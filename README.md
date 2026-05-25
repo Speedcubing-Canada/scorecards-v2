@@ -61,15 +61,16 @@ Settings and auth state live in `sessionStorage` only — they are cleared when 
 
 ## PDF output structure
 
-Each download is a ZIP containing up to three PDFs:
+Each download is a ZIP containing one PDF per round stage. Most competitions produce 2–3 PDFs; a competition with 4-round events (e.g., a large 3x3x3) produces 4.
 
 | File | Contents |
 |---|---|
 | `{id}_round1.pdf` | Named scorecards for every competitor assigned to round 1, plus one cover card per group |
-| `{id}_round2.pdf` | Intermediate rounds (only for events with 3 or more rounds total); see modes below |
+| `{id}_round2.pdf` | Round 2 of events with 3 or more rounds; prefilled or blank depending on the setting |
+| `{id}_semis.pdf` | Round 3 of events with 4 rounds (semi-finals); always blank, same structure as finals |
 | `{id}_finals.pdf` | Final round of every multi-round event; always blank scorecards |
 
-A PDF is omitted from the ZIP if it would be empty (e.g., all events have only one round → no finals PDF).
+A PDF is omitted from the ZIP if it would be empty (e.g., all events have only one round → no finals PDF). 2-round events skip straight from round 1 to finals; they never produce a round2 or semis PDF.
 
 ### Intermediate round modes
 
@@ -213,6 +214,20 @@ If a logo data URL is provided in settings, the logo occupies the left portion o
 In bilingual mode, column headers and the result header each contain both languages separated by a newline. The cut-off line and provisional line are also bilingual. Event names and group labels use the primary language only.
 
 ---
+
+## Planned features
+
+The original manual tool (Sarah-scorecard) produces several documents that are not yet automated here. The goal is to generate all of them from the same WCIF + settings flow:
+
+- **Nametags** — one badge per registered competitor, showing their name, WCA ID, country flag, and the events they are competing in (greyed-out icon for events they registered for but didn't make it into). Vertical layout, bilingual. Currently produced as an HTML file that must be printed manually.
+
+- **First-timer slips** — a small slip printed for competitors who have no WCA ID, given to the delegate to attach to their scorecard after the first solve. Lists the competitor's name and registrant ID so their results can be linked to a new WCA profile.
+
+- **Extra / spare scorecards** — a set of blank scorecards not tied to any specific group, used when a competitor shows up without their assigned card or needs a replacement.
+
+- **Mystery event scorecards** — scorecards for an unannounced bonus event revealed on the day, whose event ID is not in the WCIF at generation time.
+
+- **Schedule tracker** — a one-page grid showing all events and rounds across all days and rooms, used by staff to track which groups have been scrambled, competed, and entered.
 
 ## Project structure
 
