@@ -70,6 +70,7 @@ Settings and auth state live in `sessionStorage` only — they are cleared when 
 | `wcaLiveId` | `string \| null` | Numeric WCA Live competition ID (e.g. `9667`) used to generate per-competitor WCA Live QR codes on name tag backs |
 | `nametagLogoMode` | `hidden \| with-name \| logo-only` | How the logo appears on name tags (see Name tag section) |
 | `nametagQrMode` | `back-only \| both-sides` | Which panels get QR codes (see Name tag section) |
+| `customEvents` | `CustomEvent[]` | Zero or more custom/bonus events (see Advanced section) |
 
 ---
 
@@ -83,7 +84,10 @@ Each download is a ZIP containing one PDF per round stage plus a name-tag PDF if
 | `{id}_round2.pdf` | Round 2 of events with 3 or more rounds; prefilled or blank depending on the setting |
 | `{id}_semis.pdf` | Round 3 of events with 4 rounds (semi-finals); always blank |
 | `{id}_finals.pdf` | Final round of every multi-round event; always blank scorecards |
+| `{id}_extras.pdf` | One blank spare scorecard per round per event (sorted by schedule order) |
+| `{id}_schedule.pdf` | Schedule tracker table: estimated start/end times with blank columns for actual times and competitor count |
 | `{id}_nametags.pdf` | Landscape sheet of competitor name tags (omitted if no nametag data is available) |
+| `{id}_custom_{name}.pdf` | 4 blank scorecards for a custom/bonus event (one file per custom event added in Advanced settings) |
 
 A PDF is omitted from the ZIP if it would be empty (e.g., all events have only one round → no finals PDF). 2-round events skip straight from round 1 to finals; they never produce a round2 or semis PDF.
 
@@ -230,7 +234,7 @@ Output is written to `../current-output/`.
 
 ## WCIF parsing
 
-The parser (`src/lib/wcif-parser.ts`) reads the competition's WCIF (WCA Interchange Format) JSON and produces a `ParsedWCIF` object with four buckets:
+The parser (`src/lib/wcif-parser.ts`) reads the competition's WCIF (WCA Interchange Format) JSON and produces a `ParsedWCIF` object:
 
 ```ts
 interface ParsedWCIF {
@@ -239,6 +243,8 @@ interface ParsedWCIF {
   semis:        ScorecardData[];
   finals:       ScorecardData[];
   nametags:     NametTagEntry[];
+  extras:       ScorecardData[];     // one blank scorecard per round per event
+  scheduleDays: ScheduleDay[];       // chronological schedule tracker data
 }
 ```
 
@@ -301,6 +307,60 @@ Each accepted person produces one `NametTagEntry`. The `buildDuties` function co
 
 The `registrantId` field is the sequential person ID used by competitiongroups.com; `wcaUserId` is the WCA user account ID used by WCA Live. These two IDs are kept separate because they appear in different QR code URLs.
 
+### Extra / spare scorecards (`extras`)
+
+One blank `ScorecardEntry` is generated per round per event (excluding `333fm`, which has no scorecard format). The extra scorecards are sorted by schedule order — using the earliest child-activity start time for each round as the sort key, then by event ID as a tiebreaker. The list is padded to a multiple of 4 (with empty cover placeholders) but is **not** quadrant-reordered: extras are handled as a loose stack, not a cut-and-stack bundle.
+
+Group labels follow the same rules as regular scorecards: single-group rounds use `"Group 1 of 1"` and multi-group rounds use `"Group _ of N"` (a blank placeholder indicating the group number is to be written in by hand). FMC is excluded because no printed scorecard format exists for it.
+
+### Schedule tracker (`scheduleDays`)
+
+The schedule tracker is built in **day-primary, chronological order**: the output is a list of `ScheduleDay` objects, each representing one calendar date. Each day contains a list of `ScheduleStage` objects (one per room that has events on that day), and each stage holds `ScheduleRow` entries sorted by start time.
+
+Day labels (`"Day 1 — Monday"`, `"Day 2 — Tuesday"`, …) are computed from a global date→day-number map built across all rooms, so "Day 1" always refers to the earliest calendar date in the entire competition regardless of which room's activities you're looking at.
+
+Times are formatted in the venue's local timezone (from `wcif.schedule.venues[0].timezone`) using `Intl.DateTimeFormat` with `hour12: false`. Event round labels in the schedule tracker always use English event names regardless of the scorecard language setting, since the tracker is a staff document.
+
+`333fm` is **included** in the schedule tracker (staff still need to track it), unlike extras and scorecards where it is excluded.
+
+---
+
+## Custom events (Advanced settings)
+
+The **Advanced** section of the Settings page lets organisers add custom events — side puzzles or bonus events that are not part of the official WCIF schedule. Each custom event produces a separate PDF containing **4 blank scorecards** with the event name pre-filled but group, round, name, and all result fields left blank.
+
+### Scorecard format
+
+Each custom event has three format options:
+
+| UI field | Values | Effect |
+|---|---|---|
+| Format | Average of 5 (default) / Mean of 3 | Sets the number of attempt rows |
+| Cutoff | Empty (no cutoff) / `M:SS` string | Converts the format to `bo2-avg5` or `bo1-mo3` and prints the cutoff line |
+| Time limit | Empty (no limit) / `M:SS` string | Printed in the result-column header |
+
+The `ScorecardFormat` derivation mirrors the standard rounds:
+
+| Format radio | Cutoff set? | Resulting `ScorecardFormat` |
+|---|---|---|
+| Average of 5 | No | `avg5` |
+| Average of 5 | Yes | `bo2-avg5` |
+| Mean of 3 | No | `mo3` |
+| Mean of 3 | Yes | `bo1-mo3` |
+
+### Icon selection
+
+Each custom event can have an icon that appears in the top-left of the scorecard, next to the event name. Two options are available:
+
+- **WCA icon** — select one of the 17 standard WCA event icons shown in the picker grid. Clicking an already-selected icon deselects it.
+- **Custom image** — upload any image file; it is stored as a base64 data URL and embedded directly in the PDF.
+
+If no icon is selected, the event-name cell expands to fill the full width (same behaviour as events without icons in the standard scorecard renderer).
+
+### Output
+
+Each custom event is rendered using the same `ScorecardDocument` component as regular scorecards. The output filename is `{competitionId}_custom_{sanitized_name}.pdf`, where `sanitized_name` replaces non-alphanumeric characters with underscores (max 40 chars).
+
 ---
 
 ## PDF rendering constraints
@@ -346,11 +406,9 @@ Name tag role badges always use the panel language: French titles on front panel
 
 - **First-timer slips** — a small slip printed for competitors who have no WCA ID, given to the delegate to attach to their scorecard after the first solve. Lists the competitor's name and registrant ID so their results can be linked to a new WCA profile.
 
-- **Extra / spare scorecards** — a set of blank scorecards not tied to any specific group, used when a competitor shows up without their assigned card or needs a replacement.
+- **Improving languages i18n** - having a full i18n support so that the app can be used in fr and en but also in spanish and that it's easy to add new languages by just using keys and i18next in the react app.
 
-- **Mystery event scorecards** — scorecards for an unannounced bonus event revealed on the day, whose event ID is not in the WCIF at generation time.
-
-- **Schedule tracker** — a one-page grid showing all events and rounds across all days and rooms, used by staff to track which groups have been scrambled, competed, and entered.
+- **Improve WCA live support** - Find a way to remove having to manually add the comp id from wca live and solve the bug regarding wca live ids that are currently wrong
 
 ---
 

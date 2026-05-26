@@ -8,6 +8,14 @@ export type NametTagQrMode = 'back-only' | 'both-sides';
 
 export type NametTagLogoMode = 'hidden' | 'with-name' | 'logo-only';
 
+export interface CustomEvent {
+  name: string;
+  iconDataUrl: string | null;
+  format: 'avg5' | 'mo3';
+  cutoff: string;  // "" = none, otherwise "M:SS" — triggers bo2-avg5 / bo1-mo3
+  limit: string;   // "" = none, otherwise "M:SS"
+}
+
 export interface CompetitionSettings {
   competitionId: string;
   competitionName: string;
@@ -18,4 +26,5 @@ export interface CompetitionSettings {
   wcaLiveId: string | null;
   nametagLogoMode: NametTagLogoMode;
   nametagQrMode: NametTagQrMode;
+  customEvents: CustomEvent[];
 }

@@ -1,7 +1,16 @@
 import { useState, useRef, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import type { CompetitionSettings, Language, NametTagLogoMode, NametTagQrMode, PaperFormat, SecondRoundMode } from '../types/settings';
+import type { CompetitionSettings, CustomEvent, Language, NametTagLogoMode, NametTagQrMode, PaperFormat, SecondRoundMode } from '../types/settings';
+import { EVENT_ICONS } from '../assets/events';
+
+const WCA_EVENT_LABELS: Record<string, string> = {
+  '222': '2×2', '333': '3×3', '444': '4×4', '555': '5×5',
+  '666': '6×6', '777': '7×7', '333bf': '3BLD', '333fm': 'FMC',
+  '333oh': 'OH', 'clock': 'Clock', 'minx': 'Mega', 'pyram': 'Pyra',
+  'skewb': 'Skewb', 'sq1': 'SQ1', '444bf': '4BLD', '555bf': '5BLD',
+  '333mbf': 'MBLD',
+};
 
 const LANGUAGE_OPTIONS: { value: Language; label: string; description: string }[] = [
   { value: 'bilingual-fr', label: 'Bilingual — French main', description: 'French first, English second (CQ, QO, etc.)' },
@@ -35,7 +44,10 @@ export default function SettingsPage() {
   const [wcaLiveId, setWcaLiveId] = useState<string>('');
   const [nametagLogoMode, setNametagLogoMode] = useState<NametTagLogoMode>('with-name');
   const [nametagQrMode, setNametagQrMode] = useState<NametTagQrMode>('back-only');
+  const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const customIconRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   if (!competitionId) {
     navigate('/competitions', { replace: true });
@@ -57,6 +69,43 @@ export default function SettingsPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
+  function addCustomEvent() {
+    setCustomEvents(prev => [...prev, { name: '', iconDataUrl: null, format: 'avg5', cutoff: '', limit: '' }]);
+  }
+
+  function removeCustomEvent(i: number) {
+    setCustomEvents(prev => prev.filter((_, idx) => idx !== i));
+    customIconRefs.current.splice(i, 1);
+  }
+
+  function updateCustomName(i: number, name: string) {
+    setCustomEvents(prev => prev.map((e, idx) => idx === i ? { ...e, name } : e));
+  }
+
+  function updateCustomIcon(i: number, iconDataUrl: string | null) {
+    setCustomEvents(prev => prev.map((e, idx) => idx === i ? { ...e, iconDataUrl } : e));
+  }
+
+  function updateCustomFormat(i: number, format: 'avg5' | 'mo3') {
+    setCustomEvents(prev => prev.map((e, idx) => idx === i ? { ...e, format } : e));
+  }
+
+  function updateCustomCutoff(i: number, cutoff: string) {
+    setCustomEvents(prev => prev.map((e, idx) => idx === i ? { ...e, cutoff } : e));
+  }
+
+  function updateCustomLimit(i: number, limit: string) {
+    setCustomEvents(prev => prev.map((e, idx) => idx === i ? { ...e, limit } : e));
+  }
+
+  function handleCustomIconUpload(i: number, e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => updateCustomIcon(i, reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
   function handleSubmit() {
     const settings: CompetitionSettings = {
       competitionId,
@@ -68,6 +117,7 @@ export default function SettingsPage() {
       wcaLiveId: wcaLiveId.trim() || null,
       nametagLogoMode,
       nametagQrMode,
+      customEvents: customEvents.filter(e => e.name.trim()),
     };
     sessionStorage.setItem('competition_settings', JSON.stringify(settings));
     navigate('/generate');
@@ -254,6 +304,137 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        <section style={s.section}>
+          <button style={s.advancedToggle} onClick={() => setAdvancedOpen(o => !o)}>
+            <span style={s.advancedToggleArrow}>{advancedOpen ? '▾' : '▸'}</span>
+            Advanced
+          </button>
+
+          {advancedOpen && (
+            <div style={{ marginTop: 16 }}>
+              <h3 style={s.sectionTitle}>Custom events <span style={s.optional}>(optional)</span></h3>
+              <p style={s.hint}>
+                Print 4 blank scorecards for side events or bonus puzzles not listed in the WCIF.
+                Group and round fields will be left blank.
+              </p>
+
+              {customEvents.map((custom, i) => (
+                <div key={i} style={s.customEventCard}>
+                  <div style={s.customEventHeader}>
+                    <input
+                      type="text"
+                      placeholder="Event name (e.g. Clock Relay)"
+                      value={custom.name}
+                      onChange={e => updateCustomName(i, e.target.value)}
+                      style={{ ...s.textInput, flex: 1 }}
+                    />
+                    <button style={s.removeBtn} onClick={() => removeCustomEvent(i)}>Remove</button>
+                  </div>
+
+                  <div style={{ marginTop: 12, display: 'flex', gap: 16, alignItems: 'center' }}>
+                    <span style={{ fontSize: 12, color: '#666', flexShrink: 0 }}>Format</span>
+                    {(['avg5', 'mo3'] as const).map(fmt => (
+                      <label key={fmt} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontSize: 13 }}>
+                        <input
+                          type="radio"
+                          checked={custom.format === fmt}
+                          onChange={() => updateCustomFormat(i, fmt)}
+                          style={{ accentColor: '#003087' }}
+                        />
+                        {fmt === 'avg5' ? 'Average of 5' : 'Mean of 3'}
+                      </label>
+                    ))}
+                  </div>
+
+                  <div style={{ marginTop: 10, display: 'flex', gap: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>Cutoff <span style={{ color: '#aaa' }}>(optional, e.g. 1:30)</span></div>
+                      <input
+                        type="text"
+                        placeholder="M:SS"
+                        value={custom.cutoff}
+                        onChange={e => updateCustomCutoff(i, e.target.value)}
+                        style={{ ...s.textInput, padding: '7px 10px' }}
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>Time limit <span style={{ color: '#aaa' }}>(optional, e.g. 10:00)</span></div>
+                      <input
+                        type="text"
+                        placeholder="M:SS"
+                        value={custom.limit}
+                        onChange={e => updateCustomLimit(i, e.target.value)}
+                        style={{ ...s.textInput, padding: '7px 10px' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 12 }}>
+                    <div style={{ fontSize: 12, color: '#666', marginBottom: 6 }}>
+                      Icon — click a WCA icon or upload your own
+                      {custom.iconDataUrl && (
+                        <button style={{ ...s.removeBtn, marginLeft: 10 }} onClick={() => updateCustomIcon(i, null)}>
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div style={s.iconGrid}>
+                      {Object.entries(EVENT_ICONS).map(([id, dataUrl]) => (
+                        <div
+                          key={id}
+                          role="button"
+                          tabIndex={0}
+                          title={WCA_EVENT_LABELS[id] ?? id}
+                          onClick={() => updateCustomIcon(i, custom.iconDataUrl === dataUrl ? null : dataUrl)}
+                          onKeyDown={e => e.key === 'Enter' && updateCustomIcon(i, custom.iconDataUrl === dataUrl ? null : dataUrl)}
+                          style={{
+                            ...s.iconBtn,
+                            ...(custom.iconDataUrl === dataUrl ? s.iconBtnActive : {}),
+                          }}
+                        >
+                          <img src={dataUrl} alt={id} style={{ width: 20, height: 20 }} />
+                          <span style={s.iconLabel}>{WCA_EVENT_LABELS[id] ?? id}</span>
+                        </div>
+                      ))}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        style={{
+                          ...s.iconBtn,
+                          ...(custom.iconDataUrl && !Object.values(EVENT_ICONS).includes(custom.iconDataUrl) ? s.iconBtnActive : {}),
+                        }}
+                        onClick={() => customIconRefs.current[i]?.click()}
+                        onKeyDown={e => e.key === 'Enter' && customIconRefs.current[i]?.click()}
+                      >
+                        <span style={{ fontSize: 18, lineHeight: '20px' }}>↑</span>
+                        <span style={s.iconLabel}>Upload</span>
+                      </div>
+                    </div>
+                    <input
+                      ref={el => { customIconRefs.current[i] = el; }}
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={e => handleCustomIconUpload(i, e)}
+                    />
+                  </div>
+
+                  {custom.iconDataUrl && (
+                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <img src={custom.iconDataUrl} alt="selected icon" style={{ width: 28, height: 28, objectFit: 'contain' }} />
+                      <span style={{ fontSize: 12, color: '#555' }}>Selected icon</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              <button style={s.addCustomBtn} onClick={addCustomEvent}>
+                + Add custom event
+              </button>
+            </div>
+          )}
+        </section>
+
         <div style={s.footer}>
           <button style={s.submitBtn} onClick={handleSubmit}>
             Generate →
@@ -292,7 +473,8 @@ const s: Record<string, React.CSSProperties> = {
   optionGroup: { display: 'flex', flexDirection: 'column', gap: 8 },
   optionCard: {
     display: 'flex', alignItems: 'flex-start', gap: 12,
-    backgroundColor: '#fff', border: '2px solid #e0e0e0',
+    backgroundColor: '#fff',
+    borderWidth: 2, borderStyle: 'solid', borderColor: '#e0e0e0',
     borderRadius: 8, padding: '12px 16px', cursor: 'pointer',
   },
   optionCardActive: { borderColor: '#003087', backgroundColor: '#f0f4ff' },
@@ -327,5 +509,32 @@ const s: Record<string, React.CSSProperties> = {
     backgroundColor: '#003087', color: '#fff', border: 'none',
     borderRadius: 8, padding: '14px 32px', fontSize: 16, fontWeight: 600,
     cursor: 'pointer', width: '100%',
+  },
+  advancedToggle: {
+    background: 'none', border: 'none', padding: 0,
+    fontSize: 15, fontWeight: 700, color: '#1a1a1a', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', gap: 6,
+  },
+  advancedToggleArrow: { fontSize: 13, color: '#555' },
+  customEventCard: {
+    backgroundColor: '#fff', border: '1px solid #e0e0e0',
+    borderRadius: 8, padding: '14px 16px', marginBottom: 12,
+  },
+  customEventHeader: { display: 'flex', alignItems: 'center', gap: 10 },
+  iconGrid: { display: 'flex', flexWrap: 'wrap', gap: 6 },
+  iconBtn: {
+    display: 'flex', flexDirection: 'column', alignItems: 'center',
+    gap: 3, padding: '5px 6px',
+    borderWidth: 2, borderStyle: 'solid', borderColor: '#e0e0e0',
+    borderRadius: 6, cursor: 'pointer', backgroundColor: '#fff',
+    minWidth: 38, userSelect: 'none', outline: 'none',
+  },
+  iconBtnActive: { borderColor: '#003087', backgroundColor: '#f0f4ff' },
+  iconLabel: { fontSize: 9, color: '#555', textAlign: 'center', lineHeight: '1.1' },
+  addCustomBtn: {
+    backgroundColor: '#fff', border: '2px dashed #bbb',
+    borderRadius: 8, padding: '10px 20px', fontSize: 14,
+    cursor: 'pointer', color: '#555', width: '100%',
+    marginTop: 4,
   },
 };

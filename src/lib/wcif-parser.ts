@@ -1,6 +1,6 @@
 import type { WCIF, Round, EventId, Assignment } from '../types/wcif';
 import type { CompetitionSettings } from '../types/settings';
-import { getStrings, getEventName } from './i18n';
+import { getStrings, getEventName, EVENT_NAMES_EN } from './i18n';
 
 export type ScorecardFormat = 'avg5' | 'bo2-avg5' | 'mo3' | 'bo1-mo3' | 'bo2';
 
@@ -80,6 +80,8 @@ export interface ScorecardEntry {
   limit: string;
   format: ScorecardFormat;
   isCumulative: boolean;
+  // Overrides EVENT_ICONS lookup when set (used for custom events).
+  iconDataUrl?: string;
 }
 
 export interface CoverEntry {
@@ -94,6 +96,24 @@ export interface CoverEntry {
 
 export type ScorecardData = ScorecardEntry | CoverEntry;
 
+export interface ScheduleRow {
+  startTime: string;
+  endTime: string;
+  eventRound: string;
+}
+
+// One room's events within a single day.
+export interface ScheduleStage {
+  stageName: string;
+  rows: ScheduleRow[];
+}
+
+// One calendar day; contains one entry per room that has events that day.
+export interface ScheduleDay {
+  dayLabel: string;   // "Day 1 — Saturday"
+  stages: ScheduleStage[];
+}
+
 export interface ParsedWCIF {
   firstRound: ScorecardData[];
   // Round 2 of events with 3+ rounds.
@@ -105,6 +125,10 @@ export interface ParsedWCIF {
   // Final round of every event with 2+ rounds. Always blank.
   finals: ScorecardData[];
   nametags: NametTagEntry[];
+  // One blank scorecard per round per event (sorted by schedule order).
+  extras: ScorecardData[];
+  // Schedule tracker data in chronological (day-primary) order.
+  scheduleDays: ScheduleDay[];
 }
 
 const EMPTY_COVER: CoverEntry = {
@@ -688,6 +712,159 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     return p !== 0 ? p : a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
   });
 
+  // ── Extra scorecards ──────────────────────────────────────────────────────
+  // Build minimum timeslot for each round (eventId-rN) from its child activities.
+  const roundMinTs: Record<string, string> = {};
+  for (const [aidStr, code] of Object.entries(activityCode)) {
+    const parts = code.split('-');
+    if (parts.length < 3) continue;
+    const rk = `${parts[0]}-${parts[1]}`;
+    const ts = timeslots[Number(aidStr)] ?? 'Z99';
+    if (!roundMinTs[rk] || ts < roundMinTs[rk]) roundMinTs[rk] = ts;
+  }
+
+  const extrasEntries: ScorecardData[] = [];
+  const extrasRounds: Array<{ ts: string; eventId: string; rid: string; roundNum: number }> = [];
+  for (const event of wcif.events) {
+    const eid = event.id;
+    if (eid === '333fm') continue;
+    for (let i = 1; i <= event.rounds.length; i++) {
+      const rid = `${eid}-r${i}`;
+      const ts = roundMinTs[rid];
+      if (!ts || !roundFormat[rid]) continue;
+      extrasRounds.push({ ts, eventId: eid, rid, roundNum: i });
+    }
+  }
+  extrasRounds.sort((a, b) => a.ts.localeCompare(b.ts) || a.eventId.localeCompare(b.eventId));
+
+  for (const { ts, eventId, rid, roundNum } of extrasRounds) {
+    const totalGroups = numGroups[rid] ?? 1;
+    const group = totalGroups === 1
+      ? simpleGroupLabel('1', 1)
+      : buildBlankGroupLabel(totalGroups);
+    extrasEntries.push({
+      kind: 'scorecard',
+      timeslot: ts,
+      eventId,
+      eventName: getEventName(eventId, language),
+      roundLabel: getRoundLabel(eventId, roundNum),
+      group,
+      name: '', wcaId: '', liveId: '', gender: 'm',
+      cutoff: roundCutoff[rid], limit: roundLimit[rid],
+      format: roundFormat[rid], isCumulative: roundCumulative[rid],
+    });
+  }
+  const extrasRem = extrasEntries.length % 4;
+  if (extrasRem !== 0) for (let i = 0; i < 4 - extrasRem; i++) extrasEntries.push(EMPTY_COVER);
+
+  // ── Schedule tracker ──────────────────────────────────────────────────────
+  const timezone = wcif.schedule.venues[0]?.timezone ?? 'UTC';
+
+  const formatLocalTime = (isoTime: string): string => {
+    try {
+      return new Intl.DateTimeFormat('en-CA', {
+        hour: '2-digit', minute: '2-digit',
+        timeZone: timezone, hour12: false,
+      }).format(new Date(isoTime));
+    } catch {
+      return isoTime.slice(11, 16);
+    }
+  };
+
+  // Extract local date "YYYY-MM-DD" using formatToParts for timezone safety.
+  const getLocalDate = (isoTime: string): string => {
+    try {
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        year: 'numeric', month: '2-digit', day: '2-digit', timeZone: timezone,
+      }).formatToParts(new Date(isoTime));
+      const y = parts.find(p => p.type === 'year')?.value ?? '';
+      const m = parts.find(p => p.type === 'month')?.value ?? '';
+      const d = parts.find(p => p.type === 'day')?.value ?? '';
+      return `${y}-${m}-${d}`;
+    } catch {
+      return isoTime.slice(0, 10);
+    }
+  };
+
+  // Round count per event including FMC (for schedule label).
+  const allEventRoundCount: Record<string, number> = {};
+  for (const event of wcif.events) allEventRoundCount[event.id] = event.rounds.length;
+
+  // Map each unique local date to its day number (1-based) across the whole competition.
+  const uniqueDates = new Set<string>();
+  for (const venue of wcif.schedule.venues)
+    for (const room of venue.rooms)
+      for (const activity of room.activities)
+        uniqueDates.add(getLocalDate(activity.startTime));
+  const sortedAllDates = [...uniqueDates].sort();
+  const dateToDay: Record<string, number> = {};
+  sortedAllDates.forEach((d, i) => { dateToDay[d] = i + 1; });
+
+  const formatDayLabel = (localDate: string): string => {
+    const dayNum = dateToDay[localDate] ?? 1;
+    try {
+      const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'long' })
+        .format(new Date(`${localDate}T12:00:00Z`));
+      return `Day ${dayNum} — ${weekday}`;
+    } catch {
+      return `Day ${dayNum}`;
+    }
+  };
+
+  // Build a (date → roomIndex → activities[]) map, preserving WCIF room order via roomIndex.
+  type RoomActivity = (typeof wcif.schedule.venues)[0]['rooms'][0]['activities'][0];
+  const dayRoomMap = new Map<string, Map<number, RoomActivity[]>>();
+  const roomIndexToName = new Map<number, string>();
+  let roomIdx = 0;
+  for (const venue of wcif.schedule.venues) {
+    for (const room of venue.rooms) {
+      roomIndexToName.set(roomIdx, room.name);
+      for (const activity of room.activities) {
+        const date = getLocalDate(activity.startTime);
+        if (!dayRoomMap.has(date)) dayRoomMap.set(date, new Map());
+        const roomMap = dayRoomMap.get(date)!;
+        if (!roomMap.has(roomIdx)) roomMap.set(roomIdx, []);
+        roomMap.get(roomIdx)!.push(activity);
+      }
+      roomIdx++;
+    }
+  }
+
+  const buildRows = (activities: RoomActivity[]): ScheduleRow[] => {
+    const rows: ScheduleRow[] = [];
+    const sorted = [...activities].sort((a, b) => a.startTime.localeCompare(b.startTime));
+    for (const activity of sorted) {
+      const parts = activity.activityCode.split('-');
+      if (parts.length !== 2) continue;
+      const [eid, roundPart] = parts;
+      if (!roundPart.startsWith('r')) continue;
+      const roundNum = parseInt(roundPart.slice(1), 10);
+      if (!isFinite(roundNum)) continue;
+      const totalRounds = allEventRoundCount[eid];
+      if (totalRounds === undefined) continue;
+      const eventName = EVENT_NAMES_EN[eid] ?? eid;
+      const isLast = roundNum === totalRounds;
+      const roundLabel = totalRounds === 1 || isLast ? 'Final' : `Round ${roundNum}`;
+      rows.push({
+        startTime: formatLocalTime(activity.startTime),
+        endTime: formatLocalTime(activity.endTime),
+        eventRound: `${eventName} ${roundLabel}`,
+      });
+    }
+    return rows;
+  };
+
+  // Iterate days chronologically; within each day keep WCIF room order.
+  const scheduleDays: ScheduleDay[] = [];
+  for (const [date, roomMap] of [...dayRoomMap].sort(([a], [b]) => a.localeCompare(b))) {
+    const stages: ScheduleStage[] = [];
+    for (const [ri, activities] of [...roomMap].sort(([a], [b]) => a - b)) {
+      const rows = buildRows(activities);
+      if (rows.length > 0) stages.push({ stageName: roomIndexToName.get(ri) ?? `Room ${ri + 1}`, rows });
+    }
+    if (stages.length > 0) scheduleDays.push({ dayLabel: formatDayLabel(date), stages });
+  }
+
   return {
     firstRound: finalizeEntries(firstRoundEntries),
     intermediate: secondRoundMode === 'prefilled'
@@ -696,5 +873,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     semis:  finalizeEntries(semisEntries),
     finals: finalizeEntries(finalsEntries),
     nametags,
+    extras: extrasEntries,
+    scheduleDays,
   };
 }

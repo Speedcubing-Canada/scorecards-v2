@@ -148,7 +148,7 @@ function ScorecardCard({
   const strings = getStrings(settings.language);
   const rowH    = ROW_HEIGHTS[card.format];
   const isMBF   = card.eventId === '333mbf';
-  const icon    = EVENT_ICONS[card.eventId];
+  const icon    = card.iconDataUrl ?? EVENT_ICONS[card.eventId];
 
   const resultSuffix = card.isCumulative ? strings.cumulativeSuffix(card.limit)
                      : isMBF             ? strings.mbfSuffix

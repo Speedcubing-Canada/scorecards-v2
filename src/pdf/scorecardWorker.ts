@@ -5,10 +5,11 @@ import './bufferPolyfill';
 import React from 'react';
 import { pdf } from '@react-pdf/renderer';
 import { zipSync } from 'fflate';
-import type { ScorecardData, ParsedWCIF } from '../lib/wcif-parser';
-import type { CompetitionSettings } from '../types/settings';
+import type { ScorecardData, ScorecardEntry, ParsedWCIF } from '../lib/wcif-parser';
+import type { CompetitionSettings, CustomEvent } from '../types/settings';
 import { ScorecardDocument } from './ScorecardDocument';
 import { NametTagDocument } from './NametTagDocument';
+import { ScheduleTrackerDocument } from './ScheduleTrackerDocument';
 
 export type WorkerRequest = {
   parsed: ParsedWCIF;
@@ -38,6 +39,39 @@ async function renderNametags(parsed: ParsedWCIF, settings: CompetitionSettings)
   return new Uint8Array(ab);
 }
 
+function buildCustomEntries(custom: CustomEvent): ScorecardData[] {
+  const hasCutoff = custom.cutoff.trim() !== '';
+  const format = custom.format === 'mo3'
+    ? (hasCutoff ? 'bo1-mo3' : 'mo3')
+    : (hasCutoff ? 'bo2-avg5' : 'avg5');
+  const entry: ScorecardEntry = {
+    kind: 'scorecard',
+    timeslot: 'ZZZ',
+    eventId: 'custom',
+    eventName: custom.name,
+    roundLabel: '',
+    group: '',
+    name: '',
+    wcaId: '',
+    liveId: '',
+    gender: '',
+    cutoff: custom.cutoff.trim(),
+    limit: custom.limit.trim(),
+    format,
+    isCumulative: false,
+    iconDataUrl: custom.iconDataUrl ?? undefined,
+  };
+  return [entry, entry, entry, entry];
+}
+
+async function renderScheduleTracker(parsed: ParsedWCIF, settings: CompetitionSettings): Promise<Uint8Array> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const element = React.createElement(ScheduleTrackerDocument, { days: parsed.scheduleDays, settings }) as any;
+  const blob = await pdf(element).toBlob();
+  const ab = await blob.arrayBuffer();
+  return new Uint8Array(ab);
+}
+
 workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
   function post(msg: WorkerResponse, transfer?: Transferable[]) {
     workerSelf.postMessage(msg, transfer ?? []);
@@ -46,22 +80,32 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
   const { parsed, settings } = e.data;
   const id = settings.competitionId;
 
-  // Build list of PDFs to render: round1, intermediate (round2), semis, finals, nametags
+  // Build list of PDFs to render: round1, intermediate (round2), semis, finals, nametags, extras, schedule
   type PdfJob =
     | { kind: 'scorecards'; filename: string; entries: ScorecardData[]; label: string }
-    | { kind: 'nametags';   filename: string; label: string };
+    | { kind: 'nametags';   filename: string; label: string }
+    | { kind: 'schedule';   filename: string; label: string };
 
   const jobs: PdfJob[] = [];
   if (parsed.firstRound.length > 0)
-    jobs.push({ kind: 'scorecards', filename: `${id}_round1.pdf`,  entries: parsed.firstRound,   label: 'Round 1' });
+    jobs.push({ kind: 'scorecards', filename: `${id}_round1.pdf`,   entries: parsed.firstRound,   label: 'Round 1' });
   if (parsed.intermediate.length > 0)
-    jobs.push({ kind: 'scorecards', filename: `${id}_round2.pdf`,  entries: parsed.intermediate, label: 'Round 2' });
+    jobs.push({ kind: 'scorecards', filename: `${id}_round2.pdf`,   entries: parsed.intermediate, label: 'Round 2' });
   if (parsed.semis.length > 0)
-    jobs.push({ kind: 'scorecards', filename: `${id}_semis.pdf`,   entries: parsed.semis,        label: 'Semis' });
+    jobs.push({ kind: 'scorecards', filename: `${id}_semis.pdf`,    entries: parsed.semis,        label: 'Semis' });
   if (parsed.finals.length > 0)
-    jobs.push({ kind: 'scorecards', filename: `${id}_finals.pdf`,  entries: parsed.finals,       label: 'Finals' });
+    jobs.push({ kind: 'scorecards', filename: `${id}_finals.pdf`,   entries: parsed.finals,       label: 'Finals' });
+  if (parsed.extras.length > 0)
+    jobs.push({ kind: 'scorecards', filename: `${id}_extras.pdf`,   entries: parsed.extras,       label: 'Extras' });
+  if (parsed.scheduleDays.length > 0)
+    jobs.push({ kind: 'schedule',   filename: `${id}_schedule.pdf`, label: 'Schedule Tracker' });
   if (parsed.nametags.length > 0)
     jobs.push({ kind: 'nametags',   filename: `${id}_nametags.pdf`, label: 'Name Tags' });
+  for (const custom of settings.customEvents ?? []) {
+    if (!custom.name.trim()) continue;
+    const safeName = custom.name.trim().replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').slice(0, 40);
+    jobs.push({ kind: 'scorecards', filename: `${id}_custom_${safeName}.pdf`, entries: buildCustomEntries(custom), label: custom.name });
+  }
 
   if (jobs.length === 0) {
     post({ type: 'error', message: 'No entries to render.' });
@@ -92,6 +136,8 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
       try {
         const data = job.kind === 'nametags'
           ? await renderNametags(parsed, settings)
+          : job.kind === 'schedule'
+          ? await renderScheduleTracker(parsed, settings)
           : await renderPdf(job.entries, settings);
         clearInterval(timer);
         files[job.filename] = [data, { level: 0 }];

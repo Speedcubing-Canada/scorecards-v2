@@ -15,7 +15,10 @@ beforeEach(() => { _id = 0; });
 
 const BASE: CompetitionSettings = {
   competitionId: 'TC2024', competitionName: 'Test Comp 2024',
-  language: 'en', paperFormat: 'A4', secondRoundMode: 'blanks', logoDataUrl: null, wcaLiveId: null,
+  language: 'en', paperFormat: 'A4', secondRoundMode: 'blanks',
+  logoDataUrl: null, wcaLiveId: null,
+  nametagLogoMode: 'hidden', nametagQrMode: 'back-only',
+  customEvents: [],
 };
 const cfg = (o: Partial<CompetitionSettings> = {}): CompetitionSettings => ({ ...BASE, ...o });
 
@@ -854,5 +857,264 @@ describe('timeslot ordering', () => {
     const t333 = all.find(s => s.eventId === '333')?.timeslot ?? '';
     const t222 = all.find(s => s.eventId === '222')?.timeslot ?? '';
     expect(t333 < t222).toBe(true);
+  });
+});
+
+// ── Extra scorecards ──────────────────────────────────────────────────────────
+
+describe('extra scorecards', () => {
+  it('one extra per round per event (two events, one round each)', () => {
+    const e333 = evt('333', [rSpec('a')]);
+    const e222 = evt('222', [rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      act('222', 1, [ch(101, '222', 1, 1)]),
+    ]);
+    const result = parseWCIF(mkWCIF([e333, e222], [r]), cfg());
+    const extras = scs(result.extras);
+    expect(extras.length).toBe(2);
+    expect(extras.map(e => e.eventId).sort()).toEqual(['222', '333']);
+  });
+
+  it('two rounds per event: two extras per event', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      act('333', 2, [ch(101, '333', 2, 1, '2024-01-01T12:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    const extras = scs(result.extras);
+    expect(extras.length).toBe(2);
+    expect(extras[0]?.roundLabel).toBe('Round 1 of 2');
+    expect(extras[1]?.roundLabel).toBe('Final Round');
+  });
+
+  it('single-group round: group label is "Group 1 of 1"', () => {
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    expect(scs(result.extras)[0]?.group).toBe('Group 1 of 1');
+  });
+
+  it('multi-group round: group label is "Group _ of N"', () => {
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)])]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    expect(scs(result.extras)[0]?.group).toBe('Group _ of 2');
+  });
+
+  it('French: single group → "Groupe 1 de 1", multi-group → "Groupe _ de N"', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)]),
+      act('333', 2, [ch(110, '333', 2, 1, '2024-01-01T12:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg({ language: 'fr' }));
+    const extras = scs(result.extras);
+    expect(extras.find(e => e.roundLabel === 'Tour 1 de 2')?.group).toBe('Groupe _ de 2');
+    expect(extras.find(e => e.roundLabel === 'Tour Final')?.group).toBe('Groupe 1 de 1');
+  });
+
+  it('extras sorted by schedule order (round 2 before round 1 when scheduled earlier)', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 2, [ch(100, '333', 2, 1, '2024-01-01T09:00:00Z')]),
+      act('333', 1, [ch(101, '333', 1, 1, '2024-01-01T11:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    const extras = scs(result.extras);
+    // Round 2 starts earlier, so it comes first
+    expect(extras[0]?.roundLabel).toBe('Final Round');
+    expect(extras[1]?.roundLabel).toBe('Round 1 of 2');
+  });
+
+  it('extras is padded to a multiple of 4', () => {
+    // 3 rounds: needs 1 extra padding → 4 total entries
+    const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      act('333', 2, [ch(101, '333', 2, 1, '2024-01-01T11:00:00Z')]),
+      act('333', 3, [ch(102, '333', 3, 1, '2024-01-01T14:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    expect(result.extras.length % 4).toBe(0);
+    expect(scs(result.extras).length).toBe(3);
+  });
+
+  it('333fm rounds are excluded from extras', () => {
+    const eFm = evt('333fm', [rSpec('3')]);
+    const e3  = evt('333',   [rSpec('a')]);
+    const r = room('Stage', [
+      act('333fm', 1, [ch(100, '333fm', 1, 1)]),
+      act('333',   1, [ch(101, '333',   1, 1)]),
+    ]);
+    const result = parseWCIF(mkWCIF([eFm, e3], [r]), cfg());
+    expect(scs(result.extras).every(e => e.eventId !== '333fm')).toBe(true);
+  });
+
+  it('extras carry correct format and cutoff from their round', () => {
+    const e = evt('444', [rSpec('a', { cutoffCs: 6000, limitCs: 18000 }), rSpec('a')]);
+    const r = room('Stage', [
+      act('444', 1, [ch(100, '444', 1, 1)]),
+      act('444', 2, [ch(101, '444', 2, 1, '2024-01-01T12:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    const r1Extra = scs(result.extras).find(e => e.roundLabel === 'Round 1 of 2');
+    expect(r1Extra?.format).toBe('bo2-avg5');
+    expect(r1Extra?.cutoff).toBe('1:00');
+  });
+});
+
+// ── Schedule tracker ──────────────────────────────────────────────────────────
+
+describe('schedule tracker', () => {
+  it('one room produces one day with one stage', () => {
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    expect(result.scheduleDays.length).toBe(1);
+    expect(result.scheduleDays[0]?.stages.length).toBe(1);
+    expect(result.scheduleDays[0]?.stages[0]?.stageName).toBe('Stage');
+  });
+
+  it('two rooms on the same day produce one day with two stages', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    const rA = room('Stage A', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const rB = room('Stage B', [act('333', 2, [ch(101, '333', 2, 1)])]);
+    const result = parseWCIF(mkWCIF([e], [rA, rB]), cfg());
+    expect(result.scheduleDays.length).toBe(1);
+    expect(result.scheduleDays[0]?.stages.length).toBe(2);
+    expect(result.scheduleDays[0]?.stages[0]?.stageName).toBe('Stage A');
+    expect(result.scheduleDays[0]?.stages[1]?.stageName).toBe('Stage B');
+  });
+
+  it('single-day competition: one day entry with all rows in its stage', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      act('333', 2, [ch(101, '333', 2, 1, '2024-01-01T11:00:00Z')]),
+      act('333', 3, [ch(102, '333', 3, 1, '2024-01-01T14:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    expect(result.scheduleDays.length).toBe(1);
+    expect(result.scheduleDays[0]?.stages[0]?.rows.length).toBe(3);
+  });
+
+  it('multi-day competition: one scheduleDays entry per calendar day', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1, '2024-01-01T09:00:00Z')]),
+      act('333', 2, [ch(101, '333', 2, 1, '2024-01-02T09:00:00Z')]),
+      act('333', 3, [ch(102, '333', 3, 1, '2024-01-03T09:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    expect(result.scheduleDays.length).toBe(3);
+    expect(result.scheduleDays[0]?.stages[0]?.rows.length).toBe(1);
+    expect(result.scheduleDays[1]?.stages[0]?.rows.length).toBe(1);
+    expect(result.scheduleDays[2]?.stages[0]?.rows.length).toBe(1);
+  });
+
+  it('day labels include day number and weekday', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1, '2024-01-01T09:00:00Z')]),
+      act('333', 2, [ch(101, '333', 2, 1, '2024-01-02T09:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    const labels = result.scheduleDays.map(d => d.dayLabel);
+    expect(labels[0]).toMatch(/^Day 1/);
+    expect(labels[1]).toMatch(/^Day 2/);
+    expect(labels[0]).toContain('—');
+  });
+
+  it('eventRound uses English event names regardless of language setting', () => {
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg({ language: 'fr' }));
+    expect(result.scheduleDays[0]?.stages[0]?.rows[0]?.eventRound).toContain('3x3x3 Cube');
+  });
+
+  it('single-round event uses "Final" label in eventRound', () => {
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    expect(result.scheduleDays[0]?.stages[0]?.rows[0]?.eventRound).toBe('3x3x3 Cube Final');
+  });
+
+  it('multi-round event: intermediate rounds use "Round N" and last uses "Final"', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      act('333', 2, [ch(101, '333', 2, 1, '2024-01-01T11:00:00Z')]),
+      act('333', 3, [ch(102, '333', 3, 1, '2024-01-01T14:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    const rows = result.scheduleDays[0]?.stages[0]?.rows ?? [];
+    expect(rows[0]?.eventRound).toBe('3x3x3 Cube Round 1');
+    expect(rows[1]?.eventRound).toBe('3x3x3 Cube Round 2');
+    expect(rows[2]?.eventRound).toBe('3x3x3 Cube Final');
+  });
+
+  it('rows within a day are sorted by activity start time', () => {
+    const e333 = evt('333', [rSpec('a')]);
+    const e222 = evt('222', [rSpec('a')]);
+    // 222 starts earlier but appears second in room.activities
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1, '2024-01-01T11:00:00Z')]),
+      act('222', 1, [ch(101, '222', 1, 1, '2024-01-01T09:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e333, e222], [r]), cfg());
+    const rows = result.scheduleDays[0]?.stages[0]?.rows ?? [];
+    expect(rows[0]?.eventRound).toContain('2x2x2');
+    expect(rows[1]?.eventRound).toContain('3x3x3');
+  });
+
+  it('scheduleDays are sorted chronologically', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    // Day 2 activity appears before Day 1 in room.activities
+    const r = room('Stage', [
+      act('333', 2, [ch(101, '333', 2, 1, '2024-01-02T09:00:00Z')]),
+      act('333', 1, [ch(100, '333', 1, 1, '2024-01-01T09:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    expect(result.scheduleDays[0]?.dayLabel).toMatch(/Day 1/);
+    expect(result.scheduleDays[1]?.dayLabel).toMatch(/Day 2/);
+  });
+
+  it('333fm appears in schedule tracker (not excluded)', () => {
+    const eFm = evt('333fm', [rSpec('3')]);
+    const r = room('Stage', [act('333fm', 1, [ch(100, '333fm', 1, 1)])]);
+    const result = parseWCIF(mkWCIF([eFm], [r]), cfg());
+    const rows = result.scheduleDays[0]?.stages[0]?.rows ?? [];
+    expect(rows.some(row => row.eventRound.includes('FMC'))).toBe(true);
+  });
+
+  it('non-event activities (activityCode not matching eventId-rN) are excluded', () => {
+    const e = evt('333', [rSpec('a')]);
+    const miscActivity = {
+      id: uid(), name: 'Lunch', activityCode: 'other-lunch',
+      startTime: '2024-01-01T12:00:00Z', endTime: '2024-01-01T13:00:00Z',
+      childActivities: [], scrambleSets: [],
+    };
+    const r: Room = {
+      id: uid(), name: 'Stage', color: '#fff',
+      activities: [act('333', 1, [ch(100, '333', 1, 1)]), miscActivity],
+    };
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    expect(result.scheduleDays[0]?.stages[0]?.rows.length).toBe(1);
+  });
+
+  it('day numbering is shared across all rooms (Day 1 = earliest date in whole comp)', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    // Stage A only has Day 2 events; Stage B only has Day 1 events.
+    const rA = room('Stage A', [act('333', 2, [ch(101, '333', 2, 1, '2024-01-02T09:00:00Z')])]);
+    const rB = room('Stage B', [act('333', 1, [ch(100, '333', 1, 1, '2024-01-01T09:00:00Z')])]);
+    const result = parseWCIF(mkWCIF([e], [rA, rB]), cfg());
+    // Day 1 (earliest date) contains Stage B's activity
+    expect(result.scheduleDays[0]?.dayLabel).toMatch(/Day 1/);
+    expect(result.scheduleDays[0]?.stages[0]?.stageName).toBe('Stage B');
+    // Day 2 contains Stage A's activity (not mislabeled as Day 1)
+    expect(result.scheduleDays[1]?.dayLabel).toMatch(/Day 2/);
+    expect(result.scheduleDays[1]?.stages[0]?.stageName).toBe('Stage A');
   });
 });
