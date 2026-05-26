@@ -23,7 +23,7 @@ export interface AdvancementCondition {
 export interface Round {
   id: string;
   format: RoundFormat;
-  timeLimit: TimeLimit;
+  timeLimit: TimeLimit | null;
   cutoff: Cutoff | null;
   advancementCondition: AdvancementCondition | null;
   scrambleSetCount: number;

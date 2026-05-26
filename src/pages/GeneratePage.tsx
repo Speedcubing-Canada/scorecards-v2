@@ -62,12 +62,12 @@ export default function GeneratePage() {
   }
 
   const allEntries = parsed
-    ? [...parsed.firstRound, ...parsed.intermediate, ...parsed.finals]
+    ? [...parsed.firstRound, ...parsed.intermediate, ...parsed.semis, ...parsed.finals]
     : [];
   const scorecardCount = allEntries.filter(e => e.kind === 'scorecard').length;
   const coverCount     = allEntries.filter(e => e.kind === 'cover' && e.eventId).length;
   const pdfCount       = parsed
-    ? [parsed.firstRound, parsed.intermediate, parsed.finals].filter(r => r.length > 0).length
+    ? [parsed.firstRound, parsed.intermediate, parsed.semis, parsed.finals].filter(r => r.length > 0).length
     : 0;
   const filename       = `${settings.competitionId}_scorecards.zip`;
 

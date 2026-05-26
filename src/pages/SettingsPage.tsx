@@ -1,7 +1,7 @@
 import { useState, useRef, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import type { CompetitionSettings, Language, PaperFormat, SecondRoundMode } from '../types/settings';
+import type { CompetitionSettings, Language, NametTagLogoMode, NametTagQrMode, PaperFormat, SecondRoundMode } from '../types/settings';
 
 const LANGUAGE_OPTIONS: { value: Language; label: string; description: string }[] = [
   { value: 'bilingual-fr', label: 'Bilingual — French main', description: 'French first, English second (CQ, QO, etc.)' },
@@ -32,6 +32,9 @@ export default function SettingsPage() {
   const [secondRoundMode, setSecondRoundMode] = useState<SecondRoundMode>('prefilled');
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [logoName, setLogoName] = useState<string | null>(null);
+  const [wcaLiveId, setWcaLiveId] = useState<string>('');
+  const [nametagLogoMode, setNametagLogoMode] = useState<NametTagLogoMode>('with-name');
+  const [nametagQrMode, setNametagQrMode] = useState<NametTagQrMode>('back-only');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!competitionId) {
@@ -62,6 +65,9 @@ export default function SettingsPage() {
       paperFormat,
       secondRoundMode,
       logoDataUrl,
+      wcaLiveId: wcaLiveId.trim() || null,
+      nametagLogoMode,
+      nametagQrMode,
     };
     sessionStorage.setItem('competition_settings', JSON.stringify(settings));
     navigate('/generate');
@@ -146,6 +152,23 @@ export default function SettingsPage() {
         </section>
 
         <section style={s.section}>
+          <h3 style={s.sectionTitle}>WCA Live ID <span style={s.optional}>(optional — for nametag QR codes)</span></h3>
+          <p style={s.hint}>
+            The numeric competition ID from WCA Live (e.g. <strong>9667</strong> from
+            {' '}live.worldcubeassociation.org/competitions/<strong>9667</strong>).
+            Used to generate competitor-specific WCA Live QR codes on name tags.
+          </p>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={wcaLiveId}
+            onChange={e => setWcaLiveId(e.target.value.replace(/\D/g, ''))}
+            placeholder="e.g. 9667"
+            style={s.textInput}
+          />
+        </section>
+
+        <section style={s.section}>
           <h3 style={s.sectionTitle}>Competition logo <span style={s.optional}>(optional)</span></h3>
           <p style={s.hint}>Appears in the top-left corner of each scorecard. PNG or SVG recommended.</p>
 
@@ -170,6 +193,65 @@ export default function SettingsPage() {
             style={{ display: 'none' }}
             onChange={handleLogoChange}
           />
+        </section>
+
+        <section style={s.section}>
+          <h3 style={s.sectionTitle}>Name tag layout</h3>
+
+          {logoDataUrl && (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', marginBottom: 8 }}>
+                Logo on name tags
+              </div>
+              <div style={s.optionGroup}>
+                {([
+                  { value: 'hidden'    as const, label: 'Hidden',                    description: 'Logo not shown on name tags' },
+                  { value: 'with-name' as const, label: 'Small logo + comp name',    description: 'Small logo beside the competition name at the top of each panel' },
+                  { value: 'logo-only' as const, label: 'Large logo, replaces name', description: 'Logo replaces the competition name text — QR codes are slightly smaller to compensate' },
+                ]).map(opt => (
+                  <label key={opt.value} style={{ ...s.optionCard, ...(nametagLogoMode === opt.value ? s.optionCardActive : {}) }}>
+                    <input
+                      type="radio"
+                      name="logoMode"
+                      value={opt.value}
+                      checked={nametagLogoMode === opt.value}
+                      onChange={() => setNametagLogoMode(opt.value)}
+                      style={s.radio}
+                    />
+                    <div>
+                      <div style={s.optionLabel}>{opt.label}</div>
+                      <div style={s.optionDesc}>{opt.description}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', marginBottom: 8 }}>
+            QR codes
+          </div>
+          <div style={s.optionGroup}>
+            {([
+              { value: 'back-only' as const, label: 'Back side only', description: 'Front = group assignments (FR), back = QR codes (EN)' },
+              { value: 'both-sides' as const, label: 'Both sides', description: 'QR codes on both front and back — useful when logo takes space' },
+            ]).map(opt => (
+              <label key={opt.value} style={{ ...s.optionCard, ...(nametagQrMode === opt.value ? s.optionCardActive : {}) }}>
+                <input
+                  type="radio"
+                  name="qrMode"
+                  value={opt.value}
+                  checked={nametagQrMode === opt.value}
+                  onChange={() => setNametagQrMode(opt.value)}
+                  style={s.radio}
+                />
+                <div>
+                  <div style={s.optionLabel}>{opt.label}</div>
+                  <div style={s.optionDesc}>{opt.description}</div>
+                </div>
+              </label>
+            ))}
+          </div>
         </section>
 
         <div style={s.footer}>
@@ -233,6 +315,12 @@ const s: Record<string, React.CSSProperties> = {
     backgroundColor: '#fff', border: '2px dashed #ccc', borderRadius: 8,
     padding: '14px 24px', fontSize: 14, cursor: 'pointer', color: '#555',
     width: '100%',
+  },
+  textInput: {
+    width: '100%', boxSizing: 'border-box',
+    border: '2px solid #e0e0e0', borderRadius: 8,
+    padding: '10px 14px', fontSize: 14, fontFamily: 'inherit',
+    outline: 'none',
   },
   footer: { marginTop: 40 },
   submitBtn: {
