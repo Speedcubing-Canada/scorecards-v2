@@ -1,8 +1,9 @@
 import { useState, useRef, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
+import { useTranslation } from 'react-i18next';
 import type { CompetitionSettings, CustomEvent, Language, NametTagLogoMode, NametTagQrMode, PaperFormat, SecondRoundMode } from '../types/settings';
 import { EVENT_ICONS } from '../assets/events';
+import Header from '../components/Header';
 
 const WCA_EVENT_LABELS: Record<string, string> = {
   '222': '2×2', '333': '3×3', '444': '4×4', '555': '5×5',
@@ -12,25 +13,8 @@ const WCA_EVENT_LABELS: Record<string, string> = {
   '333mbf': 'MBLD',
 };
 
-const LANGUAGE_OPTIONS: { value: Language; label: string; description: string }[] = [
-  { value: 'bilingual-fr', label: 'Bilingual — French main', description: 'French first, English second (CQ, QO, etc.)' },
-  { value: 'bilingual-en', label: 'Bilingual — English main', description: 'English first, French second' },
-  { value: 'fr', label: 'French only', description: 'All text in French' },
-  { value: 'en', label: 'English only', description: 'All text in English' },
-];
-
-const PAPER_OPTIONS: { value: PaperFormat; label: string; description: string }[] = [
-  { value: 'A4', label: 'A4', description: '210 × 297 mm — each scorecard is A6 (105 × 148.5 mm)' },
-  { value: 'LETTER', label: 'Letter', description: '8.5 × 11 in — each scorecard is 107.95 × 139.7 mm' },
-];
-
-const ROUND_MODE_OPTIONS: { value: SecondRoundMode; label: string; description: string }[] = [
-  { value: 'prefilled', label: 'Pre-filled with names', description: 'Print scorecards for all qualifiers (requires WCA Live results)' },
-  { value: 'blanks', label: 'Event + round filled, name blank', description: 'Print blank name slots — fill in by hand at the competition' },
-];
-
 export default function SettingsPage() {
-  const { logout } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const competitionId = sessionStorage.getItem('selected_competition_id') ?? '';
@@ -53,6 +37,25 @@ export default function SettingsPage() {
     navigate('/competitions', { replace: true });
     return null;
   }
+
+  // Option arrays defined inside component so they update when UI language changes
+  const LANGUAGE_OPTIONS: { value: Language; label: string; description: string }[] = [
+    { value: 'bilingual-fr', label: t('settings.language.bilingual_fr'), description: t('settings.language.bilingual_fr_desc') },
+    { value: 'bilingual-en', label: t('settings.language.bilingual_en'), description: t('settings.language.bilingual_en_desc') },
+    { value: 'fr', label: t('settings.language.fr'), description: t('settings.language.fr_desc') },
+    { value: 'en', label: t('settings.language.en'), description: t('settings.language.en_desc') },
+    { value: 'es', label: t('settings.language.es'), description: t('settings.language.es_desc') },
+  ];
+
+  const PAPER_OPTIONS: { value: PaperFormat; label: string; description: string }[] = [
+    { value: 'A4', label: t('settings.paper.a4'), description: t('settings.paper.a4_desc') },
+    { value: 'LETTER', label: t('settings.paper.letter'), description: t('settings.paper.letter_desc') },
+  ];
+
+  const ROUND_MODE_OPTIONS: { value: SecondRoundMode; label: string; description: string }[] = [
+    { value: 'prefilled', label: t('settings.subsequent_rounds.prefilled'), description: t('settings.subsequent_rounds.prefilled_desc') },
+    { value: 'blanks', label: t('settings.subsequent_rounds.blanks'), description: t('settings.subsequent_rounds.blanks_desc') },
+  ];
 
   function handleLogoChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -123,20 +126,27 @@ export default function SettingsPage() {
     navigate('/generate');
   }
 
+  const logoModeOptions: { value: NametTagLogoMode; label: string; description: string }[] = [
+    { value: 'hidden',    label: t('settings.nametag.logo_hidden'),    description: t('settings.nametag.logo_hidden_desc') },
+    { value: 'with-name', label: t('settings.nametag.logo_with_name'), description: t('settings.nametag.logo_with_name_desc') },
+    { value: 'logo-only', label: t('settings.nametag.logo_only'),      description: t('settings.nametag.logo_only_desc') },
+  ];
+
+  const qrModeOptions: { value: NametTagQrMode; label: string; description: string }[] = [
+    { value: 'back-only',  label: t('settings.nametag.qr_back_only'),  description: t('settings.nametag.qr_back_only_desc') },
+    { value: 'both-sides', label: t('settings.nametag.qr_both_sides'), description: t('settings.nametag.qr_both_sides_desc') },
+  ];
+
   return (
     <div style={s.page}>
-      <header style={s.header}>
-        <button style={s.back} onClick={() => navigate('/competitions')}>← Back</button>
-        <span style={s.headerTitle}>Settings</span>
-        <button style={s.logoutBtn} onClick={logout}>Sign out</button>
-      </header>
+      <Header showBack onBack={() => navigate('/competitions')} showSignOut />
 
       <main style={s.main}>
         <div style={s.compBadge}>{competitionName}</div>
-        <h2 style={s.heading}>Configure your print settings</h2>
+        <h2 style={s.heading}>{t('settings.heading')}</h2>
 
         <section style={s.section}>
-          <h3 style={s.sectionTitle}>Language</h3>
+          <h3 style={s.sectionTitle}>{t('settings.language.title')}</h3>
           <div style={s.optionGroup}>
             {LANGUAGE_OPTIONS.map((opt) => (
               <label key={opt.value} style={{ ...s.optionCard, ...(language === opt.value ? s.optionCardActive : {}) }}>
@@ -158,7 +168,7 @@ export default function SettingsPage() {
         </section>
 
         <section style={s.section}>
-          <h3 style={s.sectionTitle}>Paper format</h3>
+          <h3 style={s.sectionTitle}>{t('settings.paper.title')}</h3>
           <div style={s.optionGroup}>
             {PAPER_OPTIONS.map((opt) => (
               <label key={opt.value} style={{ ...s.optionCard, ...(paperFormat === opt.value ? s.optionCardActive : {}) }}>
@@ -180,7 +190,7 @@ export default function SettingsPage() {
         </section>
 
         <section style={s.section}>
-          <h3 style={s.sectionTitle}>Subsequent rounds</h3>
+          <h3 style={s.sectionTitle}>{t('settings.subsequent_rounds.title')}</h3>
           <div style={s.optionGroup}>
             {ROUND_MODE_OPTIONS.map((opt) => (
               <label key={opt.value} style={{ ...s.optionCard, ...(secondRoundMode === opt.value ? s.optionCardActive : {}) }}>
@@ -202,37 +212,43 @@ export default function SettingsPage() {
         </section>
 
         <section style={s.section}>
-          <h3 style={s.sectionTitle}>WCA Live ID <span style={s.optional}>(optional — for nametag QR codes)</span></h3>
+          <h3 style={s.sectionTitle}>
+            {t('settings.wca_live.title')}{' '}
+            <span style={s.optional}>({t('settings.wca_live.optional_note')})</span>
+          </h3>
           <p style={s.hint}>
-            The numeric competition ID from WCA Live (e.g. <strong>9667</strong> from
-            {' '}live.worldcubeassociation.org/competitions/<strong>9667</strong>).
-            Used to generate competitor-specific WCA Live QR codes on name tags.
+            {t('settings.wca_live.hint_part1')} <strong>9667</strong>{' '}
+            {t('settings.wca_live.hint_part2')}<strong>9667</strong>
+            {t('settings.wca_live.hint_part3')}
           </p>
           <input
             type="text"
             inputMode="numeric"
             value={wcaLiveId}
             onChange={e => setWcaLiveId(e.target.value.replace(/\D/g, ''))}
-            placeholder="e.g. 9667"
+            placeholder={t('settings.wca_live.placeholder')}
             style={s.textInput}
           />
         </section>
 
         <section style={s.section}>
-          <h3 style={s.sectionTitle}>Competition logo <span style={s.optional}>(optional)</span></h3>
-          <p style={s.hint}>Appears in the top-left corner of each scorecard. PNG or SVG recommended.</p>
+          <h3 style={s.sectionTitle}>
+            {t('settings.logo.title')}{' '}
+            <span style={s.optional}>({t('settings.logo.optional_note')})</span>
+          </h3>
+          <p style={s.hint}>{t('settings.logo.hint')}</p>
 
           {logoDataUrl ? (
             <div style={s.logoPreview}>
               <img src={logoDataUrl} alt="Logo preview" style={s.logoImg} />
               <div style={s.logoMeta}>
                 <span style={s.logoName}>{logoName}</span>
-                <button style={s.removeBtn} onClick={handleRemoveLogo}>Remove</button>
+                <button style={s.removeBtn} onClick={handleRemoveLogo}>{t('common.remove')}</button>
               </div>
             </div>
           ) : (
             <button style={s.uploadBtn} onClick={() => fileInputRef.current?.click()}>
-              Choose file
+              {t('common.choose_file')}
             </button>
           )}
 
@@ -246,19 +262,15 @@ export default function SettingsPage() {
         </section>
 
         <section style={s.section}>
-          <h3 style={s.sectionTitle}>Name tag layout</h3>
+          <h3 style={s.sectionTitle}>{t('settings.nametag.title')}</h3>
 
           {logoDataUrl && (
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', marginBottom: 8 }}>
-                Logo on name tags
+                {t('settings.nametag.logo_on_nametags')}
               </div>
               <div style={s.optionGroup}>
-                {([
-                  { value: 'hidden'    as const, label: 'Hidden',                    description: 'Logo not shown on name tags' },
-                  { value: 'with-name' as const, label: 'Small logo + comp name',    description: 'Small logo beside the competition name at the top of each panel' },
-                  { value: 'logo-only' as const, label: 'Large logo, replaces name', description: 'Logo replaces the competition name text — QR codes are slightly smaller to compensate' },
-                ]).map(opt => (
+                {logoModeOptions.map(opt => (
                   <label key={opt.value} style={{ ...s.optionCard, ...(nametagLogoMode === opt.value ? s.optionCardActive : {}) }}>
                     <input
                       type="radio"
@@ -279,13 +291,10 @@ export default function SettingsPage() {
           )}
 
           <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', marginBottom: 8 }}>
-            QR codes
+            {t('settings.nametag.qr_codes')}
           </div>
           <div style={s.optionGroup}>
-            {([
-              { value: 'back-only' as const, label: 'Back side only', description: 'Front = group assignments (FR), back = QR codes (EN)' },
-              { value: 'both-sides' as const, label: 'Both sides', description: 'QR codes on both front and back — useful when logo takes space' },
-            ]).map(opt => (
+            {qrModeOptions.map(opt => (
               <label key={opt.value} style={{ ...s.optionCard, ...(nametagQrMode === opt.value ? s.optionCardActive : {}) }}>
                 <input
                   type="radio"
@@ -307,32 +316,32 @@ export default function SettingsPage() {
         <section style={s.section}>
           <button style={s.advancedToggle} onClick={() => setAdvancedOpen(o => !o)}>
             <span style={s.advancedToggleArrow}>{advancedOpen ? '▾' : '▸'}</span>
-            Advanced
+            {t('settings.advanced.toggle')}
           </button>
 
           {advancedOpen && (
             <div style={{ marginTop: 16 }}>
-              <h3 style={s.sectionTitle}>Custom events <span style={s.optional}>(optional)</span></h3>
-              <p style={s.hint}>
-                Print 4 blank scorecards for side events or bonus puzzles not listed in the WCIF.
-                Group and round fields will be left blank.
-              </p>
+              <h3 style={s.sectionTitle}>
+                {t('settings.advanced.custom_events_title')}{' '}
+                <span style={s.optional}>({t('settings.advanced.custom_events_optional')})</span>
+              </h3>
+              <p style={s.hint}>{t('settings.advanced.custom_events_hint')}</p>
 
               {customEvents.map((custom, i) => (
                 <div key={i} style={s.customEventCard}>
                   <div style={s.customEventHeader}>
                     <input
                       type="text"
-                      placeholder="Event name (e.g. Clock Relay)"
+                      placeholder={t('settings.advanced.event_name_placeholder')}
                       value={custom.name}
                       onChange={e => updateCustomName(i, e.target.value)}
                       style={{ ...s.textInput, flex: 1 }}
                     />
-                    <button style={s.removeBtn} onClick={() => removeCustomEvent(i)}>Remove</button>
+                    <button style={s.removeBtn} onClick={() => removeCustomEvent(i)}>{t('common.remove')}</button>
                   </div>
 
                   <div style={{ marginTop: 12, display: 'flex', gap: 16, alignItems: 'center' }}>
-                    <span style={{ fontSize: 12, color: '#666', flexShrink: 0 }}>Format</span>
+                    <span style={{ fontSize: 12, color: '#666', flexShrink: 0 }}>{t('settings.advanced.format_label')}</span>
                     {(['avg5', 'mo3'] as const).map(fmt => (
                       <label key={fmt} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontSize: 13 }}>
                         <input
@@ -341,14 +350,17 @@ export default function SettingsPage() {
                           onChange={() => updateCustomFormat(i, fmt)}
                           style={{ accentColor: '#003087' }}
                         />
-                        {fmt === 'avg5' ? 'Average of 5' : 'Mean of 3'}
+                        {fmt === 'avg5' ? t('settings.advanced.avg5') : t('settings.advanced.mo3')}
                       </label>
                     ))}
                   </div>
 
                   <div style={{ marginTop: 10, display: 'flex', gap: 12 }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>Cutoff <span style={{ color: '#aaa' }}>(optional, e.g. 1:30)</span></div>
+                      <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>
+                        {t('settings.advanced.cutoff_label')}{' '}
+                        <span style={{ color: '#aaa' }}>({t('settings.advanced.cutoff_optional')})</span>
+                      </div>
                       <input
                         type="text"
                         placeholder="M:SS"
@@ -358,7 +370,10 @@ export default function SettingsPage() {
                       />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>Time limit <span style={{ color: '#aaa' }}>(optional, e.g. 10:00)</span></div>
+                      <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>
+                        {t('settings.advanced.time_limit_label')}{' '}
+                        <span style={{ color: '#aaa' }}>({t('settings.advanced.time_limit_optional')})</span>
+                      </div>
                       <input
                         type="text"
                         placeholder="M:SS"
@@ -371,10 +386,10 @@ export default function SettingsPage() {
 
                   <div style={{ marginTop: 12 }}>
                     <div style={{ fontSize: 12, color: '#666', marginBottom: 6 }}>
-                      Icon — click a WCA icon or upload your own
+                      {t('settings.advanced.icon_hint')}
                       {custom.iconDataUrl && (
                         <button style={{ ...s.removeBtn, marginLeft: 10 }} onClick={() => updateCustomIcon(i, null)}>
-                          Clear
+                          {t('common.clear')}
                         </button>
                       )}
                     </div>
@@ -407,7 +422,7 @@ export default function SettingsPage() {
                         onKeyDown={e => e.key === 'Enter' && customIconRefs.current[i]?.click()}
                       >
                         <span style={{ fontSize: 18, lineHeight: '20px' }}>↑</span>
-                        <span style={s.iconLabel}>Upload</span>
+                        <span style={s.iconLabel}>{t('common.upload')}</span>
                       </div>
                     </div>
                     <input
@@ -422,14 +437,14 @@ export default function SettingsPage() {
                   {custom.iconDataUrl && (
                     <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                       <img src={custom.iconDataUrl} alt="selected icon" style={{ width: 28, height: 28, objectFit: 'contain' }} />
-                      <span style={{ fontSize: 12, color: '#555' }}>Selected icon</span>
+                      <span style={{ fontSize: 12, color: '#555' }}>{t('settings.advanced.icon_selected')}</span>
                     </div>
                   )}
                 </div>
               ))}
 
               <button style={s.addCustomBtn} onClick={addCustomEvent}>
-                + Add custom event
+                {t('settings.advanced.add_custom_event')}
               </button>
             </div>
           )}
@@ -437,7 +452,7 @@ export default function SettingsPage() {
 
         <div style={s.footer}>
           <button style={s.submitBtn} onClick={handleSubmit}>
-            Generate →
+            {t('settings.generate_button')}
           </button>
         </div>
       </main>
@@ -447,19 +462,6 @@ export default function SettingsPage() {
 
 const s: Record<string, React.CSSProperties> = {
   page: { minHeight: '100vh', backgroundColor: '#f5f5f5', fontFamily: 'Helvetica, Arial, sans-serif' },
-  header: {
-    backgroundColor: '#003087', color: '#fff', padding: '0 24px',
-    height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  },
-  back: {
-    background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.4)',
-    color: '#fff', borderRadius: 6, padding: '4px 12px', fontSize: 13, cursor: 'pointer',
-  },
-  headerTitle: { fontSize: 16, fontWeight: 700 },
-  logoutBtn: {
-    background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.4)',
-    color: '#fff', borderRadius: 6, padding: '4px 12px', fontSize: 13, cursor: 'pointer',
-  },
   main: { maxWidth: 640, margin: '0 auto', padding: '32px 24px 80px' },
   compBadge: {
     display: 'inline-block', backgroundColor: '#e8edf7', color: '#003087',

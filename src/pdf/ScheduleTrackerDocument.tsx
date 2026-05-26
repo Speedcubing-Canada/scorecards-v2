@@ -1,6 +1,7 @@
 import { Document, Page, View, Text, StyleSheet, Font } from '@react-pdf/renderer';
 import type { CompetitionSettings } from '../types/settings';
 import type { ScheduleDay } from '../lib/wcif-parser';
+import { getScheduleStrings, type ScheduleStrings } from '../lib/i18n';
 
 Font.registerHyphenationCallback((word) => [word]);
 
@@ -117,26 +118,26 @@ const styles = StyleSheet.create({
   },
 });
 
-function TableHeader() {
+function TableHeader({ strings }: { strings: ScheduleStrings }) {
   return (
     <View style={styles.headerRow}>
       <View style={styles.headerCell}>
-        <Text style={styles.headerText}>{'Estimated\nStart Time'}</Text>
+        <Text style={styles.headerText}>{strings.estimatedStart}</Text>
       </View>
       <View style={styles.headerCell}>
-        <Text style={styles.headerText}>{'Estimated\nEnd Time'}</Text>
+        <Text style={styles.headerText}>{strings.estimatedEnd}</Text>
       </View>
       <View style={styles.headerCellEvent}>
-        <Text style={styles.headerText}>Event</Text>
+        <Text style={styles.headerText}>{strings.event}</Text>
       </View>
       <View style={styles.headerCell}>
-        <Text style={styles.headerText}>{'Actual\nStart Time'}</Text>
+        <Text style={styles.headerText}>{strings.actualStart}</Text>
       </View>
       <View style={styles.headerCell}>
-        <Text style={styles.headerText}>{'Actual\nEnd Time'}</Text>
+        <Text style={styles.headerText}>{strings.actualEnd}</Text>
       </View>
       <View style={styles.headerCellLast}>
-        <Text style={styles.headerText}>{'Number of\nCompetitors'}</Text>
+        <Text style={styles.headerText}>{strings.numberOfCompetitors}</Text>
       </View>
     </View>
   );
@@ -150,11 +151,12 @@ interface Props {
 export function ScheduleTrackerDocument({ days, settings }: Props) {
   // Show room names only when there are multiple rooms in any day.
   const multiStage = days.some(d => d.stages.length > 1);
+  const strings = getScheduleStrings(settings.language);
 
   return (
     <Document title={`${settings.competitionName} — Schedule Tracker`} author="WCA Scorecard Generator">
       <Page size={settings.paperFormat} style={styles.page}>
-        <Text style={styles.title}>{settings.competitionName}— Schedule Tracker</Text>
+        <Text style={styles.title}>{settings.competitionName} {strings.title}</Text>
 
         {days.map((day, di) =>
           day.stages.map((stage, si) => (
@@ -169,7 +171,7 @@ export function ScheduleTrackerDocument({ days, settings }: Props) {
                 <Text style={styles.stageName}>{stage.stageName}</Text>
               )}
               <View style={styles.table}>
-                <TableHeader />
+                <TableHeader strings={strings} />
                 {stage.rows.map((row, ri) => (
                   <View key={ri} style={ri % 2 === 0 ? styles.dataRowEven : styles.dataRowOdd}>
                     <View style={styles.cell}>

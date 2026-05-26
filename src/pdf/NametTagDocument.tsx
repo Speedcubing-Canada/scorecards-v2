@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import type { CompetitionSettings, NametTagLogoMode } from '../types/settings';
 import type { NametTagEntry } from '../lib/wcif-parser';
 import { EVENT_ICONS } from '../assets/events';
+import { getNametTagStrings, type NametTagStrings } from '../lib/i18n';
 
 Font.registerHyphenationCallback((word) => [word]);
 
@@ -162,12 +163,13 @@ function topSectionH(logoMode: NametTagLogoMode) {
 }
 
 // ── Front panel ───────────────────────────────────────────────────────────────
-function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiveId, logoMode, logoDataUrl, qrBothSides, qrSize }: {
+function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiveId, logoMode, logoDataUrl, qrBothSides, qrSize, nametTagStrings }: {
   entry: NametTagEntry; panelW: number; panelH: number;
   pos: { left: number; top: number }; compName: string;
   competitionId: string; wcaLiveId: string | null;
   logoMode: NametTagLogoMode; logoDataUrl: string | null;
   qrBothSides: boolean; qrSize: number;
+  nametTagStrings: NametTagStrings;
 }) {
   const panelStyle = [s.panel, { position: 'absolute' as const, left: pos.left, top: pos.top, width: panelW, height: panelH }];
 
@@ -181,10 +183,10 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLi
   }
 
   const rows = [
-    { label: 'Concourir:', duties: entry.compete  },
-    { label: 'Mélanger:',  duties: entry.scramble },
-    { label: 'Juger:',     duties: entry.judge    },
-    { label: 'Courir:',    duties: entry.run      },
+    { label: nametTagStrings.compete,  duties: entry.compete  },
+    { label: nametTagStrings.scramble, duties: entry.scramble },
+    { label: nametTagStrings.judge,    duties: entry.judge    },
+    { label: nametTagStrings.run,      duties: entry.run      },
   ].filter(r => r.duties.length > 0);
 
   // Scale font down for dense assignment lists to prevent overflow.
@@ -267,6 +269,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
   const logoMode: NametTagLogoMode = logoDataUrl ? nametagLogoMode : 'hidden';
   const qrSize = logoMode === 'logo-only' ? 65 : 75;
   const qrBothSides = nametagQrMode === 'both-sides';
+  const nametTagStrings = getNametTagStrings(settings.language);
 
   const pages: NametTagEntry[][] = [];
   for (let i = 0; i < nametags.length; i += 4) pages.push(nametags.slice(i, i + 4));
@@ -287,6 +290,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
                 competitionId={competitionId} wcaLiveId={wcaLiveId}
                 logoMode={logoMode} logoDataUrl={logoDataUrl}
                 qrBothSides={qrBothSides} qrSize={qrSize}
+                nametTagStrings={nametTagStrings}
               />,
               <BackPanel
                 key={`b${ei}`} entry={entry}

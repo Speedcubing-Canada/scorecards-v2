@@ -14,6 +14,34 @@ import { ScheduleTrackerDocument } from './ScheduleTrackerDocument';
 export type WorkerRequest = {
   parsed: ParsedWCIF;
   settings: CompetitionSettings;
+  uiLanguage: 'en' | 'fr' | 'es';
+};
+
+const WORKER_MSGS = {
+  en: {
+    starting: 'Starting…',
+    rendering: (label: string) => `Rendering ${label}…`,
+    done: (label: string) => `${label} done`,
+    creatingZip: 'Creating ZIP…',
+    finalizing: 'Finalizing…',
+    noEntries: 'No entries to render.',
+  },
+  fr: {
+    starting: 'Démarrage…',
+    rendering: (label: string) => `Rendu de ${label}…`,
+    done: (label: string) => `${label} terminé`,
+    creatingZip: 'Création du ZIP…',
+    finalizing: 'Finalisation…',
+    noEntries: 'Aucune feuille à générer.',
+  },
+  es: {
+    starting: 'Iniciando…',
+    rendering: (label: string) => `Renderizando ${label}…`,
+    done: (label: string) => `${label} listo`,
+    creatingZip: 'Creando ZIP…',
+    finalizing: 'Finalizando…',
+    noEntries: 'Sin hojas que generar.',
+  },
 };
 
 export type WorkerResponse =
@@ -77,7 +105,8 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
     workerSelf.postMessage(msg, transfer ?? []);
   }
 
-  const { parsed, settings } = e.data;
+  const { parsed, settings, uiLanguage } = e.data;
+  const msgs = WORKER_MSGS[uiLanguage] ?? WORKER_MSGS.en;
   const id = settings.competitionId;
 
   // Build list of PDFs to render: round1, intermediate (round2), semis, finals, nametags, extras, schedule
@@ -108,11 +137,11 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
   }
 
   if (jobs.length === 0) {
-    post({ type: 'error', message: 'No entries to render.' });
+    post({ type: 'error', message: msgs.noEntries });
     return;
   }
 
-  post({ type: 'progress', percent: 2, message: 'Starting…' });
+  post({ type: 'progress', percent: 2, message: msgs.starting });
 
   try {
     const files: Record<string, [Uint8Array, { level: number }]> = {};
@@ -123,14 +152,14 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
       const endPct   = Math.round(5  + ((i + 1) / jobs.length) * 87);
       const capPct   = endPct - 3;
 
-      post({ type: 'progress', percent: startPct, message: `Rendering ${job.label}…` });
+      post({ type: 'progress', percent: startPct, message: msgs.rendering(job.label) });
 
       // Exponential easing: closes 6% of remaining gap each 100ms, minimum 0.4%/tick.
       // This keeps the bar visibly moving throughout without ever truly stalling at capPct.
       let fpct = startPct;
       const timer = setInterval(() => {
         fpct = Math.min(fpct + Math.max(0.4, (capPct - fpct) * 0.06), capPct);
-        post({ type: 'progress', percent: Math.round(fpct), message: `Rendering ${job.label}…` });
+        post({ type: 'progress', percent: Math.round(fpct), message: msgs.rendering(job.label) });
       }, 100);
 
       try {
@@ -141,17 +170,17 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
           : await renderPdf(job.entries, settings);
         clearInterval(timer);
         files[job.filename] = [data, { level: 0 }];
-        post({ type: 'progress', percent: endPct, message: `${job.label} done` });
+        post({ type: 'progress', percent: endPct, message: msgs.done(job.label) });
       } catch (err) {
         clearInterval(timer);
         throw err;
       }
     }
 
-    post({ type: 'progress', percent: 95, message: 'Creating ZIP…' });
+    post({ type: 'progress', percent: 95, message: msgs.creatingZip });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const zipped = zipSync(files as any);
-    post({ type: 'progress', percent: 99, message: 'Finalizing…' });
+    post({ type: 'progress', percent: 99, message: msgs.finalizing });
     post({ type: 'done', buffer: zipped.buffer }, [zipped.buffer]);
   } catch (err) {
     post({ type: 'error', message: String(err) });

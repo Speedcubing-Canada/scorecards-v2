@@ -1,33 +1,49 @@
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
 import { CLIENT_ID } from '../auth/wca';
+import i18n from '../i18n/index';
+
+const LANGS = ['en', 'fr', 'es'] as const;
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const missingClientId = !CLIENT_ID;
+  const currentLang = (i18n.language?.slice(0, 2) ?? 'en') as typeof LANGS[number];
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.title}>WCA Scorecard Generator</h1>
-        <p style={styles.subtitle}>
-          Generate print-ready scorecards and nametags for your WCA competition.
-        </p>
+        <div style={styles.langRow}>
+          {LANGS.map(lang => (
+            <button
+              key={lang}
+              style={{ ...styles.langBtn, ...(currentLang === lang ? styles.langBtnActive : {}) }}
+              onClick={() => i18n.changeLanguage(lang)}
+            >
+              {lang.toUpperCase()}
+            </button>
+          ))}
+        </div>
+
+        <h1 style={styles.title}>{t('common.app_title')}</h1>
+        <p style={styles.subtitle}>{t('login.subtitle')}</p>
 
         {missingClientId ? (
           <div style={styles.warning}>
-            <strong>Setup required:</strong> Set <code>VITE_WCA_CLIENT_ID</code> in your{' '}
-            <code>.env</code> file.
+            <strong>{t('login.setup_required')}</strong>{' '}
+            {t('login.setup_env_instruction', { key: 'VITE_WCA_CLIENT_ID' })}
             <br />
             <br />
-            Create a WCA OAuth application at{' '}
+            {t('login.setup_oauth_instruction')}{' '}
             <a href="https://www.worldcubeassociation.org/oauth/applications" target="_blank" rel="noreferrer">
-              worldcubeassociation.org/oauth/applications
+              {t('login.setup_oauth_link')}
             </a>{' '}
-            with redirect URI: <code>{window.location.origin}/auth/callback</code>
+            {t('login.setup_redirect_uri')} <code>{window.location.origin}/auth/callback</code>
           </div>
         ) : (
           <button style={styles.button} onClick={login}>
-            Sign in with WCA
+            {t('login.sign_in_button')}
           </button>
         )}
       </div>
@@ -52,6 +68,28 @@ const styles: Record<string, React.CSSProperties> = {
     width: '100%',
     boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
     textAlign: 'center',
+  },
+  langRow: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: 6,
+    marginBottom: 24,
+  },
+  langBtn: {
+    background: '#f0f0f0',
+    border: '1px solid #d0d0d0',
+    color: '#666',
+    borderRadius: 4,
+    padding: '3px 8px',
+    fontSize: 11,
+    fontWeight: 600,
+    cursor: 'pointer',
+    letterSpacing: '0.05em',
+  },
+  langBtnActive: {
+    background: '#003087',
+    borderColor: '#003087',
+    color: '#fff',
   },
   title: {
     margin: '0 0 12px',

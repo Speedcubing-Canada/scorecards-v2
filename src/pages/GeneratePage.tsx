@@ -1,15 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
 import { WCA_API_URL } from '../auth/wca';
 import type { CompetitionSettings } from '../types/settings';
 import type { WCIF } from '../types/wcif';
 import { parseWCIF, type ParsedWCIF } from '../lib/wcif-parser';
 import type { WorkerRequest, WorkerResponse } from '../pdf/scorecardWorker';
+import Header from '../components/Header';
+import i18n from '../i18n/index';
 
 type Status = 'idle' | 'fetching' | 'parsing' | 'ready' | 'building' | 'error';
 
 export default function GeneratePage() {
+  const { t } = useTranslation();
   const { token } = useAuth();
   const navigate = useNavigate();
 
@@ -81,7 +85,7 @@ export default function GeneratePage() {
     );
     workerRef.current = worker;
     setStatus('building');
-    setStatusMsg('Starting…');
+    setStatusMsg('');
     setBuildPercent(0);
 
     worker.onerror = (e) => {
@@ -115,28 +119,26 @@ export default function GeneratePage() {
       }
     };
 
-    const req: WorkerRequest = { parsed, settings };
+    const uiLang = (i18n.language?.slice(0, 2) ?? 'en') as 'en' | 'fr' | 'es';
+    const req: WorkerRequest = { parsed, settings, uiLanguage: uiLang };
     worker.postMessage(req);
   }
 
   return (
     <div style={s.page}>
-      <header style={s.header}>
-        <button style={s.back} onClick={() => navigate('/settings')}>← Back</button>
-        <span style={s.title}>Generate Scorecards</span>
-        <span />
-      </header>
+      <Header showBack onBack={() => navigate('/settings')} showSignOut />
 
       <main style={s.main}>
         <div style={s.compBadge}>{settings.competitionName}</div>
+        <h2 style={s.pageTitle}>{t('generate.title')}</h2>
 
-        {status === 'fetching' && <StatusBox icon="⏳" text="Fetching WCIF from WCA…" />}
-        {status === 'parsing'  && <StatusBox icon="⚙️" text="Building scorecard list…" />}
+        {status === 'fetching' && <StatusBox icon="⏳" text={t('generate.fetching')} />}
+        {status === 'parsing'  && <StatusBox icon="⚙️" text={t('generate.parsing')} />}
         {status === 'error'    && <StatusBox icon="❌" text={statusMsg} isError />}
         {status === 'building' && (
           <div style={s.progressBox}>
             <div style={s.progressHeader}>
-              <span style={s.progressLabel}>{statusMsg || 'Rendering PDF…'}</span>
+              <span style={s.progressLabel}>{statusMsg || t('generate.rendering')}</span>
               <span style={s.progressPct}>{buildPercent}%</span>
             </div>
             <div style={s.progressTrack}>
@@ -149,10 +151,10 @@ export default function GeneratePage() {
           <>
             {status === 'ready' && (
               <div style={s.stats}>
-                <Stat label="Scorecards" value={scorecardCount} />
-                <Stat label="Cover cards" value={coverCount} />
-                <Stat label="PDFs in ZIP" value={pdfCount} />
-                <Stat label="Paper" value={settings.paperFormat} />
+                <Stat label={t('generate.stats.scorecards')} value={scorecardCount} />
+                <Stat label={t('generate.stats.cover_cards')} value={coverCount} />
+                <Stat label={t('generate.stats.pdfs_in_zip')} value={pdfCount} />
+                <Stat label={t('generate.stats.paper')} value={settings.paperFormat} />
               </div>
             )}
 
@@ -161,7 +163,9 @@ export default function GeneratePage() {
               onClick={handleDownload}
               disabled={status === 'building'}
             >
-              {status === 'building' ? 'Building ZIP…' : `⬇ Download ${filename}`}
+              {status === 'building'
+                ? t('generate.building_button')
+                : t('generate.download_button', { filename })}
             </button>
           </>
         )}
@@ -190,20 +194,12 @@ function Stat({ label, value }: { label: string; value: number | string }) {
 
 const s: Record<string, React.CSSProperties> = {
   page: { minHeight: '100vh', backgroundColor: '#f5f5f5', fontFamily: 'Helvetica, Arial, sans-serif' },
-  header: {
-    backgroundColor: '#003087', color: '#fff', padding: '0 24px',
-    height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  },
-  back: {
-    background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.4)',
-    color: '#fff', borderRadius: 6, padding: '4px 12px', fontSize: 13, cursor: 'pointer',
-  },
-  title: { fontSize: 16, fontWeight: 700 },
   main: { maxWidth: 680, margin: '0 auto', padding: '32px 24px' },
   compBadge: {
     display: 'inline-block', backgroundColor: '#e8edf7', color: '#003087',
-    borderRadius: 6, padding: '4px 12px', fontSize: 13, fontWeight: 600, marginBottom: 24,
+    borderRadius: 6, padding: '4px 12px', fontSize: 13, fontWeight: 600, marginBottom: 8,
   },
+  pageTitle: { margin: '0 0 24px', fontSize: 22, fontWeight: 700, color: '#1a1a1a' },
   statusBox: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
     backgroundColor: '#fff', border: '1px solid #e0e0e0',

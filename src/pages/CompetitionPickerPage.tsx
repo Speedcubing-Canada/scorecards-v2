@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
-import { fetchManagedCompetitions, WCA_API_URL } from '../auth/wca';
+import { fetchManagedCompetitions } from '../auth/wca';
 import type { WCACompetition } from '../types/wcif';
+import Header from '../components/Header';
 
 export default function CompetitionPickerPage() {
-  const { token, user, logout } = useAuth();
+  const { t } = useTranslation();
+  const { token } = useAuth();
   const navigate = useNavigate();
   const [competitions, setCompetitions] = useState<WCACompetition[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,31 +37,17 @@ export default function CompetitionPickerPage() {
 
   return (
     <div style={styles.container}>
-      <header style={styles.header}>
-        <span style={styles.headerTitle}>WCA Scorecard Generator</span>
-        <div style={styles.userInfo}>
-          <img
-            src={`${WCA_API_URL}/users/${user?.id}/avatar/thumb`}
-            alt=""
-            style={styles.avatar}
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
-          <span style={styles.userName}>{user?.name}</span>
-          <button style={styles.logoutBtn} onClick={logout}>
-            Sign out
-          </button>
-        </div>
-      </header>
+      <Header showUser showSignOut />
 
       <main style={styles.main}>
-        <h2 style={styles.heading}>Select a Competition</h2>
-        <p style={styles.hint}>Showing competitions you manage or delegate.</p>
+        <h2 style={styles.heading}>{t('picker.heading')}</h2>
+        <p style={styles.hint}>{t('picker.hint')}</p>
 
-        {isLoading && <p style={styles.status}>Loading competitions…</p>}
-        {error && <p style={{ ...styles.status, color: '#c00' }}>Error: {error}</p>}
+        {isLoading && <p style={styles.status}>{t('picker.loading')}</p>}
+        {error && <p style={{ ...styles.status, color: '#c00' }}>{t('picker.error', { message: error })}</p>}
 
         {!isLoading && !error && competitions.length === 0 && (
-          <p style={styles.status}>No competitions found. Make sure you are a delegate or organizer.</p>
+          <p style={styles.status}>{t('picker.empty')}</p>
         )}
 
         <div style={styles.grid}>
@@ -93,28 +82,6 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: '100vh',
     backgroundColor: '#f5f5f5',
     fontFamily: 'Helvetica, Arial, sans-serif',
-  },
-  header: {
-    backgroundColor: '#003087',
-    color: '#fff',
-    padding: '0 32px',
-    height: 56,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerTitle: { fontSize: 16, fontWeight: 700 },
-  userInfo: { display: 'flex', alignItems: 'center', gap: 12 },
-  avatar: { width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' },
-  userName: { fontSize: 14 },
-  logoutBtn: {
-    background: 'rgba(255,255,255,0.15)',
-    border: '1px solid rgba(255,255,255,0.4)',
-    color: '#fff',
-    borderRadius: 6,
-    padding: '4px 12px',
-    fontSize: 13,
-    cursor: 'pointer',
   },
   main: {
     maxWidth: 800,

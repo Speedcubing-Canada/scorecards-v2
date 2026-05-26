@@ -1,0 +1,122 @@
+{
+  "common": {
+    "back": "← Retour",
+    "sign_out": "Se déconnecter",
+    "app_title": "Générateur de Feuilles de Score WCA",
+    "remove": "Supprimer",
+    "clear": "Effacer",
+    "upload": "Télécharger",
+    "choose_file": "Choisir un fichier",
+    "optional": "optionnel",
+    "loading": "Chargement…"
+  },
+  "login": {
+    "subtitle": "Générez des feuilles de score et des badges imprimables pour votre compétition WCA.",
+    "setup_required": "Configuration requise :",
+    "setup_env_instruction": "Définissez {{key}} dans votre fichier .env.",
+    "setup_oauth_instruction": "Créez une application OAuth WCA sur",
+    "setup_oauth_link": "worldcubeassociation.org/oauth/applications",
+    "setup_redirect_uri": "avec l'URI de redirection :",
+    "sign_in_button": "Se connecter avec WCA"
+  },
+  "auth_callback": {
+    "signing_in": "Connexion en cours…"
+  },
+  "picker": {
+    "heading": "Sélectionner une compétition",
+    "hint": "Affichage des compétitions que vous gérez ou déléguez.",
+    "loading": "Chargement des compétitions…",
+    "error": "Erreur : {{message}}",
+    "empty": "Aucune compétition trouvée. Assurez-vous d'être délégué ou organisateur."
+  },
+  "settings": {
+    "heading": "Configurer vos paramètres d'impression",
+    "language": {
+      "title": "Langue",
+      "bilingual_fr": "Bilingue — Français principal",
+      "bilingual_fr_desc": "Français en premier, anglais en second (CQ, QO, etc.)",
+      "bilingual_en": "Bilingue — Anglais principal",
+      "bilingual_en_desc": "Anglais en premier, français en second",
+      "fr": "Français seulement",
+      "fr_desc": "Tout le texte en français",
+      "en": "Anglais seulement",
+      "en_desc": "Tout le texte en anglais",
+      "es": "Espagnol seulement",
+      "es_desc": "Tout le texte en espagnol"
+    },
+    "paper": {
+      "title": "Format de papier",
+      "a4": "A4",
+      "a4_desc": "210 × 297 mm — chaque feuille est A6 (105 × 148,5 mm)",
+      "letter": "Letter",
+      "letter_desc": "8,5 × 11 po — chaque feuille est 107,95 × 139,7 mm"
+    },
+    "subsequent_rounds": {
+      "title": "Rondes suivantes",
+      "prefilled": "Préremplies avec les noms",
+      "prefilled_desc": "Imprimer les feuilles pour tous les qualifiés (nécessite les résultats WCA Live)",
+      "blanks": "Épreuve + ronde remplie, nom vide",
+      "blanks_desc": "Imprimer des cases de nom vides — à remplir à la main lors de la compétition"
+    },
+    "wca_live": {
+      "title": "ID WCA Live",
+      "optional_note": "optionnel — pour les QR codes des badges",
+      "hint_part1": "L'ID numérique de la compétition sur WCA Live (ex.",
+      "hint_part2": "depuis live.worldcubeassociation.org/competitions/",
+      "hint_part3": "). Utilisé pour générer des QR codes WCA Live sur les badges.",
+      "placeholder": "ex. 9667"
+    },
+    "logo": {
+      "title": "Logo de la compétition",
+      "optional_note": "optionnel",
+      "hint": "Apparaît dans le coin supérieur gauche de chaque feuille. PNG ou SVG recommandé."
+    },
+    "nametag": {
+      "title": "Mise en page des badges",
+      "logo_on_nametags": "Logo sur les badges",
+      "logo_hidden": "Caché",
+      "logo_hidden_desc": "Logo non affiché sur les badges",
+      "logo_with_name": "Petit logo + nom de la compétition",
+      "logo_with_name_desc": "Petit logo à côté du nom de la compétition en haut de chaque panneau",
+      "logo_only": "Grand logo, remplace le nom",
+      "logo_only_desc": "Le logo remplace le texte du nom de la compétition — les QR codes sont légèrement plus petits",
+      "qr_codes": "Codes QR",
+      "qr_back_only": "Dos seulement",
+      "qr_back_only_desc": "Avant = attributions de groupes (FR), dos = codes QR (EN)",
+      "qr_both_sides": "Les deux côtés",
+      "qr_both_sides_desc": "Codes QR sur les deux côtés — utile quand le logo prend de la place"
+    },
+    "advanced": {
+      "toggle": "Avancé",
+      "custom_events_title": "Épreuves personnalisées",
+      "custom_events_optional": "optionnel",
+      "custom_events_hint": "Imprimez 4 feuilles vides pour des épreuves annexes ou des puzzles bonus non listés dans le WCIF. Les champs groupe et ronde resteront vides.",
+      "event_name_placeholder": "Nom de l'épreuve (ex. Relais Clock)",
+      "format_label": "Format",
+      "avg5": "Moyenne de 5",
+      "mo3": "Moyenne de 3",
+      "cutoff_label": "Seuil",
+      "cutoff_optional": "optionnel, ex. 1:30",
+      "time_limit_label": "Limite de temps",
+      "time_limit_optional": "optionnel, ex. 10:00",
+      "icon_hint": "Icône — cliquez sur une icône WCA ou téléchargez la vôtre",
+      "icon_selected": "Icône sélectionnée",
+      "add_custom_event": "+ Ajouter une épreuve personnalisée"
+    },
+    "generate_button": "Générer →"
+  },
+  "generate": {
+    "title": "Générer les feuilles de score",
+    "fetching": "Récupération du WCIF depuis WCA…",
+    "parsing": "Construction de la liste des feuilles…",
+    "rendering": "Rendu du PDF…",
+    "stats": {
+      "scorecards": "Feuilles de score",
+      "cover_cards": "Feuilles de couverture",
+      "pdfs_in_zip": "PDFs dans le ZIP",
+      "paper": "Papier"
+    },
+    "download_button": "⬇ Télécharger {{filename}}",
+    "building_button": "Création du ZIP…"
+  }
+}

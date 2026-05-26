@@ -1118,3 +1118,49 @@ describe('schedule tracker', () => {
     expect(result.scheduleDays[1]?.stages[0]?.stageName).toBe('Stage A');
   });
 });
+
+// ── Spanish language support ───────────────────────────────────────────────────
+describe('Spanish language', () => {
+  it('no wcaId male → "Nuevo Competidor" in Spanish', () => {
+    const c = ch(100, '333', 1, 1);
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [c])]);
+    const p = per(1, [{ aid: 100 }], { wcaId: null, gender: 'm' });
+    const result = parseWCIF(mkWCIF([e], [r], [p]), cfg({ language: 'es' }));
+    expect(scs(result.firstRound)[0]?.wcaId).toBe('Nuevo Competidor');
+  });
+
+  it('no wcaId female → "Nueva Competidora" in Spanish', () => {
+    const c = ch(100, '333', 1, 1);
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [c])]);
+    const p = per(1, [{ aid: 100 }], { wcaId: null, gender: 'f' });
+    const result = parseWCIF(mkWCIF([e], [r], [p]), cfg({ language: 'es' }));
+    expect(scs(result.firstRound)[0]?.wcaId).toBe('Nueva Competidora');
+  });
+
+  it('round label uses Spanish "Ronda N de M" / "Ronda Final"', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a')]);
+    const c1 = ch(100, '333', 1, 1);
+    const c2 = ch(101, '333', 2, 1);
+    const c3 = ch(102, '333', 3, 1);
+    const r = room('Stage', [act('333', 1, [c1]), act('333', 2, [c2]), act('333', 3, [c3])]);
+    const p = per(1, [{ aid: 100 }, { aid: 101 }, { aid: 102 }]);
+    const result = parseWCIF(mkWCIF([e], [r], [p]), cfg({ language: 'es' }));
+    const round1 = scs(result.firstRound);
+    const round2 = scs(result.intermediate);
+    const finals = scs(result.finals);
+    expect(round1[0]?.roundLabel).toBe('Ronda 1 de 3');
+    expect(round2[0]?.roundLabel).toBe('Ronda 2 de 3');
+    expect(finals[0]?.roundLabel).toBe('Ronda Final');
+  });
+
+  it('event name uses Spanish for "es" language', () => {
+    const c = ch(100, '333', 1, 1);
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [c])]);
+    const p = per(1, [{ aid: 100 }]);
+    const result = parseWCIF(mkWCIF([e], [r], [p]), cfg({ language: 'es' }));
+    expect(scs(result.firstRound)[0]?.eventName).toBe('Cubo 3x3x3');
+  });
+});

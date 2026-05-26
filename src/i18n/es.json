@@ -1,0 +1,122 @@
+{
+  "common": {
+    "back": "← Volver",
+    "sign_out": "Cerrar sesión",
+    "app_title": "Generador de Hojas de Puntuación WCA",
+    "remove": "Eliminar",
+    "clear": "Limpiar",
+    "upload": "Subir",
+    "choose_file": "Elegir archivo",
+    "optional": "opcional",
+    "loading": "Cargando…"
+  },
+  "login": {
+    "subtitle": "Genere hojas de puntuación y etiquetas de nombre listas para imprimir para su competencia WCA.",
+    "setup_required": "Configuración requerida:",
+    "setup_env_instruction": "Configure {{key}} en su archivo .env.",
+    "setup_oauth_instruction": "Cree una aplicación OAuth de WCA en",
+    "setup_oauth_link": "worldcubeassociation.org/oauth/applications",
+    "setup_redirect_uri": "con URI de redirección:",
+    "sign_in_button": "Iniciar sesión con WCA"
+  },
+  "auth_callback": {
+    "signing_in": "Iniciando sesión…"
+  },
+  "picker": {
+    "heading": "Seleccionar una competencia",
+    "hint": "Mostrando competencias que usted gestiona o delega.",
+    "loading": "Cargando competencias…",
+    "error": "Error: {{message}}",
+    "empty": "No se encontraron competencias. Asegúrese de ser delegado u organizador."
+  },
+  "settings": {
+    "heading": "Configurar ajustes de impresión",
+    "language": {
+      "title": "Idioma",
+      "bilingual_fr": "Bilingüe — Francés principal",
+      "bilingual_fr_desc": "Francés primero, inglés segundo (CQ, QO, etc.)",
+      "bilingual_en": "Bilingüe — Inglés principal",
+      "bilingual_en_desc": "Inglés primero, francés segundo",
+      "fr": "Solo francés",
+      "fr_desc": "Todo el texto en francés",
+      "en": "Solo inglés",
+      "en_desc": "Todo el texto en inglés",
+      "es": "Solo español",
+      "es_desc": "Todo el texto en español"
+    },
+    "paper": {
+      "title": "Formato de papel",
+      "a4": "A4",
+      "a4_desc": "210 × 297 mm — cada hoja es A6 (105 × 148,5 mm)",
+      "letter": "Carta",
+      "letter_desc": "8,5 × 11 in — cada hoja es 107,95 × 139,7 mm"
+    },
+    "subsequent_rounds": {
+      "title": "Rondas siguientes",
+      "prefilled": "Prellenadas con nombres",
+      "prefilled_desc": "Imprimir hojas para todos los clasificados (requiere resultados de WCA Live)",
+      "blanks": "Evento + ronda rellenos, nombre en blanco",
+      "blanks_desc": "Imprimir espacios de nombre en blanco — rellenar a mano en la competencia"
+    },
+    "wca_live": {
+      "title": "ID de WCA Live",
+      "optional_note": "opcional — para códigos QR de etiquetas",
+      "hint_part1": "El ID numérico de la competencia en WCA Live (ej.",
+      "hint_part2": "desde live.worldcubeassociation.org/competitions/",
+      "hint_part3": "). Usado para generar códigos QR de WCA Live en las etiquetas de nombre.",
+      "placeholder": "ej. 9667"
+    },
+    "logo": {
+      "title": "Logo de la competencia",
+      "optional_note": "opcional",
+      "hint": "Aparece en la esquina superior izquierda de cada hoja. Se recomienda PNG o SVG."
+    },
+    "nametag": {
+      "title": "Diseño de etiquetas de nombre",
+      "logo_on_nametags": "Logo en etiquetas de nombre",
+      "logo_hidden": "Oculto",
+      "logo_hidden_desc": "Logo no mostrado en etiquetas de nombre",
+      "logo_with_name": "Logo pequeño + nombre de competencia",
+      "logo_with_name_desc": "Logo pequeño junto al nombre de la competencia en la parte superior de cada panel",
+      "logo_only": "Logo grande, reemplaza el nombre",
+      "logo_only_desc": "El logo reemplaza el texto del nombre de la competencia — los códigos QR son ligeramente más pequeños",
+      "qr_codes": "Códigos QR",
+      "qr_back_only": "Solo reverso",
+      "qr_back_only_desc": "Frente = asignaciones de grupos (FR), reverso = códigos QR (EN)",
+      "qr_both_sides": "Ambos lados",
+      "qr_both_sides_desc": "Códigos QR en ambos lados — útil cuando el logo ocupa espacio"
+    },
+    "advanced": {
+      "toggle": "Avanzado",
+      "custom_events_title": "Eventos personalizados",
+      "custom_events_optional": "opcional",
+      "custom_events_hint": "Imprima 4 hojas en blanco para eventos secundarios o puzzles bonus no listados en el WCIF. Los campos de grupo y ronda quedarán en blanco.",
+      "event_name_placeholder": "Nombre del evento (ej. Relevo de Clock)",
+      "format_label": "Formato",
+      "avg5": "Promedio de 5",
+      "mo3": "Media de 3",
+      "cutoff_label": "Corte",
+      "cutoff_optional": "opcional, ej. 1:30",
+      "time_limit_label": "Límite de tiempo",
+      "time_limit_optional": "opcional, ej. 10:00",
+      "icon_hint": "Ícono — haga clic en un ícono WCA o suba el suyo",
+      "icon_selected": "Ícono seleccionado",
+      "add_custom_event": "+ Agregar evento personalizado"
+    },
+    "generate_button": "Generar →"
+  },
+  "generate": {
+    "title": "Generar hojas de puntuación",
+    "fetching": "Obteniendo WCIF de WCA…",
+    "parsing": "Construyendo lista de hojas…",
+    "rendering": "Renderizando PDF…",
+    "stats": {
+      "scorecards": "Hojas de puntuación",
+      "cover_cards": "Hojas de portada",
+      "pdfs_in_zip": "PDFs en el ZIP",
+      "paper": "Papel"
+    },
+    "download_button": "⬇ Descargar {{filename}}",
+    "building_button": "Creando ZIP…"
+  }
+}

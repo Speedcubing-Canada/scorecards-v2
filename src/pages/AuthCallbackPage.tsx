@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
 
 export default function AuthCallbackPage() {
+  const { t } = useTranslation();
   const { handleCallback } = useAuth();
   const navigate = useNavigate();
   const handled = useRef(false);
@@ -33,7 +35,7 @@ export default function AuthCallbackPage() {
 
   return (
     <div style={styles.container}>
-      <p style={styles.text}>Signing you in…</p>
+      <p style={styles.text}>{t('auth_callback.signing_in')}</p>
     </div>
   );
 }

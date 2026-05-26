@@ -1,4 +1,4 @@
-export type Language = 'en' | 'fr' | 'bilingual-fr' | 'bilingual-en';
+export type Language = 'en' | 'fr' | 'es' | 'bilingual-fr' | 'bilingual-en';
 
 export type PaperFormat = 'A4' | 'LETTER';
 

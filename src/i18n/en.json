@@ -1,0 +1,122 @@
+{
+  "common": {
+    "back": "← Back",
+    "sign_out": "Sign out",
+    "app_title": "WCA Scorecard Generator",
+    "remove": "Remove",
+    "clear": "Clear",
+    "upload": "Upload",
+    "choose_file": "Choose file",
+    "optional": "optional",
+    "loading": "Loading…"
+  },
+  "login": {
+    "subtitle": "Generate print-ready scorecards and nametags for your WCA competition.",
+    "setup_required": "Setup required:",
+    "setup_env_instruction": "Set {{key}} in your .env file.",
+    "setup_oauth_instruction": "Create a WCA OAuth application at",
+    "setup_oauth_link": "worldcubeassociation.org/oauth/applications",
+    "setup_redirect_uri": "with redirect URI:",
+    "sign_in_button": "Sign in with WCA"
+  },
+  "auth_callback": {
+    "signing_in": "Signing you in…"
+  },
+  "picker": {
+    "heading": "Select a Competition",
+    "hint": "Showing competitions you manage or delegate.",
+    "loading": "Loading competitions…",
+    "error": "Error: {{message}}",
+    "empty": "No competitions found. Make sure you are a delegate or organizer."
+  },
+  "settings": {
+    "heading": "Configure your print settings",
+    "language": {
+      "title": "Language",
+      "bilingual_fr": "Bilingual — French main",
+      "bilingual_fr_desc": "French first, English second (CQ, QO, etc.)",
+      "bilingual_en": "Bilingual — English main",
+      "bilingual_en_desc": "English first, French second",
+      "fr": "French only",
+      "fr_desc": "All text in French",
+      "en": "English only",
+      "en_desc": "All text in English",
+      "es": "Spanish only",
+      "es_desc": "All text in Spanish"
+    },
+    "paper": {
+      "title": "Paper format",
+      "a4": "A4",
+      "a4_desc": "210 × 297 mm — each scorecard is A6 (105 × 148.5 mm)",
+      "letter": "Letter",
+      "letter_desc": "8.5 × 11 in — each scorecard is 107.95 × 139.7 mm"
+    },
+    "subsequent_rounds": {
+      "title": "Subsequent rounds",
+      "prefilled": "Pre-filled with names",
+      "prefilled_desc": "Print scorecards for all qualifiers (requires WCA Live results)",
+      "blanks": "Event + round filled, name blank",
+      "blanks_desc": "Print blank name slots — fill in by hand at the competition"
+    },
+    "wca_live": {
+      "title": "WCA Live ID",
+      "optional_note": "optional — for nametag QR codes",
+      "hint_part1": "The numeric competition ID from WCA Live (e.g.",
+      "hint_part2": "from live.worldcubeassociation.org/competitions/",
+      "hint_part3": "). Used to generate competitor-specific WCA Live QR codes on name tags.",
+      "placeholder": "e.g. 9667"
+    },
+    "logo": {
+      "title": "Competition logo",
+      "optional_note": "optional",
+      "hint": "Appears in the top-left corner of each scorecard. PNG or SVG recommended."
+    },
+    "nametag": {
+      "title": "Name tag layout",
+      "logo_on_nametags": "Logo on name tags",
+      "logo_hidden": "Hidden",
+      "logo_hidden_desc": "Logo not shown on name tags",
+      "logo_with_name": "Small logo + comp name",
+      "logo_with_name_desc": "Small logo beside the competition name at the top of each panel",
+      "logo_only": "Large logo, replaces name",
+      "logo_only_desc": "Logo replaces the competition name text — QR codes are slightly smaller to compensate",
+      "qr_codes": "QR codes",
+      "qr_back_only": "Back side only",
+      "qr_back_only_desc": "Front = group assignments (FR), back = QR codes (EN)",
+      "qr_both_sides": "Both sides",
+      "qr_both_sides_desc": "QR codes on both front and back — useful when logo takes space"
+    },
+    "advanced": {
+      "toggle": "Advanced",
+      "custom_events_title": "Custom events",
+      "custom_events_optional": "optional",
+      "custom_events_hint": "Print 4 blank scorecards for side events or bonus puzzles not listed in the WCIF. Group and round fields will be left blank.",
+      "event_name_placeholder": "Event name (e.g. Clock Relay)",
+      "format_label": "Format",
+      "avg5": "Average of 5",
+      "mo3": "Mean of 3",
+      "cutoff_label": "Cutoff",
+      "cutoff_optional": "optional, e.g. 1:30",
+      "time_limit_label": "Time limit",
+      "time_limit_optional": "optional, e.g. 10:00",
+      "icon_hint": "Icon — click a WCA icon or upload your own",
+      "icon_selected": "Selected icon",
+      "add_custom_event": "+ Add custom event"
+    },
+    "generate_button": "Generate →"
+  },
+  "generate": {
+    "title": "Generate Scorecards",
+    "fetching": "Fetching WCIF from WCA…",
+    "parsing": "Building scorecard list…",
+    "rendering": "Rendering PDF…",
+    "stats": {
+      "scorecards": "Scorecards",
+      "cover_cards": "Cover cards",
+      "pdfs_in_zip": "PDFs in ZIP",
+      "paper": "Paper"
+    },
+    "download_button": "⬇ Download {{filename}}",
+    "building_button": "Building ZIP…"
+  }
+}

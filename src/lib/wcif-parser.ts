@@ -359,8 +359,8 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     const isFemale = person.gender === 'f';
     const wcaId = person.wcaId
       ? person.wcaId
-      : language === 'fr' || language === 'bilingual-fr'
-        ? (isFemale ? strings.newCompetitorF : strings.newCompetitor)
+      : isFemale && strings.newCompetitorF !== strings.newCompetitor
+        ? strings.newCompetitorF
         : strings.newCompetitor;
     const liveId = String(person.registrantId);
 

@@ -250,6 +250,7 @@ function CoverCard({
   pos: { left: number; top: number };
 }) {
   if (!card.eventId) return null;
+  const cover = getStrings(settings.language).cover;
   return (
     <View style={[styles.coverCard, { position: 'absolute', left: pos.left, top: pos.top, width: cardW, height: cardH }]}>
       <Text style={styles.coverCompName}>{settings.competitionName}</Text>
@@ -258,35 +259,33 @@ function CoverCard({
 
       <View style={styles.coverDividerRow}>
         <View style={styles.coverDividerLine} />
-        <Text style={styles.coverDividerText}>FOR DELEGATE</Text>
+        <Text style={styles.coverDividerText}>{cover.forDelegate}</Text>
         <View style={styles.coverDividerLine} />
       </View>
 
       <View style={styles.coverCheckRow}>
-        <Text style={styles.coverCheckText}>
-          1. Bundled all <Text style={{ fontFamily: FONT_BOLD }}>{card.numScorecards}</Text> scorecards
-        </Text>
+        <Text style={styles.coverCheckText}>{cover.bundledScorecards(card.numScorecards)}</Text>
         <View style={styles.coverCheckBox} />
       </View>
       <View style={styles.coverCheckRow}>
-        <Text style={styles.coverCheckText}>2. Checked for missing signatures</Text>
+        <Text style={styles.coverCheckText}>{cover.checkedSignatures}</Text>
         <View style={styles.coverCheckBox} />
       </View>
-      <Text style={styles.coverItem}>3. Number of scorecards with incidents: _____</Text>
-      <Text style={styles.coverInitials}>Delegate Initials ______</Text>
+      <Text style={styles.coverItem}>{cover.incidentsCount}</Text>
+      <Text style={styles.coverInitials}>{cover.delegateInitials}</Text>
 
       <View style={styles.coverDividerRow}>
         <View style={styles.coverDividerLine} />
-        <Text style={styles.coverDividerText}>FOR DATA ENTRY</Text>
+        <Text style={styles.coverDividerText}>{cover.forDataEntry}</Text>
         <View style={styles.coverDividerLine} />
       </View>
 
-      <Text style={styles.coverItem}>4. Results entered by Scoretaker</Text>
-      <Text style={styles.coverInitials}>Scoretaker Initials ______</Text>
-      <Text style={styles.coverItem}>5. Incidents logged by Delegate</Text>
-      <Text style={styles.coverInitials}>Delegate Initials ______</Text>
-      <Text style={styles.coverItem}>6. Results checked by Delegate</Text>
-      <Text style={styles.coverInitials}>Delegate Initials ______</Text>
+      <Text style={styles.coverItem}>{cover.resultsEntered}</Text>
+      <Text style={styles.coverInitials}>{cover.scoretakerInitials}</Text>
+      <Text style={styles.coverItem}>{cover.incidentsLogged}</Text>
+      <Text style={styles.coverInitials}>{cover.delegateInitials}</Text>
+      <Text style={styles.coverItem}>{cover.resultsChecked}</Text>
+      <Text style={styles.coverInitials}>{cover.delegateInitials}</Text>
     </View>
   );
 }
