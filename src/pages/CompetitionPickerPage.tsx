@@ -81,7 +81,6 @@ const styles: Record<string, React.CSSProperties> = {
   container: {
     minHeight: '100vh',
     backgroundColor: '#f5f5f5',
-    fontFamily: 'Helvetica, Arial, sans-serif',
   },
   main: {
     maxWidth: 800,

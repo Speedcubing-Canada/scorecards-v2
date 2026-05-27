@@ -1,10 +1,17 @@
+:root {
+  --color-primary: #d32f2f;
+  --color-primary-dark: #b71c1c;
+  --color-primary-light: #ffebee;
+  --color-primary-disabled: #ef9a9a;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
   background: #f5f5f5;
   color: #1a1a1a;
   -webkit-font-smoothing: antialiased;

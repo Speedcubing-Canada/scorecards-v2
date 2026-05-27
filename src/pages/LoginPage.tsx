@@ -26,6 +26,8 @@ export default function LoginPage() {
           ))}
         </div>
 
+        <img src="/scc-logo.svg" alt="Speedcubing Canada" style={styles.logo} />
+
         <h1 style={styles.title}>{t('common.app_title')}</h1>
         <p style={styles.subtitle}>{t('login.subtitle')}</p>
 
@@ -58,13 +60,12 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#f5f5f5',
-    fontFamily: 'Helvetica, Arial, sans-serif',
   },
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: '48px 56px',
-    maxWidth: 480,
+    maxWidth: 440,
     width: '100%',
     boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
     textAlign: 'center',
@@ -73,46 +74,54 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     justifyContent: 'flex-end',
     gap: 6,
-    marginBottom: 24,
+    marginBottom: 32,
   },
   langBtn: {
-    background: '#f0f0f0',
-    border: '1px solid #d0d0d0',
-    color: '#666',
+    background: 'none',
+    border: '1px solid #ddd',
+    color: '#999',
     borderRadius: 4,
     padding: '3px 8px',
     fontSize: 11,
-    fontWeight: 600,
+    fontWeight: 700,
     cursor: 'pointer',
     letterSpacing: '0.05em',
+    fontFamily: 'inherit',
   },
   langBtnActive: {
-    background: '#003087',
-    borderColor: '#003087',
-    color: '#fff',
+    background: '#ffebee',
+    borderColor: '#d32f2f',
+    color: '#d32f2f',
+  },
+  logo: {
+    height: 40,
+    marginBottom: 24,
   },
   title: {
-    margin: '0 0 12px',
-    fontSize: 26,
+    margin: '0 0 10px',
+    fontSize: 22,
     fontWeight: 700,
     color: '#1a1a1a',
+    letterSpacing: '-0.02em',
   },
   subtitle: {
-    margin: '0 0 36px',
-    fontSize: 15,
-    color: '#555',
+    margin: '0 0 32px',
+    fontSize: 14,
+    color: '#666',
     lineHeight: 1.6,
   },
   button: {
-    backgroundColor: '#003087',
+    backgroundColor: '#d32f2f',
     color: '#fff',
     border: 'none',
     borderRadius: 8,
     padding: '14px 32px',
-    fontSize: 16,
-    fontWeight: 600,
+    fontSize: 15,
+    fontWeight: 700,
     cursor: 'pointer',
     width: '100%',
+    fontFamily: 'inherit',
+    letterSpacing: '-0.01em',
   },
   warning: {
     backgroundColor: '#fff8e1',

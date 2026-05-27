@@ -21,6 +21,8 @@ export default function Header({ showBack, onBack, showUser, showSignOut = true 
   return (
     <header style={s.header}>
       <div style={s.left}>
+        <img src="/scc-logo.svg" alt="Speedcubing Canada" style={s.logo} />
+        <div style={s.divider} />
         {showBack ? (
           <button style={s.back} onClick={onBack}>{t('common.back')}</button>
         ) : (
@@ -63,51 +65,60 @@ export default function Header({ showBack, onBack, showUser, showSignOut = true 
 
 const s: Record<string, React.CSSProperties> = {
   header: {
-    backgroundColor: '#003087',
-    color: '#fff',
+    backgroundColor: '#fff',
+    borderBottom: '1px solid #e8e8e8',
+    color: '#1a1a1a',
     padding: '0 24px',
     height: 56,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
   },
-  left: { display: 'flex', alignItems: 'center' },
+  left: { display: 'flex', alignItems: 'center', gap: 12 },
   right: { display: 'flex', alignItems: 'center', gap: 8 },
-  title: { fontSize: 16, fontWeight: 700 },
+  logo: { height: 26, display: 'block' },
+  divider: { width: 1, height: 22, backgroundColor: '#e0e0e0' },
+  title: { fontSize: 13, fontWeight: 700, color: '#1a1a1a', letterSpacing: '-0.01em' },
   back: {
-    background: 'rgba(255,255,255,0.15)',
-    border: '1px solid rgba(255,255,255,0.4)',
-    color: '#fff',
+    background: 'none',
+    border: '1px solid #ccc',
+    color: '#444',
     borderRadius: 6,
     padding: '4px 12px',
     fontSize: 13,
+    fontWeight: 500,
     cursor: 'pointer',
+    fontFamily: 'inherit',
   },
   langBtn: {
-    background: 'rgba(255,255,255,0.1)',
-    border: '1px solid rgba(255,255,255,0.3)',
-    color: 'rgba(255,255,255,0.7)',
+    background: 'none',
+    border: '1px solid #ddd',
+    color: '#999',
     borderRadius: 4,
     padding: '3px 7px',
     fontSize: 11,
-    fontWeight: 600,
+    fontWeight: 700,
     cursor: 'pointer',
     letterSpacing: '0.05em',
+    fontFamily: 'inherit',
   },
   langBtnActive: {
-    background: 'rgba(255,255,255,0.25)',
-    borderColor: 'rgba(255,255,255,0.7)',
-    color: '#fff',
+    background: '#ffebee',
+    borderColor: '#d32f2f',
+    color: '#d32f2f',
   },
   avatar: { width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' },
-  userName: { fontSize: 14 },
+  userName: { fontSize: 13, fontWeight: 500, color: '#1a1a1a' },
   logoutBtn: {
-    background: 'rgba(255,255,255,0.15)',
-    border: '1px solid rgba(255,255,255,0.4)',
-    color: '#fff',
+    background: 'none',
+    border: '1px solid #ccc',
+    color: '#444',
     borderRadius: 6,
     padding: '4px 12px',
     fontSize: 13,
+    fontWeight: 500,
     cursor: 'pointer',
+    fontFamily: 'inherit',
   },
 };

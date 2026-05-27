@@ -375,7 +375,7 @@ export default function SettingsPage() {
                           type="radio"
                           checked={custom.format === fmt}
                           onChange={() => updateCustomFormat(i, fmt)}
-                          style={{ accentColor: '#003087' }}
+                          style={{ accentColor: '#d32f2f' }}
                         />
                         {fmt === 'avg5' ? t('settings.advanced.avg5') : t('settings.advanced.mo3')}
                       </label>
@@ -488,10 +488,10 @@ export default function SettingsPage() {
 }
 
 const s: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', backgroundColor: '#f5f5f5', fontFamily: 'Helvetica, Arial, sans-serif' },
+  page: { minHeight: '100vh', backgroundColor: '#f5f5f5' },
   main: { maxWidth: 640, margin: '0 auto', padding: '32px 24px 80px' },
   compBadge: {
-    display: 'inline-block', backgroundColor: '#e8edf7', color: '#003087',
+    display: 'inline-block', backgroundColor: '#ffebee', color: '#d32f2f',
     borderRadius: 6, padding: '4px 12px', fontSize: 13, fontWeight: 600, marginBottom: 12,
   },
   heading: { margin: '0 0 28px', fontSize: 22, fontWeight: 700, color: '#1a1a1a' },
@@ -508,8 +508,8 @@ const s: Record<string, React.CSSProperties> = {
     borderWidth: 2, borderStyle: 'solid', borderColor: '#e0e0e0',
     borderRadius: 8, padding: '12px 16px', cursor: 'pointer',
   },
-  optionCardActive: { borderColor: '#003087', backgroundColor: '#f0f4ff' },
-  radio: { marginTop: 2, accentColor: '#003087', flexShrink: 0 },
+  optionCardActive: { borderColor: '#d32f2f', backgroundColor: '#ffebee' },
+  radio: { marginTop: 2, accentColor: '#d32f2f', flexShrink: 0 },
   optionLabel: { fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 2 },
   optionDesc: { fontSize: 13, color: '#666' },
   logoPreview: {
@@ -537,9 +537,9 @@ const s: Record<string, React.CSSProperties> = {
   },
   footer: { marginTop: 40 },
   submitBtn: {
-    backgroundColor: '#003087', color: '#fff', border: 'none',
-    borderRadius: 8, padding: '14px 32px', fontSize: 16, fontWeight: 600,
-    cursor: 'pointer', width: '100%',
+    backgroundColor: '#d32f2f', color: '#fff', border: 'none',
+    borderRadius: 8, padding: '14px 32px', fontSize: 15, fontWeight: 700,
+    cursor: 'pointer', width: '100%', fontFamily: 'inherit', letterSpacing: '-0.01em',
   },
   advancedToggle: {
     background: 'none', border: 'none', padding: 0,
@@ -560,7 +560,7 @@ const s: Record<string, React.CSSProperties> = {
     borderRadius: 6, cursor: 'pointer', backgroundColor: '#fff',
     minWidth: 38, userSelect: 'none', outline: 'none',
   },
-  iconBtnActive: { borderColor: '#003087', backgroundColor: '#f0f4ff' },
+  iconBtnActive: { borderColor: '#d32f2f', backgroundColor: '#ffebee' },
   iconLabel: { fontSize: 9, color: '#555', textAlign: 'center', lineHeight: '1.1' },
   addCustomBtn: {
     backgroundColor: '#fff', border: '2px dashed #bbb',

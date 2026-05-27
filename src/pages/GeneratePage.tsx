@@ -193,10 +193,10 @@ function Stat({ label, value }: { label: string; value: number | string }) {
 }
 
 const s: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', backgroundColor: '#f5f5f5', fontFamily: 'Helvetica, Arial, sans-serif' },
+  page: { minHeight: '100vh', backgroundColor: '#f5f5f5' },
   main: { maxWidth: 680, margin: '0 auto', padding: '32px 24px' },
   compBadge: {
-    display: 'inline-block', backgroundColor: '#e8edf7', color: '#003087',
+    display: 'inline-block', backgroundColor: '#ffebee', color: '#d32f2f',
     borderRadius: 6, padding: '4px 12px', fontSize: 13, fontWeight: 600, marginBottom: 8,
   },
   pageTitle: { margin: '0 0 24px', fontSize: 22, fontWeight: 700, color: '#1a1a1a' },
@@ -213,15 +213,16 @@ const s: Record<string, React.CSSProperties> = {
     backgroundColor: '#fff', border: '1px solid #e0e0e0',
     borderRadius: 8, padding: '16px', textAlign: 'center',
   },
-  statValue: { fontSize: 28, fontWeight: 700, color: '#003087', marginBottom: 4 },
+  statValue: { fontSize: 28, fontWeight: 700, color: '#d32f2f', marginBottom: 4 },
   statLabel: { fontSize: 12, color: '#666' },
   downloadBtn: {
-    display: 'block', backgroundColor: '#003087', color: '#fff',
-    border: 'none', borderRadius: 8, padding: '16px', fontSize: 16,
-    fontWeight: 600, textAlign: 'center', cursor: 'pointer', width: '100%',
+    display: 'block', backgroundColor: '#d32f2f', color: '#fff',
+    border: 'none', borderRadius: 8, padding: '16px', fontSize: 15,
+    fontWeight: 700, textAlign: 'center', cursor: 'pointer', width: '100%',
+    fontFamily: 'inherit', letterSpacing: '-0.01em',
   },
   downloadBtnDisabled: {
-    backgroundColor: '#7a9cbf', cursor: 'not-allowed',
+    backgroundColor: '#ef9a9a', cursor: 'not-allowed',
   },
   progressBox: {
     backgroundColor: '#fff', border: '1px solid #e0e0e0',
@@ -231,12 +232,12 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12,
   },
   progressLabel: { fontSize: 14, color: '#555' },
-  progressPct: { fontSize: 20, fontWeight: 700, color: '#003087' },
+  progressPct: { fontSize: 20, fontWeight: 700, color: '#d32f2f' },
   progressTrack: {
-    height: 10, backgroundColor: '#e8edf7', borderRadius: 5, overflow: 'hidden',
+    height: 10, backgroundColor: '#ffebee', borderRadius: 5, overflow: 'hidden',
   },
   progressFill: {
-    height: '100%', backgroundColor: '#003087', borderRadius: 5,
+    height: '100%', backgroundColor: '#d32f2f', borderRadius: 5,
     transition: 'width 0.2s ease',
   },
 };
