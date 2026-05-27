@@ -61,9 +61,10 @@
     "wca_live": {
       "title": "ID de WCA Live",
       "optional_note": "opcional — para códigos QR de etiquetas",
-      "hint_part1": "El ID numérico de la competencia en WCA Live (ej.",
-      "hint_part2": "desde live.worldcubeassociation.org/competitions/",
-      "hint_part3": "). Usado para generar códigos QR de WCA Live en las etiquetas de nombre.",
+      "fetching": "Obteniendo de WCA Live…",
+      "auto_detected": "Detectado automáticamente",
+      "not_found": "No encontrado en WCA Live aún — ingrese manualmente si es necesario",
+      "hint": "ID numérico de la competencia en WCA Live. Usado para generar códigos QR de WCA Live en las etiquetas de nombre.",
       "placeholder": "ej. 9667"
     },
     "logo": {

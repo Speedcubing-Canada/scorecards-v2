@@ -134,12 +134,14 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl }:
 }
 
 // ── QR code section ───────────────────────────────────────────────────────────
-function QrSection({ entry, competitionId, wcaLiveId, qrSize }: {
-  entry: NametTagEntry; competitionId: string; wcaLiveId: string | null; qrSize: number;
+function QrSection({ entry, competitionId, wcaLiveId, wcaLivePersonIds, qrSize }: {
+  entry: NametTagEntry; competitionId: string; wcaLiveId: string | null;
+  wcaLivePersonIds: Record<number, string> | null; qrSize: number;
 }) {
-  const cgUrl   = `https://www.competitiongroups.com/competitions/${competitionId}/persons/${entry.registrantId}`;
-  const liveUrl = wcaLiveId
-    ? `https://live.worldcubeassociation.org/competitions/${wcaLiveId}/competitors/${entry.wcaUserId}`
+  const cgUrl = `https://www.competitiongroups.com/competitions/${competitionId}/persons/${entry.registrantId}`;
+  const wcaLivePersonId = wcaLivePersonIds?.[entry.registrantId] ?? null;
+  const liveUrl = (wcaLiveId && wcaLivePersonId)
+    ? `https://live.worldcubeassociation.org/competitions/${wcaLiveId}/competitors/${wcaLivePersonId}`
     : 'https://live.worldcubeassociation.org';
 
   return (
@@ -163,10 +165,11 @@ function topSectionH(logoMode: NametTagLogoMode) {
 }
 
 // ── Front panel ───────────────────────────────────────────────────────────────
-function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiveId, logoMode, logoDataUrl, qrBothSides, qrSize, nametTagStrings }: {
+function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiveId, wcaLivePersonIds, logoMode, logoDataUrl, qrBothSides, qrSize, nametTagStrings }: {
   entry: NametTagEntry; panelW: number; panelH: number;
   pos: { left: number; top: number }; compName: string;
   competitionId: string; wcaLiveId: string | null;
+  wcaLivePersonIds: Record<number, string> | null;
   logoMode: NametTagLogoMode; logoDataUrl: string | null;
   qrBothSides: boolean; qrSize: number;
   nametTagStrings: NametTagStrings;
@@ -177,7 +180,7 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLi
     return (
       <View style={panelStyle}>
         <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleFr} logoMode={logoMode} logoDataUrl={logoDataUrl} />
-        <QrSection entry={entry} competitionId={competitionId} wcaLiveId={wcaLiveId} qrSize={qrSize} />
+        <QrSection entry={entry} competitionId={competitionId} wcaLiveId={wcaLiveId} wcaLivePersonIds={wcaLivePersonIds} qrSize={qrSize} />
       </View>
     );
   }
@@ -215,16 +218,17 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLi
 }
 
 // ── Back panel ────────────────────────────────────────────────────────────────
-function BackPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiveId, logoMode, logoDataUrl, qrSize }: {
+function BackPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiveId, wcaLivePersonIds, logoMode, logoDataUrl, qrSize }: {
   entry: NametTagEntry; panelW: number; panelH: number;
   pos: { left: number; top: number }; compName: string;
   competitionId: string; wcaLiveId: string | null;
+  wcaLivePersonIds: Record<number, string> | null;
   logoMode: NametTagLogoMode; logoDataUrl: string | null; qrSize: number;
 }) {
   return (
     <View style={[s.panel, { position: 'absolute', left: pos.left, top: pos.top, width: panelW, height: panelH }]}>
       <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleEn} logoMode={logoMode} logoDataUrl={logoDataUrl} />
-      <QrSection entry={entry} competitionId={competitionId} wcaLiveId={wcaLiveId} qrSize={qrSize} />
+      <QrSection entry={entry} competitionId={competitionId} wcaLiveId={wcaLiveId} wcaLivePersonIds={wcaLivePersonIds} qrSize={qrSize} />
     </View>
   );
 }
@@ -263,7 +267,7 @@ interface Props {
 export function NametTagDocument({ nametags, settings }: Props) {
   const cfg = CONFIGS[settings.paperFormat as PF] ?? CONFIGS.LETTER;
   const pos = panelPositions(cfg);
-  const { competitionId, competitionName, wcaLiveId, nametagLogoMode, logoDataUrl, nametagQrMode } = settings;
+  const { competitionId, competitionName, wcaLiveId, wcaLivePersonIds, nametagLogoMode, logoDataUrl, nametagQrMode } = settings;
 
   // If no logo was uploaded, treat any logo mode as hidden.
   const logoMode: NametTagLogoMode = logoDataUrl ? nametagLogoMode : 'hidden';
@@ -288,6 +292,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
                 panelW={cfg.panelW} panelH={cfg.panelH} pos={frontPos}
                 compName={competitionName}
                 competitionId={competitionId} wcaLiveId={wcaLiveId}
+                wcaLivePersonIds={wcaLivePersonIds}
                 logoMode={logoMode} logoDataUrl={logoDataUrl}
                 qrBothSides={qrBothSides} qrSize={qrSize}
                 nametTagStrings={nametTagStrings}
@@ -297,6 +302,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
                 panelW={cfg.panelW} panelH={cfg.panelH} pos={backPos}
                 compName={competitionName}
                 competitionId={competitionId} wcaLiveId={wcaLiveId}
+                wcaLivePersonIds={wcaLivePersonIds}
                 logoMode={logoMode} logoDataUrl={logoDataUrl}
                 qrSize={qrSize}
               />,

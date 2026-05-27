@@ -406,8 +406,6 @@ Name tag role badges always use the panel language: French titles on front panel
 
 - **First-timer slips** — a small slip printed for competitors who have no WCA ID, given to the delegate to attach to their scorecard after the first solve. Lists the competitor's name and registrant ID so their results can be linked to a new WCA profile.
 
-- **Improving languages i18n** - having a full i18n support so that the app can be used in fr and en but also in spanish and that it's easy to add new languages by just using keys and i18next in the react app.
-
 - **Improve WCA live support** - Find a way to remove having to manually add the comp id from wca live and solve the bug regarding wca live ids that are currently wrong
 
 ---

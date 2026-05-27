@@ -60,3 +60,52 @@ export async function fetchManagedCompetitions(token: string) {
   if (!res.ok) throw new Error(`Failed to fetch competitions: ${res.statusText}`);
   return res.json();
 }
+
+export const WCA_LIVE_API = 'https://live.worldcubeassociation.org/api';
+
+/** Returns the numeric WCA Live competition ID, or null if not found / API error. */
+export async function fetchWcaLiveId(wcaId: string): Promise<string | null> {
+  try {
+    const res = await fetch(WCA_LIVE_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: '{ competitions { id wcaId } }' }),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const competitions: { id: string; wcaId: string }[] = json?.data?.competitions ?? [];
+    const match = competitions.find(c => c.wcaId === wcaId);
+    return match?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Returns a map of registrantId → WCA Live person ID for all competitors in a competition.
+ * The WCA Live person ID is the internal numeric ID used in live.worldcubeassociation.org URLs.
+ */
+export async function fetchWcaLivePersonIds(
+  competitionLiveId: string,
+): Promise<Record<number, string> | null> {
+  try {
+    const res = await fetch(WCA_LIVE_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: `query($id: ID!) { competition(id: $id) { competitors { id registrantId } } }`,
+        variables: { id: competitionLiveId },
+      }),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const competitors: { id: string; registrantId: number }[] =
+      json?.data?.competition?.competitors ?? [];
+    if (competitors.length === 0) return null;
+    const map: Record<number, string> = {};
+    for (const c of competitors) map[c.registrantId] = c.id;
+    return map;
+  } catch {
+    return null;
+  }
+}

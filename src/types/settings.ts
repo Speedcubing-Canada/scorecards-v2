@@ -24,6 +24,7 @@ export interface CompetitionSettings {
   secondRoundMode: SecondRoundMode;
   logoDataUrl: string | null;
   wcaLiveId: string | null;
+  wcaLivePersonIds: Record<number, string> | null;
   nametagLogoMode: NametTagLogoMode;
   nametagQrMode: NametTagQrMode;
   customEvents: CustomEvent[];

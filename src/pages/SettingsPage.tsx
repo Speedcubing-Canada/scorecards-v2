@@ -1,9 +1,10 @@
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { CompetitionSettings, CustomEvent, Language, NametTagLogoMode, NametTagQrMode, PaperFormat, SecondRoundMode } from '../types/settings';
 import { EVENT_ICONS } from '../assets/events';
 import Header from '../components/Header';
+import { fetchWcaLiveId, fetchWcaLivePersonIds } from '../auth/wca';
 
 const WCA_EVENT_LABELS: Record<string, string> = {
   '222': '2×2', '333': '3×3', '444': '4×4', '555': '5×5',
@@ -26,12 +27,30 @@ export default function SettingsPage() {
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [logoName, setLogoName] = useState<string | null>(null);
   const [wcaLiveId, setWcaLiveId] = useState<string>('');
+  const [wcaLivePersonIds, setWcaLivePersonIds] = useState<Record<number, string> | null>(null);
+  const [wcaLiveFetchStatus, setWcaLiveFetchStatus] = useState<'loading' | 'found' | 'not-found'>('loading');
   const [nametagLogoMode, setNametagLogoMode] = useState<NametTagLogoMode>('with-name');
   const [nametagQrMode, setNametagQrMode] = useState<NametTagQrMode>('back-only');
   const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const customIconRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    if (!competitionId) return;
+    fetchWcaLiveId(competitionId).then(async id => {
+      if (id) {
+        setWcaLiveId(id);
+        setWcaLiveFetchStatus('found');
+        const personIds = await fetchWcaLivePersonIds(id);
+        setWcaLivePersonIds(personIds);
+      } else {
+        setWcaLiveFetchStatus('not-found');
+      }
+    });
+  // competitionId is stable (from sessionStorage), no deps needed beyond mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!competitionId) {
     navigate('/competitions', { replace: true });
@@ -118,6 +137,7 @@ export default function SettingsPage() {
       secondRoundMode,
       logoDataUrl,
       wcaLiveId: wcaLiveId.trim() || null,
+      wcaLivePersonIds,
       nametagLogoMode,
       nametagQrMode,
       customEvents: customEvents.filter(e => e.name.trim()),
@@ -215,12 +235,19 @@ export default function SettingsPage() {
           <h3 style={s.sectionTitle}>
             {t('settings.wca_live.title')}{' '}
             <span style={s.optional}>({t('settings.wca_live.optional_note')})</span>
+            {wcaLiveFetchStatus === 'loading' && (
+              <span style={s.wcaLiveLoading}> {t('settings.wca_live.fetching')}</span>
+            )}
+            {wcaLiveFetchStatus === 'found' && (
+              <span style={s.wcaLiveFound}> ✓ {t('settings.wca_live.auto_detected')}</span>
+            )}
           </h3>
-          <p style={s.hint}>
-            {t('settings.wca_live.hint_part1')} <strong>9667</strong>{' '}
-            {t('settings.wca_live.hint_part2')}<strong>9667</strong>
-            {t('settings.wca_live.hint_part3')}
-          </p>
+          {wcaLiveFetchStatus === 'not-found' && (
+            <p style={{ ...s.hint, color: '#b45309' }}>{t('settings.wca_live.not_found')}</p>
+          )}
+          {wcaLiveFetchStatus !== 'not-found' && (
+            <p style={s.hint}>{t('settings.wca_live.hint')}</p>
+          )}
           <input
             type="text"
             inputMode="numeric"
@@ -471,6 +498,8 @@ const s: Record<string, React.CSSProperties> = {
   section: { marginBottom: 32 },
   sectionTitle: { margin: '0 0 12px', fontSize: 15, fontWeight: 700, color: '#1a1a1a' },
   optional: { fontWeight: 400, color: '#888', fontSize: 13 },
+  wcaLiveLoading: { fontWeight: 400, color: '#888', fontSize: 12 },
+  wcaLiveFound: { fontWeight: 600, color: '#15803d', fontSize: 12 },
   hint: { margin: '0 0 12px', fontSize: 13, color: '#666' },
   optionGroup: { display: 'flex', flexDirection: 'column', gap: 8 },
   optionCard: {
