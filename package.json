@@ -6,12 +6,16 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "start": "node server.js",
+    "gcp-build": "echo \"Skipping Cloud build; using prebuilt dist\"",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
     "@react-pdf/renderer": "^4.5.1",
     "@tanstack/react-query": "^5.100.14",
     "buffer": "^6.0.3",

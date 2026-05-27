@@ -1,0 +1,8 @@
+runtime: nodejs24
+entrypoint: node server.js
+
+env_variables:
+  NODE_ENV: production
+  # WCA_CLIENT_SECRET must be set separately — do NOT put it here.
+  # Set it in the App Engine console: Versions → Edit → Environment variables,
+  # or manage it via Cloud Secret Manager and load it at startup.
