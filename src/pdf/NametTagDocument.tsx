@@ -1,7 +1,7 @@
 import { Document, Page, View, Text, Image, StyleSheet, Font, Svg, Rect } from '@react-pdf/renderer';
 import QRCode from 'qrcode';
 import type { CompetitionSettings, NametTagLogoMode } from '../types/settings';
-import type { NametTagEntry } from '../lib/wcif-parser';
+import type { NametTagEntry, NametTagRole } from '../lib/wcif-parser';
 import { EVENT_ICONS } from '../assets/events';
 import { getNametTagStrings, type NametTagStrings } from '../lib/i18n';
 
@@ -63,10 +63,10 @@ function nameFontSize(name: string, panelW: number) {
   return Math.min(20, Math.max(9, Math.floor(avail / Math.max(name.length * 0.55, 1))));
 }
 
-function badgeColors(titleEn: string) {
-  if (titleEn === 'DELEGATE' || titleEn === 'ORGANIZER')
+function badgeColors(role: NametTagRole) {
+  if (role === 'delegate' || role === 'organizer')
     return { bg: '#343434', fg: 'white' };
-  if (titleEn === 'NEW COMPETITOR')
+  if (role === 'new-competitor')
     return { bg: '#A9A9A9', fg: 'black' };
   return { bg: '#DCDCDC', fg: 'black' };
 }
@@ -101,7 +101,7 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl }:
   entry: NametTagEntry; panelW: number; compName: string; titleText: string;
   logoMode: NametTagLogoMode; logoDataUrl: string | null;
 }) {
-  const { bg, fg } = badgeColors(entry.titleEn);
+  const { bg, fg } = badgeColors(entry.role);
   const nameFs = nameFontSize(entry.name, panelW);
   const iconSz = 12;
 
@@ -179,7 +179,7 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLi
   if (qrBothSides) {
     return (
       <View style={panelStyle}>
-        <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleFr} logoMode={logoMode} logoDataUrl={logoDataUrl} />
+        <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleFront} logoMode={logoMode} logoDataUrl={logoDataUrl} />
         <QrSection entry={entry} competitionId={competitionId} wcaLiveId={wcaLiveId} wcaLivePersonIds={wcaLivePersonIds} qrSize={qrSize} />
       </View>
     );
@@ -204,7 +204,7 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLi
 
   return (
     <View style={panelStyle}>
-      <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleFr} logoMode={logoMode} logoDataUrl={logoDataUrl} />
+      <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleFront} logoMode={logoMode} logoDataUrl={logoDataUrl} />
       <View style={[s.dutiesSection, spaceEvenly ? { justifyContent: 'space-evenly' } : {}]}>
         {rows.map(({ label, duties }) => (
           <View key={label} style={[s.dutyRow, spaceEvenly ? {} : { marginBottom: 3 }]}>
@@ -227,7 +227,7 @@ function BackPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiv
 }) {
   return (
     <View style={[s.panel, { position: 'absolute', left: pos.left, top: pos.top, width: panelW, height: panelH }]}>
-      <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleEn} logoMode={logoMode} logoDataUrl={logoDataUrl} />
+      <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleBack} logoMode={logoMode} logoDataUrl={logoDataUrl} />
       <QrSection entry={entry} competitionId={competitionId} wcaLiveId={wcaLiveId} wcaLivePersonIds={wcaLivePersonIds} qrSize={qrSize} />
     </View>
   );

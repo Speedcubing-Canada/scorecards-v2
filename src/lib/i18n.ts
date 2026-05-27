@@ -31,6 +31,15 @@ export interface NametTagStrings {
   scramble: string;
   judge: string;
   run: string;
+  dutyGroup: (groupList: string) => string;
+}
+
+// ── Nametag title strings (role badge on each panel) ──────────────────────────
+export interface NametTagTitleStrings {
+  delegate: (isFemale: boolean) => string;
+  organizer: (isFemale: boolean) => string;
+  newCompetitor: (isFemale: boolean) => string;
+  competitor: (isFemale: boolean) => string;
 }
 
 // ── Scorecard strings (used in PDF rendering) ─────────────────────────────────
@@ -49,6 +58,11 @@ export interface ScorecardStrings {
   newCompetitorF: string;
   roundName: (n: number, total: number) => string;
   finalRound: string;
+  groupLabel: (gNum: string | number, total: number) => string;
+  colorGroupLabel: (color: string, gNum: string | number, total: number) => string;
+  blankGroupLabel: (total: number) => string;
+  stationLabel: (n: string) => string;
+  seatLabel: (n: string) => string;
   cover: CoverCardStrings;
 }
 
@@ -71,6 +85,11 @@ const EN: ScorecardStrings = {
   newCompetitorF: 'New Competitor',
   roundName: (n, total) => `Round ${n} of ${total}`,
   finalRound: 'Final Round',
+  groupLabel: (gNum, total) => `Group ${gNum} of ${total}`,
+  colorGroupLabel: (color, gNum, total) => `${color} ${gNum} of ${total}`,
+  blankGroupLabel: (total) => `Group _ of ${total}`,
+  stationLabel: (n) => `Station ${n}`,
+  seatLabel: (n) => `Seat ${n}`,
   cover: {
     forDelegate: 'FOR DELEGATE',
     bundledScorecards: (n) => `1. Bundled all ${n} scorecards`,
@@ -104,6 +123,11 @@ const FR: ScorecardStrings = {
   newCompetitorF: 'Nouvelle Compétitrice',
   roundName: (n, total) => `Tour ${n} de ${total}`,
   finalRound: 'Tour Final',
+  groupLabel: (gNum, total) => `Groupe ${gNum} de ${total}`,
+  colorGroupLabel: (color, gNum, total) => `${color} ${gNum} de ${total}`,
+  blankGroupLabel: (total) => `Groupe _ de ${total}`,
+  stationLabel: (n) => `Siège ${n}`,
+  seatLabel: (n) => `Siège ${n}`,
   cover: {
     forDelegate: 'POUR LE DÉLÉGUÉ',
     bundledScorecards: (n) => `1. Regroupé toutes les ${n} feuilles`,
@@ -137,6 +161,11 @@ const ES: ScorecardStrings = {
   newCompetitorF: 'Nueva Competidora',
   roundName: (n, total) => `Ronda ${n} de ${total}`,
   finalRound: 'Ronda Final',
+  groupLabel: (gNum, total) => `Grupo ${gNum} de ${total}`,
+  colorGroupLabel: (color, gNum, total) => `${color} ${gNum} de ${total}`,
+  blankGroupLabel: (total) => `Grupo _ de ${total}`,
+  stationLabel: (n) => `Estación ${n}`,
+  seatLabel: (n) => `Asiento ${n}`,
   cover: {
     forDelegate: 'PARA EL DELEGADO',
     bundledScorecards: (n) => `1. Agrupadas todas las ${n} hojas`,
@@ -173,6 +202,11 @@ export function getStrings(language: Language): ScorecardStrings {
     newCompetitorF: primary.newCompetitorF,
     roundName: (n, total) => `${primary.roundName(n, total)}`,
     finalRound: primary.finalRound,
+    groupLabel: (gNum, total) => primary.groupLabel(gNum, total),
+    colorGroupLabel: (color, gNum, total) => primary.colorGroupLabel(color, gNum, total),
+    blankGroupLabel: (total) => primary.blankGroupLabel(total),
+    stationLabel: (n) => primary.stationLabel(n),
+    seatLabel: (n) => primary.seatLabel(n),
     cover: primary.cover,
   };
 }
@@ -220,6 +254,7 @@ const NAMETAG_EN: NametTagStrings = {
   scramble: 'Scramble:',
   judge: 'Judge:',
   run: 'Run:',
+  dutyGroup: (g) => `Group ${g}`,
 };
 
 const NAMETAG_FR: NametTagStrings = {
@@ -227,6 +262,7 @@ const NAMETAG_FR: NametTagStrings = {
   scramble: 'Mélanger:',
   judge: 'Juger:',
   run: 'Courir:',
+  dutyGroup: (g) => `Groupe ${g}`,
 };
 
 const NAMETAG_ES: NametTagStrings = {
@@ -234,12 +270,74 @@ const NAMETAG_ES: NametTagStrings = {
   scramble: 'Mezclar:',
   judge: 'Juzgar:',
   run: 'Correr:',
+  dutyGroup: (g) => `Grupo ${g}`,
 };
 
 export function getNametTagStrings(language: Language): NametTagStrings {
   if (language === 'fr' || language === 'bilingual-fr') return NAMETAG_FR;
   if (language === 'es') return NAMETAG_ES;
   return NAMETAG_EN;
+}
+
+// ── Nametag title strings ──────────────────────────────────────────────────────
+const NAMETAG_TITLE_EN: NametTagTitleStrings = {
+  delegate:     () => 'DELEGATE',
+  organizer:    () => 'ORGANIZER',
+  newCompetitor: () => 'NEW COMPETITOR',
+  competitor:   () => 'COMPETITOR',
+};
+
+const NAMETAG_TITLE_FR: NametTagTitleStrings = {
+  delegate:     (f) => f ? 'DÉLÉGUÉE' : 'DÉLÉGUÉ',
+  organizer:    (f) => f ? 'ORGANISATRICE' : 'ORGANISATEUR',
+  newCompetitor: (f) => f ? 'NOUVELLE COMPÉTITRICE' : 'NOUVEAU COMPÉTITEUR',
+  competitor:   (f) => f ? 'COMPÉTITRICE' : 'COMPÉTITEUR',
+};
+
+const NAMETAG_TITLE_ES: NametTagTitleStrings = {
+  delegate:     (f) => f ? 'DELEGADA' : 'DELEGADO',
+  organizer:    (f) => f ? 'ORGANIZADORA' : 'ORGANIZADOR',
+  newCompetitor: (f) => f ? 'NUEVA COMPETIDORA' : 'NUEVO COMPETIDOR',
+  competitor:   (f) => f ? 'COMPETIDORA' : 'COMPETIDOR',
+};
+
+export function getNametTagTitleStrings(language: Language): { front: NametTagTitleStrings; back: NametTagTitleStrings } {
+  if (language === 'bilingual-fr') return { front: NAMETAG_TITLE_FR, back: NAMETAG_TITLE_EN };
+  if (language === 'bilingual-en') return { front: NAMETAG_TITLE_EN, back: NAMETAG_TITLE_FR };
+  if (language === 'fr') return { front: NAMETAG_TITLE_FR, back: NAMETAG_TITLE_FR };
+  if (language === 'es') return { front: NAMETAG_TITLE_ES, back: NAMETAG_TITLE_ES };
+  return { front: NAMETAG_TITLE_EN, back: NAMETAG_TITLE_EN };
+}
+
+// ── Short event names for nametag duty labels ──────────────────────────────────
+const SHORT_NAMETAG_NAMES_EN: Record<string, string> = {
+  '333': '3x3x3', '222': '2x2x2', '444': '4x4x4', '555': '5x5x5',
+  '666': '6x6x6', '777': '7x7x7', '333bf': '3x3x3 BLD', '333fm': 'FMC',
+  '333oh': 'One-Hand', 'clock': 'Clock', 'minx': 'Megaminx', 'pyram': 'Pyraminx',
+  'skewb': 'Skewb', 'sq1': 'Square-1', '444bf': '4x4x4 BLD', '555bf': '5x5x5 BLD',
+  '333mbf': 'Multi-BLD',
+};
+
+const SHORT_NAMETAG_NAMES_FR: Record<string, string> = {
+  '333': '3x3x3', '222': '2x2x2', '444': '4x4x4', '555': '5x5x5',
+  '666': '6x6x6', '777': '7x7x7', '333bf': '3x3x3 BLD', '333fm': 'FMC',
+  '333oh': 'À une main', 'clock': 'Clock', 'minx': 'Megaminx', 'pyram': 'Pyraminx',
+  'skewb': 'Skewb', 'sq1': 'Square-1', '444bf': '4x4x4 BLD', '555bf': '5x5x5 BLD',
+  '333mbf': 'Multi-BLD',
+};
+
+const SHORT_NAMETAG_NAMES_ES: Record<string, string> = {
+  '333': '3x3x3', '222': '2x2x2', '444': '4x4x4', '555': '5x5x5',
+  '666': '6x6x6', '777': '7x7x7', '333bf': '3x3x3 BLD', '333fm': 'FMC',
+  '333oh': 'Una mano', 'clock': 'Clock', 'minx': 'Megaminx', 'pyram': 'Pyraminx',
+  'skewb': 'Skewb', 'sq1': 'Square-1', '444bf': '4x4x4 BLD', '555bf': '5x5x5 BLD',
+  '333mbf': 'Multi-BLD',
+};
+
+export function getShortNametTagNames(language: Language): Record<string, string> {
+  if (language === 'fr' || language === 'bilingual-fr') return SHORT_NAMETAG_NAMES_FR;
+  if (language === 'es') return SHORT_NAMETAG_NAMES_ES;
+  return SHORT_NAMETAG_NAMES_EN;
 }
 
 // ── Event names ────────────────────────────────────────────────────────────────

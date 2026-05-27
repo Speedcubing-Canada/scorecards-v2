@@ -1163,6 +1163,29 @@ describe('Spanish language', () => {
     const result = parseWCIF(mkWCIF([e], [r], [p]), cfg({ language: 'es' }));
     expect(scs(result.firstRound)[0]?.eventName).toBe('Cubo 3x3x3');
   });
+
+  it('group label uses Spanish "Grupo N de M"', () => {
+    const c1 = ch(100, '333', 1, 1);
+    const c2 = ch(101, '333', 1, 2);
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [c1, c2])]);
+    const p = per(1, [{ aid: 100 }]);
+    const result = parseWCIF(mkWCIF([e], [r], [p]), cfg({ language: 'es' }));
+    expect(scs(result.firstRound)[0]?.group).toBe('Grupo 1 de 2');
+  });
+
+  it('blank group label uses Spanish "Grupo _ de N" (prefilled mode)', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)]),
+      act('333', 2, [ch(110, '333', 2, 1, '2024-01-01T12:00:00Z'), ch(111, '333', 2, 2, '2024-01-01T12:00:00Z')]),
+      act('333', 3, [ch(120, '333', 3, 1, '2024-01-01T16:00:00Z')]),
+    ]);
+    const persons = [per(1, [{ aid: 100 }]), per(2, [{ aid: 101 }])];
+    const result = parseWCIF(mkWCIF([e], [r], persons), cfg({ language: 'es', secondRoundMode: 'prefilled' }));
+    const named = scs(result.intermediate).filter(s => s.name !== '');
+    expect(named.every(s => s.group === 'Grupo _ de 2')).toBe(true);
+  });
 });
 
 // ── Nametag entries ───────────────────────────────────────────────────────────
@@ -1210,5 +1233,54 @@ describe('nametag entries', () => {
     const result = parseWCIF(mkWCIF([e], [r], [accepted, pending]), cfg());
     expect(result.nametags.length).toBe(1);
     expect(result.nametags[0]?.registrantId).toBe(1);
+  });
+
+  it('role field: delegate, organizer, new-competitor, competitor', () => {
+    const c = ch(100, '333', 1, 1);
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [c])]);
+    const delegate  = { ...per(1, [{ aid: 100 }]), roles: ['delegate'] };
+    const organizer = { ...per(2, [{ aid: 100 }]), roles: ['organizer'] };
+    const newComp   = { ...per(3, [{ aid: 100 }]), wcaId: null } as ReturnType<typeof per>;
+    const comp      = per(4, [{ aid: 100 }]);
+    const result = parseWCIF(mkWCIF([e], [r], [delegate, organizer, newComp, comp]), cfg());
+    const byId = Object.fromEntries(result.nametags.map(t => [t.registrantId, t]));
+    expect(byId[1]?.role).toBe('delegate');
+    expect(byId[2]?.role).toBe('organizer');
+    expect(byId[3]?.role).toBe('new-competitor');
+    expect(byId[4]?.role).toBe('competitor');
+  });
+
+  it('Spanish nametag titles use correct gender-aware Spanish strings', () => {
+    const c = ch(100, '333', 1, 1);
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [c])]);
+    const male   = per(1, [{ aid: 100 }], { gender: 'm' });
+    const female = per(2, [{ aid: 100 }], { gender: 'f' });
+    const result = parseWCIF(mkWCIF([e], [r], [male, female]), cfg({ language: 'es' }));
+    const byId = Object.fromEntries(result.nametags.map(t => [t.registrantId, t]));
+    expect(byId[1]?.titleFront).toBe('COMPETIDOR');
+    expect(byId[1]?.titleBack).toBe('COMPETIDOR');
+    expect(byId[2]?.titleFront).toBe('COMPETIDORA');
+    expect(byId[2]?.titleBack).toBe('COMPETIDORA');
+  });
+
+  it('bilingual-fr nametag: titleFront=FR, titleBack=EN', () => {
+    const c = ch(100, '333', 1, 1);
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [c])]);
+    const male = per(1, [{ aid: 100 }], { gender: 'm' });
+    const result = parseWCIF(mkWCIF([e], [r], [male]), cfg({ language: 'bilingual-fr' }));
+    expect(result.nametags[0]?.titleFront).toBe('COMPÉTITEUR');
+    expect(result.nametags[0]?.titleBack).toBe('COMPETITOR');
+  });
+
+  it('French delegate female gets DÉLÉGUÉE on nametag', () => {
+    const c = ch(100, '333', 1, 1);
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [c])]);
+    const delegate = { ...per(1, [{ aid: 100 }], { gender: 'f' }), roles: ['delegate'] };
+    const result = parseWCIF(mkWCIF([e], [r], [delegate]), cfg({ language: 'fr' }));
+    expect(result.nametags[0]?.titleFront).toBe('DÉLÉGUÉE');
   });
 });

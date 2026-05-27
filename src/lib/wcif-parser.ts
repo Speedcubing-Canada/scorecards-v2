@@ -1,24 +1,18 @@
 import type { WCIF, Round, EventId, Assignment } from '../types/wcif';
 import type { CompetitionSettings } from '../types/settings';
-import { getStrings, getEventName, EVENT_NAMES_EN } from './i18n';
+import { getStrings, getEventName, EVENT_NAMES_EN, getNametTagTitleStrings, getNametTagStrings, getShortNametTagNames, type NametTagTitleStrings } from './i18n';
 
 export type ScorecardFormat = 'avg5' | 'bo2-avg5' | 'mo3' | 'bo1-mo3' | 'bo2';
 
 // ── Nametag types ─────────────────────────────────────────────────────────────
 
-// Short event names for nametag duty labels (always French/bilingual style)
-const SHORT_NAMETAG_NAMES: Record<string, string> = {
-  '333': '3x3x3', '222': '2x2x2', '444': '4x4x4', '555': '5x5x5',
-  '666': '6x6x6', '777': '7x7x7', '333bf': '3x3x3 BLD', '333fm': 'FMC',
-  '333oh': 'À une main', 'clock': 'Clock', 'minx': 'Megaminx', 'pyram': 'Pyraminx',
-  'skewb': 'Skewb', 'sq1': 'Square-1', '444bf': '4x4x4 BLD', '555bf': '5x5x5 BLD',
-  '333mbf': 'Multi-BLD',
-};
 
 const WCA_EVENT_ORDER: EventId[] = [
   '333','222','444','555','666','777','333bf','333fm','333oh',
   'clock','minx','pyram','skewb','sq1','444bf','555bf','333mbf',
 ];
+
+export type NametTagRole = 'delegate' | 'organizer' | 'new-competitor' | 'competitor';
 
 export interface NametTagEntry {
   name: string;
@@ -26,8 +20,9 @@ export interface NametTagEntry {
   registrantId: number;
   wcaUserId: number;
   gender: 'm' | 'f' | 'o';
-  titleEn: string;
-  titleFr: string;
+  role: NametTagRole;
+  titleFront: string;
+  titleBack: string;
   events: EventId[];
   compete: string[];
   scramble: string[];
@@ -39,6 +34,8 @@ function buildDuties(
   assignments: Assignment[],
   code: Assignment['assignmentCode'],
   activityCodeMap: Record<number, string>,
+  shortNames: Record<string, string>,
+  dutyGroup: (groupList: string) => string,
 ): string[] {
   const byEvent: Record<string, Set<number>> = {};
   for (const a of assignments) {
@@ -58,9 +55,9 @@ function buildDuties(
 
   return Object.entries(byEvent)
     .map(([eventId, groups]) => {
-      const shortName = SHORT_NAMETAG_NAMES[eventId] ?? eventId;
+      const shortName = shortNames[eventId] ?? eventId;
       const groupList = [...groups].sort((a, b) => a - b).join(' & ');
-      return `${shortName}: Groupe ${groupList}`;
+      return `${shortName}: ${dutyGroup(groupList)}`;
     })
     .sort();
 }
@@ -211,6 +208,9 @@ function finalizeEntriesIntermediate(entries: ScorecardData[]): ScorecardData[] 
 export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF {
   const { language, secondRoundMode } = settings;
   const strings = getStrings(language);
+  const nametTagTitles = getNametTagTitleStrings(language);
+  const nametTagDutyStrings = getNametTagStrings(language);
+  const shortNametTagNames = getShortNametTagNames(language);
 
   // ── Activity maps ─────────────────────────────────────────────────────────
   const activityCode: Record<number, string> = {};
@@ -316,14 +316,12 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   // Used when a round spans multiple stages: "Rouge 3 of 4", "Rouge 3 de 4", etc.
   function buildGroupLabel(gNum: string, colour: string, total: number): string {
     const c = colour.charAt(0).toUpperCase() + colour.slice(1);
-    if (language === 'fr' || language === 'bilingual-fr') return `${c} ${gNum} de ${total}`;
-    return `${c} ${gNum} of ${total}`;
+    return strings.colorGroupLabel(c, gNum, total);
   }
 
   // Used when all groups for a round are in a single stage: "Group 1 of 3".
   function simpleGroupLabel(gNum: string, total: number): string {
-    if (language === 'fr' || language === 'bilingual-fr') return `Groupe ${gNum} de ${total}`;
-    return `Group ${gNum} of ${total}`;
+    return strings.groupLabel(gNum, total);
   }
 
   function resolveGroupLabel(rid: string, gNum: string, colour: string, total: number): string {
@@ -336,8 +334,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   }
 
   function buildBlankGroupLabel(totalGroups: number): string {
-    if (language === 'fr' || language === 'bilingual-fr') return `Groupe _ de ${totalGroups}`;
-    return `Group _ of ${totalGroups}`;
+    return strings.blankGroupLabel(totalGroups);
   }
 
   // ── Entry buckets ─────────────────────────────────────────────────────────
@@ -390,9 +387,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
       let group: string;
       if (assignment.stationNumber != null) {
-        group = language === 'fr' || language === 'bilingual-fr'
-          ? `Siège ${String(assignment.stationNumber).padStart(2, '0')}`
-          : `Station ${String(assignment.stationNumber).padStart(2, '0')}`;
+        group = strings.stationLabel(String(assignment.stationNumber).padStart(2, '0'));
       } else {
         group = resolveGroupLabel(rid, gNum, stage, totalGroups);
       }
@@ -529,9 +524,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
       for (let i = 0; i < blankCount; i++) {
         const cardGroup = useSeatNumbers
-          ? (language === 'fr' || language === 'bilingual-fr'
-              ? `Siège ${String(i + 1).padStart(2, '0')}`
-              : `Seat ${String(i + 1).padStart(2, '0')}`)
+          ? strings.seatLabel(String(i + 1).padStart(2, '0'))
           : coverLabel;
         finalsEntries.push({
           kind: 'scorecard', timeslot, eventId,
@@ -665,7 +658,14 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     }
   }
 
-  // ── Nametag entries ────────────────────────────────────────────────────────
+  // ── Nametag entries ��─────────────────────��─────────────────────────────────
+  function resolveTitle(titles: NametTagTitleStrings, role: NametTagRole, isFemale: boolean): string {
+    if (role === 'delegate') return titles.delegate(isFemale);
+    if (role === 'organizer') return titles.organizer(isFemale);
+    if (role === 'new-competitor') return titles.newCompetitor(isFemale);
+    return titles.competitor(isFemale);
+  }
+
   const nametags: NametTagEntry[] = [];
   for (const person of wcif.persons) {
     if (!person.registration || person.registration.status !== 'accepted') continue;
@@ -673,20 +673,20 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     const name = person.name.replace(/ \(.*\)$/, '');
     const isFemale = person.gender === 'f';
 
-    let titleEn: string;
-    let titleFr: string;
+    let role: NametTagRole;
     if (person.roles.some(r => r === 'delegate' || r === 'trainee-delegate')) {
-      titleEn = 'DELEGATE'; titleFr = isFemale ? 'DÉLÉGUÉE' : 'DÉLÉGUÉ';
+      role = 'delegate';
     } else if (person.roles.includes('organizer')) {
-      titleEn = 'ORGANIZER'; titleFr = isFemale ? 'ORGANISATRICE' : 'ORGANISATEUR';
+      role = 'organizer';
     } else if (!person.wcaId) {
-      titleEn = 'NEW COMPETITOR'; titleFr = isFemale ? 'NOUVELLE COMPÉTITRICE' : 'NOUVEAU COMPÉTITEUR';
+      role = 'new-competitor';
     } else {
-      titleEn = 'COMPETITOR'; titleFr = isFemale ? 'COMPÉTITRICE' : 'COMPÉTITEUR';
+      role = 'competitor';
     }
 
     const registeredSet = new Set(person.registration.eventIds as string[]);
     const events = WCA_EVENT_ORDER.filter(e => registeredSet.has(e));
+    const dutyArgs = [shortNametTagNames, nametTagDutyStrings.dutyGroup] as const;
 
     nametags.push({
       name,
@@ -694,21 +694,22 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       registrantId: person.registrantId,
       wcaUserId: person.wcaUserId,
       gender: person.gender,
-      titleEn,
-      titleFr,
+      role,
+      titleFront: resolveTitle(nametTagTitles.front, role, isFemale),
+      titleBack:  resolveTitle(nametTagTitles.back,  role, isFemale),
       events,
-      compete:  buildDuties(person.assignments, 'competitor',      activityCode),
-      scramble: buildDuties(person.assignments, 'staff-scrambler', activityCode),
-      judge:    buildDuties(person.assignments, 'staff-judge',     activityCode),
-      run:      buildDuties(person.assignments, 'staff-runner',    activityCode),
+      compete:  buildDuties(person.assignments, 'competitor',      activityCode, ...dutyArgs),
+      scramble: buildDuties(person.assignments, 'staff-scrambler', activityCode, ...dutyArgs),
+      judge:    buildDuties(person.assignments, 'staff-judge',     activityCode, ...dutyArgs),
+      run:      buildDuties(person.assignments, 'staff-runner',    activityCode, ...dutyArgs),
     });
   }
 
   // Delegates → Organizers → Competitors, each group alphabetically by name.
-  const rolePriority = (t: string) =>
-    t === 'DELEGATE' ? 0 : t === 'ORGANIZER' ? 1 : 2;
+  const rolePriority = (r: NametTagRole) =>
+    r === 'delegate' ? 0 : r === 'organizer' ? 1 : 2;
   nametags.sort((a, b) => {
-    const p = rolePriority(a.titleEn) - rolePriority(b.titleEn);
+    const p = rolePriority(a.role) - rolePriority(b.role);
     return p !== 0 ? p : a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
   });
 
