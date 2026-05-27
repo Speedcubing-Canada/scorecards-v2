@@ -8,29 +8,30 @@ import { EVENT_ICONS } from '../assets/events';
 Font.registerHyphenationCallback((word) => [word]);
 
 // ── Page/card geometry (points) ───────────────────────────────────────────
-// Cards preserve original HTML 561:726 aspect ratio (≈ 0.773).
-// Absolute positioning creates cutting guides between cards.
-// Derivation: scale = cardW/561; cardH = cardW*(726/561)
-// LETTER: cardW=282 → gap H=48, gap V=62 (fills 612×792 exactly)
-// A4:     cardW=274 → gap H=47, centering adds 36pt top/bottom margin
+// Dimensions measured from the original Sarah-scorecard LETTER PDF output:
+//   Cards: 257×345pt  |  L/R margins: ~22pt  |  T/B margins: ~24-26pt
+//   H gap: ~53pt  |  V gap: ~52pt  (gap ≈ 2× margin on both axes)
+// A4 uses the same absolute margins/gaps; cardH fills the remaining page height.
+// LETTER: 22+257+53+257+23=612  |  24+345+52+345+26=792
+// A4:     22+249+53+249+22=595  |  22+373+52+373+22=842
 
 const CONFIGS = {
   LETTER: {
-    cardW: 282, cardH: 365,
+    cardW: 257, cardH: 345,
     positions: [
-      { left: 12,  top: 12  },  // top-left    (12pt margins; H gap=24, V gap=38)
-      { left: 318, top: 12  },  // top-right
-      { left: 12,  top: 415 },  // bottom-left
-      { left: 318, top: 415 },  // bottom-right
+      { left: 22,  top: 24  },  // top-left    (L=22, T=24; H gap=53, V gap=52)
+      { left: 332, top: 24  },  // top-right
+      { left: 22,  top: 421 },  // bottom-left
+      { left: 332, top: 421 },  // bottom-right
     ],
   },
   A4: {
-    cardW: 274, cardH: 354,
+    cardW: 249, cardH: 373,
     positions: [
-      { left: 12,  top: 36  },  // 12pt L/R; 36pt T/B (H gap=23, V gap=62)
-      { left: 309, top: 36  },
-      { left: 12,  top: 452 },
-      { left: 309, top: 452 },
+      { left: 22,  top: 22  },  // 22pt margins on all sides; H gap=53, V gap=52
+      { left: 324, top: 22  },
+      { left: 22,  top: 447 },
+      { left: 324, top: 447 },
     ],
   },
 } as const;
@@ -40,18 +41,21 @@ const BORDER_THIN = '1pt solid black';
 const FONT        = 'Helvetica';
 const FONT_BOLD   = 'Helvetica-Bold';
 
-// Column widths: scaled from HTML 65/55/300/70/70 px proportions
-const COL = { scrambler: '12%', attempt: '10%', result: '54%', judge: '12%', competitor: '12%' };
+// Column widths: match HTML original proportions 75/55/290/70/70 out of 560px
+const COL = { scrambler: '13%', attempt: '10%', result: '52%', judge: '12%', competitor: '13%' };
 
-// Row heights: scaled from HTML (64→32, 52→26, 93→47, 98→49, 90→45)
+// Row heights tuned so the two flex spacers around the provisional label are ~6–8pt each.
+// Formula: spacer = (inner(335) - header(56) - eventRow(25) - tableHeader(19)
+//                   - [cutoff(13)] - rows×rowH - provLine(19) - extraRow) / 2
 const ROW_HEIGHTS: Record<ScorecardFormat, number> = {
-  avg5: 32, 'bo2-avg5': 26, mo3: 49, 'bo1-mo3': 47, bo2: 45,
+  avg5: 34, 'bo2-avg5': 31, mo3: 51, 'bo1-mo3': 49, bo2: 55,
 };
 
 // Scale name font to fit the nameCell on one line (Helvetica-Bold ~0.65pt/pt/char).
-// With logo: nameCell ≈ 182pt (no compNameCell). Without logo: nameCell ≈ 242pt.
+// Card inner width ≈ 248pt (257 - 2×border - 2×paddingH). With logo (80pt cell): nameCell≈162pt.
+// Without logo (26pt compName cell): nameCell≈216pt.
 function nameFontSize(name: string, hasLogo: boolean): number {
-  const available = hasLogo ? 175 : 235;
+  const available = hasLogo ? 158 : 210;
   return Math.min(18, Math.max(7, Math.floor(available / Math.max(name.length * 0.65, 1))));
 }
 
@@ -67,10 +71,10 @@ const styles = StyleSheet.create({
 
   // Header (comp name | logo | competitor name + id)
   header: { flexDirection: 'row', height: 56 },
-  compNameCell: { width: 28, justifyContent: 'center', alignItems: 'center' },
+  compNameCell: { width: 26, justifyContent: 'center', alignItems: 'center' },
   compNameText: { fontSize: 8, textAlign: 'center', color: '#111' },
-  logoCell: { width: 88, justifyContent: 'center', alignItems: 'center' },
-  logoImg: { width: 60, height: 60, objectFit: 'contain' },
+  logoCell: { width: 80, justifyContent: 'center', alignItems: 'center' },
+  logoImg: { width: 54, height: 54, objectFit: 'contain' },
   nameCell: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 3 },
   nameText: { fontFamily: FONT_BOLD, textAlign: 'center' },
   idText: { fontSize: 7.5, textAlign: 'center', marginTop: 2, color: '#222' },
@@ -90,7 +94,7 @@ const styles = StyleSheet.create({
   headerRow:      { flexDirection: 'row', backgroundColor: '#f8f8f8' },
   attemptRow:     { flexDirection: 'row' },
   cellBase:       { borderRight: BORDER_THIN, borderBottom: BORDER_THIN, justifyContent: 'center', alignItems: 'center' },
-  headerText:     { fontSize: 6, textAlign: 'center', paddingVertical: 2, paddingHorizontal: 0 },
+  headerText:     { fontSize: 5.5, textAlign: 'center', paddingVertical: 2, paddingHorizontal: 0 },
   attemptNumText: { fontSize: 12, textAlign: 'center', fontFamily: FONT_BOLD },
 
   cutoffLine:     { fontSize: 7, textAlign: 'center', marginVertical: 2, color: '#333' },
@@ -230,7 +234,10 @@ function ScorecardCard({
         </View>
       )}
 
+      {/* Equal spacers centre the provisional label between the last attempt row and the extra row */}
+      <View style={{ flex: 1 }} />
       <Text style={styles.provisionalLine}>{strings.provisionalLine}</Text>
+      <View style={{ flex: 1 }} />
 
       {/* Extra/provisional row */}
       <View style={styles.table}>

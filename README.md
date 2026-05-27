@@ -52,7 +52,7 @@ LoginPage → CompetitionPickerPage → SettingsPage → GeneratePage (download)
 - **LoginPage** — initiates WCA OAuth PKCE; stores the code verifier in `sessionStorage`.
 - **AuthCallbackPage** — exchanges the code for a token; stores the token in `sessionStorage`.
 - **CompetitionPickerPage** — lists competitions managed by the logged-in user (WCA API `?managed_by_me=true`).
-- **SettingsPage** — collects paper format, language, logo, WCA Live ID, and nametag layout options; stores settings in `sessionStorage`.
+- **SettingsPage** — collects paper format, language, logo, and nametag layout options; auto-detects the WCA Live competition ID and per-competitor person IDs from the WCA Live API; stores settings in `sessionStorage`.
 - **GeneratePage** — fetches the WCIF, parses it, and renders the download button. PDF rendering runs inside a Web Worker to keep the UI responsive.
 
 Settings and auth state live in `sessionStorage` only — they are cleared when the tab is closed and are never sent to any server.
@@ -67,7 +67,8 @@ Settings and auth state live in `sessionStorage` only — they are cleared when 
 | `paperFormat` | `A4 \| LETTER` | Page size for all PDFs |
 | `secondRoundMode` | `prefilled \| blanks` | How intermediate-round scorecards are printed |
 | `logoDataUrl` | `string \| null` | Base64 data URL of the competition logo, used on scorecards and optionally on name tags |
-| `wcaLiveId` | `string \| null` | Numeric WCA Live competition ID (e.g. `9667`) used to generate per-competitor WCA Live QR codes on name tag backs |
+| `wcaLiveId` | `string \| null` | Numeric WCA Live competition ID (e.g. `9667`). Auto-detected from the WCA Live API on the Settings page; can be overridden manually. Used to generate per-competitor WCA Live QR codes on name tags |
+| `wcaLivePersonIds` | `Record<number, string> \| null` | Map of `registrantId → WCA Live internal person ID`, fetched automatically after `wcaLiveId` is resolved. The WCA Live person ID differs from the WCA website user ID and is required for correct competitor QR code URLs |
 | `nametagLogoMode` | `hidden \| with-name \| logo-only` | How the logo appears on name tags (see Name tag section) |
 | `nametagQrMode` | `back-only \| both-sides` | Which panels get QR codes (see Name tag section) |
 | `customEvents` | `CustomEvent[]` | Zero or more custom/bonus events (see Advanced section) |
@@ -174,8 +175,8 @@ Every panel (front and back) starts with the same top section:
 - `Courir:` — running assignments
 
 **Back panel** (English title) — two QR codes side by side:
-- **competitiongroups.com** — links to the competitor's personal schedule using their registrant ID
-- **WCA Live** — links to the competitor's live results page if a WCA Live ID is configured; falls back to the WCA Live homepage otherwise
+- **competitiongroups.com** — links to the competitor's personal schedule using their `registrantId`
+- **WCA Live** — links to the competitor's live results page using the WCA Live internal person ID (looked up via `wcaLivePersonIds[registrantId]`); falls back to the WCA Live homepage if the mapping is unavailable
 
 ### QR code modes (`nametagQrMode`)
 
@@ -305,7 +306,7 @@ Persons without a `wcaId` get a placeholder. In French the placeholder is gender
 
 Each accepted person produces one `NametTagEntry`. The `buildDuties` function converts WCIF assignment codes (e.g., `competitor`, `staff-scrambler`, `staff-judge`, `staff-runner`) into human-readable duty strings of the form `"EventName: Group label"`. Duties are grouped into four arrays (`compete`, `scramble`, `judge`, `run`) and sorted alphabetically within each group.
 
-The `registrantId` field is the sequential person ID used by competitiongroups.com; `wcaUserId` is the WCA user account ID used by WCA Live. These two IDs are kept separate because they appear in different QR code URLs.
+The `registrantId` field is the sequential person ID used by competitiongroups.com and as the key into `wcaLivePersonIds` to resolve the WCA Live competitor URL. `wcaUserId` is the WCA website account ID. These are different numbers and must not be confused — WCA Live uses its own internal person IDs (neither `registrantId` nor `wcaUserId`).
 
 ### Extra / spare scorecards (`extras`)
 
@@ -405,8 +406,6 @@ Name tag role badges always use the panel language: French titles on front panel
 ## Planned features
 
 - **First-timer slips** — a small slip printed for competitors who have no WCA ID, given to the delegate to attach to their scorecard after the first solve. Lists the competitor's name and registrant ID so their results can be linked to a new WCA profile.
-
-- **Improve WCA live support** - Find a way to remove having to manually add the comp id from wca live and solve the bug regarding wca live ids that are currently wrong
 
 ---
 

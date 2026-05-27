@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { parseWCIF } from './wcif-parser';
-import type { ScorecardEntry, CoverEntry, ScorecardData } from './wcif-parser';
+import type { ScorecardEntry, CoverEntry, ScorecardData, NametTagEntry } from './wcif-parser';
 import type {
   WCIF, Event, Round, RoundFormat, Activity, ChildActivity,
   Room, Person, EventId, AdvancementCondition,
@@ -16,7 +16,7 @@ beforeEach(() => { _id = 0; });
 const BASE: CompetitionSettings = {
   competitionId: 'TC2024', competitionName: 'Test Comp 2024',
   language: 'en', paperFormat: 'A4', secondRoundMode: 'blanks',
-  logoDataUrl: null, wcaLiveId: null,
+  logoDataUrl: null, wcaLiveId: null, wcaLivePersonIds: null,
   nametagLogoMode: 'hidden', nametagQrMode: 'back-only',
   customEvents: [],
 };
@@ -1162,5 +1162,53 @@ describe('Spanish language', () => {
     const p = per(1, [{ aid: 100 }]);
     const result = parseWCIF(mkWCIF([e], [r], [p]), cfg({ language: 'es' }));
     expect(scs(result.firstRound)[0]?.eventName).toBe('Cubo 3x3x3');
+  });
+});
+
+// ── Nametag entries ───────────────────────────────────────────────────────────
+
+describe('nametag entries', () => {
+  function mkNametag(registrantId: number, wcaUserId: number): NametTagEntry[] {
+    const c = ch(100, '333', 1, 1);
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [c])]);
+    const p: Person = {
+      registrantId, name: `Person ${registrantId}`,
+      wcaUserId, wcaId: `2024T${registrantId}`,
+      countryIso2: 'FR', gender: 'm',
+      registration: { wcaRegistrationId: registrantId, eventIds: ['333'], status: 'accepted', isCompeting: true },
+      avatar: null, roles: [], personalBests: [],
+      assignments: [{ activityId: 100, assignmentCode: 'competitor', stationNumber: null }],
+    };
+    return parseWCIF(mkWCIF([e], [r], [p]), cfg()).nametags;
+  }
+
+  it('registrantId on nametag matches WCIF person registrantId', () => {
+    const tags = mkNametag(42, 99999);
+    expect(tags[0]?.registrantId).toBe(42);
+  });
+
+  it('wcaUserId on nametag matches WCIF person wcaUserId', () => {
+    const tags = mkNametag(42, 99999);
+    expect(tags[0]?.wcaUserId).toBe(99999);
+  });
+
+  it('registrantId and wcaUserId are kept separate — they are different numbers', () => {
+    // registrantId is keyed into wcaLivePersonIds to get the WCA Live person URL ID.
+    // wcaUserId is the WCA website account ID and must not be used for WCA Live URLs.
+    const tags = mkNametag(5, 916687);
+    expect(tags[0]?.registrantId).toBe(5);
+    expect(tags[0]?.wcaUserId).toBe(916687);
+  });
+
+  it('pending persons are excluded from nametags', () => {
+    const c = ch(100, '333', 1, 1);
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [c])]);
+    const accepted = per(1, [{ aid: 100 }]);
+    const pending  = per(2, [],           { status: 'pending' });
+    const result = parseWCIF(mkWCIF([e], [r], [accepted, pending]), cfg());
+    expect(result.nametags.length).toBe(1);
+    expect(result.nametags[0]?.registrantId).toBe(1);
   });
 });
