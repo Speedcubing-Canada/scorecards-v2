@@ -5,7 +5,7 @@ env_variables:
   NODE_ENV: production
   # VITE_WCA_CLIENT_ID is a *build-time* variable inlined into the bundle by Vite.
   # It is injected during `npm run build` in .github/workflows/deploy.yml from the
-  # repo variable of the same name. Listing it here has no effect on the bundle.
+  # repo variable of the same name.
   #
   # WCA_CLIENT_SECRET is a runtime secret. Do NOT put it here, set it via
   # App Engine console env vars (loaded from Secret Manager).
