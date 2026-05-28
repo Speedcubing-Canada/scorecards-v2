@@ -12,12 +12,22 @@ GCP project: **scorecards-v2-prod**
 gcloud app create --region=northamerica-northeast1 --project=scorecards-v2-prod
 gcloud services enable \
   appengine.googleapis.com \
+  cloudbuild.googleapis.com \
   iamcredentials.googleapis.com \
   --project=scorecards-v2-prod
 ```
 
-`iamcredentials.googleapis.com` is required by Workload Identity Federation to mint
-short-lived tokens when impersonating the service account.
+- `iamcredentials.googleapis.com` — required by Workload Identity Federation to mint short-lived tokens
+- `cloudbuild.googleapis.com` — `gcloud app deploy` delegates builds to Cloud Build; the staging bucket (`staging.<project>.appspot.com`) is created when this API is enabled
+
+After enabling Cloud Build, grant the App Engine default service account access to
+that staging bucket (it is not granted automatically):
+
+```bash
+gcloud projects add-iam-policy-binding scorecards-v2-prod \
+  --member="serviceAccount:scorecards-v2-prod@appspot.gserviceaccount.com" \
+  --role="roles/storage.admin"
+```
 
 ---
 
