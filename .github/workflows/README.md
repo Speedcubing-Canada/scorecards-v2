@@ -6,12 +6,18 @@ GCP project: **scorecards-v2-prod**
 
 ---
 
-## 1. Enable App Engine
+## 1. Enable required APIs
 
 ```bash
 gcloud app create --region=northamerica-northeast1 --project=scorecards-v2-prod
-gcloud services enable appengine.googleapis.com --project=scorecards-v2-prod
+gcloud services enable \
+  appengine.googleapis.com \
+  iamcredentials.googleapis.com \
+  --project=scorecards-v2-prod
 ```
+
+`iamcredentials.googleapis.com` is required by Workload Identity Federation to mint
+short-lived tokens when impersonating the service account.
 
 ---
 
