@@ -32,14 +32,29 @@ npm run dev
 
 ### Production deployment
 
-The production build is a static SPA that can be served from any CDN or static host, but it requires one server-side endpoint: **`POST /wca-token`**. This endpoint must:
+Deploys run automatically from [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) on every push to `main`. The workflow builds the bundle on a GitHub-hosted runner (injecting `VITE_WCA_CLIENT_ID` from the repo variable of the same name), then uploads the prebuilt `dist/` to App Engine via Workload Identity Federation. One-time GCP setup (WIF pool, service account, IAM bindings) is documented in [`.github/workflows/README.md`](.github/workflows/README.md).
 
-1. Accept the same `application/x-www-form-urlencoded` body the browser sends.
-2. Append `client_secret` from a server-side environment variable.
-3. Forward the request to `https://www.worldcubeassociation.org/oauth/token`.
-4. Return the response verbatim.
+`package.json`'s `gcp-build` script is intentionally a no-op echo. App Engine's Cloud Build runs that hook after upload; we do **not** want it to rebuild, because the build environment there has no access to `VITE_WCA_CLIENT_ID` and would clobber the good `dist/` with one that ships `client_id=undefined`.
 
-In development, `vite.config.ts` provides this endpoint as a Vite dev-server middleware. In production you need a real server-side proxy (a serverless function, nginx `proxy_pass`, etc.). The WCA token endpoint has no CORS headers, which is why the browser cannot call it directly even without the secret concern.
+For emergency manual deploys, run:
+
+```
+VITE_WCA_CLIENT_ID=... npm run build
+./deploy.sh
+```
+
+`deploy.sh` only calls `gcloud app deploy`; it relies on `dist/` already being built locally with the right env var in scope.
+
+#### Server-side token proxy
+
+The production build is a static SPA served by `server.js`, which also hosts one server-side endpoint: **`POST /wca-token`**. This endpoint:
+
+1. Accepts the same `application/x-www-form-urlencoded` body the browser sends.
+2. Appends `client_secret` from `process.env.WCA_CLIENT_SECRET` (loaded into the App Engine instance from Secret Manager — never bundled into the browser).
+3. Forwards the request to `https://www.worldcubeassociation.org/oauth/token`.
+4. Returns the response verbatim.
+
+In development, `vite.config.ts` provides this endpoint as a Vite dev-server middleware. The WCA token endpoint has no CORS headers, which is why the browser cannot call it directly even without the secret concern.
 
 ---
 

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "start": "node server.js",
-    "gcp-build": "npm run build",
+    "gcp-build": "echo 'Skipping App Engine Cloud Build; dist/ is prebuilt and uploaded'",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",

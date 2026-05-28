@@ -3,6 +3,9 @@ entrypoint: node server.js
 
 env_variables:
   NODE_ENV: production
-  VITE_WCA_CLIENT_ID: 'XaOVOOv2h5PofsQ9ak_IYXJeDPCP69qagzF7WDdd03E'
-  # WCA_CLIENT_SECRET must be set separately, do NOT put it here.
-  # manage it via Cloud Secret Manager and load it at startup.
+  # VITE_WCA_CLIENT_ID is a *build-time* variable inlined into the bundle by Vite.
+  # It is injected during `npm run build` in .github/workflows/deploy.yml from the
+  # repo variable of the same name. Listing it here has no effect on the bundle.
+  #
+  # WCA_CLIENT_SECRET is a runtime secret. Do NOT put it here — set it via
+  # App Engine console env vars (loaded from Secret Manager).
