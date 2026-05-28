@@ -44,6 +44,17 @@ for ROLE in \
 done
 ```
 
+`gcloud app deploy` delegates the actual build to Cloud Build, which runs as the
+App Engine default service account. Grant `github-deploy` permission to act as it:
+
+```bash
+gcloud iam service-accounts add-iam-policy-binding \
+  scorecards-v2-prod@appspot.gserviceaccount.com \
+  --member="serviceAccount:github-deploy@scorecards-v2-prod.iam.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountUser" \
+  --project=scorecards-v2-prod
+```
+
 ---
 
 ## 3. Configure Workload Identity Federation
