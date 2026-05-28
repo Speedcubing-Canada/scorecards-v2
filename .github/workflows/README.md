@@ -110,12 +110,42 @@ gcloud iam workload-identity-pools providers describe github-provider \
 
 ---
 
-## 4. Set WCA_CLIENT_SECRET on App Engine
+## 4. Store WCA_CLIENT_SECRET in Secret Manager
 
-The OAuth client secret must **not** go through GitHub Actions. Set it in the GCP Console:
+The OAuth client secret must **not** go through GitHub Actions or `app.yaml`. App
+Engine Standard bakes env vars from `app.yaml` into each new version at deploy
+time, so any value set manually in the console is dropped on the next workflow
+run. Instead, `server.js` fetches it from Secret Manager at startup.
 
-**App Engine → Versions → (select version) → Edit → Environment variables**
-Add: `WCA_CLIENT_SECRET = <your secret>`
+Enable the API and create the secret (run once, then paste the secret value at
+the prompt and press Ctrl-D):
+
+```bash
+gcloud services enable secretmanager.googleapis.com --project=scorecards-v2-prod
+
+gcloud secrets create WCA_CLIENT_SECRET \
+  --replication-policy=automatic \
+  --project=scorecards-v2-prod
+
+gcloud secrets versions add WCA_CLIENT_SECRET \
+  --data-file=- \
+  --project=scorecards-v2-prod
+```
+
+Grant the App Engine default service account read access to the secret. This is
+the identity `server.js` runs as on App Engine, and it's what the Secret Manager
+client picks up via Application Default Credentials:
+
+```bash
+gcloud secrets add-iam-policy-binding WCA_CLIENT_SECRET \
+  --member="serviceAccount:scorecards-v2-prod@appspot.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor" \
+  --project=scorecards-v2-prod
+```
+
+To rotate the secret later, add a new version with `gcloud secrets versions add`
+— the server reads the `latest` alias on startup, so the new value takes effect
+on the next instance start (or after `gcloud app versions migrate`).
 
 ---
 

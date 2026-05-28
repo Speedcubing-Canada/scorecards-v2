@@ -10,8 +10,32 @@ const DIST_DIR = path.join(__dirname, 'dist');
 const INDEX_PATH = path.join(DIST_DIR, 'index.html');
 const PORT = Number(process.env.PORT || 8080);
 
-// Injected server-side so the secret is never exposed in the browser bundle.
-const WCA_CLIENT_SECRET = process.env.WCA_CLIENT_SECRET;
+// On App Engine, fetch from Secret Manager (App Engine versions don't preserve
+// console-set env vars across deploys, and we don't want the secret in app.yaml
+// or in CI). Locally, fall back to .env via process.env.
+async function loadClientSecret() {
+  if (process.env.WCA_CLIENT_SECRET) return process.env.WCA_CLIENT_SECRET;
+
+  const projectId =
+    process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT;
+  if (!projectId) return '';
+
+  const { SecretManagerServiceClient } = await import(
+    '@google-cloud/secret-manager'
+  );
+  const client = new SecretManagerServiceClient();
+  const [version] = await client.accessSecretVersion({
+    name: `projects/${projectId}/secrets/WCA_CLIENT_SECRET/versions/latest`,
+  });
+  return version.payload.data.toString();
+}
+
+const WCA_CLIENT_SECRET = await loadClientSecret();
+if (!WCA_CLIENT_SECRET) {
+  console.warn(
+    'WCA_CLIENT_SECRET is not set — /wca-token will return invalid_client',
+  );
+}
 
 const app = express();
 app.disable('x-powered-by');
