@@ -53,7 +53,7 @@ export type WorkerResponse =
 const workerSelf = self as any;
 
 async function renderPdf(entries: ScorecardData[], settings: CompetitionSettings): Promise<Uint8Array> {
-  const element = React.createElement(ScorecardDocument, { entries, settings });
+  const element = React.createElement(ScorecardDocument, { entries, settings }) as any;
   const blob = await pdf(element).toBlob();
   const ab = await blob.arrayBuffer();
   return new Uint8Array(ab);
