@@ -7,9 +7,6 @@ set -euo pipefail
 
 PROJECT="scorecards-v2-prod"
 
-echo "Building frontend…"
-npm run build
-
 echo "gcloud app deploy app.yaml --project $PROJECT --quiet"
 gcloud app deploy app.yaml --project "$PROJECT" --quiet
 
