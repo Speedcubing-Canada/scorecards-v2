@@ -1,9 +1,10 @@
-'use strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import express from 'express';
+import helmet from 'helmet';
 
-const fs = require('node:fs');
-const path = require('node:path');
-const express = require('express');
-const helmet = require('helmet');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const DIST_DIR = path.join(__dirname, 'dist');
 const INDEX_PATH = path.join(DIST_DIR, 'index.html');
