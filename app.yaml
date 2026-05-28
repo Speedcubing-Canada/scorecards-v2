@@ -7,5 +7,5 @@ env_variables:
   # It is injected during `npm run build` in .github/workflows/deploy.yml from the
   # repo variable of the same name. Listing it here has no effect on the bundle.
   #
-  # WCA_CLIENT_SECRET is a runtime secret. Do NOT put it here — set it via
+  # WCA_CLIENT_SECRET is a runtime secret. Do NOT put it here, set it via
   # App Engine console env vars (loaded from Secret Manager).
