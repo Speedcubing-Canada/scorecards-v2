@@ -8,7 +8,8 @@
     "upload": "Télécharger",
     "choose_file": "Choisir un fichier",
     "optional": "optionnel",
-    "loading": "Chargement…"
+    "loading": "Chargement…",
+    "menu": "Menu"
   },
   "login": {
     "subtitle": "Générez des feuilles de score et des badges imprimables pour votre compétition WCA.",

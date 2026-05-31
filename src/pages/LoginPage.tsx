@@ -4,15 +4,17 @@ import { CLIENT_ID } from '../auth/wca';
 import LanguageSelect from '../components/LanguageSelect';
 import ThemeToggle from '../components/ThemeToggle';
 import Logo from '../components/Logo';
+import { useIsMobile } from '../lib/useIsMobile';
 
 export default function LoginPage() {
   const { t } = useTranslation();
   const { login } = useAuth();
+  const isMobile = useIsMobile();
   const missingClientId = !CLIENT_ID;
 
   return (
     <div style={styles.container}>
-      <div style={styles.card}>
+      <div style={{ ...styles.card, ...(isMobile ? styles.cardMobile : {}) }}>
         <div style={styles.langRow}>
           <LanguageSelect />
           <ThemeToggle />
@@ -62,6 +64,7 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: 'var(--shadow-lg)',
     textAlign: 'center',
   },
+  cardMobile: { padding: '32px 20px' },
   langRow: {
     display: 'flex',
     justifyContent: 'flex-end',

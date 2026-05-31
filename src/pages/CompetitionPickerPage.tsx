@@ -5,11 +5,13 @@ import { useAuth } from '../auth/AuthContext';
 import { fetchManagedCompetitions } from '../auth/wca';
 import type { WCACompetition } from '../types/wcif';
 import Header from '../components/Header';
+import { useIsMobile } from '../lib/useIsMobile';
 
 export default function CompetitionPickerPage() {
   const { t } = useTranslation();
   const { token } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [competitions, setCompetitions] = useState<WCACompetition[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export default function CompetitionPickerPage() {
     <div style={styles.container}>
       <Header showUser showSignOut />
 
-      <main style={styles.main}>
+      <main style={{ ...styles.main, ...(isMobile ? styles.mainMobile : {}) }}>
         <h2 style={styles.heading}>{t('picker.heading')}</h2>
         <p style={styles.hint}>{t('picker.hint')}</p>
 
@@ -50,7 +52,7 @@ export default function CompetitionPickerPage() {
           <p style={styles.status}>{t('picker.empty')}</p>
         )}
 
-        <div style={styles.grid}>
+        <div style={{ ...styles.grid, ...(isMobile ? styles.gridMobile : {}) }}>
           {competitions.map((comp) => (
             <button
               key={comp.id}
@@ -87,6 +89,7 @@ const styles: Record<string, React.CSSProperties> = {
     margin: '0 auto',
     padding: '40px 24px',
   },
+  mainMobile: { padding: '24px 16px' },
   heading: { margin: '0 0 8px', fontSize: 22, fontWeight: 700, color: 'var(--text)' },
   hint: { margin: '0 0 28px', fontSize: 14, color: 'var(--text-muted)' },
   status: { fontSize: 15, color: 'var(--text-muted)', textAlign: 'center', padding: '32px 0' },
@@ -95,6 +98,7 @@ const styles: Record<string, React.CSSProperties> = {
     gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
     gap: 16,
   },
+  gridMobile: { gridTemplateColumns: '1fr' },
   compCard: {
     backgroundColor: 'var(--surface)',
     border: '1px solid var(--border)',

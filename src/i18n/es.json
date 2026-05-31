@@ -8,7 +8,8 @@
     "upload": "Subir",
     "choose_file": "Elegir archivo",
     "optional": "opcional",
-    "loading": "Cargando…"
+    "loading": "Cargando…",
+    "menu": "Menú"
   },
   "login": {
     "subtitle": "Genere hojas de puntuación y etiquetas de nombre listas para imprimir para su competencia WCA.",

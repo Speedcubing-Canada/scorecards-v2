@@ -94,6 +94,18 @@ The SCC logo's wordmark and lines are black and would vanish on the dark backgro
 
 Dark mode affects the on-screen UI only. The generated PDFs (`src/pdf/*`) use `@react-pdf/renderer`'s own isolated `StyleSheet` with white backgrounds and are intentionally unaffected, so printed output is identical in either theme.
 
+### Responsive / mobile layout
+
+The UI adapts to phone-sized screens at a single breakpoint of **600px** (viewports `≤ 600px` get the mobile layout; wider viewports keep the unchanged desktop layout). Because every component styles itself with inline `React.CSSProperties` objects rather than CSS classes, CSS `@media` queries can't override those inline styles — so the breakpoint is read in JavaScript via `src/lib/useIsMobile.ts`. That module exposes the `useIsMobile()` hook (backed by `window.matchMedia`, updates live on resize), the `MOBILE_BREAKPOINT` constant, and a pure `isMobileWidth(width)` helper that is unit-tested in `useIsMobile.test.ts`.
+
+Components call `useIsMobile()` and spread a small mobile-only style override into their existing style object. The notable adaptations:
+
+- **Header** (`src/components/Header.tsx`) — on mobile the language dropdown, theme toggle, user info, and sign-out collapse behind a **hamburger button** that opens a dropdown panel (closes on outside click / sign-out). The desktop header markup is unchanged.
+- **Login** — card padding is reduced so it fits a narrow screen.
+- **Competition picker** — the card grid drops to a single column.
+- **Generate** — the stats grid goes from four columns to two, with a smaller value font.
+- **Settings** — the custom-event "format" and "cutoff / time-limit" rows stack vertically.
+
 ---
 
 ## Settings reference

@@ -5,6 +5,7 @@ import type { CompetitionSettings, CustomEvent, Language, NametTagLogoMode, Name
 import { EVENT_ICONS } from '../assets/events';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 import Header from '../components/Header';
+import { useIsMobile } from '../lib/useIsMobile';
 import { fetchWcaLiveId, fetchWcaLivePersonIds } from '../auth/wca';
 
 const WCA_EVENT_LABELS: Record<string, string> = {
@@ -18,6 +19,7 @@ const WCA_EVENT_LABELS: Record<string, string> = {
 export default function SettingsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const competitionId = sessionStorage.getItem('selected_competition_id') ?? '';
   const competitionName = sessionStorage.getItem('selected_competition_name') ?? '';
@@ -164,7 +166,7 @@ export default function SettingsPage() {
     <div style={s.page}>
       <Header showBack onBack={() => navigate('/competitions')} showSignOut />
 
-      <main style={s.main}>
+      <main style={{ ...s.main, ...(isMobile ? s.mainMobile : {}) }}>
         <div style={s.compBadge}>{competitionName}</div>
         <h2 style={s.heading}>{t('settings.heading')}</h2>
 
@@ -387,7 +389,7 @@ export default function SettingsPage() {
                     <button style={s.removeBtn} onClick={() => removeCustomEvent(i)}>{t('common.remove')}</button>
                   </div>
 
-                  <div style={{ marginTop: 12, display: 'flex', gap: 16, alignItems: 'center' }}>
+                  <div style={{ marginTop: 12, display: 'flex', gap: isMobile ? 8 : 16, alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row' }}>
                     <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>{t('settings.advanced.format_label')}</span>
                     {(['avg5', 'mo3'] as const).map(fmt => (
                       <label key={fmt} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontSize: 13 }}>
@@ -402,7 +404,7 @@ export default function SettingsPage() {
                     ))}
                   </div>
 
-                  <div style={{ marginTop: 10, display: 'flex', gap: 12 }}>
+                  <div style={{ marginTop: 10, display: 'flex', gap: 12, flexDirection: isMobile ? 'column' : 'row' }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>
                         {t('settings.advanced.cutoff_label')}{' '}
@@ -510,6 +512,7 @@ export default function SettingsPage() {
 const s: Record<string, React.CSSProperties> = {
   page: { minHeight: '100vh', backgroundColor: 'var(--bg)' },
   main: { maxWidth: 640, margin: '0 auto', padding: '32px 24px 80px' },
+  mainMobile: { padding: '24px 16px 80px' },
   compBadge: {
     display: 'inline-block', backgroundColor: 'var(--primary-soft-bg)', color: 'var(--primary-soft-text)',
     borderRadius: 6, padding: '4px 12px', fontSize: 13, fontWeight: 600, marginBottom: 12,

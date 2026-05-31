@@ -8,6 +8,8 @@ import type { WCIF } from '../types/wcif';
 import { parseWCIF, type ParsedWCIF } from '../lib/wcif-parser';
 import type { WorkerRequest, WorkerResponse } from '../pdf/scorecardWorker';
 import Header from '../components/Header';
+import { useIsMobile } from '../lib/useIsMobile';
+import { downloadButtonFontSize } from '../lib/downloadButtonFontSize';
 import i18n from '../i18n/index';
 
 type Status = 'idle' | 'fetching' | 'parsing' | 'ready' | 'building' | 'error';
@@ -16,6 +18,7 @@ export default function GeneratePage() {
   const { t } = useTranslation();
   const { token } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const raw = sessionStorage.getItem('competition_settings');
   const settings: CompetitionSettings | null = raw ? JSON.parse(raw) : null;
@@ -128,7 +131,7 @@ export default function GeneratePage() {
     <div style={s.page}>
       <Header showBack onBack={() => navigate('/settings')} showSignOut />
 
-      <main style={s.main}>
+      <main style={{ ...s.main, ...(isMobile ? s.mainMobile : {}) }}>
         <div style={s.compBadge}>{settings.competitionName}</div>
         <h2 style={s.pageTitle}>{t('generate.title')}</h2>
 
@@ -150,7 +153,7 @@ export default function GeneratePage() {
         {(status === 'ready' || status === 'building') && (
           <>
             {status === 'ready' && (
-              <div style={s.stats}>
+              <div style={{ ...s.stats, ...(isMobile ? s.statsMobile : {}) }}>
                 <Stat label={t('generate.stats.scorecards')} value={scorecardCount} />
                 <Stat label={t('generate.stats.cover_cards')} value={coverCount} />
                 <Stat label={t('generate.stats.pdfs_in_zip')} value={pdfCount} />
@@ -158,15 +161,24 @@ export default function GeneratePage() {
               </div>
             )}
 
-            <button
-              style={{ ...s.downloadBtn, ...(status === 'building' ? s.downloadBtnDisabled : {}) }}
-              onClick={handleDownload}
-              disabled={status === 'building'}
-            >
-              {status === 'building'
+            {(() => {
+              const buttonLabel = status === 'building'
                 ? t('generate.building_button')
-                : t('generate.download_button', { filename })}
-            </button>
+                : t('generate.download_button', { filename });
+              return (
+                <button
+                  style={{
+                    ...s.downloadBtn,
+                    fontSize: downloadButtonFontSize(buttonLabel),
+                    ...(status === 'building' ? s.downloadBtnDisabled : {}),
+                  }}
+                  onClick={handleDownload}
+                  disabled={status === 'building'}
+                >
+                  {buttonLabel}
+                </button>
+              );
+            })()}
           </>
         )}
       </main>
@@ -184,9 +196,10 @@ function StatusBox({ icon, text, isError = false }: { icon: string; text: string
 }
 
 function Stat({ label, value }: { label: string; value: number | string }) {
+  const isMobile = useIsMobile();
   return (
     <div style={s.stat}>
-      <div style={s.statValue}>{value}</div>
+      <div style={{ ...s.statValue, ...(isMobile ? s.statValueMobile : {}) }}>{value}</div>
       <div style={s.statLabel}>{label}</div>
     </div>
   );
@@ -195,6 +208,7 @@ function Stat({ label, value }: { label: string; value: number | string }) {
 const s: Record<string, React.CSSProperties> = {
   page: { minHeight: '100vh', backgroundColor: 'var(--bg)' },
   main: { maxWidth: 680, margin: '0 auto', padding: '32px 24px' },
+  mainMobile: { padding: '24px 16px' },
   compBadge: {
     display: 'inline-block', backgroundColor: 'var(--primary-soft-bg)', color: 'var(--primary-soft-text)',
     borderRadius: 6, padding: '4px 12px', fontSize: 13, fontWeight: 600, marginBottom: 8,
@@ -209,17 +223,19 @@ const s: Record<string, React.CSSProperties> = {
   stats: {
     display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24,
   },
+  statsMobile: { gridTemplateColumns: 'repeat(2, 1fr)' },
   stat: {
     backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
     borderRadius: 8, padding: '16px', textAlign: 'center',
   },
   statValue: { fontSize: 28, fontWeight: 700, color: 'var(--primary)', marginBottom: 4 },
+  statValueMobile: { fontSize: 22 },
   statLabel: { fontSize: 12, color: 'var(--text-muted)' },
   downloadBtn: {
     display: 'block', backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)',
     border: 'none', borderRadius: 8, padding: '16px', fontSize: 15,
     fontWeight: 700, textAlign: 'center', cursor: 'pointer', width: '100%',
-    fontFamily: 'inherit', letterSpacing: '-0.01em',
+    fontFamily: 'inherit', letterSpacing: '-0.01em', overflowWrap: 'anywhere',
   },
   downloadBtnDisabled: {
     backgroundColor: 'var(--primary-disabled)', cursor: 'not-allowed',
