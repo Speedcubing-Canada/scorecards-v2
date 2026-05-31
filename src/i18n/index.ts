@@ -5,6 +5,15 @@ import en from './en.json';
 import fr from './fr.json';
 import es from './es.json';
 
+/** Single source of truth for the languages offered in the UI. */
+export const LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'fr', label: 'Français' },
+  { code: 'es', label: 'Español' },
+] as const;
+
+export type UILang = typeof LANGUAGES[number]['code'];
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)

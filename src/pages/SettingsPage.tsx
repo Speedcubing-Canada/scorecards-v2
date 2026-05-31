@@ -246,7 +246,7 @@ export default function SettingsPage() {
             )}
           </h3>
           {wcaLiveFetchStatus === 'not-found' && (
-            <p style={{ ...s.hint, color: '#b45309' }}>{t('settings.wca_live.not_found')}</p>
+            <p style={{ ...s.hint, color: 'var(--warning-text)' }}>{t('settings.wca_live.not_found')}</p>
           )}
           {wcaLiveFetchStatus !== 'not-found' && (
             <p style={s.hint}>{t('settings.wca_live.hint')}</p>
@@ -287,7 +287,7 @@ export default function SettingsPage() {
                   type="checkbox"
                   checked={useDefaultLogo}
                   onChange={e => setUseDefaultLogo(e.target.checked)}
-                  style={{ marginTop: 2, accentColor: '#d32f2f', flexShrink: 0 }}
+                  style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
                 />
                 <img src={SCC_DEFAULT_LOGO} alt="Speedcubing Canada logo" style={s.logoImg} />
                 <div style={s.logoMeta}>
@@ -313,7 +313,7 @@ export default function SettingsPage() {
 
           {(logoDataUrl || useDefaultLogo) && (
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', marginBottom: 8 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>
                 {t('settings.nametag.logo_on_nametags')}
               </div>
               <div style={s.optionGroup}>
@@ -337,7 +337,7 @@ export default function SettingsPage() {
             </div>
           )}
 
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', marginBottom: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>
             {t('settings.nametag.qr_codes')}
           </div>
           <div style={s.optionGroup}>
@@ -388,14 +388,14 @@ export default function SettingsPage() {
                   </div>
 
                   <div style={{ marginTop: 12, display: 'flex', gap: 16, alignItems: 'center' }}>
-                    <span style={{ fontSize: 12, color: '#666', flexShrink: 0 }}>{t('settings.advanced.format_label')}</span>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>{t('settings.advanced.format_label')}</span>
                     {(['avg5', 'mo3'] as const).map(fmt => (
                       <label key={fmt} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontSize: 13 }}>
                         <input
                           type="radio"
                           checked={custom.format === fmt}
                           onChange={() => updateCustomFormat(i, fmt)}
-                          style={{ accentColor: '#d32f2f' }}
+                          style={{ accentColor: 'var(--primary)' }}
                         />
                         {fmt === 'avg5' ? t('settings.advanced.avg5') : t('settings.advanced.mo3')}
                       </label>
@@ -404,9 +404,9 @@ export default function SettingsPage() {
 
                   <div style={{ marginTop: 10, display: 'flex', gap: 12 }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>
                         {t('settings.advanced.cutoff_label')}{' '}
-                        <span style={{ color: '#aaa' }}>({t('settings.advanced.cutoff_optional')})</span>
+                        <span style={{ color: 'var(--text-faint)' }}>({t('settings.advanced.cutoff_optional')})</span>
                       </div>
                       <input
                         type="text"
@@ -417,9 +417,9 @@ export default function SettingsPage() {
                       />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>
                         {t('settings.advanced.time_limit_label')}{' '}
-                        <span style={{ color: '#aaa' }}>({t('settings.advanced.time_limit_optional')})</span>
+                        <span style={{ color: 'var(--text-faint)' }}>({t('settings.advanced.time_limit_optional')})</span>
                       </div>
                       <input
                         type="text"
@@ -432,7 +432,7 @@ export default function SettingsPage() {
                   </div>
 
                   <div style={{ marginTop: 12 }}>
-                    <div style={{ fontSize: 12, color: '#666', marginBottom: 6 }}>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
                       {t('settings.advanced.icon_hint')}
                       {custom.iconDataUrl && (
                         <button style={{ ...s.removeBtn, marginLeft: 10 }} onClick={() => updateCustomIcon(i, null)}>
@@ -484,7 +484,7 @@ export default function SettingsPage() {
                   {custom.iconDataUrl && (
                     <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                       <img src={custom.iconDataUrl} alt="selected icon" style={{ width: 28, height: 28, objectFit: 'contain' }} />
-                      <span style={{ fontSize: 12, color: '#555' }}>{t('settings.advanced.icon_selected')}</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.advanced.icon_selected')}</span>
                     </div>
                   )}
                 </div>
@@ -508,67 +508,68 @@ export default function SettingsPage() {
 }
 
 const s: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', backgroundColor: '#f5f5f5' },
+  page: { minHeight: '100vh', backgroundColor: 'var(--bg)' },
   main: { maxWidth: 640, margin: '0 auto', padding: '32px 24px 80px' },
   compBadge: {
-    display: 'inline-block', backgroundColor: '#ffebee', color: '#d32f2f',
+    display: 'inline-block', backgroundColor: 'var(--primary-soft-bg)', color: 'var(--primary-soft-text)',
     borderRadius: 6, padding: '4px 12px', fontSize: 13, fontWeight: 600, marginBottom: 12,
   },
-  heading: { margin: '0 0 28px', fontSize: 22, fontWeight: 700, color: '#1a1a1a' },
+  heading: { margin: '0 0 28px', fontSize: 22, fontWeight: 700, color: 'var(--text)' },
   section: { marginBottom: 32 },
-  sectionTitle: { margin: '0 0 12px', fontSize: 15, fontWeight: 700, color: '#1a1a1a' },
-  optional: { fontWeight: 400, color: '#888', fontSize: 13 },
-  wcaLiveLoading: { fontWeight: 400, color: '#888', fontSize: 12 },
-  wcaLiveFound: { fontWeight: 600, color: '#15803d', fontSize: 12 },
-  hint: { margin: '0 0 12px', fontSize: 13, color: '#666' },
+  sectionTitle: { margin: '0 0 12px', fontSize: 15, fontWeight: 700, color: 'var(--text)' },
+  optional: { fontWeight: 400, color: 'var(--text-subtle)', fontSize: 13 },
+  wcaLiveLoading: { fontWeight: 400, color: 'var(--text-subtle)', fontSize: 12 },
+  wcaLiveFound: { fontWeight: 600, color: 'var(--success)', fontSize: 12 },
+  hint: { margin: '0 0 12px', fontSize: 13, color: 'var(--text-muted)' },
   optionGroup: { display: 'flex', flexDirection: 'column', gap: 8 },
   optionCard: {
     display: 'flex', alignItems: 'flex-start', gap: 12,
-    backgroundColor: '#fff',
-    borderWidth: 2, borderStyle: 'solid', borderColor: '#e0e0e0',
+    backgroundColor: 'var(--surface)',
+    borderWidth: 2, borderStyle: 'solid', borderColor: 'var(--border)',
     borderRadius: 8, padding: '12px 16px', cursor: 'pointer',
   },
-  optionCardActive: { borderColor: '#d32f2f', backgroundColor: '#ffebee' },
-  radio: { marginTop: 2, accentColor: '#d32f2f', flexShrink: 0 },
-  optionLabel: { fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 2 },
-  optionDesc: { fontSize: 13, color: '#666' },
+  optionCardActive: { borderColor: 'var(--primary)', backgroundColor: 'var(--primary-soft-bg)' },
+  radio: { marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 },
+  optionLabel: { fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 2 },
+  optionDesc: { fontSize: 13, color: 'var(--text-muted)' },
   logoPreview: {
     display: 'flex', alignItems: 'center', gap: 16,
-    backgroundColor: '#fff', border: '1px solid #e0e0e0',
+    backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
     borderRadius: 8, padding: '12px 16px',
   },
   logoImg: { width: 64, height: 64, objectFit: 'contain', borderRadius: 4 },
   logoMeta: { display: 'flex', flexDirection: 'column', gap: 6 },
-  logoName: { fontSize: 13, color: '#444' },
+  logoName: { fontSize: 13, color: 'var(--text-muted)' },
   removeBtn: {
-    background: 'none', border: '1px solid #ccc', borderRadius: 5,
-    padding: '3px 10px', fontSize: 12, cursor: 'pointer', color: '#666',
+    background: 'none', border: '1px solid var(--border-strong)', borderRadius: 5,
+    padding: '3px 10px', fontSize: 12, cursor: 'pointer', color: 'var(--text-muted)',
   },
   uploadBtn: {
-    backgroundColor: '#fff', border: '2px dashed #ccc', borderRadius: 8,
-    padding: '14px 24px', fontSize: 14, cursor: 'pointer', color: '#555',
+    backgroundColor: 'var(--surface)', border: '2px dashed var(--border-strong)', borderRadius: 8,
+    padding: '14px 24px', fontSize: 14, cursor: 'pointer', color: 'var(--text-muted)',
     width: '100%',
   },
   textInput: {
     width: '100%', boxSizing: 'border-box',
-    border: '2px solid #e0e0e0', borderRadius: 8,
+    backgroundColor: 'var(--surface)', color: 'var(--text)',
+    border: '2px solid var(--border)', borderRadius: 8,
     padding: '10px 14px', fontSize: 14, fontFamily: 'inherit',
     outline: 'none',
   },
   footer: { marginTop: 40 },
   submitBtn: {
-    backgroundColor: '#d32f2f', color: '#fff', border: 'none',
+    backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)', border: 'none',
     borderRadius: 8, padding: '14px 32px', fontSize: 15, fontWeight: 700,
     cursor: 'pointer', width: '100%', fontFamily: 'inherit', letterSpacing: '-0.01em',
   },
   advancedToggle: {
     background: 'none', border: 'none', padding: 0,
-    fontSize: 15, fontWeight: 700, color: '#1a1a1a', cursor: 'pointer',
+    fontSize: 15, fontWeight: 700, color: 'var(--text)', cursor: 'pointer',
     display: 'flex', alignItems: 'center', gap: 6,
   },
-  advancedToggleArrow: { fontSize: 13, color: '#555' },
+  advancedToggleArrow: { fontSize: 13, color: 'var(--text-muted)' },
   customEventCard: {
-    backgroundColor: '#fff', border: '1px solid #e0e0e0',
+    backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
     borderRadius: 8, padding: '14px 16px', marginBottom: 12,
   },
   customEventHeader: { display: 'flex', alignItems: 'center', gap: 10 },
@@ -576,16 +577,16 @@ const s: Record<string, React.CSSProperties> = {
   iconBtn: {
     display: 'flex', flexDirection: 'column', alignItems: 'center',
     gap: 3, padding: '5px 6px',
-    borderWidth: 2, borderStyle: 'solid', borderColor: '#e0e0e0',
-    borderRadius: 6, cursor: 'pointer', backgroundColor: '#fff',
+    borderWidth: 2, borderStyle: 'solid', borderColor: 'var(--border)',
+    borderRadius: 6, cursor: 'pointer', backgroundColor: 'var(--surface)',
     minWidth: 38, userSelect: 'none', outline: 'none',
   },
-  iconBtnActive: { borderColor: '#d32f2f', backgroundColor: '#ffebee' },
-  iconLabel: { fontSize: 9, color: '#555', textAlign: 'center', lineHeight: '1.1' },
+  iconBtnActive: { borderColor: 'var(--primary)', backgroundColor: 'var(--primary-soft-bg)' },
+  iconLabel: { fontSize: 9, color: 'var(--text-muted)', textAlign: 'center', lineHeight: '1.1' },
   addCustomBtn: {
-    backgroundColor: '#fff', border: '2px dashed #bbb',
+    backgroundColor: 'var(--surface)', border: '2px dashed var(--border-strong)',
     borderRadius: 8, padding: '10px 20px', fontSize: 14,
-    cursor: 'pointer', color: '#555', width: '100%',
+    cursor: 'pointer', color: 'var(--text-muted)', width: '100%',
     marginTop: 4,
   },
 };

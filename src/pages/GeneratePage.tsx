@@ -178,7 +178,7 @@ function StatusBox({ icon, text, isError = false }: { icon: string; text: string
   return (
     <div style={{ ...s.statusBox, ...(isError ? s.statusError : {}) }}>
       <span style={{ fontSize: 24 }}>{icon}</span>
-      <span style={{ fontSize: 14, color: isError ? '#c00' : '#555' }}>{text}</span>
+      <span style={{ fontSize: 14, color: isError ? 'var(--danger)' : 'var(--text-muted)' }}>{text}</span>
     </div>
   );
 }
@@ -193,51 +193,51 @@ function Stat({ label, value }: { label: string; value: number | string }) {
 }
 
 const s: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', backgroundColor: '#f5f5f5' },
+  page: { minHeight: '100vh', backgroundColor: 'var(--bg)' },
   main: { maxWidth: 680, margin: '0 auto', padding: '32px 24px' },
   compBadge: {
-    display: 'inline-block', backgroundColor: '#ffebee', color: '#d32f2f',
+    display: 'inline-block', backgroundColor: 'var(--primary-soft-bg)', color: 'var(--primary-soft-text)',
     borderRadius: 6, padding: '4px 12px', fontSize: 13, fontWeight: 600, marginBottom: 8,
   },
-  pageTitle: { margin: '0 0 24px', fontSize: 22, fontWeight: 700, color: '#1a1a1a' },
+  pageTitle: { margin: '0 0 24px', fontSize: 22, fontWeight: 700, color: 'var(--text)' },
   statusBox: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
-    backgroundColor: '#fff', border: '1px solid #e0e0e0',
+    backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
     borderRadius: 10, padding: '40px 24px', textAlign: 'center', marginBottom: 24,
   },
-  statusError: { borderColor: '#fca5a5', backgroundColor: '#fff5f5' },
+  statusError: { borderColor: 'var(--danger)', backgroundColor: 'var(--primary-soft-bg)' },
   stats: {
     display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24,
   },
   stat: {
-    backgroundColor: '#fff', border: '1px solid #e0e0e0',
+    backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
     borderRadius: 8, padding: '16px', textAlign: 'center',
   },
-  statValue: { fontSize: 28, fontWeight: 700, color: '#d32f2f', marginBottom: 4 },
-  statLabel: { fontSize: 12, color: '#666' },
+  statValue: { fontSize: 28, fontWeight: 700, color: 'var(--primary)', marginBottom: 4 },
+  statLabel: { fontSize: 12, color: 'var(--text-muted)' },
   downloadBtn: {
-    display: 'block', backgroundColor: '#d32f2f', color: '#fff',
+    display: 'block', backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)',
     border: 'none', borderRadius: 8, padding: '16px', fontSize: 15,
     fontWeight: 700, textAlign: 'center', cursor: 'pointer', width: '100%',
     fontFamily: 'inherit', letterSpacing: '-0.01em',
   },
   downloadBtnDisabled: {
-    backgroundColor: '#ef9a9a', cursor: 'not-allowed',
+    backgroundColor: 'var(--primary-disabled)', cursor: 'not-allowed',
   },
   progressBox: {
-    backgroundColor: '#fff', border: '1px solid #e0e0e0',
+    backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
     borderRadius: 10, padding: '24px 28px', marginBottom: 24,
   },
   progressHeader: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12,
   },
-  progressLabel: { fontSize: 14, color: '#555' },
-  progressPct: { fontSize: 20, fontWeight: 700, color: '#d32f2f' },
+  progressLabel: { fontSize: 14, color: 'var(--text-muted)' },
+  progressPct: { fontSize: 20, fontWeight: 700, color: 'var(--primary)' },
   progressTrack: {
-    height: 10, backgroundColor: '#ffebee', borderRadius: 5, overflow: 'hidden',
+    height: 10, backgroundColor: 'var(--primary-soft-bg)', borderRadius: 5, overflow: 'hidden',
   },
   progressFill: {
-    height: '100%', backgroundColor: '#d32f2f', borderRadius: 5,
+    height: '100%', backgroundColor: 'var(--primary)', borderRadius: 5,
     transition: 'width 0.2s ease',
   },
 };

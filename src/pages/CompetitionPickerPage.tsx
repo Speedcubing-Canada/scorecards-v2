@@ -44,7 +44,7 @@ export default function CompetitionPickerPage() {
         <p style={styles.hint}>{t('picker.hint')}</p>
 
         {isLoading && <p style={styles.status}>{t('picker.loading')}</p>}
-        {error && <p style={{ ...styles.status, color: '#c00' }}>{t('picker.error', { message: error })}</p>}
+        {error && <p style={{ ...styles.status, color: 'var(--danger)' }}>{t('picker.error', { message: error })}</p>}
 
         {!isLoading && !error && competitions.length === 0 && (
           <p style={styles.status}>{t('picker.empty')}</p>
@@ -80,24 +80,24 @@ function formatDate(dateStr: string) {
 const styles: Record<string, React.CSSProperties> = {
   container: {
     minHeight: '100vh',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'var(--bg)',
   },
   main: {
     maxWidth: 800,
     margin: '0 auto',
     padding: '40px 24px',
   },
-  heading: { margin: '0 0 8px', fontSize: 22, fontWeight: 700, color: '#1a1a1a' },
-  hint: { margin: '0 0 28px', fontSize: 14, color: '#666' },
-  status: { fontSize: 15, color: '#666', textAlign: 'center', padding: '32px 0' },
+  heading: { margin: '0 0 8px', fontSize: 22, fontWeight: 700, color: 'var(--text)' },
+  hint: { margin: '0 0 28px', fontSize: 14, color: 'var(--text-muted)' },
+  status: { fontSize: 15, color: 'var(--text-muted)', textAlign: 'center', padding: '32px 0' },
   grid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
     gap: 16,
   },
   compCard: {
-    backgroundColor: '#fff',
-    border: '1px solid #e0e0e0',
+    backgroundColor: 'var(--surface)',
+    border: '1px solid var(--border)',
     borderRadius: 10,
     padding: '20px 24px',
     textAlign: 'left',
@@ -107,6 +107,6 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 6,
     transition: 'border-color 0.15s, box-shadow 0.15s',
   },
-  compName: { fontSize: 16, fontWeight: 600, color: '#1a1a1a' },
-  compMeta: { fontSize: 13, color: '#666' },
+  compName: { fontSize: 16, fontWeight: 600, color: 'var(--text)' },
+  compMeta: { fontSize: 13, color: 'var(--text-muted)' },
 };

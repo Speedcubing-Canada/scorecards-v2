@@ -1,8 +1,81 @@
 :root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg: #f5f5f5;
+  --surface: #ffffff;
+  --surface-2: #f0f0f0;
+
+  /* Text */
+  --text: #1a1a1a;
+  --text-muted: #555555;
+  --text-subtle: #888888;
+  --text-faint: #aaaaaa;
+
+  /* Borders */
+  --border: #e0e0e0;
+  --border-strong: #cccccc;
+
+  /* Brand */
   --color-primary: #d32f2f;
   --color-primary-dark: #b71c1c;
-  --color-primary-light: #ffebee;
-  --color-primary-disabled: #ef9a9a;
+  --primary: #d32f2f;
+  --primary-dark: #b71c1c;
+  --primary-contrast: #ffffff;
+  --primary-soft-bg: #ffebee;
+  --primary-soft-text: #d32f2f;
+  --primary-disabled: #ef9a9a;
+
+  /* Status */
+  --warning-bg: #fff8e1;
+  --warning-border: #f9a825;
+  --warning-text: #b45309;
+  --danger: #c00000;
+  --success: #15803d;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --bg: #121212;
+  --surface: #1e1e1e;
+  --surface-2: #2a2a2a;
+
+  /* Text */
+  --text: #f2f2f2;
+  --text-muted: #b8b8b8;
+  --text-subtle: #8a8a8a;
+  --text-faint: #6a6a6a;
+
+  /* Borders */
+  --border: #3a3a3a;
+  --border-strong: #4a4a4a;
+
+  /* Brand */
+  --color-primary: #f06a6a;
+  --color-primary-dark: #e05252;
+  --primary: #f06a6a;
+  --primary-dark: #e05252;
+  --primary-contrast: #1a1a1a;
+  --primary-soft-bg: #3a2424;
+  --primary-soft-text: #f8a0a0;
+  --primary-disabled: #6e4040;
+
+  /* Status */
+  --warning-bg: #3a3320;
+  --warning-border: #b08a2e;
+  --warning-text: #e8c477;
+  --danger: #ff6b6b;
+  --success: #4ade80;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 24px rgba(0, 0, 0, 0.5);
 }
 
 *, *::before, *::after {
@@ -12,9 +85,10 @@
 body {
   margin: 0;
   font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  background: #f5f5f5;
-  color: #1a1a1a;
+  background: var(--bg);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 #root {
@@ -24,7 +98,7 @@ body {
 code {
   font-family: ui-monospace, Consolas, monospace;
   font-size: 13px;
-  background: #f0f0f0;
+  background: var(--surface-2);
   padding: 2px 6px;
   border-radius: 4px;
 }

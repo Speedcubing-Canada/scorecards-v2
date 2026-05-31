@@ -74,6 +74,28 @@ Settings and auth state live in `sessionStorage` only — they are cleared when 
 
 ---
 
+## User interface
+
+### Interface language
+
+The header (and the login page) carries a **language dropdown** (`src/components/LanguageSelect.tsx`) that switches the *interface* language via `i18next`. The available languages are defined once in `src/i18n/index.ts` as the exported `LANGUAGES` array — add a locale there (and its translation JSON) and it appears in the dropdown automatically, no per-language button wiring needed. The chosen interface language is persisted by `i18next-browser-languagedetector` under the `i18nextLng` localStorage key.
+
+This is independent of the `language` *setting* on the SettingsPage, which controls the language printed on the scorecards themselves.
+
+### Dark mode
+
+A theme toggle (🌙/☀️) sits next to the language dropdown in the header and on the login page. Theming is implemented with **CSS custom properties**:
+
+- `src/index.css` defines the full token set under `:root` (light) and `[data-theme='dark']` (dark) — surfaces, text shades, borders, brand, status colors, and shadows. All UI components reference these via `var(--token)` rather than hardcoded hex.
+- `src/theme/ThemeContext.tsx` (`ThemeProvider` + `useTheme`) sets the `data-theme` attribute on `<html>`. It defaults to the OS `prefers-color-scheme` and, while no explicit choice is stored, follows live OS changes. Once the user toggles, the choice is persisted under the `theme` localStorage key and wins over the OS preference.
+- `src/theme/theme.ts` holds the pure `resolveInitialTheme(stored, prefersDark)` helper (covered by `theme.test.ts`).
+
+The SCC logo's wordmark and lines are black and would vanish on the dark background, so `src/components/Logo.tsx` swaps to a white-recolored variant (`public/scc-logo-dark.svg`) in dark mode. That variant is `public/scc-logo.svg` with every `#000000` replaced by `#ffffff`; `logo-asset.test.ts` guards that the two stay in sync (regenerate the dark file if the source logo ever changes).
+
+Dark mode affects the on-screen UI only. The generated PDFs (`src/pdf/*`) use `@react-pdf/renderer`'s own isolated `StyleSheet` with white backgrounds and are intentionally unaffected, so printed output is identical in either theme.
+
+---
+
 ## Settings reference
 
 | Field | Type | Description |

@@ -50,6 +50,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
   text: {
     fontSize: 18,
-    color: '#555',
+    color: 'var(--text-muted)',
   },
 };
