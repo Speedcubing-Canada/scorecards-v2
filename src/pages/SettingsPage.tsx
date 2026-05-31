@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { CompetitionSettings, CustomEvent, Language, NametTagLogoMode, NametTagQrMode, PaperFormat, SecondRoundMode } from '../types/settings';
 import { EVENT_ICONS } from '../assets/events';
+import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 import Header from '../components/Header';
 import { fetchWcaLiveId, fetchWcaLivePersonIds } from '../auth/wca';
 
@@ -26,6 +27,7 @@ export default function SettingsPage() {
   const [secondRoundMode, setSecondRoundMode] = useState<SecondRoundMode>('prefilled');
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [logoName, setLogoName] = useState<string | null>(null);
+  const [useDefaultLogo, setUseDefaultLogo] = useState<boolean>(true);
   const [wcaLiveId, setWcaLiveId] = useState<string>('');
   const [wcaLivePersonIds, setWcaLivePersonIds] = useState<Record<number, string> | null>(null);
   const [wcaLiveFetchStatus, setWcaLiveFetchStatus] = useState<'loading' | 'found' | 'not-found'>('loading');
@@ -136,6 +138,7 @@ export default function SettingsPage() {
       paperFormat,
       secondRoundMode,
       logoDataUrl,
+      useDefaultLogo,
       wcaLiveId: wcaLiveId.trim() || null,
       wcaLivePersonIds,
       nametagLogoMode,
@@ -274,9 +277,26 @@ export default function SettingsPage() {
               </div>
             </div>
           ) : (
-            <button style={s.uploadBtn} onClick={() => fileInputRef.current?.click()}>
-              {t('common.choose_file')}
-            </button>
+            <>
+              <button style={s.uploadBtn} onClick={() => fileInputRef.current?.click()}>
+                {t('common.choose_file')}
+              </button>
+
+              <label style={{ ...s.logoPreview, marginTop: 12, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={useDefaultLogo}
+                  onChange={e => setUseDefaultLogo(e.target.checked)}
+                  style={{ marginTop: 2, accentColor: '#d32f2f', flexShrink: 0 }}
+                />
+                <img src={SCC_DEFAULT_LOGO} alt="Speedcubing Canada logo" style={s.logoImg} />
+                <div style={s.logoMeta}>
+                  <span style={s.optionLabel}>{t('settings.logo.default_title')}</span>
+                  <span style={s.optionDesc}>{t('settings.logo.default_desc')}</span>
+                  <span style={{ ...s.hint, margin: 0 }}>{t('settings.logo.use_default_hint')}</span>
+                </div>
+              </label>
+            </>
           )}
 
           <input
@@ -291,7 +311,7 @@ export default function SettingsPage() {
         <section style={s.section}>
           <h3 style={s.sectionTitle}>{t('settings.nametag.title')}</h3>
 
-          {logoDataUrl && (
+          {(logoDataUrl || useDefaultLogo) && (
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', marginBottom: 8 }}>
                 {t('settings.nametag.logo_on_nametags')}

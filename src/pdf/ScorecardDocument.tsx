@@ -3,6 +3,7 @@ import type { CompetitionSettings } from '../types/settings';
 import type { ScorecardData, ScorecardFormat } from '../lib/wcif-parser';
 import { getStrings } from '../lib/i18n';
 import { EVENT_ICONS } from '../assets/events';
+import { logoState, resolveLogo } from '../lib/logo';
 
 // Prevent react-pdf from hyphenating words — lets computed font size control line breaks instead.
 Font.registerHyphenationCallback((word) => [word]);
@@ -52,10 +53,12 @@ const ROW_HEIGHTS: Record<ScorecardFormat, number> = {
 };
 
 // Scale name font to fit the nameCell on one line (Helvetica-Bold ~0.65pt/pt/char).
-// Card inner width ≈ 248pt (257 - 2×border - 2×paddingH). With logo (80pt cell): nameCell≈162pt.
-// Without logo (26pt compName cell): nameCell≈216pt.
-function nameFontSize(name: string, hasLogo: boolean): number {
-  const available = hasLogo ? 158 : 210;
+// Card inner width ≈ 248pt (257 - 2×border - 2×paddingH).
+//   'custom'  → 80pt logo cell           → nameCell ≈ 162pt → available ≈ 158pt
+//   'default' → 80pt comp name + logo    → nameCell ≈ 162pt → available ≈ 158pt
+//   'none'    → 26pt comp name cell      → nameCell ≈ 216pt → available ≈ 210pt
+function nameFontSize(name: string, state: 'custom' | 'default' | 'none'): number {
+  const available = state === 'none' ? 210 : 158;
   return Math.min(18, Math.max(7, Math.floor(available / Math.max(name.length * 0.65, 1))));
 }
 
@@ -75,6 +78,10 @@ const styles = StyleSheet.create({
   compNameText: { fontSize: 8, textAlign: 'center', color: '#111' },
   logoCell: { width: 80, justifyContent: 'center', alignItems: 'center' },
   logoImg: { width: 54, height: 54, objectFit: 'contain' },
+  // Default-logo cell: comp name text (left) + SCC logo (right), both centred vertically
+  defaultLogoCell: { width: 80, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 2 },
+  defaultCompNameText: { fontSize: 7.5, textAlign: 'center', color: '#111', flex: 1, paddingRight: 2 },
+  defaultLogoImg: { width: 30, height: 30, objectFit: 'contain' },
   nameCell: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 3 },
   nameText: { fontFamily: FONT_BOLD, textAlign: 'center' },
   idText: { fontSize: 7.5, textAlign: 'center', marginTop: 2, color: '#222' },
@@ -175,13 +182,21 @@ function ScorecardCard({
   const postRows = card.format === 'bo2-avg5' ? [3,4,5] : card.format === 'bo1-mo3' ? [2,3] : [];
   const hasCutoff = card.cutoff !== '';
 
+  const logoMode = logoState(settings);
+  const headerLogo = resolveLogo(settings);
+
   return (
     <View style={[styles.card, { position: 'absolute', left: pos.left, top: pos.top, width: cardW, height: cardH }]}>
-      {/* Header: logo OR comp name — not both */}
+      {/* Header: custom logo (alone) | comp name + SCC logo | comp name only */}
       <View style={styles.header}>
-        {settings.logoDataUrl ? (
+        {logoMode === 'custom' && headerLogo ? (
           <View style={styles.logoCell}>
-            <Image src={settings.logoDataUrl} style={styles.logoImg} />
+            <Image src={headerLogo} style={styles.logoImg} />
+          </View>
+        ) : logoMode === 'default' && headerLogo ? (
+          <View style={styles.defaultLogoCell}>
+            <Text style={styles.defaultCompNameText}>{settings.competitionName}</Text>
+            <Image src={headerLogo} style={styles.defaultLogoImg} />
           </View>
         ) : (
           <View style={styles.compNameCell}>
@@ -189,7 +204,7 @@ function ScorecardCard({
           </View>
         )}
         <View style={styles.nameCell}>
-          <Text style={[styles.nameText, { fontSize: nameFontSize(card.name || ' ', !!settings.logoDataUrl) }]}>
+          <Text style={[styles.nameText, { fontSize: nameFontSize(card.name || ' ', logoMode) }]}>
             {card.name || ' '}
           </Text>
           <Text style={styles.idText}>

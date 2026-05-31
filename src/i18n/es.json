@@ -70,7 +70,11 @@
     "logo": {
       "title": "Logo de la competencia",
       "optional_note": "opcional",
-      "hint": "Aparece en la esquina superior izquierda de cada hoja. Se recomienda PNG o SVG."
+      "hint": "Aparece en la esquina superior izquierda de cada hoja. Se recomienda PNG o SVG.",
+      "default_title": "Logo de Speedcubing Canada por defecto",
+      "default_desc": "Se muestra en la esquina superior izquierda de cada hoja, junto al nombre de la competencia, cuando no se sube un logo personalizado.",
+      "use_default_label": "Usar el logo de Speedcubing Canada",
+      "use_default_hint": "Recomendado para competencias canadienses. Desactívalo para competencias fuera de Canadá."
     },
     "nametag": {
       "title": "Diseño de etiquetas de nombre",

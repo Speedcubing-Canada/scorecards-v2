@@ -70,7 +70,11 @@
     "logo": {
       "title": "Logo de la compétition",
       "optional_note": "optionnel",
-      "hint": "Apparaît dans le coin supérieur gauche de chaque feuille. PNG ou SVG recommandé."
+      "hint": "Apparaît dans le coin supérieur gauche de chaque feuille. PNG ou SVG recommandé.",
+      "default_title": "Logo Speedcubing Canada par défaut",
+      "default_desc": "Affiché dans le coin supérieur gauche de chaque feuille, à côté du nom de la compétition, lorsqu'aucun logo personnalisé n'est téléchargé.",
+      "use_default_label": "Utiliser le logo Speedcubing Canada",
+      "use_default_hint": "Recommandé pour les compétitions canadiennes. À désactiver pour les compétitions hors du Canada."
     },
     "nametag": {
       "title": "Mise en page des badges",

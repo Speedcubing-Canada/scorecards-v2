@@ -70,7 +70,11 @@
     "logo": {
       "title": "Competition logo",
       "optional_note": "optional",
-      "hint": "Appears in the top-left corner of each scorecard. PNG or SVG recommended."
+      "hint": "Appears in the top-left corner of each scorecard. PNG or SVG recommended.",
+      "default_title": "Default Speedcubing Canada logo",
+      "default_desc": "Used in the top-left corner of each scorecard alongside the competition name when no custom logo is uploaded.",
+      "use_default_label": "Use the Speedcubing Canada logo",
+      "use_default_hint": "Recommended for Canadian competitions. Disable for competitions outside Canada."
     },
     "nametag": {
       "title": "Name tag layout",

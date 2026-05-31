@@ -23,6 +23,9 @@ export interface CompetitionSettings {
   paperFormat: PaperFormat;
   secondRoundMode: SecondRoundMode;
   logoDataUrl: string | null;
+  // Falls back to the bundled Speedcubing Canada logo when no custom logo is uploaded.
+  // Disable for competitions outside Canada that don't want the SCC branding.
+  useDefaultLogo: boolean;
   wcaLiveId: string | null;
   wcaLivePersonIds: Record<number, string> | null;
   nametagLogoMode: NametTagLogoMode;

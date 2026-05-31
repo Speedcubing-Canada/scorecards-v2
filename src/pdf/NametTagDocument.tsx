@@ -4,6 +4,7 @@ import type { CompetitionSettings, NametTagLogoMode } from '../types/settings';
 import type { NametTagEntry, NametTagRole } from '../lib/wcif-parser';
 import { EVENT_ICONS } from '../assets/events';
 import { getNametTagStrings, type NametTagStrings } from '../lib/i18n';
+import { resolveLogo } from '../lib/logo';
 
 Font.registerHyphenationCallback((word) => [word]);
 
@@ -267,9 +268,12 @@ interface Props {
 export function NametTagDocument({ nametags, settings }: Props) {
   const cfg = CONFIGS[settings.paperFormat as PF] ?? CONFIGS.LETTER;
   const pos = panelPositions(cfg);
-  const { competitionId, competitionName, wcaLiveId, wcaLivePersonIds, nametagLogoMode, logoDataUrl, nametagQrMode } = settings;
+  const { competitionId, competitionName, wcaLiveId, wcaLivePersonIds, nametagLogoMode, nametagQrMode } = settings;
 
-  // If no logo was uploaded, treat any logo mode as hidden.
+  // Custom logo (if any) wins; otherwise fall back to the bundled SCC logo when enabled.
+  const logoDataUrl = resolveLogo(settings);
+
+  // If no logo is available at all, force any logo mode to hidden.
   const logoMode: NametTagLogoMode = logoDataUrl ? nametagLogoMode : 'hidden';
   const qrSize = logoMode === 'logo-only' ? 65 : 75;
   const qrBothSides = nametagQrMode === 'both-sides';

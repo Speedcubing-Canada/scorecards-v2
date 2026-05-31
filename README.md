@@ -81,7 +81,8 @@ Settings and auth state live in `sessionStorage` only — they are cleared when 
 | `language` | `en \| fr \| bilingual-en \| bilingual-fr` | Scorecard language |
 | `paperFormat` | `A4 \| LETTER` | Page size for all PDFs |
 | `secondRoundMode` | `prefilled \| blanks` | How intermediate-round scorecards are printed |
-| `logoDataUrl` | `string \| null` | Base64 data URL of the competition logo, used on scorecards and optionally on name tags |
+| `logoDataUrl` | `string \| null` | Base64 data URL of a custom competition logo. When set, takes precedence over `useDefaultLogo` |
+| `useDefaultLogo` | `boolean` | If `true` and no custom logo is uploaded, the bundled Speedcubing Canada logo (`src/assets/SC_Logo.png`) is rendered next to the competition name. Defaults to `true`; disable for competitions outside Canada |
 | `wcaLiveId` | `string \| null` | Numeric WCA Live competition ID (e.g. `9667`). Auto-detected from the WCA Live API on the Settings page; can be overridden manually. Used to generate per-competitor WCA Live QR codes on name tags |
 | `wcaLivePersonIds` | `Record<number, string> \| null` | Map of `registrantId → WCA Live internal person ID`, fetched automatically after `wcaLiveId` is resolved. The WCA Live person ID differs from the WCA website user ID and is required for correct competitor QR code URLs |
 | `nametagLogoMode` | `hidden \| with-name \| logo-only` | How the logo appears on name tags (see Name tag section) |
@@ -147,11 +148,19 @@ The competitor name is auto-scaled to fit on one line inside the name cell. The 
 fontSize = clamp(7, floor(available / (name.length * 0.65)), 18)
 ```
 
-Available width is ~175 pt when a logo is present, ~235 pt when no logo is used.
+Available width is ~158 pt when any logo cell is present (custom or default), ~210 pt when the header is the narrow comp-name-only cell.
 
 ### Logo vs competition name
 
-If a logo data URL is provided in settings, the logo occupies the left portion of the scorecard header and the competition name is **not printed** anywhere on the scorecard. If no logo is provided, the competition name is printed vertically in a narrow cell on the left. The two are mutually exclusive.
+The header has three mutually exclusive modes, resolved by `src/lib/logo.ts`:
+
+| `logoDataUrl` | `useDefaultLogo` | State | Header content |
+|---|---|---|---|
+| set | — | `custom` | Uploaded logo alone in an 80 pt cell; competition name is **not printed** on the card |
+| `null` | `true` (default) | `default` | Competition name text + bundled Speedcubing Canada logo side by side in an 80 pt cell |
+| `null` | `false` | `none` | Competition name only, printed vertically in a narrow 26 pt cell on the left |
+
+The `default` state is intended as the standard for Canadian competitions; competitions outside Canada toggle `useDefaultLogo` off to fall back to the legacy `none` layout.
 
 ---
 
@@ -204,7 +213,7 @@ Every panel (front and back) starts with the same top section:
 
 ### Logo modes (`nametagLogoMode`)
 
-Only available when a logo has been uploaded. Has no effect otherwise.
+Available whenever a logo will be rendered — either a custom upload or the bundled Speedcubing Canada default (when `useDefaultLogo` is true). Has no effect when both sources are unavailable.
 
 | Value | Header row |
 |---|---|
@@ -452,5 +461,9 @@ src/
   assets/
     events/                — PNG event icons (one colour + one grey per WCA event ID)
     events.ts              — Maps event IDs to their icon data URLs (Vite ?inline imports)
+    SC_Logo.png            — Bundled Speedcubing Canada logo (black & white)
+    scc-logo.ts            — Re-exports SC_Logo.png as a data URL for the PDF worker
+  lib/
+    logo.ts                — Resolves which logo to render: custom upload, SCC default, or none
 generate-nametags.mjs      — Dev-only Node.js script to render a local name-tag PDF without a browser
 ```
