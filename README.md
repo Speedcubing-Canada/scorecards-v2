@@ -491,6 +491,8 @@ All PDF rendering happens inside `src/pdf/scorecardWorker.ts` (a Vite module wor
 |---|---|
 | `en` | English only |
 | `fr` | French only |
+| `es` | Spanish only |
+| `pt` | Portuguese (Brazil) only |
 | `bilingual-en` | English primary, French secondary (EN on top) |
 | `bilingual-fr` | French primary, English secondary (FR on top) |
 

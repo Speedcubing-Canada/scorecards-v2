@@ -1,0 +1,145 @@
+{
+  "common": {
+    "back": "← Voltar",
+    "sign_out": "Sair",
+    "app_title": "Gerador de Folhas de Pontuação WCA",
+    "remove": "Remover",
+    "clear": "Limpar",
+    "upload": "Enviar",
+    "choose_file": "Escolher arquivo",
+    "optional": "opcional",
+    "loading": "Carregando…",
+    "menu": "Menu"
+  },
+  "login": {
+    "subtitle": "Gere folhas de pontuação e crachás prontos para impressão para sua competição da WCA.",
+    "setup_required": "Configuração necessária:",
+    "setup_env_instruction": "Defina {{key}} no seu arquivo .env.",
+    "setup_oauth_instruction": "Crie um aplicativo OAuth da WCA em",
+    "setup_oauth_link": "worldcubeassociation.org/oauth/applications",
+    "setup_redirect_uri": "com a URI de redirecionamento:",
+    "sign_in_button": "Entrar com a WCA"
+  },
+  "auth_callback": {
+    "signing_in": "Entrando…"
+  },
+  "picker": {
+    "heading": "Selecionar uma competição",
+    "hint": "Exibindo competições que você gerencia ou delega.",
+    "loading": "Carregando competições…",
+    "error": "Erro: {{message}}",
+    "empty": "Nenhuma competição encontrada. Verifique se você é delegado ou organizador."
+  },
+  "settings": {
+    "heading": "Configurar opções de impressão",
+    "language": {
+      "title": "Idioma",
+      "bilingual_fr": "Bilíngue — Francês principal",
+      "bilingual_fr_desc": "Francês primeiro, inglês depois (CQ, QO, etc.)",
+      "bilingual_en": "Bilíngue — Inglês principal",
+      "bilingual_en_desc": "Inglês primeiro, francês depois",
+      "fr": "Somente francês",
+      "fr_desc": "Todo o texto em francês",
+      "en": "Somente inglês",
+      "en_desc": "Todo o texto em inglês",
+      "es": "Somente espanhol",
+      "es_desc": "Todo o texto em espanhol",
+      "pt": "Somente português",
+      "pt_desc": "Todo o texto em português"
+    },
+    "paper": {
+      "title": "Formato do papel",
+      "a4": "A4",
+      "a4_desc": "210 × 297 mm — cada folha é A6 (105 × 148,5 mm)",
+      "letter": "Carta",
+      "letter_desc": "8,5 × 11 pol — cada folha é 107,95 × 139,7 mm"
+    },
+    "subsequent_rounds": {
+      "title": "Rodadas seguintes",
+      "prefilled": "Preenchidas com nomes",
+      "prefilled_desc": "Imprimir folhas para todos os classificados (requer resultados do WCA Live)",
+      "blanks": "Evento + rodada preenchidos, nome em branco",
+      "blanks_desc": "Imprimir espaços de nome em branco — preencher à mão na competição"
+    },
+    "double_check": {
+      "title": "Dupla verificação de misturas",
+      "optional_note": "opcional — para grandes campeonatos",
+      "hint": "Adiciona uma segunda coluna de assinatura do misturador para verificar as misturas de forma independente.",
+      "enable": "Ativar a dupla verificação de misturas",
+      "enable_desc": "Adiciona uma segunda coluna de assinatura do misturador às folhas selecionadas.",
+      "rounds_title": "Aplicar às rodadas",
+      "round_first": "Rodada 1",
+      "round_second": "Rodada 2",
+      "round_semis": "Semifinais",
+      "round_finals": "Finais",
+      "overrides_title": "Sempre verificar competidores específicos (opcional)",
+      "overrides_hint": "Envie um arquivo CSV — uma linha por competidor: WCAID,evento1,evento2 (ex. 2015FOOB01,333,444). Esses competidores são verificados duas vezes nesses eventos em todas as rodadas.",
+      "overrides_count": "{{count}} competidor(es) carregado(s)"
+    },
+    "wca_live": {
+      "title": "ID do WCA Live",
+      "optional_note": "opcional — para QR codes dos crachás",
+      "fetching": "Buscando no WCA Live…",
+      "auto_detected": "Detectado automaticamente",
+      "not_found": "Ainda não encontrado no WCA Live — insira manualmente se necessário",
+      "hint": "ID numérico da competição no WCA Live. Usado para gerar QR codes do WCA Live nos crachás.",
+      "placeholder": "ex. 9667"
+    },
+    "logo": {
+      "title": "Logo da competição",
+      "optional_note": "opcional",
+      "hint": "Aparece no canto superior esquerdo de cada folha. Recomenda-se PNG ou SVG.",
+      "default_title": "Logo padrão da Speedcubing Canada",
+      "default_desc": "Exibido no canto superior esquerdo de cada folha, ao lado do nome da competição, quando nenhum logo personalizado é enviado.",
+      "use_default_label": "Usar o logo da Speedcubing Canada",
+      "use_default_hint": "Recomendado para competições canadenses. Desative para competições fora do Canadá."
+    },
+    "nametag": {
+      "title": "Layout dos crachás",
+      "logo_on_nametags": "Logo nos crachás",
+      "logo_hidden": "Oculto",
+      "logo_hidden_desc": "Logo não exibido nos crachás",
+      "logo_with_name": "Logo pequeno + nome da competição",
+      "logo_with_name_desc": "Logo pequeno ao lado do nome da competição no topo de cada painel",
+      "logo_only": "Logo grande, substitui o nome",
+      "logo_only_desc": "O logo substitui o texto do nome da competição — os QR codes ficam um pouco menores",
+      "qr_codes": "QR codes",
+      "qr_back_only": "Somente verso",
+      "qr_back_only_desc": "Frente = atribuições de grupos (FR), verso = QR codes (EN)",
+      "qr_both_sides": "Ambos os lados",
+      "qr_both_sides_desc": "QR codes em ambos os lados — útil quando o logo ocupa espaço"
+    },
+    "advanced": {
+      "toggle": "Avançado",
+      "custom_events_title": "Eventos personalizados",
+      "custom_events_optional": "opcional",
+      "custom_events_hint": "Imprima 4 folhas em branco para eventos secundários ou quebra-cabeças bônus não listados no WCIF. Os campos de grupo e rodada ficarão em branco.",
+      "event_name_placeholder": "Nome do evento (ex. Revezamento de Clock)",
+      "format_label": "Formato",
+      "avg5": "Média de 5",
+      "mo3": "Média de 3",
+      "cutoff_label": "Corte",
+      "cutoff_optional": "opcional, ex. 1:30",
+      "time_limit_label": "Limite de tempo",
+      "time_limit_optional": "opcional, ex. 10:00",
+      "icon_hint": "Ícone — clique em um ícone da WCA ou envie o seu",
+      "icon_selected": "Ícone selecionado",
+      "add_custom_event": "+ Adicionar evento personalizado"
+    },
+    "generate_button": "Gerar →"
+  },
+  "generate": {
+    "title": "Gerar folhas de pontuação",
+    "fetching": "Buscando WCIF da WCA…",
+    "parsing": "Montando lista de folhas…",
+    "rendering": "Renderizando PDF…",
+    "stats": {
+      "scorecards": "Folhas de pontuação",
+      "cover_cards": "Folhas de capa",
+      "pdfs_in_zip": "PDFs no ZIP",
+      "paper": "Papel"
+    },
+    "download_button": "⬇ Baixar {{filename}}",
+    "building_button": "Criando ZIP…"
+  }
+}

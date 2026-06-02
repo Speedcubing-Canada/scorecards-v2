@@ -14,7 +14,7 @@ import { ScheduleTrackerDocument } from './ScheduleTrackerDocument';
 export type WorkerRequest = {
   parsed: ParsedWCIF;
   settings: CompetitionSettings;
-  uiLanguage: 'en' | 'fr' | 'es';
+  uiLanguage: 'en' | 'fr' | 'es' | 'pt';
 };
 
 const WORKER_MSGS = {
@@ -41,6 +41,14 @@ const WORKER_MSGS = {
     creatingZip: 'Creando ZIP…',
     finalizing: 'Finalizando…',
     noEntries: 'Sin hojas que generar.',
+  },
+  pt: {
+    starting: 'Iniciando…',
+    rendering: (label: string) => `Renderizando ${label}…`,
+    done: (label: string) => `${label} concluído`,
+    creatingZip: 'Criando ZIP…',
+    finalizing: 'Finalizando…',
+    noEntries: 'Nenhuma folha para gerar.',
   },
 };
 

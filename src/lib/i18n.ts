@@ -184,10 +184,50 @@ const ES: ScorecardStrings = {
   },
 };
 
+// ── Portuguese (Brazil) ─────────────────────────────────────────────────────────
+const PT: ScorecardStrings = {
+  scrambler: 'Misturador',
+  scramblerCheck: 'Verif.',
+  attempt: 'Tentativa',
+  judge: 'Juiz',
+  competitor: 'Competidor',
+  resultPrefix: 'Resultado',
+  dnfSuffix: (limit) => `(DNF se não for inferior a ${limit})`,
+  cumulativeSuffix: (limit) => `(Limite de Tempo Acumulado: ${limit})`,
+  mbfSuffix: '(Limite: Reg. H1b)',
+  cutoffLine: (cutoff, mo3) =>
+    mo3
+      ? `─── Continue se a Tentativa 1 for inferior a ${cutoff} ───`
+      : `─── Continue se a Tentativa 1 ou 2 for inferior a ${cutoff} ───`,
+  provisionalLine: '─── Tentativa extra ou provisória (Iniciais do Delegado _______) ───',
+  newCompetitor: 'Novo Competidor',
+  newCompetitorF: 'Nova Competidora',
+  roundName: (n, total) => `Rodada ${n} de ${total}`,
+  finalRound: 'Rodada Final',
+  groupLabel: (gNum, total) => `Grupo ${gNum} de ${total}`,
+  colorGroupLabel: (color, gNum, total) => `${color} ${gNum} de ${total}`,
+  blankGroupLabel: (total) => `Grupo _ de ${total}`,
+  stationLabel: (n) => `Estação ${n}`,
+  seatLabel: (n) => `Assento ${n}`,
+  cover: {
+    forDelegate: 'PARA O DELEGADO',
+    bundledScorecards: (n) => `1. Agrupadas todas as ${n} folhas`,
+    checkedSignatures: '2. Verificadas as assinaturas faltantes',
+    incidentsCount: '3. Número de folhas com incidentes: _____',
+    delegateInitials: 'Iniciais do Delegado ______',
+    forDataEntry: 'PARA ENTRADA DE DADOS',
+    resultsEntered: '4. Resultados inseridos pelo Anotador',
+    scoretakerInitials: 'Iniciais do Anotador ______',
+    incidentsLogged: '5. Incidentes registrados pelo Delegado',
+    resultsChecked: '6. Resultados verificados pelo Delegado',
+  },
+};
+
 export function getStrings(language: Language): ScorecardStrings {
   if (language === 'en') return EN;
   if (language === 'fr') return FR;
   if (language === 'es') return ES;
+  if (language === 'pt') return PT;
   // Bilingual: merge EN + FR with separator
   const primary = language === 'bilingual-fr' ? FR : EN;
   const secondary = language === 'bilingual-fr' ? EN : FR;
@@ -247,9 +287,20 @@ const SCHEDULE_ES: ScheduleStrings = {
   numberOfCompetitors: 'Número de\ncompetidores',
 };
 
+const SCHEDULE_PT: ScheduleStrings = {
+  title: '— Acompanhamento de Horário',
+  estimatedStart: 'Horário de\nInício Estimado',
+  estimatedEnd: 'Horário de\nTérmino Estimado',
+  event: 'Evento',
+  actualStart: 'Horário de\nInício Real',
+  actualEnd: 'Horário de\nTérmino Real',
+  numberOfCompetitors: 'Número de\nCompetidores',
+};
+
 export function getScheduleStrings(language: Language): ScheduleStrings {
   if (language === 'fr' || language === 'bilingual-fr') return SCHEDULE_FR;
   if (language === 'es') return SCHEDULE_ES;
+  if (language === 'pt') return SCHEDULE_PT;
   return SCHEDULE_EN;
 }
 
@@ -278,9 +329,18 @@ const NAMETAG_ES: NametTagStrings = {
   dutyGroup: (g) => `Grupo ${g}`,
 };
 
+const NAMETAG_PT: NametTagStrings = {
+  compete: 'Competir:',
+  scramble: 'Misturar:',
+  judge: 'Julgar:',
+  run: 'Correr:',
+  dutyGroup: (g) => `Grupo ${g}`,
+};
+
 export function getNametTagStrings(language: Language): NametTagStrings {
   if (language === 'fr' || language === 'bilingual-fr') return NAMETAG_FR;
   if (language === 'es') return NAMETAG_ES;
+  if (language === 'pt') return NAMETAG_PT;
   return NAMETAG_EN;
 }
 
@@ -306,11 +366,19 @@ const NAMETAG_TITLE_ES: NametTagTitleStrings = {
   competitor:   (f) => f ? 'COMPETIDORA' : 'COMPETIDOR',
 };
 
+const NAMETAG_TITLE_PT: NametTagTitleStrings = {
+  delegate:     (f) => f ? 'DELEGADA' : 'DELEGADO',
+  organizer:    (f) => f ? 'ORGANIZADORA' : 'ORGANIZADOR',
+  newCompetitor: (f) => f ? 'NOVA COMPETIDORA' : 'NOVO COMPETIDOR',
+  competitor:   (f) => f ? 'COMPETIDORA' : 'COMPETIDOR',
+};
+
 export function getNametTagTitleStrings(language: Language): { front: NametTagTitleStrings; back: NametTagTitleStrings } {
   if (language === 'bilingual-fr') return { front: NAMETAG_TITLE_FR, back: NAMETAG_TITLE_EN };
   if (language === 'bilingual-en') return { front: NAMETAG_TITLE_EN, back: NAMETAG_TITLE_FR };
   if (language === 'fr') return { front: NAMETAG_TITLE_FR, back: NAMETAG_TITLE_FR };
   if (language === 'es') return { front: NAMETAG_TITLE_ES, back: NAMETAG_TITLE_ES };
+  if (language === 'pt') return { front: NAMETAG_TITLE_PT, back: NAMETAG_TITLE_PT };
   return { front: NAMETAG_TITLE_EN, back: NAMETAG_TITLE_EN };
 }
 
@@ -339,9 +407,18 @@ const SHORT_NAMETAG_NAMES_ES: Record<string, string> = {
   '333mbf': 'Multi-BLD',
 };
 
+const SHORT_NAMETAG_NAMES_PT: Record<string, string> = {
+  '333': '3x3x3', '222': '2x2x2', '444': '4x4x4', '555': '5x5x5',
+  '666': '6x6x6', '777': '7x7x7', '333bf': '3x3x3 BLD', '333fm': 'FMC',
+  '333oh': 'Uma Mão', 'clock': 'Clock', 'minx': 'Megaminx', 'pyram': 'Pyraminx',
+  'skewb': 'Skewb', 'sq1': 'Square-1', '444bf': '4x4x4 BLD', '555bf': '5x5x5 BLD',
+  '333mbf': 'Multi-BLD',
+};
+
 export function getShortNametTagNames(language: Language): Record<string, string> {
   if (language === 'fr' || language === 'bilingual-fr') return SHORT_NAMETAG_NAMES_FR;
   if (language === 'es') return SHORT_NAMETAG_NAMES_ES;
+  if (language === 'pt') return SHORT_NAMETAG_NAMES_PT;
   return SHORT_NAMETAG_NAMES_EN;
 }
 
@@ -373,10 +450,20 @@ export const EVENT_NAMES_ES: Record<string, string> = {
   '555bf': '5x5x5 A Ciegas', '333mbf': '3x3x3 Multi-BLD',
 };
 
+export const EVENT_NAMES_PT: Record<string, string> = {
+  '333': 'Cubo 3x3x3', '222': 'Cubo 2x2x2', '444': 'Cubo 4x4x4',
+  '555': 'Cubo 5x5x5', '666': 'Cubo 6x6x6', '777': 'Cubo 7x7x7',
+  '333bf': '3x3x3 Às Cegas', '333fm': 'FMC', '333oh': '3x3x3 Uma Mão',
+  'clock': 'Clock', 'minx': 'Megaminx', 'pyram': 'Pyraminx',
+  'skewb': 'Skewb', 'sq1': 'Square-1', '444bf': '4x4x4 Às Cegas',
+  '555bf': '5x5x5 Às Cegas', '333mbf': '3x3x3 Multi-BLD',
+};
+
 export function getEventName(eventId: string, language: Language): string {
   if (language === 'en') return EVENT_NAMES_EN[eventId] ?? eventId;
   if (language === 'fr') return EVENT_NAMES_FR[eventId] ?? eventId;
   if (language === 'es') return EVENT_NAMES_ES[eventId] ?? eventId;
+  if (language === 'pt') return EVENT_NAMES_PT[eventId] ?? eventId;
   const fr = EVENT_NAMES_FR[eventId] ?? eventId;
   const en = EVENT_NAMES_EN[eventId] ?? eventId;
   return language === 'bilingual-fr' ? fr : en;

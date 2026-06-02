@@ -140,7 +140,7 @@ function colContentW(frac: number): number {
   return TABLE_CONTENT_W * frac - CELL_BORDER;
 }
 
-const LANGUAGES = ['en', 'fr', 'es', 'bilingual-fr', 'bilingual-en'] as const;
+const LANGUAGES = ['en', 'fr', 'es', 'pt', 'bilingual-fr', 'bilingual-en'] as const;
 
 describe('Scorecard header labels fit within their columns', () => {
   for (const lang of LANGUAGES) {

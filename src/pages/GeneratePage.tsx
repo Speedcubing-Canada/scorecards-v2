@@ -122,7 +122,7 @@ export default function GeneratePage() {
       }
     };
 
-    const uiLang = (i18n.language?.slice(0, 2) ?? 'en') as 'en' | 'fr' | 'es';
+    const uiLang = (i18n.language?.slice(0, 2) ?? 'en') as 'en' | 'fr' | 'es' | 'pt';
     const req: WorkerRequest = { parsed, settings: settings!, uiLanguage: uiLang };
     worker.postMessage(req);
   }

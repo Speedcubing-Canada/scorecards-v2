@@ -74,6 +74,7 @@ export default function SettingsPage() {
     { value: 'fr', label: t('settings.language.fr'), description: t('settings.language.fr_desc') },
     { value: 'en', label: t('settings.language.en'), description: t('settings.language.en_desc') },
     { value: 'es', label: t('settings.language.es'), description: t('settings.language.es_desc') },
+    { value: 'pt', label: t('settings.language.pt'), description: t('settings.language.pt_desc') },
   ];
 
   const PAPER_OPTIONS: { value: PaperFormat; label: string; description: string }[] = [

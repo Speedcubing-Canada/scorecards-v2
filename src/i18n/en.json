@@ -43,7 +43,9 @@
       "en": "English only",
       "en_desc": "All text in English",
       "es": "Spanish only",
-      "es_desc": "All text in Spanish"
+      "es_desc": "All text in Spanish",
+      "pt": "Portuguese only",
+      "pt_desc": "All text in Portuguese"
     },
     "paper": {
       "title": "Paper format",

@@ -43,7 +43,9 @@
       "en": "Anglais seulement",
       "en_desc": "Tout le texte en anglais",
       "es": "Espagnol seulement",
-      "es_desc": "Tout le texte en espagnol"
+      "es_desc": "Tout le texte en espagnol",
+      "pt": "Portugais seulement",
+      "pt_desc": "Tout le texte en portugais"
     },
     "paper": {
       "title": "Format de papier",

@@ -71,6 +71,44 @@ describe('getStrings', () => {
     expect(s.cutoffLine('30.00', false)).toBe('─── Continuar si el Intento 1 o 2 es inferior a 30.00 ───');
     expect(s.cutoffLine('30.00', true)).toBe('─── Continuar si el Intento 1 es inferior a 30.00 ───');
   });
+
+  it('returns Portuguese strings for "pt"', () => {
+    const s = getStrings('pt');
+    expect(s.scrambler).toBe('Misturador');
+    expect(s.attempt).toBe('Tentativa');
+    expect(s.judge).toBe('Juiz');
+    expect(s.competitor).toBe('Competidor');
+    expect(s.resultPrefix).toBe('Resultado');
+  });
+
+  it('Portuguese cover card strings', () => {
+    const { cover } = getStrings('pt');
+    expect(cover.forDelegate).toBe('PARA O DELEGADO');
+    expect(cover.forDataEntry).toBe('PARA ENTRADA DE DADOS');
+    expect(cover.bundledScorecards(12)).toBe('1. Agrupadas todas as 12 folhas');
+    expect(cover.checkedSignatures).toBe('2. Verificadas as assinaturas faltantes');
+    expect(cover.delegateInitials).toBe('Iniciais do Delegado ______');
+  });
+
+  it('Portuguese roundName and gender variants', () => {
+    const s = getStrings('pt');
+    expect(s.roundName(1, 3)).toBe('Rodada 1 de 3');
+    expect(s.finalRound).toBe('Rodada Final');
+    expect(s.newCompetitor).toBe('Novo Competidor');
+    expect(s.newCompetitorF).toBe('Nova Competidora');
+  });
+
+  it('Portuguese dnfSuffix and cutoffLine', () => {
+    const s = getStrings('pt');
+    expect(s.dnfSuffix('1:00')).toBe('(DNF se não for inferior a 1:00)');
+    expect(s.cutoffLine('30.00', false)).toBe('─── Continue se a Tentativa 1 ou 2 for inferior a 30.00 ───');
+    expect(s.cutoffLine('30.00', true)).toBe('─── Continue se a Tentativa 1 for inferior a 30.00 ───');
+  });
+
+  it('Portuguese does not affect bilingual modes (still EN+FR)', () => {
+    const s = getStrings('bilingual-fr');
+    expect(s.scrambler).not.toContain('Misturador');
+  });
 });
 
 describe('getScheduleStrings', () => {
@@ -99,6 +137,14 @@ describe('getScheduleStrings', () => {
     expect(s.title).toBe('— Seguimiento del Horario');
     expect(s.estimatedStart).toBe('Hora de\ninicio estimada');
     expect(s.numberOfCompetitors).toBe('Número de\ncompetidores');
+  });
+
+  it('returns Portuguese strings for pt', () => {
+    const s = getScheduleStrings('pt');
+    expect(s.event).toBe('Evento');
+    expect(s.title).toBe('— Acompanhamento de Horário');
+    expect(s.estimatedStart).toBe('Horário de\nInício Estimado');
+    expect(s.numberOfCompetitors).toBe('Número de\nCompetidores');
   });
 
   it('bilingual-en falls back to English', () => {
@@ -137,6 +183,14 @@ describe('getNametTagStrings', () => {
     expect(s.run).toBe('Correr:');
   });
 
+  it('returns Portuguese strings for pt', () => {
+    const s = getNametTagStrings('pt');
+    expect(s.compete).toBe('Competir:');
+    expect(s.scramble).toBe('Misturar:');
+    expect(s.judge).toBe('Julgar:');
+    expect(s.run).toBe('Correr:');
+  });
+
   it('bilingual-en falls back to English', () => {
     const s = getNametTagStrings('bilingual-en');
     expect(s.compete).toBe('Compete:');
@@ -159,6 +213,13 @@ describe('getEventName', () => {
     expect(getEventName('333bf', 'es')).toBe('3x3x3 A Ciegas');
     expect(getEventName('333oh', 'es')).toBe('3x3x3 Una Mano');
     expect(getEventName('333mbf', 'es')).toBe('3x3x3 Multi-BLD');
+  });
+
+  it('Portuguese event names', () => {
+    expect(getEventName('333', 'pt')).toBe('Cubo 3x3x3');
+    expect(getEventName('333bf', 'pt')).toBe('3x3x3 Às Cegas');
+    expect(getEventName('333oh', 'pt')).toBe('3x3x3 Uma Mão');
+    expect(getEventName('333mbf', 'pt')).toBe('3x3x3 Multi-BLD');
   });
 
   it('bilingual-fr returns French name', () => {
@@ -211,6 +272,19 @@ describe('getNametTagTitleStrings', () => {
     expect(back.delegate(false)).toBe('DELEGADO');
   });
 
+  it('Portuguese — gender-aware titles', () => {
+    const { front, back } = getNametTagTitleStrings('pt');
+    expect(front.delegate(false)).toBe('DELEGADO');
+    expect(front.delegate(true)).toBe('DELEGADA');
+    expect(front.organizer(false)).toBe('ORGANIZADOR');
+    expect(front.organizer(true)).toBe('ORGANIZADORA');
+    expect(front.competitor(false)).toBe('COMPETIDOR');
+    expect(front.competitor(true)).toBe('COMPETIDORA');
+    expect(front.newCompetitor(false)).toBe('NOVO COMPETIDOR');
+    expect(front.newCompetitor(true)).toBe('NOVA COMPETIDORA');
+    expect(back.delegate(false)).toBe('DELEGADO');
+  });
+
   it('bilingual-fr: front=FR, back=EN', () => {
     const { front, back } = getNametTagTitleStrings('bilingual-fr');
     expect(front.delegate(false)).toBe('DÉLÉGUÉ');
@@ -227,6 +301,7 @@ describe('getNametTagTitleStrings', () => {
 describe('getNametTagStrings dutyGroup', () => {
   it('French duty group', () => expect(getNametTagStrings('fr').dutyGroup('1 & 2')).toBe('Groupe 1 & 2'));
   it('Spanish duty group', () => expect(getNametTagStrings('es').dutyGroup('1 & 2')).toBe('Grupo 1 & 2'));
+  it('Portuguese duty group', () => expect(getNametTagStrings('pt').dutyGroup('1 & 2')).toBe('Grupo 1 & 2'));
   it('English duty group', () => expect(getNametTagStrings('en').dutyGroup('1 & 2')).toBe('Group 1 & 2'));
   it('bilingual-fr duty group uses French', () => expect(getNametTagStrings('bilingual-fr').dutyGroup('1')).toBe('Groupe 1'));
 });
@@ -234,6 +309,7 @@ describe('getNametTagStrings dutyGroup', () => {
 describe('getShortNametTagNames', () => {
   it('French: 333oh is "À une main"', () => expect(getShortNametTagNames('fr')['333oh']).toBe('À une main'));
   it('Spanish: 333oh is "Una mano"', () => expect(getShortNametTagNames('es')['333oh']).toBe('Una mano'));
+  it('Portuguese: 333oh is "Uma Mão"', () => expect(getShortNametTagNames('pt')['333oh']).toBe('Uma Mão'));
   it('English: 333oh is "One-Hand"', () => expect(getShortNametTagNames('en')['333oh']).toBe('One-Hand'));
   it('bilingual-fr uses French names', () => expect(getShortNametTagNames('bilingual-fr')['333oh']).toBe('À une main'));
   it('common names are the same across languages', () => {
@@ -261,6 +337,11 @@ describe('getStrings seat/station labels', () => {
     const s = getStrings('es');
     expect(s.stationLabel('03')).toBe('Estación 03');
     expect(s.seatLabel('03')).toBe('Asiento 03');
+  });
+  it('Portuguese: Estação and Assento', () => {
+    const s = getStrings('pt');
+    expect(s.stationLabel('03')).toBe('Estação 03');
+    expect(s.seatLabel('03')).toBe('Assento 03');
   });
   it('bilingual-fr uses French labels', () => {
     const s = getStrings('bilingual-fr');
