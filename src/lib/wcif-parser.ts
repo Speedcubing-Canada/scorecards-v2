@@ -68,6 +68,9 @@ export interface ScorecardEntry {
   eventId: string;
   eventName: string;
   roundLabel: string;
+  // 1-based round number this card belongs to (0 for custom events). Used by the
+  // generation-scope filter to select cards by (eventId, roundNum) without re-parsing labels.
+  roundNum: number;
   group: string;
   name: string;
   wcaId: string;
@@ -89,6 +92,7 @@ export interface CoverEntry {
   eventId: string;
   eventName: string;
   roundLabel: string;
+  roundNum: number;
   group: string;
   numScorecards: number;
 }
@@ -128,11 +132,15 @@ export interface ParsedWCIF {
   extras: ScorecardData[];
   // Schedule tracker data in chronological (day-primary) order.
   scheduleDays: ScheduleDay[];
+  // Rounds (>= 2) that have real competitor group assignments in the WCIF — i.e. groups
+  // were generated mid-competition. Empty for a standard pre-competition WCIF. Drives the
+  // generation-scope prompt on GeneratePage. Sorted by event order then round number.
+  laterRoundsWithAssignments: { eventId: string; roundNum: number }[];
 }
 
 const EMPTY_COVER: CoverEntry = {
   kind: 'cover', timeslot: 'ZZZ', eventId: '' as EventId,
-  eventName: '', roundLabel: '', group: '', numScorecards: 0,
+  eventName: '', roundLabel: '', roundNum: 0, group: '', numScorecards: 0,
 };
 
 function padToMultipleOfFour(arr: ScorecardData[]): void {
@@ -169,7 +177,7 @@ function reorderQuadrants<T>(items: T[]): T[] {
 // Standard finalize: sort by timeslot → eventId → group → cover-before-scorecard → name.
 // Sorting by group before kind keeps each group's cover immediately before its own scorecards,
 // so that after quad-reorder the cut-and-stack produces one correctly ordered pile per group.
-function finalizeEntries(entries: ScorecardData[]): ScorecardData[] {
+export function finalizeEntries(entries: ScorecardData[]): ScorecardData[] {
   if (entries.length === 0) return [];
   entries.sort((a, b) => {
     const ts = a.timeslot.localeCompare(b.timeslot);
@@ -368,8 +376,15 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
   // Round-1 participant list per event (for prefilled intermediate cards)
   const round1Participants: Record<string, ScorecardEntry[]> = {};
-  // Group sizes per activity (for first-round cover cards)
-  const firstGroupSizes: Record<number, Set<number>> = {};
+  // Group sizes per activity (for cover cards), keyed by activityId — covers every
+  // round that has real assignments (round 1 always; rounds 2+ only when assigned).
+  const namedGroupSizes: Record<number, Set<number>> = {};
+  // Rounds (rid like "333-r2") with real competitor assignments and roundNum >= 2.
+  // These are rendered as named scorecards and skipped by the blank/prefilled loops.
+  const liveRounds = new Set<string>();
+  // Whether the intermediate bucket holds any real-assignment named cards (vs prefilled
+  // placeholders) — selects the finalize strategy below.
+  let intermediateHasNamed = false;
 
   // ── Named scorecard entries from person assignments ───────────────────────
   for (const person of wcif.persons) {
@@ -401,8 +416,31 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
       const total = numRounds[eventId] ?? 1;
       const isFirst = roundNum === 1;
-      // Only add named entries for round 1
-      if (!isFirst) continue;
+      const isFinal = roundNum === total && total > 1;
+      const isRound2 = roundNum === 2 && total >= 3;
+      const isSemis = roundNum >= 3 && roundNum < total && total >= 4;
+
+      // Round 1 is always named. Rounds 2+ are named only when groups were assigned
+      // mid-competition — i.e. this competitor assignment exists in the WCIF. Route each
+      // card to the bucket matching its round (same classification as the schedule loop).
+      let targetBucket: ScorecardData[];
+      let dcBuckets: DoubleCheckRound[];
+      if (isFirst) {
+        targetBucket = firstRoundEntries;
+        dcBuckets = total === 1 ? ['firstRound', 'finals'] : ['firstRound'];
+      } else if (isFinal) {
+        targetBucket = finalsEntries;
+        dcBuckets = ['finals'];
+      } else if (isRound2) {
+        targetBucket = intermediateEntries;
+        dcBuckets = ['intermediate'];
+        intermediateHasNamed = true;
+      } else if (isSemis) {
+        targetBucket = semisEntries;
+        dcBuckets = ['semis'];
+      } else {
+        continue;
+      }
 
       const gNum = groupPart.slice(1);
       const stage = activityStage[aid]?.toLowerCase() ?? 'hall';
@@ -420,7 +458,8 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         timeslot: timeslots[aid] ?? 'Z99',
         eventId,
         eventName: getEventName(eventId, language),
-        roundLabel: getRoundLabel(eventId, total === 1 ? 1 : roundNum),
+        roundLabel: getRoundLabel(eventId, roundNum),
+        roundNum,
         group,
         name,
         wcaId,
@@ -430,22 +469,23 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         limit: roundLimit[rid],
         format: roundFormat[rid],
         isCumulative: roundCumulative[rid],
-        scrambleDoubleCheck: wantsDoubleCheck(
-          total === 1 ? ['firstRound', 'finals'] : ['firstRound'],
-          wcaId, eventId,
-        ),
+        scrambleDoubleCheck: wantsDoubleCheck(dcBuckets, wcaId, eventId),
       };
 
-      firstRoundEntries.push(entry);
-      if (!round1Participants[eventId]) round1Participants[eventId] = [];
-      round1Participants[eventId].push(entry);
-      if (!firstGroupSizes[aid]) firstGroupSizes[aid] = new Set();
-      firstGroupSizes[aid].add(person.registrantId);
+      targetBucket.push(entry);
+      if (isFirst) {
+        if (!round1Participants[eventId]) round1Participants[eventId] = [];
+        round1Participants[eventId].push(entry);
+      } else {
+        liveRounds.add(rid);
+      }
+      if (!namedGroupSizes[aid]) namedGroupSizes[aid] = new Set();
+      namedGroupSizes[aid].add(person.registrantId);
     }
   }
 
-  // ── Cover cards for round 1 ───────────────────────────────────────────────
-  for (const [aidStr, ids] of Object.entries(firstGroupSizes)) {
+  // ── Cover cards (one per group) for every named round ─────────────────────
+  for (const [aidStr, ids] of Object.entries(namedGroupSizes)) {
     const aid = Number(aidStr);
     const code = activityCode[aid];
     if (!code) continue;
@@ -455,16 +495,29 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     if (eventId === '333fm') continue;
 
     const rid = `${eventId}-${roundPart}`;
+    const roundNum = parseInt(roundPart.slice(1), 10);
+    const total = numRounds[eventId] ?? 1;
     const gNum = groupPart.slice(1);
     const stage = activityStage[aid]?.toLowerCase() ?? 'hall';
     const totalGroups = numGroups[rid] ?? 1;
 
-    firstRoundEntries.push({
+    const isFinal = roundNum === total && total > 1;
+    const isRound2 = roundNum === 2 && total >= 3;
+    const isSemis = roundNum >= 3 && roundNum < total && total >= 4;
+    const target = roundNum === 1 ? firstRoundEntries
+      : isFinal ? finalsEntries
+      : isRound2 ? intermediateEntries
+      : isSemis ? semisEntries
+      : null;
+    if (!target) continue;
+
+    target.push({
       kind: 'cover',
       timeslot: timeslots[aid] ?? 'Z99',
       eventId: eventId as EventId,
       eventName: getEventName(eventId, language),
-      roundLabel: getRoundLabel(eventId, 1),
+      roundLabel: getRoundLabel(eventId, roundNum),
+      roundNum,
       group: resolveGroupLabel(rid, gNum, stage, totalGroups),
       numScorecards: ids.size,
     });
@@ -492,6 +545,9 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
           const rid = `${eventId}-${roundPart}`;
           if (!roundFormat[rid]) continue;
+          // Already emitted as named scorecards (groups assigned mid-competition) — don't
+          // also produce blank/prefilled cards for the same round.
+          if (liveRounds.has(rid)) continue;
 
           const total = numRounds[eventId] ?? 1;
           const isFinal        = roundNum === total && total > 1;
@@ -556,7 +612,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         finalsEntries.push({
           kind: 'scorecard', timeslot, eventId,
           eventName: getEventName(eventId, language),
-          roundLabel: getRoundLabel(eventId, roundNum),
+          roundLabel: getRoundLabel(eventId, roundNum), roundNum,
           group: cardGroup, name: '', wcaId: '', liveId: '', gender: 'm',
           cutoff: roundCutoff[rid], limit: roundLimit[rid],
           format: roundFormat[rid], isCumulative: roundCumulative[rid],
@@ -566,7 +622,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       finalsEntries.push({
         kind: 'cover', timeslot, eventId: eventId as EventId,
         eventName: getEventName(eventId, language),
-        roundLabel: getRoundLabel(eventId, roundNum),
+        roundLabel: getRoundLabel(eventId, roundNum), roundNum,
         group: coverLabel, numScorecards: blankCount,
       });
     }
@@ -594,7 +650,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         semisEntries.push({
           kind: 'scorecard', timeslot, eventId,
           eventName: getEventName(eventId, language),
-          roundLabel: getRoundLabel(eventId, roundNum),
+          roundLabel: getRoundLabel(eventId, roundNum), roundNum,
           group: groupLabel, name: '', wcaId: '', liveId: '', gender: 'm',
           cutoff: roundCutoff[rid], limit: roundLimit[rid],
           format: roundFormat[rid], isCumulative: roundCumulative[rid],
@@ -604,7 +660,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       semisEntries.push({
         kind: 'cover', timeslot, eventId: eventId as EventId,
         eventName: getEventName(eventId, language),
-        roundLabel: getRoundLabel(eventId, roundNum),
+        roundLabel: getRoundLabel(eventId, roundNum), roundNum,
         group: groupLabel, numScorecards: blankCount,
       });
     }
@@ -637,7 +693,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         intermediateEntries.push({
           kind: 'cover', timeslot: minTs, eventId: eventId as EventId,
           eventName: getEventName(eventId, language),
-          roundLabel: getRoundLabel(eventId, roundNum),
+          roundLabel: getRoundLabel(eventId, roundNum), roundNum,
           group: coverLabel,
           numScorecards,
         });
@@ -649,7 +705,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         intermediateEntries.push({
           kind: 'scorecard', timeslot: minTs, eventId,
           eventName: getEventName(eventId, language),
-          roundLabel: getRoundLabel(eventId, roundNum),
+          roundLabel: getRoundLabel(eventId, roundNum), roundNum,
           group: blankGroup,
           name: p.name, wcaId: p.wcaId, liveId: p.liveId, gender: p.gender,
           cutoff: roundCutoff[rid], limit: roundLimit[rid],
@@ -672,7 +728,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
           intermediateEntries.push({
             kind: 'scorecard', timeslot, eventId,
             eventName: getEventName(eventId, language),
-            roundLabel: getRoundLabel(eventId, roundNum),
+            roundLabel: getRoundLabel(eventId, roundNum), roundNum,
             group: groupLabel, name: '', wcaId: '', liveId: '', gender: 'm',
             cutoff: roundCutoff[rid], limit: roundLimit[rid],
             format: roundFormat[rid], isCumulative: roundCumulative[rid],
@@ -682,7 +738,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         intermediateEntries.push({
           kind: 'cover', timeslot, eventId: eventId as EventId,
           eventName: getEventName(eventId, language),
-          roundLabel: getRoundLabel(eventId, roundNum),
+          roundLabel: getRoundLabel(eventId, roundNum), roundNum,
           group: groupLabel, numScorecards: blankCount,
         });
       }
@@ -780,6 +836,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       eventId,
       eventName: getEventName(eventId, language),
       roundLabel: getRoundLabel(eventId, roundNum),
+      roundNum,
       group,
       name: '', wcaId: '', liveId: '', gender: 'm',
       cutoff: roundCutoff[rid], limit: roundLimit[rid],
@@ -897,9 +954,22 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     if (stages.length > 0) scheduleDays.push({ dayLabel: formatDayLabel(date), stages });
   }
 
+  // Named round-2 cards carry real groups + covers, so they need the group-sorted
+  // finalize (cover immediately before its own group). The placeholder-group prefilled
+  // layout only needs its special finalize when no real assignments are present.
+  const laterRoundsWithAssignments = [...liveRounds]
+    .map((rid) => {
+      const [eventId, roundPart] = rid.split('-');
+      return { eventId, roundNum: parseInt(roundPart.slice(1), 10) };
+    })
+    .sort((a, b) =>
+      (WCA_EVENT_ORDER.indexOf(a.eventId as EventId) - WCA_EVENT_ORDER.indexOf(b.eventId as EventId))
+      || (a.roundNum - b.roundNum),
+    );
+
   return {
     firstRound: finalizeEntries(firstRoundEntries),
-    intermediate: secondRoundMode === 'prefilled'
+    intermediate: secondRoundMode === 'prefilled' && !intermediateHasNamed
       ? finalizeEntriesIntermediate(intermediateEntries)
       : finalizeEntries(intermediateEntries),
     semis:  finalizeEntries(semisEntries),
@@ -907,5 +977,6 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     nametags,
     extras: extrasEntries,
     scheduleDays,
+    laterRoundsWithAssignments,
   };
 }

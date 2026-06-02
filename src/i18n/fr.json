@@ -132,5 +132,23 @@
     },
     "download_button": "⬇ Télécharger {{filename}}",
     "building_button": "Création du ZIP…"
+  },
+  "scope": {
+    "heading": "Que générer",
+    "intro": "Cette compétition a déjà les groupes d’un tour après le tour 1. Choisissez quoi imprimer — vous pourrez régler le reste à l’écran suivant.",
+    "checking": "Vérification de la compétition…",
+    "continue": "Continuer →",
+    "latest": {
+      "label": "Dernier tour uniquement",
+      "desc": "N'imprime que le tour le plus récent qui a des groupes. Idéal pendant une compétition."
+    },
+    "everything": {
+      "label": "Tout",
+      "desc": "Imprime tous les tours (et badges, horaire, etc.), en utilisant les groupes attribués lorsqu’ils existent."
+    },
+    "selected": {
+      "label": "Choisir les tours",
+      "desc": "Choisissez précisément quels tours d'épreuves imprimer."
+    }
   }
 }

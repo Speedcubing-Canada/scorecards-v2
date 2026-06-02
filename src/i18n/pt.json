@@ -132,5 +132,23 @@
     },
     "download_button": "⬇ Baixar {{filename}}",
     "building_button": "Criando ZIP…"
+  },
+  "scope": {
+    "heading": "O que gerar",
+    "intro": "Esta competição já tem grupos para uma rodada após a Rodada 1. Escolha o que imprimir — você pode ajustar o resto na próxima tela.",
+    "checking": "Verificando a competição…",
+    "continue": "Continuar →",
+    "latest": {
+      "label": "Apenas a última rodada",
+      "desc": "Imprime apenas a rodada mais recente que tem grupos. Ideal durante uma competição."
+    },
+    "everything": {
+      "label": "Tudo",
+      "desc": "Imprime todas as rodadas (e crachás, cronograma, etc.), usando os grupos atribuídos quando existirem."
+    },
+    "selected": {
+      "label": "Selecionar rodadas",
+      "desc": "Escolha exatamente quais rodadas de cada evento imprimir."
+    }
   }
 }

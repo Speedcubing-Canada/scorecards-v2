@@ -20,6 +20,7 @@ const BASE: CompetitionSettings = {
   nametagLogoMode: 'hidden', nametagQrMode: 'back-only',
   customEvents: [],
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
+  generationScope: { mode: 'everything' },
 };
 const cfg = (o: Partial<CompetitionSettings> = {}): CompetitionSettings => ({ ...BASE, ...o });
 
@@ -1361,5 +1362,107 @@ describe('Scramble double-checking', () => {
       scrambleDoubleCheck: true, scrambleDoubleCheckRounds: ['finals'],
     }));
     expect(scs(result.firstRound).every(s => s.scrambleDoubleCheck)).toBe(true);
+  });
+});
+
+// ── Mid-competition: real group assignments for rounds 2+ ─────────────────────
+describe('mid-competition named later rounds', () => {
+  // 3-round 333; both competitors are assigned to BOTH round 1 and round 2 groups
+  // (groups generated mid-competition). aid 110/111 are the two round-2 groups.
+  function mk3RoundWithR2(mode: 'blanks' | 'prefilled' = 'blanks') {
+    const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)]),
+      act('333', 2, [ch(110, '333', 2, 1, '2024-01-01T12:00:00Z'), ch(111, '333', 2, 2, '2024-01-01T12:00:00Z')]),
+      act('333', 3, [ch(120, '333', 3, 1, '2024-01-01T16:00:00Z')]),
+    ]);
+    const persons = [
+      per(1, [{ aid: 100 }, { aid: 110 }]),
+      per(2, [{ aid: 101 }, { aid: 111 }]),
+    ];
+    return parseWCIF(mkWCIF([e], [r], persons), cfg({ secondRoundMode: mode }));
+  }
+
+  it('emits named round-2 scorecards with real group labels (not the blank placeholder)', () => {
+    const result = mk3RoundWithR2('prefilled');
+    const named = scs(result.intermediate).filter(s => s.name !== '');
+    expect(named.map(s => s.name).sort()).toEqual(['P1', 'P2']);
+    expect(named.map(s => s.group).sort()).toEqual(['Group 1 of 2', 'Group 2 of 2']);
+    expect(named.every(s => s.group !== 'Group _ of 2')).toBe(true);
+  });
+
+  it('does not also emit blank/prefilled duplicates for the assigned round', () => {
+    // Only the two real competitors → exactly 2 scorecards (no 16-blank padding rows).
+    const result = mk3RoundWithR2('blanks');
+    const cards = scs(result.intermediate).filter(s => s.eventId === '333');
+    expect(cards.length).toBe(2);
+    expect(cards.every(s => s.name !== '')).toBe(true);
+  });
+
+  it('reports the assigned round in laterRoundsWithAssignments', () => {
+    const result = mk3RoundWithR2();
+    expect(result.laterRoundsWithAssignments).toEqual([{ eventId: '333', roundNum: 2 }]);
+  });
+
+  it('tags every scorecard/cover with its roundNum', () => {
+    const result = mk3RoundWithR2();
+    expect(scs(result.firstRound).every(s => s.roundNum === 1)).toBe(true);
+    expect([...scs(result.intermediate), ...cvs(result.intermediate)].every(e => e.roundNum === 2)).toBe(true);
+  });
+
+  it('emits a cover per assigned round-2 group', () => {
+    const result = mk3RoundWithR2();
+    const cov = cvs(result.intermediate);
+    expect(cov.length).toBe(2);
+    expect(cov.map(c => c.group).sort()).toEqual(['Group 1 of 2', 'Group 2 of 2']);
+    expect(cov.every(c => c.numScorecards === 1)).toBe(true);
+  });
+
+  it('2-round event: an assigned round 2 produces named cards in the finals bucket', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      act('333', 2, [ch(110, '333', 2, 1, '2024-01-01T14:00:00Z')]),
+    ]);
+    const persons = [per(1, [{ aid: 100 }, { aid: 110 }])];
+    const result = parseWCIF(mkWCIF([e], [r], persons), cfg());
+    const named = scs(result.finals).filter(s => s.name !== '');
+    expect(named.length).toBe(1);
+    expect(named[0]?.name).toBe('P1');
+    expect(named[0]?.roundLabel).toBe('Final Round');
+    expect(result.intermediate.length).toBe(0);
+    expect(result.laterRoundsWithAssignments).toEqual([{ eventId: '333', roundNum: 2 }]);
+  });
+
+  it('4-round event: an assigned round 3 produces named cards in the semis bucket', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      act('333', 2, [ch(110, '333', 2, 1, '2024-01-01T12:00:00Z')]),
+      act('333', 3, [ch(120, '333', 3, 1, '2024-01-01T15:00:00Z')]),
+      act('333', 4, [ch(130, '333', 4, 1, '2024-01-01T18:00:00Z')]),
+    ]);
+    const persons = [per(1, [{ aid: 100 }, { aid: 120 }])];
+    const result = parseWCIF(mkWCIF([e], [r], persons), cfg());
+    const named = scs(result.semis).filter(s => s.name !== '');
+    expect(named.length).toBe(1);
+    expect(named[0]?.name).toBe('P1');
+    expect(named[0]?.roundNum).toBe(3);
+    expect(result.laterRoundsWithAssignments).toEqual([{ eventId: '333', roundNum: 3 }]);
+  });
+
+  it('regression: an unassigned round 2 still produces prefilled/blank output (no behaviour change)', () => {
+    // Competitors only assigned to round 1 — the normal pre-competition WCIF.
+    const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)]),
+      act('333', 2, [ch(110, '333', 2, 1, '2024-01-01T12:00:00Z'), ch(111, '333', 2, 2, '2024-01-01T12:00:00Z')]),
+      act('333', 3, [ch(120, '333', 3, 1, '2024-01-01T16:00:00Z')]),
+    ]);
+    const persons = [per(1, [{ aid: 100 }]), per(2, [{ aid: 101 }])];
+    const result = parseWCIF(mkWCIF([e], [r], persons), cfg({ secondRoundMode: 'prefilled' }));
+    const named = scs(result.intermediate).filter(s => s.name !== '');
+    expect(named.every(s => s.group === 'Group _ of 2')).toBe(true);
+    expect(result.laterRoundsWithAssignments).toEqual([]);
   });
 });

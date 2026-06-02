@@ -1,3 +1,5 @@
+import type { GenerationScope } from '../lib/generationScope';
+
 // A single printable language. The set of supported codes is mirrored by the
 // `LANGUAGES` registry in src/i18n/index.ts (UI dropdown) and the `LOCALES`
 // table in src/lib/i18n.ts (PDF strings) — keep all three in sync.
@@ -51,4 +53,7 @@ export interface CompetitionSettings {
   scrambleDoubleCheck: boolean;
   scrambleDoubleCheckRounds: DoubleCheckRound[];
   scrambleDoubleCheckOverrides: ScrambleDoubleCheckOverrides;
+  // What to generate. Defaults to `{ mode: 'everything' }` (the normal pre-competition case).
+  // Set on the scope step when the WCIF already has groups for a later round.
+  generationScope: GenerationScope;
 }

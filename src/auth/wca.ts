@@ -1,3 +1,5 @@
+import type { WCIF } from '../types/wcif';
+
 export const WCA_OAUTH_URL = 'https://www.worldcubeassociation.org/oauth/authorize';
 // In dev, route through the Vite proxy (WCA's token endpoint has no CORS headers).
 // In production, a backend proxy at /wca-token is required — see README.
@@ -58,6 +60,15 @@ export async function fetchManagedCompetitions(token: string) {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error(`Failed to fetch competitions: ${res.statusText}`);
+  return res.json();
+}
+
+/** Fetch a competition's WCIF (events, persons, schedule). Requires a WCA access token. */
+export async function fetchWcif(competitionId: string, token: string): Promise<WCIF> {
+  const res = await fetch(`${WCA_API_URL}/competitions/${competitionId}/wcif`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`WCIF fetch failed (${res.status})`);
   return res.json();
 }
 

@@ -86,6 +86,7 @@ function buildCustomEntries(custom: CustomEvent): ScorecardData[] {
     eventId: 'custom',
     eventName: custom.name,
     roundLabel: '',
+    roundNum: 0,
     group: '',
     name: '',
     wcaId: '',

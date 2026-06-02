@@ -34,7 +34,7 @@ export default function CompetitionPickerPage() {
   function selectCompetition(comp: WCACompetition) {
     sessionStorage.setItem('selected_competition_id', comp.id);
     sessionStorage.setItem('selected_competition_name', comp.name);
-    navigate('/settings');
+    navigate('/scope');
   }
 
   return (

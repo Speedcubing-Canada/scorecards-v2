@@ -61,14 +61,15 @@ In development, `vite.config.ts` provides this endpoint as a Vite dev-server mid
 ## Application flow
 
 ```
-LoginPage → CompetitionPickerPage → SettingsPage → GeneratePage (download)
+LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → GeneratePage (download)
 ```
 
 - **LoginPage** — initiates WCA OAuth PKCE; stores the code verifier in `sessionStorage`.
 - **AuthCallbackPage** — exchanges the code for a token; stores the token in `sessionStorage`.
 - **CompetitionPickerPage** — lists competitions managed by the logged-in user (WCA API `?managed_by_me=true`).
-- **SettingsPage** — collects paper format, language, logo, and nametag layout options; auto-detects the WCA Live competition ID and per-competitor person IDs from the WCA Live API; stores settings in `sessionStorage`.
-- **GeneratePage** — fetches the WCIF, parses it, and renders the download button. PDF rendering runs inside a Web Worker to keep the UI responsive.
+- **RoundScopePage** — fetches the WCIF up front and detects whether any round ≥ 2 already has real group assignments (groups generated mid-competition). If not (the normal pre-competition case), it auto-advances straight to Settings. If so, it asks **what to generate** — latest round only (default) / everything / select specific event+rounds — and stores the choice. The WCIF is cached in memory (`lib/wcifCache.ts`) so GeneratePage reuses it without a second fetch.
+- **SettingsPage** — collects paper format, language, logo, etc.; auto-detects the WCA Live competition ID and per-competitor person IDs from the WCA Live API; stores settings in `sessionStorage`. It adapts to the scope: when generating scorecards only (scope ≠ everything) it shows just scorecard-relevant options and hides the name-tag and custom-event sections; it also hides the Round 2 prefilled/blanks control once Round 2 has real groups (so the choice no longer matters).
+- **GeneratePage** — gets the WCIF (cache or fetch), parses it, applies the chosen scope, and renders the download button. PDF rendering runs inside a Web Worker to keep the UI responsive.
 
 Settings and auth state live in `sessionStorage` only — they are cleared when the tab is closed and are never sent to any server.
 
@@ -171,9 +172,9 @@ Each download is a ZIP containing one PDF per round stage plus a name-tag PDF if
 | File | Contents |
 |---|---|
 | `{id}_round1.pdf` | Named scorecards for every competitor assigned to round 1, plus one cover card per group |
-| `{id}_round2.pdf` | Round 2 of events with 3 or more rounds; prefilled or blank depending on the setting |
-| `{id}_semis.pdf` | Round 3 of events with 4 rounds (semi-finals); always blank |
-| `{id}_finals.pdf` | Final round of every multi-round event; always blank scorecards |
+| `{id}_round2.pdf` | Round 2 of events with 3 or more rounds; named when groups are assigned in the WCIF, otherwise prefilled or blank depending on the setting |
+| `{id}_semis.pdf` | Round 3 of events with 4 rounds (semi-finals); named when groups are assigned, otherwise blank |
+| `{id}_finals.pdf` | Final round of every multi-round event; named when groups are assigned, otherwise blank scorecards |
 | `{id}_extras.pdf` | One blank spare scorecard per round per event (sorted by schedule order) |
 | `{id}_schedule.pdf` | Schedule tracker table: estimated start/end times with blank columns for actual times and competitor count |
 | `{id}_nametags.pdf` | Landscape sheet of competitor name tags (omitted if no nametag data is available) |
@@ -191,6 +192,38 @@ Controlled by the `secondRoundMode` setting:
 
 - **Prefilled** — N cover cards (one per group) followed by all round-1 participants with a blank group placeholder (`Group _ of N`). Staff sorts the advancing competitors into groups manually and pulls their cards from the stack.
 - **Blanks** — fully blank scorecards per group, same as finals.
+
+These two modes only apply to a round that has **not** been assigned yet — see below.
+
+### Mid-competition generation (live group assignments)
+
+Scorecards are normally generated before a competition, when the WCIF only contains
+competitor group assignments for Round 1. During the competition the organizer typically
+assigns groups for the next round in their grouping tool and re-exports the WCIF. When the
+parser finds real `competitor` assignments for a round ≥ 2, it produces **named** scorecards
+with the actual group for that round (routed to the matching `intermediate` / `semis` /
+`finals` PDF), instead of the prefilled/blank output described above. The blank/prefilled
+fallback is still used for any round that has not been assigned.
+
+Detection happens **up front** on `RoundScopePage` (right after picking the competition), not
+at download time. When at least one later round has real assignments, that page asks a
+**scope** question:
+
+- **Latest round only** *(default)* — print only the most recent round that has groups. Best
+  during a competition (you don't reprint earlier rounds).
+- **Everything** — print all rounds (plus name tags, schedule, etc.), using assigned groups
+  where available.
+- **Select rounds** — pick individual event + round combinations.
+
+The scoped modes (`latest` / `selected`) emit scorecard PDFs only — name tags, the schedule
+tracker, and extras are pre-competition artifacts and are skipped, and the Settings page hides
+those sections accordingly. When no later round has assignments (the normal pre-competition
+WCIF) there is no prompt, the page auto-advances to Settings, and output is unchanged.
+
+The scope filtering lives in `src/lib/generationScope.ts` (`GenerationScope`,
+`filterParsedByScope`, `availableRounds`, `latestAssignedRound`, `hasUnassignedIntermediate`);
+the parser exposes `ParsedWCIF.laterRoundsWithAssignments` and a `roundNum` on every entry to
+drive it. The chosen scope is persisted on `CompetitionSettings.generationScope`.
 
 ### Print layout (quad-reorder / cut-and-stack)
 
@@ -343,8 +376,13 @@ interface ParsedWCIF {
   nametags:     NametTagEntry[];
   extras:       ScorecardData[];     // one blank scorecard per round per event
   scheduleDays: ScheduleDay[];       // chronological schedule tracker data
+  // Rounds (≥ 2) that already have real competitor group assignments — empty for a
+  // standard pre-competition WCIF. Drives the generation-scope prompt.
+  laterRoundsWithAssignments: { eventId: string; roundNum: number }[];
 }
 ```
+
+Every `ScorecardData` entry also carries a `roundNum` (1-based; `0` for custom events) so the generation-scope filter can select cards by event + round.
 
 ### What is skipped
 

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { CompetitionSettings, CustomEvent, DoubleCheckRound, LocaleCode, NametTagLogoMode, NametTagQrMode, PaperFormat, ScrambleDoubleCheckOverrides, SecondRoundMode } from '../types/settings';
+import type { GenerationScope } from '../lib/generationScope';
 import { LANGUAGES } from '../i18n/index';
 import { resolveDefaultPrimaryLanguage, secondaryLanguageRow } from '../lib/languageSelector';
 import { parseDoubleCheckOverrides } from '../lib/parseDoubleCheckOverrides';
@@ -26,6 +27,17 @@ export default function SettingsPage() {
 
   const competitionId = sessionStorage.getItem('selected_competition_id') ?? '';
   const competitionName = sessionStorage.getItem('selected_competition_name') ?? '';
+
+  // Decided on the scope step. When generating scorecards only (scope ≠ everything), the
+  // Settings page shows just what's relevant to scorecards.
+  const scopeRaw = sessionStorage.getItem('generation_scope');
+  const generationScope: GenerationScope = scopeRaw ? JSON.parse(scopeRaw) : { mode: 'everything' };
+  const detectionRaw = sessionStorage.getItem('generation_detection');
+  const detection = detectionRaw ? JSON.parse(detectionRaw) as { showSecondRoundMode?: boolean } : null;
+  const everything = generationScope.mode === 'everything';
+  // Round 2 prefilled/blanks only matters when an unassigned Round 2 will actually be
+  // generated. Absent detection (step bypassed) ⇒ show it, preserving prior behaviour.
+  const showSecondRoundMode = detection?.showSecondRoundMode !== false;
 
   // Default the primary scorecard language to whatever interface language the
   // user is already using (saves a click for most people); secondary starts as
@@ -212,6 +224,7 @@ export default function SettingsPage() {
       scrambleDoubleCheck,
       scrambleDoubleCheckRounds,
       scrambleDoubleCheckOverrides,
+      generationScope,
     };
     sessionStorage.setItem('competition_settings', JSON.stringify(settings));
     navigate('/generate');
@@ -297,6 +310,7 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        {showSecondRoundMode && (
         <section style={s.section}>
           <h3 style={s.sectionTitle}>{t('settings.subsequent_rounds.title')}</h3>
           <div style={s.optionGroup}>
@@ -318,6 +332,7 @@ export default function SettingsPage() {
             ))}
           </div>
         </section>
+        )}
 
         <section style={s.section}>
           <h3 style={s.sectionTitle}>
@@ -462,6 +477,7 @@ export default function SettingsPage() {
           />
         </section>
 
+        {everything && (
         <section style={s.section}>
           <h3 style={s.sectionTitle}>{t('settings.nametag.title')}</h3>
 
@@ -513,7 +529,9 @@ export default function SettingsPage() {
             ))}
           </div>
         </section>
+        )}
 
+        {everything && (
         <section style={s.section}>
           <button style={s.advancedToggle} onClick={() => setAdvancedOpen(o => !o)}>
             <span style={s.advancedToggleArrow}>{advancedOpen ? '▾' : '▸'}</span>
@@ -650,6 +668,7 @@ export default function SettingsPage() {
             </div>
           )}
         </section>
+        )}
 
         <div style={s.footer}>
           <button style={s.submitBtn} onClick={handleSubmit}>

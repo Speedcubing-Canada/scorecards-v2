@@ -1,0 +1,136 @@
+import { describe, it, expect } from 'vitest';
+import { availableRounds, filterParsedByScope, latestAssignedRound, hasUnassignedIntermediate } from './generationScope';
+import type { ParsedWCIF, ScorecardData, ScorecardEntry, CoverEntry } from './wcif-parser';
+
+// ── Builders ──────────────────────────────────────────────────────────────────
+function sc(eventId: string, roundNum: number, name = ''): ScorecardEntry {
+  return {
+    kind: 'scorecard', timeslot: 'a01', eventId, eventName: eventId,
+    roundLabel: `Round ${roundNum}`, roundNum, group: `Group 1 of 1`,
+    name, wcaId: '', liveId: '', gender: 'm', cutoff: '', limit: '',
+    format: 'avg5', isCumulative: false,
+  };
+}
+function cover(eventId: string, roundNum: number): CoverEntry {
+  return {
+    kind: 'cover', timeslot: 'a01', eventId, eventName: eventId,
+    roundLabel: `Round ${roundNum}`, roundNum, group: 'Group 1 of 1', numScorecards: 1,
+  };
+}
+
+function mkParsed(over: Partial<ParsedWCIF> = {}): ParsedWCIF {
+  return {
+    firstRound: [], intermediate: [], semis: [], finals: [],
+    nametags: [], extras: [], scheduleDays: [],
+    laterRoundsWithAssignments: [],
+    ...over,
+  };
+}
+
+const realScs = (entries: ScorecardData[]) =>
+  entries.filter((e): e is ScorecardEntry => e.kind === 'scorecard' && e.eventId !== '');
+
+describe('availableRounds', () => {
+  it('lists unique event+round across all scorecard buckets', () => {
+    const parsed = mkParsed({
+      firstRound: [sc('333', 1, 'A'), cover('333', 1), sc('222', 1, 'B')],
+      intermediate: [sc('333', 2, 'A')],
+      finals: [sc('222', 2)],
+    });
+    expect(availableRounds(parsed)).toEqual([
+      { eventId: '333', roundNum: 1 },
+      { eventId: '222', roundNum: 1 },
+      { eventId: '333', roundNum: 2 },
+      { eventId: '222', roundNum: 2 },
+    ]);
+  });
+
+  it('ignores empty padding covers', () => {
+    const padding: CoverEntry = {
+      kind: 'cover', timeslot: 'ZZZ', eventId: '', eventName: '',
+      roundLabel: '', roundNum: 0, group: '', numScorecards: 0,
+    };
+    const parsed = mkParsed({ firstRound: [sc('333', 1, 'A'), padding] });
+    expect(availableRounds(parsed)).toEqual([{ eventId: '333', roundNum: 1 }]);
+  });
+});
+
+describe('latestAssignedRound', () => {
+  it('returns the highest assigned round number', () => {
+    expect(latestAssignedRound(mkParsed({
+      laterRoundsWithAssignments: [{ eventId: '333', roundNum: 2 }, { eventId: '222', roundNum: 3 }],
+    }))).toBe(3);
+  });
+  it('returns 0 when nothing is assigned', () => {
+    expect(latestAssignedRound(mkParsed())).toBe(0);
+  });
+});
+
+describe('hasUnassignedIntermediate', () => {
+  it('true for a pre-competition parse (Round 2 prefilled/blank, nothing assigned)', () => {
+    expect(hasUnassignedIntermediate(mkParsed({
+      intermediate: [sc('333', 2), cover('333', 2)],
+      laterRoundsWithAssignments: [],
+    }))).toBe(true);
+  });
+
+  it('false when every intermediate round is assigned (named)', () => {
+    expect(hasUnassignedIntermediate(mkParsed({
+      intermediate: [sc('333', 2, 'A'), cover('333', 2)],
+      laterRoundsWithAssignments: [{ eventId: '333', roundNum: 2 }],
+    }))).toBe(false);
+  });
+
+  it('true in a mixed case where one event\'s Round 2 is still unassigned', () => {
+    expect(hasUnassignedIntermediate(mkParsed({
+      intermediate: [sc('333', 2, 'A'), sc('222', 2)],
+      laterRoundsWithAssignments: [{ eventId: '333', roundNum: 2 }],
+    }))).toBe(true);
+  });
+
+  it('false when there is no intermediate bucket at all', () => {
+    expect(hasUnassignedIntermediate(mkParsed())).toBe(false);
+  });
+});
+
+describe('filterParsedByScope', () => {
+  const base = mkParsed({
+    firstRound: [sc('333', 1, 'A'), sc('333', 1, 'B')],
+    intermediate: [sc('333', 2, 'A'), cover('333', 2)],
+    finals: [sc('333', 3)],
+    nametags: [{ name: 'x' } as never],
+    extras: [sc('333', 1)],
+    scheduleDays: [{ dayLabel: 'Day 1', stages: [] }],
+    laterRoundsWithAssignments: [{ eventId: '333', roundNum: 2 }],
+  });
+
+  it('everything → returns the input unchanged', () => {
+    expect(filterParsedByScope(base, { mode: 'everything' })).toBe(base);
+  });
+
+  it('latest → keeps only the highest assigned round and clears extras/nametags/schedule', () => {
+    const out = filterParsedByScope(base, { mode: 'latest' });
+    expect(realScs(out.firstRound)).toHaveLength(0);
+    expect(realScs(out.intermediate).map(s => s.name).sort()).toEqual(['A']);
+    expect(realScs(out.finals)).toHaveLength(0);
+    expect(out.extras).toHaveLength(0);
+    expect(out.nametags).toHaveLength(0);
+    expect(out.scheduleDays).toHaveLength(0);
+  });
+
+  it('selected → keeps only the chosen event+round pairs', () => {
+    const out = filterParsedByScope(base, {
+      mode: 'selected',
+      rounds: [{ eventId: '333', roundNum: 1 }, { eventId: '333', roundNum: 3 }],
+    });
+    expect(realScs(out.firstRound).map(s => s.name).sort()).toEqual(['A', 'B']);
+    expect(realScs(out.intermediate)).toHaveLength(0);
+    expect(realScs(out.finals)).toHaveLength(1);
+  });
+
+  it('pads each non-empty kept bucket to a multiple of 4', () => {
+    const out = filterParsedByScope(base, { mode: 'selected', rounds: [{ eventId: '333', roundNum: 1 }] });
+    expect(out.firstRound.length % 4).toBe(0);
+    expect(out.firstRound.length).toBeGreaterThan(0);
+  });
+});

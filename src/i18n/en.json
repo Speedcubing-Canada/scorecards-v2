@@ -132,5 +132,23 @@
     },
     "download_button": "⬇ Download {{filename}}",
     "building_button": "Building ZIP…"
+  },
+  "scope": {
+    "heading": "What to generate",
+    "intro": "This competition already has groups for a round after Round 1. Choose what to print — you can adjust everything else on the next screen.",
+    "checking": "Checking the competition…",
+    "continue": "Continue →",
+    "latest": {
+      "label": "Latest round only",
+      "desc": "Print only the most recent round that has groups. Best during a competition."
+    },
+    "everything": {
+      "label": "Everything",
+      "desc": "Print all rounds (and name tags, schedule, etc.), using assigned groups where available."
+    },
+    "selected": {
+      "label": "Select rounds",
+      "desc": "Choose exactly which event rounds to print."
+    }
   }
 }

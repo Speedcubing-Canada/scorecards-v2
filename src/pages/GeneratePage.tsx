@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
-import { WCA_API_URL } from '../auth/wca';
+import { fetchWcif } from '../auth/wca';
+import { getCachedWcif, setCachedWcif } from '../lib/wcifCache';
 import type { CompetitionSettings } from '../types/settings';
-import type { WCIF } from '../types/wcif';
 import { parseWCIF, type ParsedWCIF } from '../lib/wcif-parser';
+import { filterParsedByScope, type GenerationScope } from '../lib/generationScope';
 import type { WorkerRequest, WorkerResponse } from '../pdf/scorecardWorker';
 import Header from '../components/Header';
 import { useIsMobile } from '../lib/useIsMobile';
@@ -17,7 +18,8 @@ type Status = 'idle' | 'fetching' | 'parsing' | 'ready' | 'building' | 'error';
 /**
  * Read persisted settings, migrating the retired bilingual presets onto the
  * primary + optional-secondary model. Also backfills `secondaryLanguage` so
- * settings saved before that field existed don't render as `undefined`.
+ * settings saved before that field existed don't render as `undefined`, and
+ * `generationScope` for settings saved before scoped generation existed.
  */
 function loadSettings(raw: string | null): CompetitionSettings | null {
   if (!raw) return null;
@@ -25,6 +27,7 @@ function loadSettings(raw: string | null): CompetitionSettings | null {
   if (s.language === 'bilingual-fr') { s.language = 'fr'; s.secondaryLanguage = 'en'; }
   else if (s.language === 'bilingual-en') { s.language = 'en'; s.secondaryLanguage = 'fr'; }
   else if (s.secondaryLanguage === undefined) { s.secondaryLanguage = null; }
+  if (s.generationScope === undefined) s.generationScope = { mode: 'everything' };
   return s as unknown as CompetitionSettings;
 }
 
@@ -43,6 +46,11 @@ export default function GeneratePage() {
   const [parsed, setParsed] = useState<ParsedWCIF | null>(null);
   const workerRef = useRef<Worker | null>(null);
 
+  // The scope is chosen up front on the scope step; here we just apply it. Memoise on a
+  // stable string key since `settings` is re-parsed from sessionStorage every render.
+  const scopeKey = JSON.stringify(settings?.generationScope ?? { mode: 'everything' });
+  const scope = useMemo<GenerationScope>(() => JSON.parse(scopeKey) as GenerationScope, [scopeKey]);
+
   useEffect(() => {
     if (!settings || !token) return;
     let cancelled = false;
@@ -50,13 +58,10 @@ export default function GeneratePage() {
     async function run() {
       setStatus('fetching');
       try {
-        const res = await fetch(
-          `${WCA_API_URL}/competitions/${settings!.competitionId}/wcif`,
-          { headers: { Authorization: `Bearer ${token!.access_token}` } },
-        );
-        if (!res.ok) throw new Error(`WCIF fetch failed (${res.status})`);
-        const wcif: WCIF = await res.json();
+        const wcif = getCachedWcif(settings!.competitionId)
+          ?? await fetchWcif(settings!.competitionId, token!.access_token);
         if (cancelled) return;
+        setCachedWcif(settings!.competitionId, wcif);
 
         setStatus('parsing');
         const result = parseWCIF(wcif, settings!);
@@ -77,23 +82,28 @@ export default function GeneratePage() {
   // Terminate any running worker on unmount
   useEffect(() => () => { workerRef.current?.terminate(); }, []);
 
+  const effectiveParsed = useMemo(
+    () => (parsed ? filterParsedByScope(parsed, scope) : null),
+    [parsed, scope],
+  );
+
   if (!settings) {
     navigate('/competitions', { replace: true });
     return null;
   }
 
-  const allEntries = parsed
-    ? [...parsed.firstRound, ...parsed.intermediate, ...parsed.semis, ...parsed.finals]
+  const allEntries = effectiveParsed
+    ? [...effectiveParsed.firstRound, ...effectiveParsed.intermediate, ...effectiveParsed.semis, ...effectiveParsed.finals]
     : [];
   const scorecardCount = allEntries.filter(e => e.kind === 'scorecard').length;
   const coverCount     = allEntries.filter(e => e.kind === 'cover' && e.eventId).length;
-  const pdfCount       = parsed
-    ? [parsed.firstRound, parsed.intermediate, parsed.semis, parsed.finals].filter(r => r.length > 0).length
+  const pdfCount       = effectiveParsed
+    ? [effectiveParsed.firstRound, effectiveParsed.intermediate, effectiveParsed.semis, effectiveParsed.finals].filter(r => r.length > 0).length
     : 0;
   const filename       = `${settings.competitionId}_scorecards.zip`;
 
   function handleDownload() {
-    if (status === 'building' || !parsed) return;
+    if (status === 'building' || !effectiveParsed || pdfCount === 0) return;
 
     workerRef.current?.terminate();
     const worker = new Worker(
@@ -137,7 +147,7 @@ export default function GeneratePage() {
     };
 
     const uiLang = (i18n.language?.slice(0, 2) ?? 'en') as 'en' | 'fr' | 'es' | 'pt';
-    const req: WorkerRequest = { parsed, settings: settings!, uiLanguage: uiLang };
+    const req: WorkerRequest = { parsed: effectiveParsed, settings: settings!, uiLanguage: uiLang };
     worker.postMessage(req);
   }
 
@@ -179,15 +189,16 @@ export default function GeneratePage() {
               const buttonLabel = status === 'building'
                 ? t('generate.building_button')
                 : t('generate.download_button', { filename });
+              const disabled = status === 'building' || pdfCount === 0;
               return (
                 <button
                   style={{
                     ...s.downloadBtn,
                     fontSize: downloadButtonFontSize(buttonLabel),
-                    ...(status === 'building' ? s.downloadBtnDisabled : {}),
+                    ...(disabled ? s.downloadBtnDisabled : {}),
                   }}
                   onClick={handleDownload}
-                  disabled={status === 'building'}
+                  disabled={disabled}
                 >
                   {buttonLabel}
                 </button>

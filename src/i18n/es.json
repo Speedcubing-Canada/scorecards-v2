@@ -132,5 +132,23 @@
     },
     "download_button": "⬇ Descargar {{filename}}",
     "building_button": "Creando ZIP…"
+  },
+  "scope": {
+    "heading": "Qué generar",
+    "intro": "Esta competición ya tiene grupos para una ronda posterior a la Ronda 1. Elige qué imprimir — podrás ajustar el resto en la siguiente pantalla.",
+    "checking": "Comprobando la competición…",
+    "continue": "Continuar →",
+    "latest": {
+      "label": "Solo la última ronda",
+      "desc": "Imprime solo la ronda más reciente que tiene grupos. Ideal durante una competición."
+    },
+    "everything": {
+      "label": "Todo",
+      "desc": "Imprime todas las rondas (y credenciales, horario, etc.), usando los grupos asignados cuando existan."
+    },
+    "selected": {
+      "label": "Seleccionar rondas",
+      "desc": "Elige exactamente qué rondas de cada evento imprimir."
+    }
   }
 }
