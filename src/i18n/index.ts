@@ -1,20 +1,27 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import type { LocaleCode } from '../types/settings';
 import en from './en.json';
 import fr from './fr.json';
 import es from './es.json';
 import pt from './pt.json';
 
-/** Single source of truth for the languages offered in the UI. */
-export const LANGUAGES = [
+/**
+ * Single source of truth for the languages the app supports, by native label.
+ * Feeds BOTH the interface-language dropdown (LanguageSelect) and the
+ * scorecard primary/secondary language pickers (SettingsPage). Codes are
+ * constrained to `LocaleCode` so this stays in sync with the PDF `LOCALES`
+ * table in src/lib/i18n.ts.
+ */
+export const LANGUAGES: readonly { code: LocaleCode; label: string }[] = [
   { code: 'en', label: 'English' },
   { code: 'fr', label: 'Français' },
   { code: 'es', label: 'Español' },
   { code: 'pt', label: 'Português' },
-] as const;
+];
 
-export type UILang = typeof LANGUAGES[number]['code'];
+export type UILang = LocaleCode;
 
 i18n
   .use(LanguageDetector)

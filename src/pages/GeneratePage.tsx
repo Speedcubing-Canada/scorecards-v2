@@ -14,6 +14,20 @@ import i18n from '../i18n/index';
 
 type Status = 'idle' | 'fetching' | 'parsing' | 'ready' | 'building' | 'error';
 
+/**
+ * Read persisted settings, migrating the retired bilingual presets onto the
+ * primary + optional-secondary model. Also backfills `secondaryLanguage` so
+ * settings saved before that field existed don't render as `undefined`.
+ */
+function loadSettings(raw: string | null): CompetitionSettings | null {
+  if (!raw) return null;
+  const s = JSON.parse(raw) as Record<string, unknown>;
+  if (s.language === 'bilingual-fr') { s.language = 'fr'; s.secondaryLanguage = 'en'; }
+  else if (s.language === 'bilingual-en') { s.language = 'en'; s.secondaryLanguage = 'fr'; }
+  else if (s.secondaryLanguage === undefined) { s.secondaryLanguage = null; }
+  return s as unknown as CompetitionSettings;
+}
+
 export default function GeneratePage() {
   const { t } = useTranslation();
   const { token } = useAuth();
@@ -21,7 +35,7 @@ export default function GeneratePage() {
   const isMobile = useIsMobile();
 
   const raw = sessionStorage.getItem('competition_settings');
-  const settings: CompetitionSettings | null = raw ? JSON.parse(raw) : null;
+  const settings: CompetitionSettings | null = loadSettings(raw);
 
   const [status, setStatus] = useState<Status>('idle');
   const [statusMsg, setStatusMsg] = useState('');

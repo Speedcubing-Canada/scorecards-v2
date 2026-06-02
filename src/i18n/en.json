@@ -34,18 +34,9 @@
     "heading": "Configure your print settings",
     "language": {
       "title": "Language",
-      "bilingual_fr": "Bilingual — French main",
-      "bilingual_fr_desc": "French first, English second (CQ, QO, etc.)",
-      "bilingual_en": "Bilingual — English main",
-      "bilingual_en_desc": "English first, French second",
-      "fr": "French only",
-      "fr_desc": "All text in French",
-      "en": "English only",
-      "en_desc": "All text in English",
-      "es": "Spanish only",
-      "es_desc": "All text in Spanish",
-      "pt": "Portuguese only",
-      "pt_desc": "All text in Portuguese"
+      "primary_title": "Primary language",
+      "secondary_title": "Second language (optional)",
+      "secondary_none": "None"
     },
     "paper": {
       "title": "Paper format",

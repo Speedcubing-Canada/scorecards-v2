@@ -140,12 +140,19 @@ function colContentW(frac: number): number {
   return TABLE_CONTENT_W * frac - CELL_BORDER;
 }
 
-const LANGUAGES = ['en', 'fr', 'es', 'pt', 'bilingual-fr', 'bilingual-en'] as const;
+// Every single language plus representative two-language combinations. The
+// combos are the real guard now that any primary+secondary pair is selectable:
+// a merged header must still fit inside its column for any pairing we ship.
+const HEADER_CASES = [
+  ...(['en', 'fr', 'es', 'pt'] as const).map((l) => ({ label: l, s: getStrings(l) })),
+  ...([['fr', 'en'], ['en', 'fr'], ['es', 'pt'], ['en', 'pt']] as const).map(
+    ([p, sec]) => ({ label: `${p}+${sec}`, s: getStrings(p, sec) }),
+  ),
+];
 
 describe('Scorecard header labels fit within their columns', () => {
-  for (const lang of LANGUAGES) {
-    const s = getStrings(lang);
-    describe(`language: ${lang}`, () => {
+  for (const { label, s } of HEADER_CASES) {
+    describe(`language: ${label}`, () => {
       it('competitor label fits', () => {
         expect(maxLineWidth(s.competitor, HEADER_FONT)).toBeLessThanOrEqual(colContentW(COL_FRAC.competitor));
       });

@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import type { CompetitionSettings, CustomEvent, DoubleCheckRound, Language, NametTagLogoMode, NametTagQrMode, PaperFormat, ScrambleDoubleCheckOverrides, SecondRoundMode } from '../types/settings';
+import type { CompetitionSettings, CustomEvent, DoubleCheckRound, LocaleCode, NametTagLogoMode, NametTagQrMode, PaperFormat, ScrambleDoubleCheckOverrides, SecondRoundMode } from '../types/settings';
+import { LANGUAGES } from '../i18n/index';
 import { parseDoubleCheckOverrides } from '../lib/parseDoubleCheckOverrides';
 import { EVENT_ICONS } from '../assets/events';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
@@ -25,7 +26,8 @@ export default function SettingsPage() {
   const competitionId = sessionStorage.getItem('selected_competition_id') ?? '';
   const competitionName = sessionStorage.getItem('selected_competition_name') ?? '';
 
-  const [language, setLanguage] = useState<Language>('bilingual-fr');
+  const [language, setLanguage] = useState<LocaleCode>('fr');
+  const [secondaryLanguage, setSecondaryLanguage] = useState<LocaleCode | null>('en');
   const [paperFormat, setPaperFormat] = useState<PaperFormat>('LETTER');
   const [secondRoundMode, setSecondRoundMode] = useState<SecondRoundMode>('prefilled');
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
@@ -67,15 +69,34 @@ export default function SettingsPage() {
     return null;
   }
 
-  // Option arrays defined inside component so they update when UI language changes
-  const LANGUAGE_OPTIONS: { value: Language; label: string; description: string }[] = [
-    { value: 'bilingual-fr', label: t('settings.language.bilingual_fr'), description: t('settings.language.bilingual_fr_desc') },
-    { value: 'bilingual-en', label: t('settings.language.bilingual_en'), description: t('settings.language.bilingual_en_desc') },
-    { value: 'fr', label: t('settings.language.fr'), description: t('settings.language.fr_desc') },
-    { value: 'en', label: t('settings.language.en'), description: t('settings.language.en_desc') },
-    { value: 'es', label: t('settings.language.es'), description: t('settings.language.es_desc') },
-    { value: 'pt', label: t('settings.language.pt'), description: t('settings.language.pt_desc') },
+  // Language pickers are driven by the shared LANGUAGES registry (native labels),
+  // so adding a language needs no per-language settings strings here.
+  // Primary: any supported language. Secondary: "None" or any language other
+  // than the chosen primary.
+  const SECONDARY_LANGUAGE_OPTIONS: { value: LocaleCode | null; label: string }[] = [
+    { value: null, label: t('settings.language.secondary_none') },
+    ...LANGUAGES.filter((l) => l.code !== language).map((l) => ({ value: l.code, label: l.label })),
   ];
+
+  function handlePrimaryLanguageChange(code: LocaleCode) {
+    setLanguage(code);
+    if (secondaryLanguage === code) setSecondaryLanguage(null);
+  }
+
+  // A compact, tappable language tile (monogram badge + native label) in the
+  // spirit of an event-icon selector — far less form-like than a radio list.
+  const renderLangTile = (o: { key: string; badge: string; label: string; selected: boolean; onClick: () => void }) => (
+    <button
+      key={o.key}
+      type="button"
+      onClick={o.onClick}
+      aria-pressed={o.selected}
+      style={{ ...s.langTile, ...(o.selected ? s.langTileActive : {}) }}
+    >
+      <span style={{ ...s.langBadge, ...(o.selected ? s.langBadgeActive : {}) }}>{o.badge}</span>
+      <span style={s.langTileLabel}>{o.label}</span>
+    </button>
+  );
 
   const PAPER_OPTIONS: { value: PaperFormat; label: string; description: string }[] = [
     { value: 'A4', label: t('settings.paper.a4'), description: t('settings.paper.a4_desc') },
@@ -174,6 +195,7 @@ export default function SettingsPage() {
       competitionId,
       competitionName,
       language,
+      secondaryLanguage,
       paperFormat,
       secondRoundMode,
       logoDataUrl,
@@ -212,23 +234,27 @@ export default function SettingsPage() {
 
         <section style={s.section}>
           <h3 style={s.sectionTitle}>{t('settings.language.title')}</h3>
-          <div style={s.optionGroup}>
-            {LANGUAGE_OPTIONS.map((opt) => (
-              <label key={opt.value} style={{ ...s.optionCard, ...(language === opt.value ? s.optionCardActive : {}) }}>
-                <input
-                  type="radio"
-                  name="language"
-                  value={opt.value}
-                  checked={language === opt.value}
-                  onChange={() => setLanguage(opt.value)}
-                  style={s.radio}
-                />
-                <div>
-                  <div style={s.optionLabel}>{opt.label}</div>
-                  <div style={s.optionDesc}>{opt.description}</div>
-                </div>
-              </label>
-            ))}
+
+          <p style={s.langCaption}>{t('settings.language.primary_title')}</p>
+          <div style={s.langRow}>
+            {LANGUAGES.map((opt) => renderLangTile({
+              key: opt.code,
+              badge: opt.code.toUpperCase(),
+              label: opt.label,
+              selected: language === opt.code,
+              onClick: () => handlePrimaryLanguageChange(opt.code),
+            }))}
+          </div>
+
+          <p style={{ ...s.langCaption, marginTop: 18 }}>{t('settings.language.secondary_title')}</p>
+          <div style={s.langRow}>
+            {SECONDARY_LANGUAGE_OPTIONS.map((opt) => renderLangTile({
+              key: opt.value ?? 'none',
+              badge: opt.value ? opt.value.toUpperCase() : '—',
+              label: opt.label,
+              selected: secondaryLanguage === opt.value,
+              onClick: () => setSecondaryLanguage(opt.value),
+            }))}
           </div>
         </section>
 
@@ -642,6 +668,29 @@ const s: Record<string, React.CSSProperties> = {
   },
   optionCardActive: { borderColor: 'var(--primary)', backgroundColor: 'var(--primary-soft-bg)' },
   radio: { marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 },
+  langCaption: {
+    margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: 'var(--text-subtle)',
+    textTransform: 'uppercase', letterSpacing: '0.05em',
+  },
+  langRow: { display: 'flex', flexWrap: 'wrap', gap: 8 },
+  langTile: {
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    gap: 7, padding: '10px 6px', width: 78,
+    borderWidth: 2, borderStyle: 'solid', borderColor: 'var(--border)', borderRadius: 12,
+    cursor: 'pointer', backgroundColor: 'var(--surface)', userSelect: 'none',
+    fontFamily: 'inherit', outline: 'none',
+    transition: 'border-color 120ms ease, background-color 120ms ease',
+  },
+  langTileActive: { borderColor: 'var(--primary)', backgroundColor: 'var(--primary-soft-bg)' },
+  langBadge: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    width: 36, height: 36, borderRadius: 9,
+    backgroundColor: 'var(--border)', color: 'var(--text-muted)',
+    fontSize: 13, fontWeight: 800, letterSpacing: '0.03em',
+    transition: 'background-color 120ms ease, color 120ms ease',
+  },
+  langBadgeActive: { backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)' },
+  langTileLabel: { fontSize: 12, fontWeight: 600, color: 'var(--text)' },
   optionLabel: { fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 2 },
   optionDesc: { fontSize: 13, color: 'var(--text-muted)' },
   logoPreview: {

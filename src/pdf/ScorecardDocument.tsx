@@ -165,7 +165,7 @@ function ScorecardCard({
   cardW: number; cardH: number;
   pos: { left: number; top: number };
 }) {
-  const strings = getStrings(settings.language);
+  const strings = getStrings(settings.language, settings.secondaryLanguage);
   const rowH    = ROW_HEIGHTS[card.format];
   const isMBF   = card.eventId === '333mbf';
   const doubleCheck = card.scrambleDoubleCheck === true;

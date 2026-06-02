@@ -34,18 +34,9 @@
     "heading": "Configurer vos paramètres d'impression",
     "language": {
       "title": "Langue",
-      "bilingual_fr": "Bilingue — Français principal",
-      "bilingual_fr_desc": "Français en premier, anglais en second (CQ, QO, etc.)",
-      "bilingual_en": "Bilingue — Anglais principal",
-      "bilingual_en_desc": "Anglais en premier, français en second",
-      "fr": "Français seulement",
-      "fr_desc": "Tout le texte en français",
-      "en": "Anglais seulement",
-      "en_desc": "Tout le texte en anglais",
-      "es": "Espagnol seulement",
-      "es_desc": "Tout le texte en espagnol",
-      "pt": "Portugais seulement",
-      "pt_desc": "Tout le texte en portugais"
+      "primary_title": "Langue principale",
+      "secondary_title": "Deuxième langue (optionnel)",
+      "secondary_none": "Aucune"
     },
     "paper": {
       "title": "Format de papier",

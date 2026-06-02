@@ -1,4 +1,7 @@
-export type Language = 'en' | 'fr' | 'es' | 'pt' | 'bilingual-fr' | 'bilingual-en';
+// A single printable language. The set of supported codes is mirrored by the
+// `LANGUAGES` registry in src/i18n/index.ts (UI dropdown) and the `LOCALES`
+// table in src/lib/i18n.ts (PDF strings) — keep all three in sync.
+export type LocaleCode = 'en' | 'fr' | 'es' | 'pt';
 
 export type PaperFormat = 'A4' | 'LETTER';
 
@@ -25,7 +28,12 @@ export interface CustomEvent {
 export interface CompetitionSettings {
   competitionId: string;
   competitionName: string;
-  language: Language;
+  // Primary (mandatory) scorecard language.
+  language: LocaleCode;
+  // Optional second language. When set, scorecard column headers and the
+  // cutoff/provisional lines show both languages, and name-tag back-side role
+  // badges use this language. `null` ⇒ single-language output.
+  secondaryLanguage: LocaleCode | null;
   paperFormat: PaperFormat;
   secondRoundMode: SecondRoundMode;
   logoDataUrl: string | null;

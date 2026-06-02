@@ -78,9 +78,9 @@ Settings and auth state live in `sessionStorage` only — they are cleared when 
 
 ### Interface language
 
-The header (and the login page) carries a **language dropdown** (`src/components/LanguageSelect.tsx`) that switches the *interface* language via `i18next`. The available languages are defined once in `src/i18n/index.ts` as the exported `LANGUAGES` array — add a locale there (and its translation JSON) and it appears in the dropdown automatically, no per-language button wiring needed. The chosen interface language is persisted by `i18next-browser-languagedetector` under the `i18nextLng` localStorage key.
+The header (and the login page) carries a **language dropdown** (`src/components/LanguageSelect.tsx`) that switches the *interface* language via `i18next`. The available languages are defined once in `src/i18n/index.ts` as the exported `LANGUAGES` registry (code + native label) — this same registry also drives the scorecard language pickers on the SettingsPage, so adding a locale there (plus its translation JSON) makes it appear in both places automatically, no per-language wiring needed. The chosen interface language is persisted by `i18next-browser-languagedetector` under the `i18nextLng` localStorage key.
 
-This is independent of the `language` *setting* on the SettingsPage, which controls the language printed on the scorecards themselves.
+This is independent of the printed-output `language` / `secondaryLanguage` *settings* on the SettingsPage, which control the language(s) printed on the scorecards themselves.
 
 ### Dark mode
 
@@ -487,18 +487,20 @@ All PDF rendering happens inside `src/pdf/scorecardWorker.ts` (a Vite module wor
 
 ## Language support
 
-| Code | Description |
+The printed-output language is chosen on the SettingsPage as a **mandatory primary language** plus an **optional second language**, in any combination — not a fixed list of presets. Both selectors are driven by the shared `LANGUAGES` registry (`src/i18n/index.ts`), and the per-language strings live in the `LOCALES` table in `src/lib/i18n.ts`.
+
+| Setting | Effect |
 |---|---|
-| `en` | English only |
-| `fr` | French only |
-| `es` | Spanish only |
-| `pt` | Portuguese (Brazil) only |
-| `bilingual-en` | English primary, French secondary (EN on top) |
-| `bilingual-fr` | French primary, English secondary (FR on top) |
+| `language` | Primary language (mandatory). Currently one of `en`, `fr`, `es`, `pt`. |
+| `secondaryLanguage` | Optional second language (`null` = single-language output). |
 
-In bilingual mode, column headers and the result header each contain both languages separated by a newline. The cut-off line and provisional line are also bilingual. Event names and group labels use the primary language only.
+**Adding a language** is a one-entry-per-store change: add a string bundle to `LOCALES` in `src/lib/i18n.ts`, and add a `LANGUAGES` entry + UI translation JSON (registered in `resources`/`supportedLngs`) in `src/i18n/index.ts`. No getter, merge, or settings-form code needs touching.
 
-Name tag role badges always use the panel language: French titles on front panels, English titles on back panels, regardless of the scorecard language setting.
+When a second language is set, scorecard column headers and the result header each contain both languages separated by a newline (primary first), and the cut-off and provisional lines are likewise bilingual. Event names, group labels, round labels, seat/station labels and the cover card always use the **primary** language only. The schedule tracker and name-tag duty labels also use the primary language only.
+
+Name tag role badges use the primary language on the **front** panel and the secondary language on the **back** panel (falling back to the primary when no second language is set). For example, primary `fr` + secondary `en` reproduces the previous default: French titles on front, English on back.
+
+> The retired `bilingual-fr` / `bilingual-en` presets map onto this model as primary `fr` + secondary `en` and primary `en` + secondary `fr` respectively; `GeneratePage` migrates any persisted legacy value automatically.
 
 ---
 

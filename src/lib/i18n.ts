@@ -1,4 +1,4 @@
-import type { Language } from '../types/settings';
+import type { LocaleCode } from '../types/settings';
 
 // ── Cover card strings ────────────────────────────────────────────────────────
 export interface CoverCardStrings {
@@ -223,14 +223,14 @@ const PT: ScorecardStrings = {
   },
 };
 
-export function getStrings(language: Language): ScorecardStrings {
-  if (language === 'en') return EN;
-  if (language === 'fr') return FR;
-  if (language === 'es') return ES;
-  if (language === 'pt') return PT;
-  // Bilingual: merge EN + FR with separator
-  const primary = language === 'bilingual-fr' ? FR : EN;
-  const secondary = language === 'bilingual-fr' ? EN : FR;
+/**
+ * Merge two languages' scorecard strings for a dual-language scorecard.
+ * Column headers and the cut-off/provisional lines stack both languages
+ * (`primary\nsecondary`); everything else (round/group/seat labels, cover) uses
+ * the primary language only. This is the single place that defines which fields
+ * are bilingual — adding a language never touches it.
+ */
+function mergeScorecardStrings(primary: ScorecardStrings, secondary: ScorecardStrings): ScorecardStrings {
   return {
     scrambler: `${primary.scrambler}\n${secondary.scrambler}`,
     scramblerCheck: `${primary.scramblerCheck}\n${secondary.scramblerCheck}`,
@@ -254,6 +254,16 @@ export function getStrings(language: Language): ScorecardStrings {
     seatLabel: (n) => primary.seatLabel(n),
     cover: primary.cover,
   };
+}
+
+/**
+ * Scorecard strings for a primary language, optionally merged with a secondary.
+ * `secondary` of `null`/`undefined` (or equal to primary) ⇒ single language.
+ */
+export function getStrings(language: LocaleCode, secondary?: LocaleCode | null): ScorecardStrings {
+  const primary = LOCALES[language].scorecard;
+  if (!secondary || secondary === language) return primary;
+  return mergeScorecardStrings(primary, LOCALES[secondary].scorecard);
 }
 
 // ── Schedule tracker strings ───────────────────────────────────────────────────
@@ -297,11 +307,8 @@ const SCHEDULE_PT: ScheduleStrings = {
   numberOfCompetitors: 'Número de\nCompetidores',
 };
 
-export function getScheduleStrings(language: Language): ScheduleStrings {
-  if (language === 'fr' || language === 'bilingual-fr') return SCHEDULE_FR;
-  if (language === 'es') return SCHEDULE_ES;
-  if (language === 'pt') return SCHEDULE_PT;
-  return SCHEDULE_EN;
+export function getScheduleStrings(language: LocaleCode): ScheduleStrings {
+  return LOCALES[language].schedule;
 }
 
 // ── Nametag duty strings ───────────────────────────────────────────────────────
@@ -337,11 +344,8 @@ const NAMETAG_PT: NametTagStrings = {
   dutyGroup: (g) => `Grupo ${g}`,
 };
 
-export function getNametTagStrings(language: Language): NametTagStrings {
-  if (language === 'fr' || language === 'bilingual-fr') return NAMETAG_FR;
-  if (language === 'es') return NAMETAG_ES;
-  if (language === 'pt') return NAMETAG_PT;
-  return NAMETAG_EN;
+export function getNametTagStrings(language: LocaleCode): NametTagStrings {
+  return LOCALES[language].nametag;
 }
 
 // ── Nametag title strings ──────────────────────────────────────────────────────
@@ -373,13 +377,20 @@ const NAMETAG_TITLE_PT: NametTagTitleStrings = {
   competitor:   (f) => f ? 'COMPETIDORA' : 'COMPETIDOR',
 };
 
-export function getNametTagTitleStrings(language: Language): { front: NametTagTitleStrings; back: NametTagTitleStrings } {
-  if (language === 'bilingual-fr') return { front: NAMETAG_TITLE_FR, back: NAMETAG_TITLE_EN };
-  if (language === 'bilingual-en') return { front: NAMETAG_TITLE_EN, back: NAMETAG_TITLE_FR };
-  if (language === 'fr') return { front: NAMETAG_TITLE_FR, back: NAMETAG_TITLE_FR };
-  if (language === 'es') return { front: NAMETAG_TITLE_ES, back: NAMETAG_TITLE_ES };
-  if (language === 'pt') return { front: NAMETAG_TITLE_PT, back: NAMETAG_TITLE_PT };
-  return { front: NAMETAG_TITLE_EN, back: NAMETAG_TITLE_EN };
+/**
+ * Role-badge titles for the two name-tag panels. The front panel uses the
+ * primary language; the back panel uses the secondary language when set,
+ * otherwise the primary (single-language ⇒ both panels match). This generalizes
+ * the old bilingual front=FR/back=EN behavior to any language pair.
+ */
+export function getNametTagTitleStrings(
+  language: LocaleCode,
+  secondary?: LocaleCode | null,
+): { front: NametTagTitleStrings; back: NametTagTitleStrings } {
+  return {
+    front: LOCALES[language].title,
+    back: LOCALES[secondary ?? language].title,
+  };
 }
 
 // ── Short event names for nametag duty labels ──────────────────────────────────
@@ -415,11 +426,8 @@ const SHORT_NAMETAG_NAMES_PT: Record<string, string> = {
   '333mbf': 'Multi-BLD',
 };
 
-export function getShortNametTagNames(language: Language): Record<string, string> {
-  if (language === 'fr' || language === 'bilingual-fr') return SHORT_NAMETAG_NAMES_FR;
-  if (language === 'es') return SHORT_NAMETAG_NAMES_ES;
-  if (language === 'pt') return SHORT_NAMETAG_NAMES_PT;
-  return SHORT_NAMETAG_NAMES_EN;
+export function getShortNametTagNames(language: LocaleCode): Record<string, string> {
+  return LOCALES[language].shortNames;
 }
 
 // ── Event names ────────────────────────────────────────────────────────────────
@@ -459,12 +467,26 @@ export const EVENT_NAMES_PT: Record<string, string> = {
   '555bf': '5x5x5 Às Cegas', '333mbf': '3x3x3 Multi-BLD',
 };
 
-export function getEventName(eventId: string, language: Language): string {
-  if (language === 'en') return EVENT_NAMES_EN[eventId] ?? eventId;
-  if (language === 'fr') return EVENT_NAMES_FR[eventId] ?? eventId;
-  if (language === 'es') return EVENT_NAMES_ES[eventId] ?? eventId;
-  if (language === 'pt') return EVENT_NAMES_PT[eventId] ?? eventId;
-  const fr = EVENT_NAMES_FR[eventId] ?? eventId;
-  const en = EVENT_NAMES_EN[eventId] ?? eventId;
-  return language === 'bilingual-fr' ? fr : en;
+export function getEventName(eventId: string, language: LocaleCode): string {
+  return LOCALES[language].eventNames[eventId] ?? eventId;
 }
+
+// ── Locale registry ────────────────────────────────────────────────────────────
+// Single source of truth tying every per-language string set to its code. Adding
+// a language = add its string objects above and one entry here (plus a UI JSON +
+// registry entry in src/i18n/index.ts). No getter or merge logic needs touching.
+interface LocaleBundle {
+  scorecard: ScorecardStrings;
+  schedule: ScheduleStrings;
+  nametag: NametTagStrings;
+  title: NametTagTitleStrings;
+  shortNames: Record<string, string>;
+  eventNames: Record<string, string>;
+}
+
+const LOCALES: Record<LocaleCode, LocaleBundle> = {
+  en: { scorecard: EN, schedule: SCHEDULE_EN, nametag: NAMETAG_EN, title: NAMETAG_TITLE_EN, shortNames: SHORT_NAMETAG_NAMES_EN, eventNames: EVENT_NAMES_EN },
+  fr: { scorecard: FR, schedule: SCHEDULE_FR, nametag: NAMETAG_FR, title: NAMETAG_TITLE_FR, shortNames: SHORT_NAMETAG_NAMES_FR, eventNames: EVENT_NAMES_FR },
+  es: { scorecard: ES, schedule: SCHEDULE_ES, nametag: NAMETAG_ES, title: NAMETAG_TITLE_ES, shortNames: SHORT_NAMETAG_NAMES_ES, eventNames: EVENT_NAMES_ES },
+  pt: { scorecard: PT, schedule: SCHEDULE_PT, nametag: NAMETAG_PT, title: NAMETAG_TITLE_PT, shortNames: SHORT_NAMETAG_NAMES_PT, eventNames: EVENT_NAMES_PT },
+};

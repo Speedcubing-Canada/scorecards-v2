@@ -35,22 +35,36 @@ describe('getStrings', () => {
     expect(cover.bundledScorecards(3)).toBe('1. Regroupé toutes les 3 feuilles');
   });
 
-  it('bilingual-fr still merges EN+FR (not ES)', () => {
-    const s = getStrings('bilingual-fr');
-    expect(s.scrambler).toContain('Mélangeur');
-    expect(s.scrambler).toContain('Scrambler');
+  it('merges primary FR + secondary EN (FR first, cover from primary)', () => {
+    const s = getStrings('fr', 'en');
+    expect(s.scrambler).toBe('Mélangeur\nScrambler');
     expect(s.scrambler).not.toContain('Mezclador');
-    // cover comes from primary (FR)
+    // primary-only fields come from FR
     expect(s.cover.forDelegate).toBe('POUR LE DÉLÉGUÉ');
+    expect(s.roundName(1, 3)).toBe('Tour 1 de 3');
   });
 
-  it('bilingual-en still merges EN+FR (not ES)', () => {
-    const s = getStrings('bilingual-en');
-    expect(s.scrambler).toContain('Scrambler');
-    expect(s.scrambler).toContain('Mélangeur');
-    expect(s.scrambler).not.toContain('Mezclador');
-    // cover comes from primary (EN)
+  it('merges primary EN + secondary FR (EN first, cover from primary)', () => {
+    const s = getStrings('en', 'fr');
+    expect(s.scrambler).toBe('Scrambler\nMélangeur');
     expect(s.cover.forDelegate).toBe('FOR DELEGATE');
+  });
+
+  it('merges an arbitrary pair (ES primary + PT secondary)', () => {
+    const s = getStrings('es', 'pt');
+    expect(s.scrambler).toBe('Mezclador\nMisturador');
+    expect(s.attempt).toBe('Intento\nTentativa');
+    // primary-only fields come from ES
+    expect(s.cover.forDelegate).toBe('PARA EL DELEGADO');
+    expect(s.cutoffLine('30.00', true)).toBe(
+      '─── Continuar si el Intento 1 es inferior a 30.00 ───\n─── Continue se a Tentativa 1 for inferior a 30.00 ───',
+    );
+  });
+
+  it('no secondary (or secondary === primary) returns a single language', () => {
+    expect(getStrings('fr').scrambler).toBe('Mélangeur');
+    expect(getStrings('fr', null).scrambler).toBe('Mélangeur');
+    expect(getStrings('fr', 'fr').scrambler).toBe('Mélangeur');
   });
 
   it('Spanish roundName', () => {
@@ -105,10 +119,6 @@ describe('getStrings', () => {
     expect(s.cutoffLine('30.00', true)).toBe('─── Continue se a Tentativa 1 for inferior a 30.00 ───');
   });
 
-  it('Portuguese does not affect bilingual modes (still EN+FR)', () => {
-    const s = getStrings('bilingual-fr');
-    expect(s.scrambler).not.toContain('Misturador');
-  });
 });
 
 describe('getScheduleStrings', () => {
@@ -124,11 +134,6 @@ describe('getScheduleStrings', () => {
     const s = getScheduleStrings('fr');
     expect(s.event).toBe('Épreuve');
     expect(s.title).toBe('— Suivi du calendrier');
-  });
-
-  it('returns French strings for bilingual-fr', () => {
-    const s = getScheduleStrings('bilingual-fr');
-    expect(s.event).toBe('Épreuve');
   });
 
   it('returns Spanish strings for es', () => {
@@ -147,10 +152,6 @@ describe('getScheduleStrings', () => {
     expect(s.numberOfCompetitors).toBe('Número de\nCompetidores');
   });
 
-  it('bilingual-en falls back to English', () => {
-    const s = getScheduleStrings('bilingual-en');
-    expect(s.event).toBe('Event');
-  });
 });
 
 describe('getNametTagStrings', () => {
@@ -170,11 +171,6 @@ describe('getNametTagStrings', () => {
     expect(s.run).toBe('Courir:');
   });
 
-  it('returns French strings for bilingual-fr', () => {
-    const s = getNametTagStrings('bilingual-fr');
-    expect(s.compete).toBe('Concourir:');
-  });
-
   it('returns Spanish strings for es', () => {
     const s = getNametTagStrings('es');
     expect(s.compete).toBe('Competir:');
@@ -191,10 +187,6 @@ describe('getNametTagStrings', () => {
     expect(s.run).toBe('Correr:');
   });
 
-  it('bilingual-en falls back to English', () => {
-    const s = getNametTagStrings('bilingual-en');
-    expect(s.compete).toBe('Compete:');
-  });
 });
 
 describe('getEventName', () => {
@@ -220,14 +212,6 @@ describe('getEventName', () => {
     expect(getEventName('333bf', 'pt')).toBe('3x3x3 Às Cegas');
     expect(getEventName('333oh', 'pt')).toBe('3x3x3 Uma Mão');
     expect(getEventName('333mbf', 'pt')).toBe('3x3x3 Multi-BLD');
-  });
-
-  it('bilingual-fr returns French name', () => {
-    expect(getEventName('333', 'bilingual-fr')).toBe('Cube 3x3x3');
-  });
-
-  it('bilingual-en returns English name', () => {
-    expect(getEventName('333', 'bilingual-en')).toBe('3x3x3 Cube');
   });
 
   it('unknown event falls back to eventId', () => {
@@ -285,16 +269,34 @@ describe('getNametTagTitleStrings', () => {
     expect(back.delegate(false)).toBe('DELEGADO');
   });
 
-  it('bilingual-fr: front=FR, back=EN', () => {
-    const { front, back } = getNametTagTitleStrings('bilingual-fr');
+  it('single language: front and back match', () => {
+    const { front, back } = getNametTagTitleStrings('fr');
+    expect(front.delegate(false)).toBe('DÉLÉGUÉ');
+    expect(back.delegate(false)).toBe('DÉLÉGUÉ');
+  });
+
+  it('primary FR + secondary EN: front=FR, back=EN', () => {
+    const { front, back } = getNametTagTitleStrings('fr', 'en');
     expect(front.delegate(false)).toBe('DÉLÉGUÉ');
     expect(back.delegate(false)).toBe('DELEGATE');
   });
 
-  it('bilingual-en: front=EN, back=FR', () => {
-    const { front, back } = getNametTagTitleStrings('bilingual-en');
+  it('primary EN + secondary FR: front=EN, back=FR', () => {
+    const { front, back } = getNametTagTitleStrings('en', 'fr');
     expect(front.delegate(false)).toBe('DELEGATE');
     expect(back.delegate(false)).toBe('DÉLÉGUÉ');
+  });
+
+  it('arbitrary pair ES + PT: front=ES, back=PT', () => {
+    const { front, back } = getNametTagTitleStrings('es', 'pt');
+    expect(front.competitor(true)).toBe('COMPETIDORA');
+    expect(back.newCompetitor(false)).toBe('NOVO COMPETIDOR');
+  });
+
+  it('null secondary falls back to primary on the back', () => {
+    const { front, back } = getNametTagTitleStrings('es', null);
+    expect(front.delegate(false)).toBe('DELEGADO');
+    expect(back.delegate(false)).toBe('DELEGADO');
   });
 });
 
@@ -303,7 +305,6 @@ describe('getNametTagStrings dutyGroup', () => {
   it('Spanish duty group', () => expect(getNametTagStrings('es').dutyGroup('1 & 2')).toBe('Grupo 1 & 2'));
   it('Portuguese duty group', () => expect(getNametTagStrings('pt').dutyGroup('1 & 2')).toBe('Grupo 1 & 2'));
   it('English duty group', () => expect(getNametTagStrings('en').dutyGroup('1 & 2')).toBe('Group 1 & 2'));
-  it('bilingual-fr duty group uses French', () => expect(getNametTagStrings('bilingual-fr').dutyGroup('1')).toBe('Groupe 1'));
 });
 
 describe('getShortNametTagNames', () => {
@@ -311,7 +312,6 @@ describe('getShortNametTagNames', () => {
   it('Spanish: 333oh is "Una mano"', () => expect(getShortNametTagNames('es')['333oh']).toBe('Una mano'));
   it('Portuguese: 333oh is "Uma Mão"', () => expect(getShortNametTagNames('pt')['333oh']).toBe('Uma Mão'));
   it('English: 333oh is "One-Hand"', () => expect(getShortNametTagNames('en')['333oh']).toBe('One-Hand'));
-  it('bilingual-fr uses French names', () => expect(getShortNametTagNames('bilingual-fr')['333oh']).toBe('À une main'));
   it('common names are the same across languages', () => {
     const fr = getShortNametTagNames('fr');
     const es = getShortNametTagNames('es');
@@ -343,8 +343,8 @@ describe('getStrings seat/station labels', () => {
     expect(s.stationLabel('03')).toBe('Estação 03');
     expect(s.seatLabel('03')).toBe('Assento 03');
   });
-  it('bilingual-fr uses French labels', () => {
-    const s = getStrings('bilingual-fr');
+  it('seat/station labels are primary-only when a secondary is set', () => {
+    const s = getStrings('fr', 'en');
     expect(s.stationLabel('01')).toBe('Siège 01');
     expect(s.seatLabel('01')).toBe('Siège 01');
   });

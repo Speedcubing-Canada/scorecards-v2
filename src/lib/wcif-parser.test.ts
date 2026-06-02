@@ -15,7 +15,7 @@ beforeEach(() => { _id = 0; });
 
 const BASE: CompetitionSettings = {
   competitionId: 'TC2024', competitionName: 'Test Comp 2024',
-  language: 'en', paperFormat: 'A4', secondRoundMode: 'blanks',
+  language: 'en', secondaryLanguage: null, paperFormat: 'A4', secondRoundMode: 'blanks',
   logoDataUrl: null, useDefaultLogo: false, wcaLiveId: null, wcaLivePersonIds: null,
   nametagLogoMode: 'hidden', nametagQrMode: 'back-only',
   customEvents: [],
@@ -1266,14 +1266,24 @@ describe('nametag entries', () => {
     expect(byId[2]?.titleBack).toBe('COMPETIDORA');
   });
 
-  it('bilingual-fr nametag: titleFront=FR, titleBack=EN', () => {
+  it('primary FR + secondary EN nametag: titleFront=FR, titleBack=EN', () => {
     const c = ch(100, '333', 1, 1);
     const e = evt('333', [rSpec('a')]);
     const r = room('Stage', [act('333', 1, [c])]);
     const male = per(1, [{ aid: 100 }], { gender: 'm' });
-    const result = parseWCIF(mkWCIF([e], [r], [male]), cfg({ language: 'bilingual-fr' }));
+    const result = parseWCIF(mkWCIF([e], [r], [male]), cfg({ language: 'fr', secondaryLanguage: 'en' }));
     expect(result.nametags[0]?.titleFront).toBe('COMPÉTITEUR');
     expect(result.nametags[0]?.titleBack).toBe('COMPETITOR');
+  });
+
+  it('arbitrary pair FR + ES nametag: titleFront=FR, titleBack=ES', () => {
+    const c = ch(100, '333', 1, 1);
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [c])]);
+    const female = per(2, [{ aid: 100 }], { gender: 'f' });
+    const result = parseWCIF(mkWCIF([e], [r], [female]), cfg({ language: 'fr', secondaryLanguage: 'es' }));
+    expect(result.nametags[0]?.titleFront).toBe('COMPÉTITRICE');
+    expect(result.nametags[0]?.titleBack).toBe('COMPETIDORA');
   });
 
   it('French delegate female gets DÉLÉGUÉE on nametag', () => {

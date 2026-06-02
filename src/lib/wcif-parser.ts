@@ -208,7 +208,8 @@ function finalizeEntriesIntermediate(entries: ScorecardData[]): ScorecardData[] 
 }
 
 export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF {
-  const { language, secondRoundMode } = settings;
+  const { language, secondaryLanguage, secondRoundMode } = settings;
+  // Station/seat labels are primary-only, so the secondary language is irrelevant here.
   const strings = getStrings(language);
 
   // ── Scramble double-checking ────────────────────────────────────────────────
@@ -228,7 +229,9 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     return !!evs && evs.includes(eventId);
   }
 
-  const nametTagTitles = getNametTagTitleStrings(language);
+  // Front panels use the primary language; back panels use the secondary (or the
+  // primary when there is none) — generalizes the old bilingual front/back split.
+  const nametTagTitles = getNametTagTitleStrings(language, secondaryLanguage);
   const nametTagDutyStrings = getNametTagStrings(language);
   const shortNametTagNames = getShortNametTagNames(language);
 

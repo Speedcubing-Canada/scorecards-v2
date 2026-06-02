@@ -34,18 +34,9 @@
     "heading": "Configurar opções de impressão",
     "language": {
       "title": "Idioma",
-      "bilingual_fr": "Bilíngue — Francês principal",
-      "bilingual_fr_desc": "Francês primeiro, inglês depois (CQ, QO, etc.)",
-      "bilingual_en": "Bilíngue — Inglês principal",
-      "bilingual_en_desc": "Inglês primeiro, francês depois",
-      "fr": "Somente francês",
-      "fr_desc": "Todo o texto em francês",
-      "en": "Somente inglês",
-      "en_desc": "Todo o texto em inglês",
-      "es": "Somente espanhol",
-      "es_desc": "Todo o texto em espanhol",
-      "pt": "Somente português",
-      "pt_desc": "Todo o texto em português"
+      "primary_title": "Idioma principal",
+      "secondary_title": "Segundo idioma (opcional)",
+      "secondary_none": "Nenhum"
     },
     "paper": {
       "title": "Formato do papel",
