@@ -59,6 +59,21 @@
       "blanks": "Épreuve + ronde remplie, nom vide",
       "blanks_desc": "Imprimer des cases de nom vides — à remplir à la main lors de la compétition"
     },
+    "double_check": {
+      "title": "Double vérification des mélanges",
+      "optional_note": "optionnel — pour les grands championnats",
+      "hint": "Ajoute une deuxième colonne de signature du mélangeur pour vérifier les mélanges de façon indépendante.",
+      "enable": "Activer la double vérification des mélanges",
+      "enable_desc": "Ajoute une deuxième colonne de signature du mélangeur aux feuilles sélectionnées.",
+      "rounds_title": "Appliquer aux rondes",
+      "round_first": "Ronde 1",
+      "round_second": "Ronde 2",
+      "round_semis": "Demi-finales",
+      "round_finals": "Finales",
+      "overrides_title": "Toujours double-vérifier certains compétiteurs (optionnel)",
+      "overrides_hint": "Téléverser un fichier CSV — une ligne par compétiteur : WCAID,épreuve1,épreuve2 (ex. 2015FOOB01,333,444). Ces compétiteurs sont double-vérifiés pour ces épreuves à toutes les rondes.",
+      "overrides_count": "{{count}} compétiteur(s) chargé(s)"
+    },
     "wca_live": {
       "title": "ID WCA Live",
       "optional_note": "optionnel — pour les QR codes des badges",

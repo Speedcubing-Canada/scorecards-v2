@@ -45,6 +45,7 @@ export interface NametTagTitleStrings {
 // ── Scorecard strings (used in PDF rendering) ─────────────────────────────────
 export interface ScorecardStrings {
   scrambler: string;
+  scramblerCheck: string;
   attempt: string;
   judge: string;
   competitor: string;
@@ -69,6 +70,7 @@ export interface ScorecardStrings {
 // ── English ───────────────────────────────────────────────────────────────────
 const EN: ScorecardStrings = {
   scrambler: 'Scrambler',
+  scramblerCheck: 'Check',
   attempt: 'Attempt',
   judge: 'Judge',
   competitor: 'Competitor',
@@ -107,6 +109,7 @@ const EN: ScorecardStrings = {
 // ── French ────────────────────────────────────────────────────────────────────
 const FR: ScorecardStrings = {
   scrambler: 'Mélangeur',
+  scramblerCheck: 'Vérif.',
   attempt: 'Essai',
   judge: 'Juge',
   competitor: 'Compétiteur',
@@ -145,6 +148,7 @@ const FR: ScorecardStrings = {
 // ── Spanish ───────────────────────────────────────────────────────────────────
 const ES: ScorecardStrings = {
   scrambler: 'Mezclador',
+  scramblerCheck: 'Verif.',
   attempt: 'Intento',
   judge: 'Juez',
   competitor: 'Competidor',
@@ -189,6 +193,7 @@ export function getStrings(language: Language): ScorecardStrings {
   const secondary = language === 'bilingual-fr' ? EN : FR;
   return {
     scrambler: `${primary.scrambler}\n${secondary.scrambler}`,
+    scramblerCheck: `${primary.scramblerCheck}\n${secondary.scramblerCheck}`,
     attempt: `${primary.attempt}\n${secondary.attempt}`,
     judge: `${primary.judge}\n${secondary.judge}`,
     competitor: `${primary.competitor}\n${secondary.competitor}`,

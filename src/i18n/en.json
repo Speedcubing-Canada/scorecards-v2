@@ -59,6 +59,21 @@
       "blanks": "Event + round filled, name blank",
       "blanks_desc": "Print blank name slots — fill in by hand at the competition"
     },
+    "double_check": {
+      "title": "Scramble double-checking",
+      "optional_note": "optional — for major championships",
+      "hint": "Adds a second scrambler-signature column so scrambles can be independently double-checked.",
+      "enable": "Enable scramble double-checking",
+      "enable_desc": "Adds a second scrambler signature column to the selected scorecards.",
+      "rounds_title": "Apply to rounds",
+      "round_first": "Round 1",
+      "round_second": "Round 2",
+      "round_semis": "Semi-finals",
+      "round_finals": "Finals",
+      "overrides_title": "Always double-check specific competitors (optional)",
+      "overrides_hint": "Upload a CSV file — one line per competitor: WCAID,event1,event2 (e.g. 2015FOOB01,333,444). These competitors are double-checked for those events in every round.",
+      "overrides_count": "{{count}} competitor(s) loaded"
+    },
     "wca_live": {
       "title": "WCA Live ID",
       "optional_note": "optional — for nametag QR codes",

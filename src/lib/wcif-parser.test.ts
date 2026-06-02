@@ -19,6 +19,7 @@ const BASE: CompetitionSettings = {
   logoDataUrl: null, useDefaultLogo: false, wcaLiveId: null, wcaLivePersonIds: null,
   nametagLogoMode: 'hidden', nametagQrMode: 'back-only',
   customEvents: [],
+  scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
 };
 const cfg = (o: Partial<CompetitionSettings> = {}): CompetitionSettings => ({ ...BASE, ...o });
 
@@ -1282,5 +1283,73 @@ describe('nametag entries', () => {
     const delegate = { ...per(1, [{ aid: 100 }], { gender: 'f' }), roles: ['delegate'] };
     const result = parseWCIF(mkWCIF([e], [r], [delegate]), cfg({ language: 'fr' }));
     expect(result.nametags[0]?.titleFront).toBe('DÉLÉGUÉE');
+  });
+});
+
+// ── Scramble double-checking ──────────────────────────────────────────────────
+describe('Scramble double-checking', () => {
+  // 2-round event: round 1 (named) + finals (blank).
+  function mk2Round(settings: Partial<CompetitionSettings>) {
+    const e = evt('333', [rSpec('a', { adv: { type: 'ranking', level: 8 } }), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      act('333', 2, [ch(110, '333', 2, 1, '2024-01-01T16:00:00Z')]),
+    ]);
+    const persons = [per(1, [{ aid: 100 }], { wcaId: '2015FOOB01' })];
+    return parseWCIF(mkWCIF([e], [r], persons), cfg(settings));
+  }
+
+  it('disabled by default: no card is flagged', () => {
+    const result = mk2Round({ scrambleDoubleCheck: false });
+    expect(scs(result.firstRound).some(s => s.scrambleDoubleCheck)).toBe(false);
+    expect(scs(result.finals).some(s => s.scrambleDoubleCheck)).toBe(false);
+  });
+
+  it('round rule: enabling with default Finals flags finals but not round 1', () => {
+    const result = mk2Round({ scrambleDoubleCheck: true, scrambleDoubleCheckRounds: ['finals'] });
+    expect(scs(result.finals).every(s => s.scrambleDoubleCheck)).toBe(true);
+    expect(scs(result.firstRound).some(s => s.scrambleDoubleCheck)).toBe(false);
+  });
+
+  it('round rule: selecting firstRound flags round-1 cards', () => {
+    const result = mk2Round({ scrambleDoubleCheck: true, scrambleDoubleCheckRounds: ['firstRound'] });
+    expect(scs(result.firstRound).every(s => s.scrambleDoubleCheck)).toBe(true);
+  });
+
+  it('override rule: flags a named round-1 card by WCA ID + event, regardless of round selection', () => {
+    const result = mk2Round({
+      scrambleDoubleCheck: true,
+      scrambleDoubleCheckRounds: [], // no round selected
+      scrambleDoubleCheckOverrides: { '2015FOOB01': ['333'] },
+    });
+    expect(scs(result.firstRound).every(s => s.scrambleDoubleCheck)).toBe(true);
+  });
+
+  it('override rule: event mismatch does not flag the card', () => {
+    const result = mk2Round({
+      scrambleDoubleCheck: true,
+      scrambleDoubleCheckRounds: [],
+      scrambleDoubleCheckOverrides: { '2015FOOB01': ['444'] },
+    });
+    expect(scs(result.firstRound).some(s => s.scrambleDoubleCheck)).toBe(false);
+  });
+
+  it('override rule does not affect blank later-round cards (no WCA ID)', () => {
+    const result = mk2Round({
+      scrambleDoubleCheck: true,
+      scrambleDoubleCheckRounds: [],
+      scrambleDoubleCheckOverrides: { '2015FOOB01': ['333'] },
+    });
+    expect(scs(result.finals).some(s => s.scrambleDoubleCheck)).toBe(false);
+  });
+
+  it('single-round event: its only round counts as a final for the Finals selection', () => {
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const persons = [per(1, [{ aid: 100 }], { wcaId: '2015FOOB01' })];
+    const result = parseWCIF(mkWCIF([e], [r], persons), cfg({
+      scrambleDoubleCheck: true, scrambleDoubleCheckRounds: ['finals'],
+    }));
+    expect(scs(result.firstRound).every(s => s.scrambleDoubleCheck)).toBe(true);
   });
 });

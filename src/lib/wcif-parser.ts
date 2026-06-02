@@ -1,5 +1,5 @@
 import type { WCIF, Round, EventId, Assignment } from '../types/wcif';
-import type { CompetitionSettings } from '../types/settings';
+import type { CompetitionSettings, DoubleCheckRound } from '../types/settings';
 import { getStrings, getEventName, EVENT_NAMES_EN, getNametTagTitleStrings, getNametTagStrings, getShortNametTagNames, type NametTagTitleStrings } from './i18n';
 
 export type ScorecardFormat = 'avg5' | 'bo2-avg5' | 'mo3' | 'bo1-mo3' | 'bo2';
@@ -79,6 +79,8 @@ export interface ScorecardEntry {
   isCumulative: boolean;
   // Overrides EVENT_ICONS lookup when set (used for custom events).
   iconDataUrl?: string;
+  // When true, render a second scrambler-signature column (scramble double-checking).
+  scrambleDoubleCheck?: boolean;
 }
 
 export interface CoverEntry {
@@ -208,6 +210,24 @@ function finalizeEntriesIntermediate(entries: ScorecardData[]): ScorecardData[] 
 export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF {
   const { language, secondRoundMode } = settings;
   const strings = getStrings(language);
+
+  // ── Scramble double-checking ────────────────────────────────────────────────
+  // Decide per-card whether to add the second scrambler-signature column. The round
+  // rule keys off the destination bucket (which maps 1:1 to the emitted PDFs); the
+  // override rule matches a named card's WCA ID + event across all rounds.
+  const dcEnabled = settings.scrambleDoubleCheck === true;
+  const dcRounds = new Set(settings.scrambleDoubleCheckRounds ?? []);
+  const dcOverrides = settings.scrambleDoubleCheckOverrides ?? {};
+  // `buckets` lists every round-category the card belongs to. A single-round event's
+  // only round is both 'firstRound' and 'finals', so selecting either covers it.
+  function wantsDoubleCheck(buckets: DoubleCheckRound[], wcaId: string, eventId: string): boolean {
+    if (!dcEnabled) return false;
+    if (buckets.some(b => dcRounds.has(b))) return true;
+    if (!wcaId) return false; // override matches named cards only
+    const evs = dcOverrides[wcaId];
+    return !!evs && evs.includes(eventId);
+  }
+
   const nametTagTitles = getNametTagTitleStrings(language);
   const nametTagDutyStrings = getNametTagStrings(language);
   const shortNametTagNames = getShortNametTagNames(language);
@@ -407,6 +427,10 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         limit: roundLimit[rid],
         format: roundFormat[rid],
         isCumulative: roundCumulative[rid],
+        scrambleDoubleCheck: wantsDoubleCheck(
+          total === 1 ? ['firstRound', 'finals'] : ['firstRound'],
+          wcaId, eventId,
+        ),
       };
 
       firstRoundEntries.push(entry);
@@ -533,6 +557,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
           group: cardGroup, name: '', wcaId: '', liveId: '', gender: 'm',
           cutoff: roundCutoff[rid], limit: roundLimit[rid],
           format: roundFormat[rid], isCumulative: roundCumulative[rid],
+          scrambleDoubleCheck: wantsDoubleCheck(['finals'], '', eventId),
         });
       }
       finalsEntries.push({
@@ -570,6 +595,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
           group: groupLabel, name: '', wcaId: '', liveId: '', gender: 'm',
           cutoff: roundCutoff[rid], limit: roundLimit[rid],
           format: roundFormat[rid], isCumulative: roundCumulative[rid],
+          scrambleDoubleCheck: wantsDoubleCheck(['semis'], '', eventId),
         });
       }
       semisEntries.push({
@@ -625,6 +651,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
           name: p.name, wcaId: p.wcaId, liveId: p.liveId, gender: p.gender,
           cutoff: roundCutoff[rid], limit: roundLimit[rid],
           format: roundFormat[rid], isCumulative: roundCumulative[rid],
+          scrambleDoubleCheck: wantsDoubleCheck(['intermediate'], p.wcaId, eventId),
         });
       }
     } else {
@@ -646,6 +673,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
             group: groupLabel, name: '', wcaId: '', liveId: '', gender: 'm',
             cutoff: roundCutoff[rid], limit: roundLimit[rid],
             format: roundFormat[rid], isCumulative: roundCumulative[rid],
+            scrambleDoubleCheck: wantsDoubleCheck(['intermediate'], '', eventId),
           });
         }
         intermediateEntries.push({

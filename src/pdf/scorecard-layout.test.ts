@@ -129,6 +129,12 @@ const CARD_CONTENT_W  = CARD_W - 2 * CARD_BORDER - 2 * CARD_PAD_H;   // 248pt
 const TABLE_CONTENT_W = CARD_CONTENT_W - TABLE_BORDER;                  // 247pt
 
 const COL_FRAC = { scrambler: 0.13, attempt: 0.10, result: 0.52, judge: 0.12, competitor: 0.13 };
+// Scramble double-checking variant: extra 13% scramblerCheck column taken from result (52→39).
+const COL_FRAC6 = { scrambler: 0.13, scramblerCheck: 0.13, attempt: 0.10, result: 0.39, judge: 0.12, competitor: 0.13 };
+
+function sum(o: Record<string, number>): number {
+  return Object.values(o).reduce((a, b) => a + b, 0);
+}
 
 function colContentW(frac: number): number {
   return TABLE_CONTENT_W * frac - CELL_BORDER;
@@ -152,6 +158,29 @@ describe('Scorecard header labels fit within their columns', () => {
       it('attempt label fits', () => {
         expect(maxLineWidth(s.attempt, HEADER_FONT)).toBeLessThanOrEqual(colContentW(COL_FRAC.attempt));
       });
+      it('scramblerCheck label fits (double-checking column)', () => {
+        expect(maxLineWidth(s.scramblerCheck, HEADER_FONT)).toBeLessThanOrEqual(colContentW(COL_FRAC6.scramblerCheck));
+      });
     });
   }
+});
+
+describe('Scorecard column widths sum to the full table width', () => {
+  it('5-column layout sums to 1.0', () => {
+    expect(sum(COL_FRAC)).toBeCloseTo(1.0, 10);
+  });
+  it('6-column (double-check) layout sums to 1.0', () => {
+    expect(sum(COL_FRAC6)).toBeCloseTo(1.0, 10);
+  });
+  it('the double-check column takes its width entirely from result (others unchanged)', () => {
+    expect(COL_FRAC6.scrambler).toBe(COL_FRAC.scrambler);
+    expect(COL_FRAC6.attempt).toBe(COL_FRAC.attempt);
+    expect(COL_FRAC6.judge).toBe(COL_FRAC.judge);
+    expect(COL_FRAC6.competitor).toBe(COL_FRAC.competitor);
+    expect(COL_FRAC6.scramblerCheck).toBe(COL_FRAC.scrambler);
+    expect(COL_FRAC6.result).toBeCloseTo(COL_FRAC.result - COL_FRAC6.scramblerCheck, 10);
+  });
+  it('result stays positive with room for content in the 6-column layout', () => {
+    expect(colContentW(COL_FRAC6.result)).toBeGreaterThan(50);
+  });
 });

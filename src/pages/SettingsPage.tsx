@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import type { CompetitionSettings, CustomEvent, Language, NametTagLogoMode, NametTagQrMode, PaperFormat, SecondRoundMode } from '../types/settings';
+import type { CompetitionSettings, CustomEvent, DoubleCheckRound, Language, NametTagLogoMode, NametTagQrMode, PaperFormat, ScrambleDoubleCheckOverrides, SecondRoundMode } from '../types/settings';
+import { parseDoubleCheckOverrides } from '../lib/parseDoubleCheckOverrides';
 import { EVENT_ICONS } from '../assets/events';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 import Header from '../components/Header';
@@ -37,7 +38,12 @@ export default function SettingsPage() {
   const [nametagQrMode, setNametagQrMode] = useState<NametTagQrMode>('back-only');
   const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [scrambleDoubleCheck, setScrambleDoubleCheck] = useState<boolean>(false);
+  const [scrambleDoubleCheckRounds, setScrambleDoubleCheckRounds] = useState<DoubleCheckRound[]>(['finals']);
+  const [scrambleDoubleCheckOverrides, setScrambleDoubleCheckOverrides] = useState<ScrambleDoubleCheckOverrides>({});
+  const [dcOverridesName, setDcOverridesName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dcFileInputRef = useRef<HTMLInputElement>(null);
   const customIconRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -80,6 +86,15 @@ export default function SettingsPage() {
     { value: 'blanks', label: t('settings.subsequent_rounds.blanks'), description: t('settings.subsequent_rounds.blanks_desc') },
   ];
 
+  const DOUBLE_CHECK_ROUND_OPTIONS: { value: DoubleCheckRound; label: string }[] = [
+    { value: 'firstRound',   label: t('settings.double_check.round_first') },
+    { value: 'intermediate', label: t('settings.double_check.round_second') },
+    { value: 'semis',        label: t('settings.double_check.round_semis') },
+    { value: 'finals',       label: t('settings.double_check.round_finals') },
+  ];
+
+  const dcOverrideCount = Object.keys(scrambleDoubleCheckOverrides).length;
+
   function handleLogoChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -93,6 +108,27 @@ export default function SettingsPage() {
     setLogoDataUrl(null);
     setLogoName(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  function toggleDoubleCheckRound(round: DoubleCheckRound) {
+    setScrambleDoubleCheckRounds(prev =>
+      prev.includes(round) ? prev.filter(r => r !== round) : [...prev, round]
+    );
+  }
+
+  function handleDcOverridesChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setDcOverridesName(file.name);
+    const reader = new FileReader();
+    reader.onload = () => setScrambleDoubleCheckOverrides(parseDoubleCheckOverrides(reader.result as string));
+    reader.readAsText(file);
+  }
+
+  function handleRemoveDcOverrides() {
+    setScrambleDoubleCheckOverrides({});
+    setDcOverridesName(null);
+    if (dcFileInputRef.current) dcFileInputRef.current.value = '';
   }
 
   function addCustomEvent() {
@@ -146,6 +182,9 @@ export default function SettingsPage() {
       nametagLogoMode,
       nametagQrMode,
       customEvents: customEvents.filter(e => e.name.trim()),
+      scrambleDoubleCheck,
+      scrambleDoubleCheckRounds,
+      scrambleDoubleCheckOverrides,
     };
     sessionStorage.setItem('competition_settings', JSON.stringify(settings));
     navigate('/generate');
@@ -234,6 +273,75 @@ export default function SettingsPage() {
               </label>
             ))}
           </div>
+        </section>
+
+        <section style={s.section}>
+          <h3 style={s.sectionTitle}>
+            {t('settings.double_check.title')}{' '}
+            <span style={s.optional}>({t('settings.double_check.optional_note')})</span>
+          </h3>
+          <p style={s.hint}>{t('settings.double_check.hint')}</p>
+
+          <label style={{ ...s.optionCard, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={scrambleDoubleCheck}
+              onChange={e => setScrambleDoubleCheck(e.target.checked)}
+              style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
+            />
+            <div>
+              <div style={s.optionLabel}>{t('settings.double_check.enable')}</div>
+              <div style={s.optionDesc}>{t('settings.double_check.enable_desc')}</div>
+            </div>
+          </label>
+
+          {scrambleDoubleCheck && (
+            <div style={{ marginTop: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>
+                {t('settings.double_check.rounds_title')}
+              </div>
+              <div style={s.optionGroup}>
+                {DOUBLE_CHECK_ROUND_OPTIONS.map(opt => (
+                  <label key={opt.value} style={{ ...s.optionCard, ...(scrambleDoubleCheckRounds.includes(opt.value) ? s.optionCardActive : {}), cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={scrambleDoubleCheckRounds.includes(opt.value)}
+                      onChange={() => toggleDoubleCheckRound(opt.value)}
+                      style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
+                    />
+                    <div>
+                      <div style={s.optionLabel}>{opt.label}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', margin: '16px 0 8px' }}>
+                {t('settings.double_check.overrides_title')}
+              </div>
+              <p style={s.hint}>{t('settings.double_check.overrides_hint')}</p>
+              {dcOverrideCount > 0 ? (
+                <div style={s.logoPreview}>
+                  <div style={s.logoMeta}>
+                    <span style={s.logoName}>{dcOverridesName}</span>
+                    <span style={s.optionDesc}>{t('settings.double_check.overrides_count', { count: dcOverrideCount })}</span>
+                    <button style={s.removeBtn} onClick={handleRemoveDcOverrides}>{t('common.remove')}</button>
+                  </div>
+                </div>
+              ) : (
+                <button style={s.uploadBtn} onClick={() => dcFileInputRef.current?.click()}>
+                  {t('common.choose_file')}
+                </button>
+              )}
+              <input
+                ref={dcFileInputRef}
+                type="file"
+                accept=".csv,text/csv,text/plain"
+                style={{ display: 'none' }}
+                onChange={handleDcOverridesChange}
+              />
+            </div>
+          )}
         </section>
 
         <section style={s.section}>

@@ -59,6 +59,21 @@
       "blanks": "Evento + ronda rellenos, nombre en blanco",
       "blanks_desc": "Imprimir espacios de nombre en blanco — rellenar a mano en la competencia"
     },
+    "double_check": {
+      "title": "Doble verificación de mezclas",
+      "optional_note": "opcional — para grandes campeonatos",
+      "hint": "Añade una segunda columna de firma del mezclador para verificar las mezclas de forma independiente.",
+      "enable": "Activar la doble verificación de mezclas",
+      "enable_desc": "Añade una segunda columna de firma del mezclador a las hojas seleccionadas.",
+      "rounds_title": "Aplicar a las rondas",
+      "round_first": "Ronda 1",
+      "round_second": "Ronda 2",
+      "round_semis": "Semifinales",
+      "round_finals": "Finales",
+      "overrides_title": "Verificar siempre a competidores específicos (opcional)",
+      "overrides_hint": "Sube un archivo CSV — una línea por competidor: WCAID,evento1,evento2 (ej. 2015FOOB01,333,444). Estos competidores se verifican dos veces en esos eventos en todas las rondas.",
+      "overrides_count": "{{count}} competidor(es) cargado(s)"
+    },
     "wca_live": {
       "title": "ID de WCA Live",
       "optional_note": "opcional — para códigos QR de etiquetas",

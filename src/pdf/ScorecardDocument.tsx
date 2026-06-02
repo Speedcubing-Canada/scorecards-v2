@@ -44,6 +44,13 @@ const FONT_BOLD   = 'Helvetica-Bold';
 
 // Column widths: match HTML original proportions 75/55/290/70/70 out of 560px
 const COL = { scrambler: '13%', attempt: '10%', result: '52%', judge: '12%', competitor: '13%' };
+// Scramble double-checking: a second scrambler-signature column is inserted after the
+// first one. Its 13% is taken entirely from `result` (52% → 39%) so every other column
+// — and the card's outer geometry — stays unchanged. Both variants sum to 100%.
+const COL_DC = { scrambler: '13%', scramblerCheck: '13%', attempt: '10%', result: '39%', judge: '12%', competitor: '13%' };
+// Column key order for the header/rows, with and without the double-check column.
+const COLS_5 = ['scrambler', 'attempt', 'result', 'judge', 'competitor'] as const;
+const COLS_6 = ['scrambler', 'scramblerCheck', 'attempt', 'result', 'judge', 'competitor'] as const;
 
 // Row heights tuned so the two flex spacers around the provisional label are ~6–8pt each.
 // Formula: spacer = (inner(335) - header(56) - eventRow(25) - tableHeader(19)
@@ -127,22 +134,24 @@ const styles = StyleSheet.create({
 });
 
 // ── Attempt row ───────────────────────────────────────────────────────────
-function AttemptRow({ num, rowH, isMBF }: { num: number | ''; rowH: number; isMBF: boolean }) {
+function AttemptRow({ num, rowH, isMBF, doubleCheck }: { num: number | ''; rowH: number; isMBF: boolean; doubleCheck: boolean }) {
+  const cols = doubleCheck ? COL_DC : COL;
   return (
     <View style={[styles.attemptRow, { height: rowH }]}>
-      <View style={[styles.cellBase, { width: COL.scrambler }]} />
-      <View style={[styles.cellBase, { width: COL.attempt }]}>
+      <View style={[styles.cellBase, { width: cols.scrambler }]} />
+      {doubleCheck && <View style={[styles.cellBase, { width: COL_DC.scramblerCheck }]} />}
+      <View style={[styles.cellBase, { width: cols.attempt }]}>
         {num !== '' && <Text style={styles.attemptNumText}>{num}</Text>}
       </View>
-      <View style={[styles.cellBase, { width: COL.result }]}>
+      <View style={[styles.cellBase, { width: cols.result }]}>
         {isMBF && (
           <Text style={{ fontSize: 6.5, textAlign: 'center', color: '#333' }}>
             {'_____ out of _____\nTime\n_______________'}
           </Text>
         )}
       </View>
-      <View style={[styles.cellBase, { width: COL.judge }]} />
-      <View style={[styles.cellBase, { width: COL.competitor }]} />
+      <View style={[styles.cellBase, { width: cols.judge }]} />
+      <View style={[styles.cellBase, { width: cols.competitor }]} />
     </View>
   );
 }
@@ -159,6 +168,7 @@ function ScorecardCard({
   const strings = getStrings(settings.language);
   const rowH    = ROW_HEIGHTS[card.format];
   const isMBF   = card.eventId === '333mbf';
+  const doubleCheck = card.scrambleDoubleCheck === true;
   const icon    = card.iconDataUrl ?? EVENT_ICONS[card.eventId];
 
   const resultSuffix = card.isCumulative ? strings.cumulativeSuffix(card.limit)
@@ -224,19 +234,20 @@ function ScorecardCard({
       {/* Pre-cutoff attempts */}
       <View style={styles.table}>
         <View style={styles.headerRow}>
-          {(['scrambler','attempt','result','judge','competitor'] as const).map((col) => (
-            <View key={col} style={[styles.cellBase, { width: COL[col] }]}>
+          {(doubleCheck ? COLS_6 : COLS_5).map((col) => (
+            <View key={col} style={[styles.cellBase, { width: (doubleCheck ? COL_DC : COL as Record<string, string>)[col] }]}>
               <Text style={styles.headerText}>
-                {col === 'result'     ? resultHeader
-               : col === 'scrambler' ? strings.scrambler
-               : col === 'attempt'   ? strings.attempt
-               : col === 'judge'     ? strings.judge
+                {col === 'result'        ? resultHeader
+               : col === 'scrambler'     ? strings.scrambler
+               : col === 'scramblerCheck' ? strings.scramblerCheck
+               : col === 'attempt'       ? strings.attempt
+               : col === 'judge'         ? strings.judge
                : strings.competitor}
               </Text>
             </View>
           ))}
         </View>
-        {preRows.map(n => <AttemptRow key={n} num={n} rowH={rowH} isMBF={isMBF} />)}
+        {preRows.map(n => <AttemptRow key={n} num={n} rowH={rowH} isMBF={isMBF} doubleCheck={doubleCheck} />)}
       </View>
 
       {hasCutoff && (
@@ -245,7 +256,7 @@ function ScorecardCard({
 
       {postRows.length > 0 && (
         <View style={styles.table}>
-          {postRows.map(n => <AttemptRow key={n} num={n} rowH={rowH} isMBF={false} />)}
+          {postRows.map(n => <AttemptRow key={n} num={n} rowH={rowH} isMBF={false} doubleCheck={doubleCheck} />)}
         </View>
       )}
 
@@ -256,7 +267,7 @@ function ScorecardCard({
 
       {/* Extra/provisional row */}
       <View style={styles.table}>
-        <AttemptRow num='' rowH={rowH} isMBF={isMBF} />
+        <AttemptRow num='' rowH={rowH} isMBF={isMBF} doubleCheck={doubleCheck} />
       </View>
     </View>
   );

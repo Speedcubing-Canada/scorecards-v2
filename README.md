@@ -122,6 +122,45 @@ Components call `useIsMobile()` and spread a small mobile-only style override in
 | `nametagLogoMode` | `hidden \| with-name \| logo-only` | How the logo appears on name tags (see Name tag section) |
 | `nametagQrMode` | `back-only \| both-sides` | Which panels get QR codes (see Name tag section) |
 | `customEvents` | `CustomEvent[]` | Zero or more custom/bonus events (see Advanced section) |
+| `scrambleDoubleCheck` | `boolean` | Enables the optional second scrambler-signature column (see Scramble double-checking) |
+| `scrambleDoubleCheckRounds` | `DoubleCheckRound[]` | Which round categories get the column: `firstRound \| intermediate \| semis \| finals`. Defaults to `['finals']` |
+| `scrambleDoubleCheckOverrides` | `Record<string, string[]>` | Map of `WCA ID → event IDs` that are always double-checked for that competitor, in every round (named cards only) |
+
+---
+
+## Scramble double-checking
+
+For major championships, scrambles are often double-checked: a second scrambler
+independently confirms the scramble and signs for it. When enabled, scorecards gain a
+second scrambler-signature column (header "Check") immediately to the right of the
+existing **Scrambler** column. Its 13% width is taken entirely from the result column
+(52% → 39%); the card's outer size, the other columns, and the 4-up cut lines are
+unchanged, so a double-check card and a normal card can sit on the same sheet.
+
+A scorecard gets the column when **either**:
+
+1. **Round rule** — its round category is selected in `scrambleDoubleCheckRounds`
+   (default: Finals only). The four categories map 1:1 to the generated PDFs
+   (`round1` / `round2` / `semis` / `finals`). A single-round event's only round is
+   treated as a final, so selecting "Finals" also covers it.
+2. **Per-competitor override** — the competitor's WCA ID + event appears in the uploaded
+   override file. These competitors are double-checked for those events in **every**
+   round. Because the override matches by WCA ID, it only applies to **named** cards
+   (Round 1, and prefilled Round 2); blank later-round cards rely on the round rule.
+
+### Override file format
+
+A CSV with one line per competitor and no header:
+
+```
+# WCAID,event1,event2,...
+2015FOOB01,333,444
+2018BARS02,333bf,555bf
+```
+
+Blank lines and lines starting with `#` are ignored; WCA IDs are upper-cased and event
+IDs lower-cased. Parsed by `src/lib/parseDoubleCheckOverrides.ts`. (A helper script to
+generate this file from a competition's data may be added later.)
 
 ---
 
