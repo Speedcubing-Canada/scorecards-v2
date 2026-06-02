@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { CompetitionSettings, CustomEvent, DoubleCheckRound, LocaleCode, NametTagLogoMode, NametTagQrMode, PaperFormat, ScrambleDoubleCheckOverrides, SecondRoundMode } from '../types/settings';
 import { LANGUAGES } from '../i18n/index';
+import { resolveDefaultPrimaryLanguage, secondaryLanguageRow } from '../lib/languageSelector';
 import { parseDoubleCheckOverrides } from '../lib/parseDoubleCheckOverrides';
 import { EVENT_ICONS } from '../assets/events';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
@@ -19,15 +20,23 @@ const WCA_EVENT_LABELS: Record<string, string> = {
 };
 
 export default function SettingsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
   const competitionId = sessionStorage.getItem('selected_competition_id') ?? '';
   const competitionName = sessionStorage.getItem('selected_competition_name') ?? '';
 
-  const [language, setLanguage] = useState<LocaleCode>('fr');
-  const [secondaryLanguage, setSecondaryLanguage] = useState<LocaleCode | null>('en');
+  // Default the primary scorecard language to whatever interface language the
+  // user is already using (saves a click for most people); secondary starts as
+  // None so single-language users don't have to clear anything.
+  const defaultPrimary = resolveDefaultPrimaryLanguage(
+    i18n.resolvedLanguage ?? i18n.language,
+    LANGUAGES,
+  );
+
+  const [language, setLanguage] = useState<LocaleCode>(defaultPrimary);
+  const [secondaryLanguage, setSecondaryLanguage] = useState<LocaleCode | null>(null);
   const [paperFormat, setPaperFormat] = useState<PaperFormat>('LETTER');
   const [secondRoundMode, setSecondRoundMode] = useState<SecondRoundMode>('prefilled');
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
@@ -70,14 +79,9 @@ export default function SettingsPage() {
   }
 
   // Language pickers are driven by the shared LANGUAGES registry (native labels),
-  // so adding a language needs no per-language settings strings here.
-  // Primary: any supported language. Secondary: "None" or any language other
-  // than the chosen primary.
-  const SECONDARY_LANGUAGE_OPTIONS: { value: LocaleCode | null; label: string }[] = [
-    { value: null, label: t('settings.language.secondary_none') },
-    ...LANGUAGES.filter((l) => l.code !== language).map((l) => ({ value: l.code, label: l.label })),
-  ];
-
+  // so adding a language needs no per-language settings strings here. Primary and
+  // secondary rows share the same fixed columns (one language each); the column
+  // under the selected primary becomes the "None" tile so nothing ever shifts.
   function handlePrimaryLanguageChange(code: LocaleCode) {
     setLanguage(code);
     if (secondaryLanguage === code) setSecondaryLanguage(null);
@@ -248,13 +252,26 @@ export default function SettingsPage() {
 
           <p style={{ ...s.langCaption, marginTop: 18 }}>{t('settings.language.secondary_title')}</p>
           <div style={s.langRow}>
-            {SECONDARY_LANGUAGE_OPTIONS.map((opt) => renderLangTile({
-              key: opt.value ?? 'none',
-              badge: opt.value ? opt.value.toUpperCase() : '—',
-              label: opt.label,
-              selected: secondaryLanguage === opt.value,
-              onClick: () => setSecondaryLanguage(opt.value),
-            }))}
+            {secondaryLanguageRow(LANGUAGES, language, secondaryLanguage).map((tile, i) => {
+              // Columns mirror the primary row; the column under the selected
+              // primary is the "None" tile (tile.value === null).
+              const lang = LANGUAGES[i];
+              return renderLangTile(tile.value === null
+                ? {
+                    key: 'none',
+                    badge: '—',
+                    label: t('settings.language.secondary_none'),
+                    selected: tile.selected,
+                    onClick: () => setSecondaryLanguage(null),
+                  }
+                : {
+                    key: lang.code,
+                    badge: lang.code.toUpperCase(),
+                    label: lang.label,
+                    selected: tile.selected,
+                    onClick: () => setSecondaryLanguage(tile.value),
+                  });
+            })}
           </div>
         </section>
 

@@ -491,8 +491,10 @@ The printed-output language is chosen on the SettingsPage as a **mandatory prima
 
 | Setting | Effect |
 |---|---|
-| `language` | Primary language (mandatory). Currently one of `en`, `fr`, `es`, `pt`. |
-| `secondaryLanguage` | Optional second language (`null` = single-language output). |
+| `language` | Primary language (mandatory). Currently one of `en`, `fr`, `es`, `pt`. Defaults to the current interface language (falling back to the first supported language). |
+| `secondaryLanguage` | Optional second language (`null` = single-language output). Defaults to `null`. |
+
+In the SettingsPage UI the two rows of language tiles share the same fixed columns (one language per column). The secondary row mirrors the primary row, except the column under the currently-selected primary becomes the **None** tile — so the columns never shift when the primary changes, and each column always represents exactly one language. This selector logic lives in `src/lib/languageSelector.ts` (`resolveDefaultPrimaryLanguage`, `secondaryLanguageRow`).
 
 **Adding a language** is a one-entry-per-store change: add a string bundle to `LOCALES` in `src/lib/i18n.ts`, and add a `LANGUAGES` entry + UI translation JSON (registered in `resources`/`supportedLngs`) in `src/i18n/index.ts`. No getter, merge, or settings-form code needs touching.
 
