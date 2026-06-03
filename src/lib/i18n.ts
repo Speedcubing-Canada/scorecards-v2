@@ -52,6 +52,9 @@ export interface ScorecardStrings {
   resultPrefix: string;
   dnfSuffix: (limit: string) => string;
   cumulativeSuffix: (limit: string) => string;
+  // Compact forms used in the 6-column (double-check) header where the result column is narrower.
+  shortDnfSuffix: (limit: string) => string;
+  shortCumulativeSuffix: (limit: string) => string;
   mbfSuffix: string;
   cutoffLine: (cutoff: string, mo3: boolean) => string;
   provisionalLine: string;
@@ -77,6 +80,8 @@ const EN: ScorecardStrings = {
   resultPrefix: 'Result',
   dnfSuffix: (limit) => `(DNF if not under ${limit})`,
   cumulativeSuffix: (limit) => `(Cumulative Time Limit: ${limit})`,
+  shortDnfSuffix: (limit) => `(DNF if <${limit})`,
+  shortCumulativeSuffix: (limit) => `(cumul. <${limit})`,
   mbfSuffix: '(Limit: Reg. H1b)',
   cutoffLine: (cutoff, mo3) =>
     mo3
@@ -116,6 +121,8 @@ const FR: ScorecardStrings = {
   resultPrefix: 'Résultat',
   dnfSuffix: (limit) => `(DNF si n'est pas inférieur à ${limit})`,
   cumulativeSuffix: (limit) => `(Limite de Temps Cumul.: ${limit})`,
+  shortDnfSuffix: (limit) => `(DNF si <${limit})`,
+  shortCumulativeSuffix: (limit) => `(cumul. <${limit})`,
   mbfSuffix: '(Limite: Rég. H1b)',
   cutoffLine: (cutoff, mo3) =>
     mo3
@@ -155,6 +162,8 @@ const ES: ScorecardStrings = {
   resultPrefix: 'Resultado',
   dnfSuffix: (limit) => `(DNF si no es inferior a ${limit})`,
   cumulativeSuffix: (limit) => `(Límite de tiempo acumulado: ${limit})`,
+  shortDnfSuffix: (limit) => `(DNF si <${limit})`,
+  shortCumulativeSuffix: (limit) => `(acum. <${limit})`,
   mbfSuffix: '(Límite: Reg. H1b)',
   cutoffLine: (cutoff, mo3) =>
     mo3
@@ -194,6 +203,8 @@ const PT: ScorecardStrings = {
   resultPrefix: 'Resultado',
   dnfSuffix: (limit) => `(DNF se não for inferior a ${limit})`,
   cumulativeSuffix: (limit) => `(Limite de Tempo Acumulado: ${limit})`,
+  shortDnfSuffix: (limit) => `(DNF se <${limit})`,
+  shortCumulativeSuffix: (limit) => `(acum. <${limit})`,
   mbfSuffix: '(Limite: Reg. H1b)',
   cutoffLine: (cutoff, mo3) =>
     mo3
@@ -240,6 +251,8 @@ function mergeScorecardStrings(primary: ScorecardStrings, secondary: ScorecardSt
     resultPrefix: `${primary.resultPrefix}\n${secondary.resultPrefix}`,
     dnfSuffix: (limit) => `${primary.dnfSuffix(limit)}\n${secondary.dnfSuffix(limit)}`,
     cumulativeSuffix: (limit) => `${primary.cumulativeSuffix(limit)}\n${secondary.cumulativeSuffix(limit)}`,
+    shortDnfSuffix: (limit) => `${primary.shortDnfSuffix(limit)}\n${secondary.shortDnfSuffix(limit)}`,
+    shortCumulativeSuffix: (limit) => `${primary.shortCumulativeSuffix(limit)}\n${secondary.shortCumulativeSuffix(limit)}`,
     mbfSuffix: primary.mbfSuffix,
     cutoffLine: (cutoff, mo3) => `${primary.cutoffLine(cutoff, mo3)}\n${secondary.cutoffLine(cutoff, mo3)}`,
     provisionalLine: `${primary.provisionalLine}\n${secondary.provisionalLine}`,

@@ -28,6 +28,7 @@ function loadSettings(raw: string | null): CompetitionSettings | null {
   else if (s.language === 'bilingual-en') { s.language = 'en'; s.secondaryLanguage = 'fr'; }
   else if (s.secondaryLanguage === undefined) { s.secondaryLanguage = null; }
   if (s.generationScope === undefined) s.generationScope = { mode: 'everything' };
+  if (s.hideWcaLiveId === undefined) s.hideWcaLiveId = false;
   return s as unknown as CompetitionSettings;
 }
 

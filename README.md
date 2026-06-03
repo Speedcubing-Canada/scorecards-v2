@@ -120,6 +120,7 @@ Components call `useIsMobile()` and spread a small mobile-only style override in
 | `useDefaultLogo` | `boolean` | If `true` and no custom logo is uploaded, the bundled Speedcubing Canada logo (`src/assets/SC_Logo.png`) is rendered next to the competition name. Defaults to `true`; disable for competitions outside Canada |
 | `wcaLiveId` | `string \| null` | Numeric WCA Live competition ID (e.g. `9667`). Auto-detected from the WCA Live API on the Settings page; can be overridden manually. Used to generate per-competitor WCA Live QR codes on name tags |
 | `wcaLivePersonIds` | `Record<number, string> \| null` | Map of `registrantId → WCA Live internal person ID`, fetched automatically after `wcaLiveId` is resolved. The WCA Live person ID differs from the WCA website user ID and is required for correct competitor QR code URLs |
+| `hideWcaLiveId` | `boolean` | When `true`, suppresses the `WCA Live: …` line on scorecard headers. Useful when generating blank scorecards where no competitor ID has been assigned yet. Defaults to `false` |
 | `nametagLogoMode` | `hidden \| with-name \| logo-only` | How the logo appears on name tags (see Name tag section) |
 | `nametagQrMode` | `back-only \| both-sides` | Which panels get QR codes (see Name tag section) |
 | `customEvents` | `CustomEvent[]` | Zero or more custom/bonus events (see Advanced section) |
@@ -294,7 +295,7 @@ Every panel (front and back) starts with the same top section:
 
 - **Logo or competition name** — controlled by `nametagLogoMode` (see below)
 - **Competitor name** — auto-sized to fill available width (see formula below)
-- **Role badge** — DÉLÉGUÉ / COMPÉTITEUR / COMPÉTITRICE / NOUVEAU COMPÉTITEUR / etc. (or English equivalents on the back panel), coloured by role
+- **Role badge** — DÉLÉGUÉ / COMPÉTITEUR / COMPÉTITRICE / NOUVEAU COMPÉTITEUR / etc. (or English equivalents on the back panel), coloured by role. The badge is pinned at a fixed vertical position within the top section so it appears at the same height regardless of name length
 - **Event icons** — one icon per registered event
 - **WCA ID** — or a blank placeholder for first-timers
 
@@ -441,6 +442,8 @@ Persons without a `wcaId` get a placeholder. In French the placeholder is gender
 
 Each accepted person produces one `NametTagEntry`. The `buildDuties` function converts WCIF assignment codes (e.g., `competitor`, `staff-scrambler`, `staff-judge`, `staff-runner`) into human-readable duty strings of the form `"EventName: Group label"`. Duties are grouped into four arrays (`compete`, `scramble`, `judge`, `run`) and sorted alphabetically within each group.
 
+Entries are sorted in this order: **Delegates → Organizers → Returning competitors → New competitors** (persons without a WCA ID), each sub-group alphabetically by name. New competitors are placed at the end so their nametags can be separated at check-in for first-timer orientation.
+
 The `registrantId` field is the sequential person ID used by competitiongroups.com and as the key into `wcaLivePersonIds` to resolve the WCA Live competitor URL. `wcaUserId` is the WCA website account ID. These are different numbers and must not be confused — WCA Live uses its own internal person IDs (neither `registrantId` nor `wcaUserId`).
 
 ### Extra / spare scorecards (`extras`)
@@ -547,6 +550,8 @@ Name tag role badges use the primary language on the **front** panel and the sec
 ## Planned features
 
 - **First-timer slips** — a small slip printed for competitors who have no WCA ID, given to the delegate to attach to their scorecard after the first solve. Lists the competitor's name and registrant ID so their results can be linked to a new WCA profile.
+
+- **Horizontal nametags** - Using the files in Sarah-scorecard/Nametags (Horizontal, English Only) to add an option to have different nametags orientations
 
 ---
 

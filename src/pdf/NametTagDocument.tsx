@@ -107,7 +107,7 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl }:
   const iconSz = 12;
 
   return (
-    <View>
+    <View style={{ height: topSectionH(logoMode), flexDirection: 'column' }}>
       {logoMode === 'logo-only' && logoDataUrl ? (
         <Image src={logoDataUrl} style={s.logoLarge} />
       ) : logoMode === 'with-name' && logoDataUrl ? (
@@ -119,6 +119,7 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl }:
         <Text style={s.compName}>{compName}</Text>
       )}
       <Text style={[s.name, { fontSize: nameFs }]}>{entry.name}</Text>
+      <View style={{ flex: 1 }} />
       <View style={[s.badge, { backgroundColor: bg }]}>
         <Text style={[s.badgeText, { color: fg }]}>{titleText}</Text>
       </View>
@@ -201,7 +202,7 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLi
   const lineH = dutyFs * 1.4;
   const estLines = rows.reduce((sum, r) => sum + Math.ceil(r.duties.length / 2), 0);
   const estH = (estLines + rows.length) * lineH;
-  const spaceEvenly = estH < (panelH - topSectionH(logoMode)) * 0.65;
+  const spaceEvenly = estH < (panelH - topSectionH(logoMode)) * 0.90;
 
   return (
     <View style={panelStyle}>
@@ -247,10 +248,10 @@ const s = StyleSheet.create({
   logoLarge:  { height: 28, objectFit: 'contain', alignSelf: 'center', marginBottom: 4 },
   compName:   { fontSize: 8.5, textAlign: 'center', color: '#333', marginBottom: 4, fontFamily: FONT },
   name:       { textAlign: 'center', fontFamily: FONT, marginBottom: 6 },
-  badge:      { borderRadius: 2, paddingVertical: 5, marginBottom: 8 },
+  badge:      { borderRadius: 2, paddingVertical: 5, marginBottom: 4 },
   badgeText:  { fontSize: 13, textAlign: 'center', fontFamily: FONT_BOLD },
-  iconsRow:   { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 7 },
-  wcaId:      { fontSize: 13, textAlign: 'center', marginBottom: 10, color: '#222', fontFamily: FONT },
+  iconsRow:   { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 6, marginBottom: 4 },
+  wcaId:      { fontSize: 13, textAlign: 'center', marginBottom: 4, color: '#222', fontFamily: FONT },
   dutiesSection: { flexDirection: 'column', flex: 1 },
   dutyRow:    { flexDirection: 'row', alignItems: 'flex-start' },
   dutyLabel:  { fontFamily: FONT_BOLD, width: 46, flexShrink: 0 },

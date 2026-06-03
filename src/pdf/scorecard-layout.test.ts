@@ -129,8 +129,8 @@ const CARD_CONTENT_W  = CARD_W - 2 * CARD_BORDER - 2 * CARD_PAD_H;   // 248pt
 const TABLE_CONTENT_W = CARD_CONTENT_W - TABLE_BORDER;                  // 247pt
 
 const COL_FRAC = { scrambler: 0.13, attempt: 0.10, result: 0.52, judge: 0.12, competitor: 0.13 };
-// Scramble double-checking variant: extra 13% scramblerCheck column taken from result (52→39).
-const COL_FRAC6 = { scrambler: 0.13, scramblerCheck: 0.13, attempt: 0.10, result: 0.39, judge: 0.12, competitor: 0.13 };
+// Scramble double-checking variant: extra 12% scramblerCheck column (same width as judge) taken from result (52→40).
+const COL_FRAC6 = { scrambler: 0.13, scramblerCheck: 0.12, attempt: 0.10, result: 0.40, judge: 0.12, competitor: 0.13 };
 
 function sum(o: Record<string, number>): number {
   return Object.values(o).reduce((a, b) => a + b, 0);
@@ -184,7 +184,8 @@ describe('Scorecard column widths sum to the full table width', () => {
     expect(COL_FRAC6.attempt).toBe(COL_FRAC.attempt);
     expect(COL_FRAC6.judge).toBe(COL_FRAC.judge);
     expect(COL_FRAC6.competitor).toBe(COL_FRAC.competitor);
-    expect(COL_FRAC6.scramblerCheck).toBe(COL_FRAC.scrambler);
+    // scramblerCheck matches judge width (not scrambler — keeps the column compact)
+    expect(COL_FRAC6.scramblerCheck).toBe(COL_FRAC.judge);
     expect(COL_FRAC6.result).toBeCloseTo(COL_FRAC.result - COL_FRAC6.scramblerCheck, 10);
   });
   it('result stays positive with room for content in the 6-column layout', () => {

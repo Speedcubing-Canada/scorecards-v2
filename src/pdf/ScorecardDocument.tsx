@@ -47,7 +47,7 @@ const COL = { scrambler: '13%', attempt: '10%', result: '52%', judge: '12%', com
 // Scramble double-checking: a second scrambler-signature column is inserted after the
 // first one. Its 13% is taken entirely from `result` (52% → 39%) so every other column
 // — and the card's outer geometry — stays unchanged. Both variants sum to 100%.
-const COL_DC = { scrambler: '13%', scramblerCheck: '13%', attempt: '10%', result: '39%', judge: '12%', competitor: '13%' };
+const COL_DC = { scrambler: '13%', scramblerCheck: '12%', attempt: '10%', result: '40%', judge: '12%', competitor: '13%' };
 // Column key order for the header/rows, with and without the double-check column.
 const COLS_5 = ['scrambler', 'attempt', 'result', 'judge', 'competitor'] as const;
 const COLS_6 = ['scrambler', 'scramblerCheck', 'attempt', 'result', 'judge', 'competitor'] as const;
@@ -58,6 +58,13 @@ const COLS_6 = ['scrambler', 'scramblerCheck', 'attempt', 'result', 'judge', 'co
 const ROW_HEIGHTS: Record<ScorecardFormat, number> = {
   avg5: 34, 'bo2-avg5': 31, mo3: 51, 'bo1-mo3': 49, bo2: 55,
 };
+
+// Scale cover-card event+round text to fit the card width (Helvetica-Bold ~0.6pt/pt/char).
+// cardW(257) - 2×paddingH(8) = 241pt available.
+function coverEventFontSize(text: string): number {
+  const available = 241;
+  return Math.min(18, Math.max(10, Math.floor(available / Math.max(text.length * 0.6, 1))));
+}
 
 // Scale name font to fit the nameCell on one line (Helvetica-Bold ~0.65pt/pt/char).
 // Card inner width ≈ 248pt (257 - 2×border - 2×paddingH).
@@ -117,7 +124,7 @@ const styles = StyleSheet.create({
   // Cover card
   coverCard: {
     border: BORDER, borderRadius: 7.5,
-    paddingVertical: 10, paddingHorizontal: 8,
+    paddingVertical: 10, paddingHorizontal: 14,
     fontFamily: FONT, justifyContent: 'flex-start',
   },
   coverCompName:     { fontSize: 12, textAlign: 'center', marginBottom: 4 },
@@ -126,10 +133,10 @@ const styles = StyleSheet.create({
   coverDividerRow:   { flexDirection: 'row', alignItems: 'center', marginTop: 10, marginBottom: 7 },
   coverDividerLine:  { flex: 1, height: 0.75, backgroundColor: '#444' },
   coverDividerText:  { fontSize: 10, fontFamily: FONT_BOLD, marginHorizontal: 7 },
-  coverCheckRow:     { flexDirection: 'row', alignItems: 'center', paddingLeft: 14, marginBottom: 8 },
+  coverCheckRow:     { flexDirection: 'row', alignItems: 'center', paddingLeft: 20, marginBottom: 8 },
   coverCheckText:    { fontSize: 9 },
   coverCheckBox:     { width: 9, height: 9, border: '0.75pt solid black', marginLeft: 5, flexShrink: 0 },
-  coverItem:         { fontSize: 9, paddingLeft: 14, marginBottom: 8 },
+  coverItem:         { fontSize: 9, paddingLeft: 20, marginBottom: 8 },
   coverInitials:     { fontSize: 10, textAlign: 'center', fontFamily: FONT_BOLD, marginBottom: 12 },
 });
 
@@ -171,9 +178,15 @@ function ScorecardCard({
   const doubleCheck = card.scrambleDoubleCheck === true;
   const icon    = card.iconDataUrl ?? EVENT_ICONS[card.eventId];
 
-  const resultSuffix = card.isCumulative ? strings.cumulativeSuffix(card.limit)
-                     : isMBF             ? strings.mbfSuffix
-                     :                    strings.dnfSuffix(card.limit);
+  // In the 6-column (double-check) layout the result column is narrower (40% vs 52%),
+  // so use compact suffixes to prevent the bilingual header from wrapping to 4 lines.
+  const resultSuffix = doubleCheck
+    ? (card.isCumulative ? strings.shortCumulativeSuffix(card.limit)
+       : isMBF           ? strings.mbfSuffix
+       :                   strings.shortDnfSuffix(card.limit))
+    : (card.isCumulative ? strings.cumulativeSuffix(card.limit)
+       : isMBF           ? strings.mbfSuffix
+       :                   strings.dnfSuffix(card.limit));
 
   // For bilingual languages the prefix and suffix each have 2 lines (EN + FR).
   // Merge them per-language so each language occupies exactly one line.
@@ -218,7 +231,7 @@ function ScorecardCard({
             {card.name || ' '}
           </Text>
           <Text style={styles.idText}>
-            {card.wcaId}{'    '}WCA Live: <Text style={{ fontFamily: FONT_BOLD }}>{card.liveId}</Text>
+            {card.wcaId}{!settings.hideWcaLiveId && <>{'    '}WCA Live: <Text style={{ fontFamily: FONT_BOLD }}>{card.liveId}</Text></>}
           </Text>
         </View>
       </View>
@@ -287,7 +300,7 @@ function CoverCard({
   return (
     <View style={[styles.coverCard, { position: 'absolute', left: pos.left, top: pos.top, width: cardW, height: cardH }]}>
       <Text style={styles.coverCompName}>{settings.competitionName}</Text>
-      <Text style={styles.coverEventRound}>{card.eventName} {card.roundLabel}</Text>
+      <Text style={[styles.coverEventRound, { fontSize: coverEventFontSize(`${card.eventName} ${card.roundLabel}`) }]}>{card.eventName} {card.roundLabel}</Text>
       <Text style={styles.coverGroup}>{card.group}</Text>
 
       <View style={styles.coverDividerRow}>

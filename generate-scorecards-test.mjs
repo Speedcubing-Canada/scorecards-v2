@@ -8,8 +8,8 @@ const CONFIGS = { LETTER: { cardW: 257, cardH: 345, positions: [{ left: 22, top:
 const BORDER = '1.5pt solid black', BORDER_THIN = '1pt solid black';
 const FONT = 'Helvetica', FONT_BOLD = 'Helvetica-Bold';
 const COL = { scrambler: '13%', attempt: '10%', result: '52%', judge: '12%', competitor: '13%' };
-// Scramble double-checking variant: extra 13% scramblerCheck column, taken from result (52→39).
-const COL_DC = { scrambler: '13%', scramblerCheck: '13%', attempt: '10%', result: '39%', judge: '12%', competitor: '13%' };
+// Scramble double-checking variant: extra 12% scramblerCheck column (same as judge), taken from result (52→40).
+const COL_DC = { scrambler: '13%', scramblerCheck: '12%', attempt: '10%', result: '40%', judge: '12%', competitor: '13%' };
 
 const styles = StyleSheet.create({
   page: { backgroundColor: '#ffffff' },
@@ -67,7 +67,11 @@ function Card({ label, rowH, preRows, postRows, hasCutoff, pos, cardW, cardH, do
     ),
     e(View, { style: styles.table },
       e(View, { style: styles.headerRow }, ...Object.entries(cols).map(([col, w]) => {
-        const labels = { scrambler: 'Mélangeur\nScrambler', scramblerCheck: 'Vérif.\nCheck', attempt: 'Essai\nAttempt', result: 'Résultat (DNF si n\'est pas inférieur à ...)\nResult (DNF if not under ...)', judge: 'Juge\nJudge', competitor: 'Compétiteur\nCompetitor' };
+        // DC cards use the compact result suffix so the narrower 40% column doesn't wrap to 4 lines.
+        const resultLabel = doubleCheck
+          ? 'Résultat (DNF si <...)\nResult (DNF if <...)'
+          : 'Résultat (DNF si n\'est pas inférieur à ...)\nResult (DNF if not under ...)';
+        const labels = { scrambler: 'Mélangeur\nScrambler', scramblerCheck: 'Vérif.\nCheck', attempt: 'Essai\nAttempt', result: resultLabel, judge: 'Juge\nJudge', competitor: 'Compétiteur\nCompetitor' };
         return e(View, { key: col, style: [styles.cellBase, { width: w }] }, e(Text, { style: styles.headerText }, labels[col]));
       })),
       ...preRows.map(n => e(AttemptRow, { key: n, num: n, rowH, doubleCheck })),

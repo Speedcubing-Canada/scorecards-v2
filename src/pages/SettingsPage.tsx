@@ -57,6 +57,7 @@ export default function SettingsPage() {
   const [wcaLiveId, setWcaLiveId] = useState<string>('');
   const [wcaLivePersonIds, setWcaLivePersonIds] = useState<Record<number, string> | null>(null);
   const [wcaLiveFetchStatus, setWcaLiveFetchStatus] = useState<'loading' | 'found' | 'not-found'>('loading');
+  const [hideWcaLiveId, setHideWcaLiveId] = useState<boolean>(false);
   const [nametagLogoMode, setNametagLogoMode] = useState<NametTagLogoMode>('with-name');
   const [nametagQrMode, setNametagQrMode] = useState<NametTagQrMode>('back-only');
   const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
@@ -218,6 +219,7 @@ export default function SettingsPage() {
       useDefaultLogo,
       wcaLiveId: wcaLiveId.trim() || null,
       wcaLivePersonIds,
+      hideWcaLiveId,
       nametagLogoMode,
       nametagQrMode,
       customEvents: customEvents.filter(e => e.name.trim()),
@@ -428,6 +430,18 @@ export default function SettingsPage() {
             placeholder={t('settings.wca_live.placeholder')}
             style={s.textInput}
           />
+          <label style={{ ...s.optionCard, cursor: 'pointer', marginTop: 12 }}>
+            <input
+              type="checkbox"
+              checked={hideWcaLiveId}
+              onChange={e => setHideWcaLiveId(e.target.checked)}
+              style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
+            />
+            <div>
+              <div style={s.optionLabel}>{t('settings.wca_live.hide_label')}</div>
+              <div style={s.optionDesc}>{t('settings.wca_live.hide_desc')}</div>
+            </div>
+          </label>
         </section>
 
         <section style={s.section}>

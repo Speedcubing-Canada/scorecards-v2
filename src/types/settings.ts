@@ -44,6 +44,7 @@ export interface CompetitionSettings {
   useDefaultLogo: boolean;
   wcaLiveId: string | null;
   wcaLivePersonIds: Record<number, string> | null;
+  hideWcaLiveId: boolean;
   nametagLogoMode: NametTagLogoMode;
   nametagQrMode: NametTagQrMode;
   customEvents: CustomEvent[];

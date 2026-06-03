@@ -792,9 +792,9 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     });
   }
 
-  // Delegates → Organizers → Competitors, each group alphabetically by name.
+  // Delegates → Organizers → Returning competitors → New competitors, each group alphabetically by name.
   const rolePriority = (r: NametTagRole) =>
-    r === 'delegate' ? 0 : r === 'organizer' ? 1 : 2;
+    r === 'delegate' ? 0 : r === 'organizer' ? 1 : r === 'competitor' ? 2 : 3;
   nametags.sort((a, b) => {
     const p = rolePriority(a.role) - rolePriority(b.role);
     return p !== 0 ? p : a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });

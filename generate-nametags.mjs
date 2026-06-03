@@ -128,10 +128,10 @@ const s = {
   },
   compName:   { fontSize: 8.5, textAlign: 'center', color: '#333', marginBottom: 4, fontFamily: FONT },
   name:       { textAlign: 'center', fontFamily: FONT, marginBottom: 6 },
-  badge:      { borderRadius: 2, paddingVertical: 5, marginBottom: 8 },
+  badge:      { borderRadius: 2, paddingVertical: 5, marginBottom: 4 },
   badgeText:  { fontSize: 13, textAlign: 'center', fontFamily: FONT_BOLD },
-  iconsRow:   { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 7 },
-  wcaId:      { fontSize: 13, textAlign: 'center', marginBottom: 10, color: '#222', fontFamily: FONT },
+  iconsRow:   { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 6, marginBottom: 4 },
+  wcaId:      { fontSize: 13, textAlign: 'center', marginBottom: 4, color: '#222', fontFamily: FONT },
   dutiesSection: { flexDirection: 'column', flex: 1 },
   dutyRow:    { flexDirection: 'row', alignItems: 'flex-start' },
   dutyLabel:  { fontFamily: FONT_BOLD, width: 46, flexShrink: 0 },
@@ -162,9 +162,10 @@ function PanelTop({ entry, panelW, compName, titleText }) {
   const { bg, fg } = badgeColors(entry.titleEn);
   const nameFs = nameFontSize(entry.name, panelW);
   const iconSz = 12;
-  return e(View, null,
+  return e(View, { style: { height: topSectionH('hidden'), flexDirection: 'column' } },
     e(Text, { style: s.compName }, compName),
     e(Text, { style: { ...s.name, fontSize: nameFs } }, entry.name),
+    e(View, { style: { flex: 1 } }),
     e(View, { style: { ...s.badge, backgroundColor: bg } },
       e(Text, { style: { ...s.badgeText, color: fg } }, titleText),
     ),
@@ -222,7 +223,7 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLi
   const lineH = dutyFs * 1.4;
   const estLines = rows.reduce((sum, r) => sum + Math.ceil(r.duties.length / 2), 0);
   const estH = (estLines + rows.length) * lineH;
-  const spaceEvenly = estH < (panelH - topSectionH('hidden')) * 0.65;
+  const spaceEvenly = estH < (panelH - topSectionH('hidden')) * 0.90;
 
   return e(View, { style: panelStyle },
     e(PanelTop, { entry, panelW, compName, titleText: entry.titleFr }),
