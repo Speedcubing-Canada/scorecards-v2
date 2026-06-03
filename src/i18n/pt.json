@@ -100,7 +100,10 @@
       "qr_back_only": "Somente verso",
       "qr_back_only_desc": "Frente = atribuições de grupos (FR), verso = QR codes (EN)",
       "qr_both_sides": "Ambos os lados",
-      "qr_both_sides_desc": "QR codes em ambos os lados — útil quando o logo ocupa espaço"
+      "qr_both_sides_desc": "QR codes em ambos os lados — útil quando o logo ocupa espaço",
+      "layout": "Orientação dos crachás",
+      "layout_vertical": "Vertical (retrato)",
+      "layout_horizontal": "Horizontal (paisagem)"
     },
     "advanced": {
       "toggle": "Avançado",

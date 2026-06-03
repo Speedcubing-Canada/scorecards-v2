@@ -100,7 +100,10 @@
       "qr_back_only": "Back side only",
       "qr_back_only_desc": "Front = group assignments (FR), back = QR codes (EN)",
       "qr_both_sides": "Both sides",
-      "qr_both_sides_desc": "QR codes on both front and back — useful when logo takes space"
+      "qr_both_sides_desc": "QR codes on both front and back — useful when logo takes space",
+      "layout": "Card orientation",
+      "layout_vertical": "Vertical (tall)",
+      "layout_horizontal": "Horizontal (wide)"
     },
     "advanced": {
       "toggle": "Advanced",

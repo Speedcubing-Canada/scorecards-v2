@@ -69,11 +69,25 @@ const CONFIGS = {
   A4:     { panelW: 201, panelH: 283, margin: 12, gapH: 4, gapV: 4 },
 };
 
+const HORIZONTAL_CONFIGS = {
+  LETTER: { panelW: 382, panelH: 193, margin: 12, gapH: 4, gapV: 4 },
+  A4:     { panelW: 407, panelH: 188, margin: 12, gapH: 4, gapV: 4 },
+};
+
 function panelPositions(cfg) {
   const { panelW, panelH, margin, gapH, gapV } = cfg;
   const pos = [];
   for (let row = 0; row < 2; row++)
     for (let col = 0; col < 4; col++)
+      pos.push({ left: margin + col * (panelW + gapH), top: margin + row * (panelH + gapV) });
+  return pos;
+}
+
+function panelPositionsHorizontal(cfg) {
+  const { panelW, panelH, margin, gapH, gapV } = cfg;
+  const pos = [];
+  for (let row = 0; row < 3; row++)
+    for (let col = 0; col < 2; col++)
       pos.push({ left: margin + col * (panelW + gapH), top: margin + row * (panelH + gapV) });
   return pos;
 }
@@ -158,35 +172,41 @@ function DutyLines({ duties, fontSize }) {
   );
 }
 
-function PanelTop({ entry, panelW, compName, titleText }) {
+function PanelTop({ entry, panelW, compName, titleText, compact = false, showWcaId = true }) {
   const { bg, fg } = badgeColors(entry.titleEn);
-  const nameFs = nameFontSize(entry.name, panelW);
-  const iconSz = 12;
-  return e(View, { style: { height: topSectionH('hidden'), flexDirection: 'column' } },
-    e(Text, { style: s.compName }, compName),
+  const maxNameFs = compact ? 16 : 20;
+  const nameFs = Math.min(maxNameFs, nameFontSize(entry.name, panelW));
+  const iconSz = compact ? 10 : 12;
+  const compNameStyle = compact ? { ...s.compName, fontSize: 7, marginBottom: 2 } : s.compName;
+  const badgeStyle = compact
+    ? { ...s.badge, backgroundColor: bg, paddingVertical: 3, marginBottom: 2 }
+    : { ...s.badge, backgroundColor: bg };
+  const badgeTextStyle = compact ? { ...s.badgeText, fontSize: 11, color: fg } : { ...s.badgeText, color: fg };
+  return e(View, { style: { height: topSectionH('hidden', compact), flexDirection: 'column' } },
+    e(Text, { style: compNameStyle }, compName),
     e(Text, { style: { ...s.name, fontSize: nameFs } }, entry.name),
-    e(View, { style: { flex: 1 } }),
-    e(View, { style: { ...s.badge, backgroundColor: bg } },
-      e(Text, { style: { ...s.badgeText, color: fg } }, titleText),
+    !compact && e(View, { style: { flex: 1 } }),
+    e(View, { style: badgeStyle },
+      e(Text, { style: badgeTextStyle }, titleText),
     ),
-    e(View, { style: s.iconsRow },
+    e(View, { style: { ...s.iconsRow, ...(compact ? { marginTop: 3, marginBottom: 2 } : {}) } },
       ...entry.events.map(evId =>
         EVENT_ICONS[evId]
-          ? e(Image, { key: evId, src: EVENT_ICONS[evId], style: { width: iconSz, height: iconSz, marginHorizontal: 1.5 } })
+          ? e(Image, { key: evId, src: EVENT_ICONS[evId], style: { width: iconSz, height: iconSz, marginHorizontal: 1 } })
           : null,
       ).filter(Boolean),
     ),
-    e(Text, { style: s.wcaId }, entry.wcaId || ' '),
+    showWcaId && !compact && e(Text, { style: s.wcaId }, entry.wcaId || ' '),
   );
 }
 
-function QrSection({ entry, competitionId: compId, wcaLiveId: liveId, qrSize = 75 }) {
+function QrSection({ entry, competitionId: compId, wcaLiveId: liveId, qrSize = 75, compact = false }) {
   const cgUrl   = `https://www.competitiongroups.com/competitions/${compId}/persons/${entry.registrantId}`;
   const liveUrl = liveId
     ? `https://live.worldcubeassociation.org/competitions/${liveId}/competitors/${entry.wcaUserId}`
     : 'https://live.worldcubeassociation.org';
 
-  return e(View, { style: s.qrSection },
+  return e(View, { style: { ...s.qrSection, ...(compact ? { gap: 8 } : {}) } },
     e(View, { style: s.qrCol },
       e(QrSvg, { url: cgUrl, size: qrSize }),
       e(Text, { style: s.qrLabel }, 'competitiongroups.com'),
@@ -199,15 +219,18 @@ function QrSection({ entry, competitionId: compId, wcaLiveId: liveId, qrSize = 7
 }
 
 // topH: empirical top-section height for space-evenly estimation.
-function topSectionH(logoMode) { return logoMode === 'logo-only' ? 146 : 127; }
+function topSectionH(logoMode, compact = false) {
+  if (compact) return logoMode === 'logo-only' ? 85 : 75;
+  return logoMode === 'logo-only' ? 146 : 127;
+}
 
-function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiveId, qrBothSides, qrSize = 75 }) {
+function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiveId, qrBothSides, qrSize = 75, compact = false }) {
   const panelStyle = { ...s.panel, position: 'absolute', left: pos.left, top: pos.top, width: panelW, height: panelH };
 
   if (qrBothSides) {
     return e(View, { style: panelStyle },
-      e(PanelTop, { entry, panelW, compName, titleText: entry.titleFr }),
-      e(QrSection, { entry, competitionId, wcaLiveId, qrSize }),
+      e(PanelTop, { entry, panelW, compName, titleText: entry.titleFr, compact, showWcaId: !compact }),
+      e(QrSection, { entry, competitionId, wcaLiveId, qrSize, compact }),
     );
   }
 
@@ -223,10 +246,10 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLi
   const lineH = dutyFs * 1.4;
   const estLines = rows.reduce((sum, r) => sum + Math.ceil(r.duties.length / 2), 0);
   const estH = (estLines + rows.length) * lineH;
-  const spaceEvenly = estH < (panelH - topSectionH('hidden')) * 0.90;
+  const spaceEvenly = estH < (panelH - topSectionH('hidden', compact)) * 0.90;
 
   return e(View, { style: panelStyle },
-    e(PanelTop, { entry, panelW, compName, titleText: entry.titleFr }),
+    e(PanelTop, { entry, panelW, compName, titleText: entry.titleFr, compact, showWcaId: !compact }),
     e(View, { style: { ...s.dutiesSection, ...(spaceEvenly ? { justifyContent: 'space-evenly' } : {}) } },
       ...rows.map(({ label, duties }) =>
         e(View, { key: label, style: { ...s.dutyRow, ...(spaceEvenly ? {} : { marginBottom: 3 }) } },
@@ -238,19 +261,23 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLi
   );
 }
 
-function BackPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiveId, qrSize = 75 }) {
+function BackPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiveId, qrSize = 75, compact = false }) {
   return e(View, { style: { ...s.panel, position: 'absolute', left: pos.left, top: pos.top, width: panelW, height: panelH } },
-    e(PanelTop, { entry, panelW, compName, titleText: entry.titleEn }),
-    e(QrSection, { entry, competitionId, wcaLiveId, qrSize }),
+    e(PanelTop, { entry, panelW, compName, titleText: entry.titleEn, compact }),
+    compact && e(Text, { style: { ...s.wcaId, marginTop: 2, marginBottom: 2 } }, entry.wcaId || ' '),
+    e(QrSection, { entry, competitionId, wcaLiveId, qrSize, compact }),
   );
 }
 
-function NametTagDocument({ nametags: tags, compName, compId, liveId, paperFormat, qrBothSides = false }) {
-  const cfg = CONFIGS[paperFormat] ?? CONFIGS.LETTER;
-  const pos = panelPositions(cfg);
+function NametTagDocument({ nametags: tags, compName, compId, liveId, paperFormat, qrBothSides = false, nametagLayout = 'vertical' }) {
+  const horizontal = nametagLayout === 'horizontal';
+  const cfg = horizontal ? (HORIZONTAL_CONFIGS[paperFormat] ?? HORIZONTAL_CONFIGS.LETTER) : (CONFIGS[paperFormat] ?? CONFIGS.LETTER);
+  const pos = horizontal ? panelPositionsHorizontal(cfg) : panelPositions(cfg);
+  const personsPerPage = horizontal ? 3 : 4;
+  const qrSize = horizontal ? 60 : 75;
 
   const pages = [];
-  for (let i = 0; i < tags.length; i += 4) pages.push(tags.slice(i, i + 4));
+  for (let i = 0; i < tags.length; i += personsPerPage) pages.push(tags.slice(i, i + personsPerPage));
 
   return e(Document, { title: `${compName} — Name Tags`, author: 'WCA Scorecard Generator' },
     ...pages.map((page, pi) =>
@@ -261,9 +288,9 @@ function NametTagDocument({ nametags: tags, compName, compId, liveId, paperForma
           if (!frontPos || !backPos) return [];
           return [
             e(FrontPanel, { key: `f${ei}`, entry, panelW: cfg.panelW, panelH: cfg.panelH, pos: frontPos, compName,
-                            competitionId: compId, wcaLiveId: liveId, qrBothSides }),
+                            competitionId: compId, wcaLiveId: liveId, qrBothSides, qrSize, compact: horizontal }),
             e(BackPanel,  { key: `b${ei}`, entry, panelW: cfg.panelW, panelH: cfg.panelH, pos: backPos, compName,
-                            competitionId: compId, wcaLiveId: liveId }),
+                            competitionId: compId, wcaLiveId: liveId, qrSize, compact: horizontal }),
           ];
         }),
       ),
@@ -275,6 +302,8 @@ function NametTagDocument({ nametags: tags, compName, compId, liveId, paperForma
 const outPath = resolve(__dir, '../current-output/GrosJouetsaMontreal2026_nametags.pdf');
 
 console.log(`Rendering ${nametags.length} nametags…`);
+const nametagLayout = process.argv.includes('--horizontal') ? 'horizontal' : 'vertical';
+
 const element = e(NametTagDocument, {
   nametags,
   compName: competitionName,
@@ -282,6 +311,7 @@ const element = e(NametTagDocument, {
   liveId: wcaLiveId,
   paperFormat: 'LETTER',
   qrBothSides: false,
+  nametagLayout,
 });
 
 const buffer = await renderToBuffer(element);

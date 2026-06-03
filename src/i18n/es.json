@@ -100,7 +100,10 @@
       "qr_back_only": "Solo reverso",
       "qr_back_only_desc": "Frente = asignaciones de grupos (FR), reverso = códigos QR (EN)",
       "qr_both_sides": "Ambos lados",
-      "qr_both_sides_desc": "Códigos QR en ambos lados — útil cuando el logo ocupa espacio"
+      "qr_both_sides_desc": "Códigos QR en ambos lados — útil cuando el logo ocupa espacio",
+      "layout": "Orientación de credenciales",
+      "layout_vertical": "Vertical (retrato)",
+      "layout_horizontal": "Horizontal (paisaje)"
     },
     "advanced": {
       "toggle": "Avanzado",

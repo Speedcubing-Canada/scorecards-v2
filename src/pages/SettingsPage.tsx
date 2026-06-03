@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import type { CompetitionSettings, CustomEvent, DoubleCheckRound, LocaleCode, NametTagLogoMode, NametTagQrMode, PaperFormat, ScrambleDoubleCheckOverrides, SecondRoundMode } from '../types/settings';
+import type { CompetitionSettings, CustomEvent, DoubleCheckRound, LocaleCode, NametTagLayout, NametTagLogoMode, NametTagQrMode, PaperFormat, ScrambleDoubleCheckOverrides, SecondRoundMode } from '../types/settings';
 import type { GenerationScope } from '../lib/generationScope';
 import { LANGUAGES } from '../i18n/index';
 import { resolveDefaultPrimaryLanguage, secondaryLanguageRow } from '../lib/languageSelector';
@@ -60,6 +60,7 @@ export default function SettingsPage() {
   const [hideWcaLiveId, setHideWcaLiveId] = useState<boolean>(false);
   const [nametagLogoMode, setNametagLogoMode] = useState<NametTagLogoMode>('with-name');
   const [nametagQrMode, setNametagQrMode] = useState<NametTagQrMode>('back-only');
+  const [nametagLayout, setNametagLayout] = useState<NametTagLayout>('vertical');
   const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [scrambleDoubleCheck, setScrambleDoubleCheck] = useState<boolean>(false);
@@ -222,6 +223,7 @@ export default function SettingsPage() {
       hideWcaLiveId,
       nametagLogoMode,
       nametagQrMode,
+      nametagLayout,
       customEvents: customEvents.filter(e => e.name.trim()),
       scrambleDoubleCheck,
       scrambleDoubleCheckRounds,
@@ -242,6 +244,7 @@ export default function SettingsPage() {
     { value: 'back-only',  label: t('settings.nametag.qr_back_only'),  description: t('settings.nametag.qr_back_only_desc') },
     { value: 'both-sides', label: t('settings.nametag.qr_both_sides'), description: t('settings.nametag.qr_both_sides_desc') },
   ];
+
 
   return (
     <div style={s.page}>
@@ -542,6 +545,34 @@ export default function SettingsPage() {
               </label>
             ))}
           </div>
+
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 8, marginTop: 20 }}>
+            {t('settings.nametag.layout')}
+          </div>
+          <div style={s.segmentedControl}>
+            <button
+              type="button"
+              onClick={() => setNametagLayout('vertical')}
+              aria-pressed={nametagLayout === 'vertical'}
+              style={{ ...s.segment, ...(nametagLayout === 'vertical' ? s.segmentActive : s.segmentInactive) }}
+            >
+              <svg width="12" height="17" viewBox="0 0 12 17" fill="none" aria-hidden="true">
+                <rect x="0.75" y="0.75" width="10.5" height="15.5" rx="2" stroke="currentColor" strokeWidth="1.5" fill={nametagLayout === 'vertical' ? 'rgba(255,255,255,0.15)' : 'none'} />
+              </svg>
+              {t('settings.nametag.layout_vertical')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setNametagLayout('horizontal')}
+              aria-pressed={nametagLayout === 'horizontal'}
+              style={{ ...s.segment, ...(nametagLayout === 'horizontal' ? s.segmentActive : s.segmentInactive) }}
+            >
+              <svg width="17" height="12" viewBox="0 0 17 12" fill="none" aria-hidden="true">
+                <rect x="0.75" y="0.75" width="15.5" height="10.5" rx="2" stroke="currentColor" strokeWidth="1.5" fill={nametagLayout === 'horizontal' ? 'rgba(255,255,255,0.15)' : 'none'} />
+              </svg>
+              {t('settings.nametag.layout_horizontal')}
+            </button>
+          </div>
         </section>
         )}
 
@@ -794,6 +825,33 @@ const s: Record<string, React.CSSProperties> = {
   },
   iconBtnActive: { borderColor: 'var(--primary)', backgroundColor: 'var(--primary-soft-bg)' },
   iconLabel: { fontSize: 9, color: 'var(--text-muted)', textAlign: 'center', lineHeight: '1.1' },
+  segmentedControl: {
+    display: 'flex',
+    border: '2px solid var(--border)',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  segment: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: '10px 0',
+    border: 'none',
+    fontSize: 13,
+    fontWeight: 600,
+    fontFamily: 'inherit',
+    cursor: 'pointer',
+  },
+  segmentActive: {
+    backgroundColor: 'var(--primary)',
+    color: 'var(--primary-contrast)',
+  },
+  segmentInactive: {
+    backgroundColor: 'var(--surface)',
+    color: 'var(--text-muted)',
+  },
   addCustomBtn: {
     backgroundColor: 'var(--surface)', border: '2px dashed var(--border-strong)',
     borderRadius: 8, padding: '10px 20px', fontSize: 14,

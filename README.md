@@ -123,6 +123,7 @@ Components call `useIsMobile()` and spread a small mobile-only style override in
 | `hideWcaLiveId` | `boolean` | When `true`, suppresses the `WCA Live: …` line on scorecard headers. Useful when generating blank scorecards where no competitor ID has been assigned yet. Defaults to `false` |
 | `nametagLogoMode` | `hidden \| with-name \| logo-only` | How the logo appears on name tags (see Name tag section) |
 | `nametagQrMode` | `back-only \| both-sides` | Which panels get QR codes (see Name tag section) |
+| `nametagLayout` | `vertical \| horizontal` | Card orientation: portrait 4-up (default) or landscape 3-up |
 | `customEvents` | `CustomEvent[]` | Zero or more custom/bonus events (see Advanced section) |
 | `scrambleDoubleCheck` | `boolean` | Enables the optional second scrambler-signature column (see Scramble double-checking) |
 | `scrambleDoubleCheckRounds` | `DoubleCheckRound[]` | Which round categories get the column: `firstRound \| intermediate \| semis \| finals`. Defaults to `['finals']` |
@@ -282,12 +283,31 @@ row 0: [Front_A] [Back_A] [Front_B] [Back_B]
 row 1: [Front_C] [Back_C] [Front_D] [Back_D]
 ```
 
+**Horizontal layout** (`nametagLayout: 'horizontal'`) — 1 pair per row × 3 rows = 3 persons per page:
+
+```
+row 0: [Front_A] [Back_A]
+row 1: [Front_B] [Back_B]
+row 2: [Front_C] [Back_C]
+```
+
 When cut between column pairs and folded front-to-back, each pair becomes one double-sided name tag.
+
+**Vertical layout** (`nametagLayout: 'vertical'`, default):
 
 | Paper | Panel size | Margin | Gap |
 |---|---|---|---|
 | LETTER | 189 × 292 pt | 12 pt | 4 pt H, 4 pt V |
 | A4 | 201 × 283 pt | 12 pt | 4 pt H, 4 pt V |
+
+**Horizontal layout** (`nametagLayout: 'horizontal'`):
+
+| Paper | Panel size | Margin | Gap |
+|---|---|---|---|
+| LETTER | 382 × 193 pt | 12 pt | 4 pt H, 4 pt V |
+| A4 | 407 × 188 pt | 12 pt | 4 pt H, 4 pt V |
+
+In horizontal mode the top section is compressed (≈ 75 pt vs 127–146 pt) and the WCA ID is omitted from the front panel to fit the shorter card height.
 
 ### Panel contents
 
@@ -357,7 +377,8 @@ QR codes are rendered as native react-pdf SVG elements (`<Svg>` / `<Rect>`) rath
 `generate-nametags.mjs` is a standalone Node.js ESM script that generates a name-tag PDF from a local legacy data file without needing a browser or a running dev server. Run it with:
 
 ```
-node generate-nametags.mjs
+node generate-nametags.mjs              # vertical layout (default)
+node generate-nametags.mjs --horizontal # horizontal layout
 ```
 
 Output is written to `../current-output/`.
