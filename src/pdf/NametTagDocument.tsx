@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Document, Page, View, Text, Image, StyleSheet, Font, Svg, Rect } from '@react-pdf/renderer';
 import QRCode from 'qrcode';
 import type { CompetitionSettings, NametTagLayout, NametTagLogoMode } from '../types/settings';
@@ -9,26 +10,22 @@ import { resolveLogo } from '../lib/logo';
 Font.registerHyphenationCallback((word) => [word]);
 
 // ── Page geometry ─────────────────────────────────────────────────────────────
-// Vertical — landscape pages: 4 panels wide × 2 panels tall = 8 panels = 4 nametag pairs.
+// Both layouts use the SAME landscape-page grid: 4 panel slots wide × 2 tall =
+// 8 slots = 4 nametag pairs per page.
 // Layout per page (persons A, B, C, D):
 //   row 0: [Front_A] [Back_A] [Front_B] [Back_B]
 //   row 1: [Front_C] [Back_C] [Front_D] [Back_D]
-//
-// Horizontal — landscape pages: 2 panels wide × 3 panels tall = 6 panels = 3 nametag pairs.
-// Layout per page (persons A, B, C):
-//   row 0: [Front_A] [Back_A]
-//   row 1: [Front_B] [Back_B]
-//   row 2: [Front_C] [Back_C]
 // When cut and folded front-to-back, each pair becomes one nametag.
+//
+// Vertical:   the card content fills its portrait slot upright (189×292 LETTER).
+// Horizontal: the SAME slots are used, but each card's content is rendered in a
+//   landscape frame (slot dims swapped → 292×189 LETTER) and rotated 90° to fit
+//   the portrait slot. The printed sheet is then read sideways; this fits 4 pairs
+//   per page on cut lines identical to the vertical sheet.
 
 const CONFIGS = {
   LETTER: { panelW: 189, panelH: 292, margin: 12, gapH: 4, gapV: 4 },
   A4:     { panelW: 201, panelH: 283, margin: 12, gapH: 4, gapV: 4 },
-} as const;
-
-const HORIZONTAL_CONFIGS = {
-  LETTER: { panelW: 382, panelH: 193, margin: 12, gapH: 4, gapV: 4 },
-  A4:     { panelW: 407, panelH: 188, margin: 12, gapH: 4, gapV: 4 },
 } as const;
 
 type PF = keyof typeof CONFIGS;
@@ -38,15 +35,6 @@ function panelPositions(cfg: (typeof CONFIGS)[PF]) {
   const pos: { left: number; top: number }[] = [];
   for (let row = 0; row < 2; row++)
     for (let col = 0; col < 4; col++)
-      pos.push({ left: margin + col * (panelW + gapH), top: margin + row * (panelH + gapV) });
-  return pos;
-}
-
-function panelPositionsHorizontal(cfg: (typeof HORIZONTAL_CONFIGS)[PF]) {
-  const { panelW, panelH, margin, gapH, gapV } = cfg;
-  const pos: { left: number; top: number }[] = [];
-  for (let row = 0; row < 3; row++)
-    for (let col = 0; col < 2; col++)
       pos.push({ left: margin + col * (panelW + gapH), top: margin + row * (panelH + gapV) });
   return pos;
 }
@@ -194,9 +182,46 @@ function topSectionH(logoMode: NametTagLogoMode, compact = false) {
   return logoMode === 'logo-only' ? 146 : 127;
 }
 
+// ── Panel frame ───────────────────────────────────────────────────────────────
+// Positions one card inside its grid slot. The card's own border/padding/content
+// live on the inner View, sized to the content dimensions (panelW × panelH).
+//   vertical   → content fills the slot upright (slotW===panelW, slotH===panelH).
+//   horizontal → content is a landscape frame (panelW > panelH) rotated 90° about
+//                its centre so its bounding box equals the portrait slot.
+function PanelFrame({ pos, slotW, slotH, panelW, panelH, rotate, children }: {
+  pos: { left: number; top: number }; slotW: number; slotH: number;
+  panelW: number; panelH: number; rotate: boolean; children: ReactNode;
+}) {
+  if (!rotate) {
+    return (
+      <View style={[s.panel, { position: 'absolute', left: pos.left, top: pos.top, width: panelW, height: panelH }]}>
+        {children}
+      </View>
+    );
+  }
+  return (
+    <View style={{ position: 'absolute', left: pos.left, top: pos.top, width: slotW, height: slotH }}>
+      <View style={[s.panel, {
+        position: 'absolute',
+        left: (slotW - panelW) / 2,
+        top: (slotH - panelH) / 2,
+        width: panelW, height: panelH,
+        // react-pdf clips overflow against the UN-rotated layout box (clip is
+        // applied before the transform), which would erase the rotated card.
+        // Content is font-scaled to fit, so we render without clipping.
+        // ('visible' is the runtime default but missing from react-pdf's types.)
+        overflow: 'visible' as 'hidden',
+        transform: 'rotate(90deg)',
+      }]}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
 // ── Front panel ───────────────────────────────────────────────────────────────
-function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiveId, wcaLivePersonIds, logoMode, logoDataUrl, qrBothSides, qrSize, nametTagStrings, compact = false }: {
-  entry: NametTagEntry; panelW: number; panelH: number;
+function FrontPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName, competitionId, wcaLiveId, wcaLivePersonIds, logoMode, logoDataUrl, qrBothSides, qrSize, nametTagStrings, compact = false }: {
+  entry: NametTagEntry; panelW: number; panelH: number; slotW: number; slotH: number; rotate: boolean;
   pos: { left: number; top: number }; compName: string;
   competitionId: string; wcaLiveId: string | null;
   wcaLivePersonIds: Record<number, string> | null;
@@ -205,15 +230,15 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLi
   nametTagStrings: NametTagStrings;
   compact?: boolean;
 }) {
-  const panelStyle = [s.panel, { position: 'absolute' as const, left: pos.left, top: pos.top, width: panelW, height: panelH }];
+  const frame = (children: ReactNode) => (
+    <PanelFrame pos={pos} slotW={slotW} slotH={slotH} panelW={panelW} panelH={panelH} rotate={rotate}>{children}</PanelFrame>
+  );
 
   if (qrBothSides) {
-    return (
-      <View style={panelStyle}>
-        <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleFront} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} showWcaId={!compact} />
-        <QrSection entry={entry} competitionId={competitionId} wcaLiveId={wcaLiveId} wcaLivePersonIds={wcaLivePersonIds} qrSize={qrSize} compact={compact} />
-      </View>
-    );
+    return frame(<>
+      <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleFront} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} showWcaId={!compact} />
+      <QrSection entry={entry} competitionId={competitionId} wcaLiveId={wcaLiveId} wcaLivePersonIds={wcaLivePersonIds} qrSize={qrSize} compact={compact} />
+    </>);
   }
 
   const rows = [
@@ -233,24 +258,22 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLi
   const estH = (estLines + rows.length) * lineH;
   const spaceEvenly = estH < (panelH - topSectionH(logoMode, compact)) * 0.90;
 
-  return (
-    <View style={panelStyle}>
-      <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleFront} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} showWcaId={!compact} />
-      <View style={[s.dutiesSection, spaceEvenly ? { justifyContent: 'space-evenly' } : {}]}>
-        {rows.map(({ label, duties }) => (
-          <View key={label} style={[s.dutyRow, spaceEvenly ? {} : { marginBottom: 3 }]}>
-            <Text style={[s.dutyLabel, { fontSize: dutyFs }]}>{label}</Text>
-            <DutyLines duties={duties} fontSize={dutyFs} />
-          </View>
-        ))}
-      </View>
+  return frame(<>
+    <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleFront} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} showWcaId={!compact} />
+    <View style={[s.dutiesSection, spaceEvenly ? { justifyContent: 'space-evenly' } : {}]}>
+      {rows.map(({ label, duties }) => (
+        <View key={label} style={[s.dutyRow, spaceEvenly ? {} : { marginBottom: 3 }]}>
+          <Text style={[s.dutyLabel, { fontSize: dutyFs }]}>{label}</Text>
+          <DutyLines duties={duties} fontSize={dutyFs} />
+        </View>
+      ))}
     </View>
-  );
+  </>);
 }
 
 // ── Back panel ────────────────────────────────────────────────────────────────
-function BackPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiveId, wcaLivePersonIds, logoMode, logoDataUrl, qrSize, compact = false }: {
-  entry: NametTagEntry; panelW: number; panelH: number;
+function BackPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName, competitionId, wcaLiveId, wcaLivePersonIds, logoMode, logoDataUrl, qrSize, compact = false }: {
+  entry: NametTagEntry; panelW: number; panelH: number; slotW: number; slotH: number; rotate: boolean;
   pos: { left: number; top: number }; compName: string;
   competitionId: string; wcaLiveId: string | null;
   wcaLivePersonIds: Record<number, string> | null;
@@ -258,11 +281,11 @@ function BackPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiv
   compact?: boolean;
 }) {
   return (
-    <View style={[s.panel, { position: 'absolute', left: pos.left, top: pos.top, width: panelW, height: panelH }]}>
+    <PanelFrame pos={pos} slotW={slotW} slotH={slotH} panelW={panelW} panelH={panelH} rotate={rotate}>
       <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleBack} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} />
       {compact && <Text style={[s.wcaId, { marginTop: 2, marginBottom: 2 }]}>{entry.wcaId || ' '}</Text>}
       <QrSection entry={entry} competitionId={competitionId} wcaLiveId={wcaLiveId} wcaLivePersonIds={wcaLivePersonIds} qrSize={qrSize} compact={compact} />
-    </View>
+    </PanelFrame>
   );
 }
 
@@ -300,11 +323,14 @@ interface Props {
 export function NametTagDocument({ nametags, settings }: Props) {
   const layout: NametTagLayout = settings.nametagLayout ?? 'vertical';
   const horizontal = layout === 'horizontal';
-  const cfg = horizontal
-    ? (HORIZONTAL_CONFIGS[settings.paperFormat as PF] ?? HORIZONTAL_CONFIGS.LETTER)
-    : (CONFIGS[settings.paperFormat as PF] ?? CONFIGS.LETTER);
-  const pos = horizontal ? panelPositionsHorizontal(cfg as (typeof HORIZONTAL_CONFIGS)[PF]) : panelPositions(cfg as (typeof CONFIGS)[PF]);
-  const personsPerPage = horizontal ? 3 : 4;
+  const cfg = CONFIGS[settings.paperFormat as PF] ?? CONFIGS.LETTER;
+  const pos = panelPositions(cfg);
+  const personsPerPage = 4;
+  // Slot = the portrait grid rectangle (same for both layouts). For horizontal the
+  // card content is a landscape frame (slot dims swapped) rotated 90° into the slot.
+  const slotW = cfg.panelW, slotH = cfg.panelH;
+  const panelW = horizontal ? cfg.panelH : cfg.panelW;
+  const panelH = horizontal ? cfg.panelW : cfg.panelH;
   const { competitionId, competitionName, wcaLiveId, wcaLivePersonIds, nametagLogoMode, nametagQrMode } = settings;
 
   // Custom logo (if any) wins; otherwise fall back to the bundled SCC logo when enabled.
@@ -330,7 +356,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
             return [
               <FrontPanel
                 key={`f${ei}`} entry={entry}
-                panelW={cfg.panelW} panelH={cfg.panelH} pos={frontPos}
+                panelW={panelW} panelH={panelH} slotW={slotW} slotH={slotH} rotate={horizontal} pos={frontPos}
                 compName={competitionName}
                 competitionId={competitionId} wcaLiveId={wcaLiveId}
                 wcaLivePersonIds={wcaLivePersonIds}
@@ -341,7 +367,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
               />,
               <BackPanel
                 key={`b${ei}`} entry={entry}
-                panelW={cfg.panelW} panelH={cfg.panelH} pos={backPos}
+                panelW={panelW} panelH={panelH} slotW={slotW} slotH={slotH} rotate={horizontal} pos={backPos}
                 compName={competitionName}
                 competitionId={competitionId} wcaLiveId={wcaLiveId}
                 wcaLivePersonIds={wcaLivePersonIds}

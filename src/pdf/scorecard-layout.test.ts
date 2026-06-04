@@ -88,40 +88,70 @@ describe('Scorecard layout geometry', () => {
   }
 });
 
-// ── Horizontal nametag layout geometry ───────────────────────────────────────
-// Landscape pages, 1 pair per row × 3 rows = 3 persons per page.
-// Panel sizes: LETTER 382×193pt, A4 407×188pt. Margins 12pt, gaps 4pt.
+// ── Nametag layout geometry (vertical + horizontal share one grid) ────────────
+// Both layouts render on landscape pages using the SAME 4-col × 2-row portrait-slot
+// grid = 8 slots = 4 nametag pairs per page. Slot sizes: LETTER 189×292pt,
+// A4 201×283pt. Margins 12pt, gaps 4pt.
+//
+// Vertical:   content fills its portrait slot upright.
+// Horizontal: content is laid out in a LANDSCAPE frame (slot dims swapped →
+//   LETTER 292×189, A4 283×201) and rotated 90° about its centre. A W×H box
+//   rotated 90° has a bounding box of H×W, so the rotated frame's bounding box
+//   equals the slot exactly. This fits 4 pairs/page on cut lines identical to the
+//   vertical sheet (vs. the old wide 382×193 panels that fit only 3 pairs).
 
-const NAMETAG_LANDSCAPE_W = { LETTER: 792, A4: 841 };  // approx for LETTER; A4 is 841.89 but truncated
+const NAMETAG_LANDSCAPE_W = { LETTER: 792, A4: 841 };  // landscape page width (A4 841.89 truncated)
 const NAMETAG_LANDSCAPE_H = { LETTER: 612, A4: 595 };
 
-const HORIZONTAL_NAMETAG_CONFIGS = {
-  LETTER: { panelW: 382, panelH: 193, margin: 12, gapH: 4, gapV: 4 },
-  A4:     { panelW: 407, panelH: 188, margin: 12, gapH: 4, gapV: 4 },
+const NAMETAG_CONFIGS = {
+  LETTER: { panelW: 189, panelH: 292, margin: 12, gapH: 4, gapV: 4 },
+  A4:     { panelW: 201, panelH: 283, margin: 12, gapH: 4, gapV: 4 },
 } as const;
 
-describe('Horizontal nametag layout geometry', () => {
+describe('Nametag layout geometry (shared grid)', () => {
   for (const fmt of ['LETTER', 'A4'] as const) {
-    const cfg = HORIZONTAL_NAMETAG_CONFIGS[fmt];
+    const cfg = NAMETAG_CONFIGS[fmt];
 
     describe(fmt, () => {
-      it('2 panels (1 pair) fit horizontally within landscape page width', () => {
-        const usedW = 2 * cfg.panelW + cfg.gapH + 2 * cfg.margin;
-        expect(usedW).toBeLessThanOrEqual(NAMETAG_LANDSCAPE_W[fmt] + 5); // +5pt for A4 rounding
+      it('4 slots (2 pairs) fit horizontally within landscape page width', () => {
+        const usedW = 4 * cfg.panelW + 3 * cfg.gapH + 2 * cfg.margin;
+        expect(usedW).toBeLessThanOrEqual(NAMETAG_LANDSCAPE_W[fmt] + 5);
       });
 
-      it('3 panels fit vertically within landscape page height', () => {
-        const usedH = 3 * cfg.panelH + 2 * cfg.gapV + 2 * cfg.margin;
+      it('2 rows fit vertically within landscape page height', () => {
+        const usedH = 2 * cfg.panelH + cfg.gapV + 2 * cfg.margin;
         expect(usedH).toBeLessThanOrEqual(NAMETAG_LANDSCAPE_H[fmt] + 5);
       });
 
-      it('panels are wider than tall (landscape card orientation)', () => {
-        expect(cfg.panelW).toBeGreaterThan(cfg.panelH);
+      it('8 slots (4 pairs) fit per page', () => {
+        const cols = Math.floor((NAMETAG_LANDSCAPE_W[fmt] - 2 * cfg.margin + cfg.gapH) / (cfg.panelW + cfg.gapH));
+        const rows = Math.floor((NAMETAG_LANDSCAPE_H[fmt] - 2 * cfg.margin + cfg.gapV) / (cfg.panelH + cfg.gapV));
+        expect(cols).toBe(4);
+        expect(rows).toBe(2);
       });
 
-      it('panel width fills nearly all available horizontal space', () => {
-        const usedW = 2 * cfg.panelW + cfg.gapH + 2 * cfg.margin;
-        expect(usedW).toBeGreaterThan(NAMETAG_LANDSCAPE_W[fmt] * 0.90);
+      describe('horizontal (rotated) content frame', () => {
+        // The card content frame is the slot with width/height swapped.
+        const contentW = cfg.panelH;
+        const contentH = cfg.panelW;
+
+        it('content frame is landscape (wider than tall)', () => {
+          expect(contentW).toBeGreaterThan(contentH);
+        });
+
+        it('rotating the frame 90° yields a bounding box equal to the slot', () => {
+          // 90° rotation maps a contentW×contentH box to contentH×contentW.
+          expect(contentH).toBe(cfg.panelW);
+          expect(contentW).toBe(cfg.panelH);
+        });
+
+        it('centred placement offsets are symmetric within the slot', () => {
+          // PanelFrame positions the inner frame at ((slotW-contentW)/2, (slotH-contentH)/2).
+          const offsetX = (cfg.panelW - contentW) / 2;
+          const offsetY = (cfg.panelH - contentH) / 2;
+          // Equal magnitude, opposite sign → rotation centre coincides with slot centre.
+          expect(offsetX).toBeCloseTo(-offsetY, 6);
+        });
       });
     });
   }

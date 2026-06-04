@@ -103,7 +103,7 @@
       "qr_both_sides_desc": "QR codes on both front and back — useful when logo takes space",
       "layout": "Card orientation",
       "layout_vertical": "Vertical (tall)",
-      "layout_horizontal": "Horizontal (wide)"
+      "layout_horizontal": "Horizontal (landscape)"
     },
     "advanced": {
       "toggle": "Advanced",

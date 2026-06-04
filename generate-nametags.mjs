@@ -64,14 +64,12 @@ const nametags = fakeWindow.competitors.map(c => ({
 }));
 
 // ── Page geometry ──────────────────────────────────────────────────────────
+// Both layouts share the same 4×2 portrait-slot grid (8 slots = 4 pairs/page).
+// Horizontal renders each card in a landscape frame (slot dims swapped) rotated
+// 90° into its slot — read sideways, same cut lines as vertical.
 const CONFIGS = {
   LETTER: { panelW: 189, panelH: 292, margin: 12, gapH: 4, gapV: 4 },
   A4:     { panelW: 201, panelH: 283, margin: 12, gapH: 4, gapV: 4 },
-};
-
-const HORIZONTAL_CONFIGS = {
-  LETTER: { panelW: 382, panelH: 193, margin: 12, gapH: 4, gapV: 4 },
-  A4:     { panelW: 407, panelH: 188, margin: 12, gapH: 4, gapV: 4 },
 };
 
 function panelPositions(cfg) {
@@ -79,15 +77,6 @@ function panelPositions(cfg) {
   const pos = [];
   for (let row = 0; row < 2; row++)
     for (let col = 0; col < 4; col++)
-      pos.push({ left: margin + col * (panelW + gapH), top: margin + row * (panelH + gapV) });
-  return pos;
-}
-
-function panelPositionsHorizontal(cfg) {
-  const { panelW, panelH, margin, gapH, gapV } = cfg;
-  const pos = [];
-  for (let row = 0; row < 3; row++)
-    for (let col = 0; col < 2; col++)
       pos.push({ left: margin + col * (panelW + gapH), top: margin + row * (panelH + gapV) });
   return pos;
 }
@@ -224,11 +213,27 @@ function topSectionH(logoMode, compact = false) {
   return logoMode === 'logo-only' ? 146 : 127;
 }
 
-function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiveId, qrBothSides, qrSize = 75, compact = false }) {
-  const panelStyle = { ...s.panel, position: 'absolute', left: pos.left, top: pos.top, width: panelW, height: panelH };
+// Positions one card in its grid slot; rotates content 90° for horizontal layout.
+function PanelFrame({ pos, slotW, slotH, panelW, panelH, rotate, children }) {
+  if (!rotate) {
+    return e(View, { style: { ...s.panel, position: 'absolute', left: pos.left, top: pos.top, width: panelW, height: panelH } }, children);
+  }
+  return e(View, { style: { position: 'absolute', left: pos.left, top: pos.top, width: slotW, height: slotH, overflow: 'visible' } },
+    e(View, { style: {
+      ...s.panel, position: 'absolute',
+      left: (slotW - panelW) / 2, top: (slotH - panelH) / 2,
+      width: panelW, height: panelH,
+      // react-pdf clips overflow against the un-rotated box → would erase content.
+      overflow: 'visible', transform: 'rotate(90deg)',
+    } }, children),
+  );
+}
+
+function FrontPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName, competitionId, wcaLiveId, qrBothSides, qrSize = 75, compact = false }) {
+  const frame = (...children) => e(PanelFrame, { pos, slotW, slotH, panelW, panelH, rotate }, ...children);
 
   if (qrBothSides) {
-    return e(View, { style: panelStyle },
+    return frame(
       e(PanelTop, { entry, panelW, compName, titleText: entry.titleFr, compact, showWcaId: !compact }),
       e(QrSection, { entry, competitionId, wcaLiveId, qrSize, compact }),
     );
@@ -248,7 +253,7 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLi
   const estH = (estLines + rows.length) * lineH;
   const spaceEvenly = estH < (panelH - topSectionH('hidden', compact)) * 0.90;
 
-  return e(View, { style: panelStyle },
+  return frame(
     e(PanelTop, { entry, panelW, compName, titleText: entry.titleFr, compact, showWcaId: !compact }),
     e(View, { style: { ...s.dutiesSection, ...(spaceEvenly ? { justifyContent: 'space-evenly' } : {}) } },
       ...rows.map(({ label, duties }) =>
@@ -261,8 +266,8 @@ function FrontPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLi
   );
 }
 
-function BackPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiveId, qrSize = 75, compact = false }) {
-  return e(View, { style: { ...s.panel, position: 'absolute', left: pos.left, top: pos.top, width: panelW, height: panelH } },
+function BackPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName, competitionId, wcaLiveId, qrSize = 75, compact = false }) {
+  return e(PanelFrame, { pos, slotW, slotH, panelW, panelH, rotate },
     e(PanelTop, { entry, panelW, compName, titleText: entry.titleEn, compact }),
     compact && e(Text, { style: { ...s.wcaId, marginTop: 2, marginBottom: 2 } }, entry.wcaId || ' '),
     e(QrSection, { entry, competitionId, wcaLiveId, qrSize, compact }),
@@ -271,10 +276,14 @@ function BackPanel({ entry, panelW, panelH, pos, compName, competitionId, wcaLiv
 
 function NametTagDocument({ nametags: tags, compName, compId, liveId, paperFormat, qrBothSides = false, nametagLayout = 'vertical' }) {
   const horizontal = nametagLayout === 'horizontal';
-  const cfg = horizontal ? (HORIZONTAL_CONFIGS[paperFormat] ?? HORIZONTAL_CONFIGS.LETTER) : (CONFIGS[paperFormat] ?? CONFIGS.LETTER);
-  const pos = horizontal ? panelPositionsHorizontal(cfg) : panelPositions(cfg);
-  const personsPerPage = horizontal ? 3 : 4;
+  const cfg = CONFIGS[paperFormat] ?? CONFIGS.LETTER;
+  const pos = panelPositions(cfg);
+  const personsPerPage = 4;
   const qrSize = horizontal ? 60 : 75;
+  // Slot = portrait grid rectangle; horizontal swaps content dims and rotates 90°.
+  const slotW = cfg.panelW, slotH = cfg.panelH;
+  const panelW = horizontal ? cfg.panelH : cfg.panelW;
+  const panelH = horizontal ? cfg.panelW : cfg.panelH;
 
   const pages = [];
   for (let i = 0; i < tags.length; i += personsPerPage) pages.push(tags.slice(i, i + personsPerPage));
@@ -287,9 +296,9 @@ function NametTagDocument({ nametags: tags, compName, compId, liveId, paperForma
           const backPos  = pos[ei * 2 + 1];
           if (!frontPos || !backPos) return [];
           return [
-            e(FrontPanel, { key: `f${ei}`, entry, panelW: cfg.panelW, panelH: cfg.panelH, pos: frontPos, compName,
+            e(FrontPanel, { key: `f${ei}`, entry, panelW, panelH, slotW, slotH, rotate: horizontal, pos: frontPos, compName,
                             competitionId: compId, wcaLiveId: liveId, qrBothSides, qrSize, compact: horizontal }),
-            e(BackPanel,  { key: `b${ei}`, entry, panelW: cfg.panelW, panelH: cfg.panelH, pos: backPos, compName,
+            e(BackPanel,  { key: `b${ei}`, entry, panelW, panelH, slotW, slotH, rotate: horizontal, pos: backPos, compName,
                             competitionId: compId, wcaLiveId: liveId, qrSize, compact: horizontal }),
           ];
         }),
