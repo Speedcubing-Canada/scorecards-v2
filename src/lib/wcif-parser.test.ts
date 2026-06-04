@@ -18,7 +18,7 @@ const BASE: CompetitionSettings = {
   language: 'en', secondaryLanguage: null, paperFormat: 'A4', secondRoundMode: 'blanks',
   logoDataUrl: null, useDefaultLogo: false, wcaLiveId: null, wcaLivePersonIds: null,
   hideWcaLiveId: false, nametagLogoMode: 'hidden', nametagQrMode: 'back-only', nametagLayout: 'vertical',
-  customEvents: [],
+  customEvents: [], firstTimerSlips: false,
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
   generationScope: { mode: 'everything' },
 };

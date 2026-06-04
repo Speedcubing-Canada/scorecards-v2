@@ -56,7 +56,7 @@ export default function RoundScopePage() {
           logoDataUrl: null, useDefaultLogo: true,
           wcaLiveId: null, wcaLivePersonIds: null, hideWcaLiveId: false,
           nametagLogoMode: 'with-name', nametagQrMode: 'back-only', nametagLayout: 'vertical',
-          customEvents: [],
+          customEvents: [], firstTimerSlips: false,
           scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
           generationScope: { mode: 'everything' },
         };
