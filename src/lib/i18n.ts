@@ -34,6 +34,26 @@ export interface NametTagStrings {
   dutyGroup: (groupList: string) => string;
 }
 
+// ── First-timer slip strings ──────────────────────────────────────────────────
+// Confirmation checklist printed for each newcomer (no WCA ID). Bolded values
+// (name, gender, birthdate, country) always sit at the end of their line, so each
+// prefix is stored without the value and the value is appended bold in the document.
+export interface FirstTimerSlipStrings {
+  confirmIntro1: string;
+  confirmIntro2: string;
+  firstCompetition: string;
+  preferredNamePrefix: string;
+  genderPrefix: string;
+  birthdatePrefix: string;
+  citizenshipPrefix: string;
+  parentalConsent: string;
+  solveSingle: (event: string) => string;
+  solveMultipleIntro: string;
+  genderMale: string;
+  genderFemale: string;
+  genderOther: string;
+}
+
 // ── Nametag title strings (role badge on each panel) ──────────────────────────
 export interface NametTagTitleStrings {
   delegate: (isFemale: boolean) => string;
@@ -361,6 +381,75 @@ export function getNametTagStrings(language: LocaleCode): NametTagStrings {
   return LOCALES[language].nametag;
 }
 
+// ── First-timer slip strings ───────────────────────────────────────────────────
+const FIRST_TIMER_EN: FirstTimerSlipStrings = {
+  confirmIntro1: 'Please check off the boxes to confirm everything is correct.',
+  confirmIntro2: 'If anything is incorrect, please let us know.',
+  firstCompetition: 'This is my first WCA competition',
+  preferredNamePrefix: 'My preferred name is',
+  genderPrefix: 'My gender identity is',
+  birthdatePrefix: 'My birthdate is',
+  citizenshipPrefix: 'I hold citizenship in',
+  parentalConsent: 'I have permission from a parent/guardian/caregiver to compete',
+  solveSingle: (e) => `I can solve the ${e}`,
+  solveMultipleIntro: 'I can solve all these puzzles/events:',
+  genderMale: 'male',
+  genderFemale: 'female',
+  genderOther: 'non-binary or undisclosed',
+};
+
+const FIRST_TIMER_FR: FirstTimerSlipStrings = {
+  confirmIntro1: 'Veuillez cocher les cases pour confirmer que tout est exact.',
+  confirmIntro2: 'Si quelque chose est incorrect, veuillez nous en informer.',
+  firstCompetition: "C'est ma première compétition WCA",
+  preferredNamePrefix: 'Mon nom préféré est',
+  genderPrefix: 'Mon identité de genre est',
+  birthdatePrefix: 'Ma date de naissance est',
+  citizenshipPrefix: 'Mon pays de citoyenneté est',
+  parentalConsent: "J'ai la permission d'un parent/tuteur/responsable pour participer",
+  solveSingle: (e) => `Je peux résoudre le ${e}`,
+  solveMultipleIntro: 'Je peux résoudre tous ces casse-têtes/épreuves :',
+  genderMale: 'masculin',
+  genderFemale: 'féminin',
+  genderOther: 'non-binaire ou non divulgué',
+};
+
+const FIRST_TIMER_ES: FirstTimerSlipStrings = {
+  confirmIntro1: 'Marque las casillas para confirmar que todo es correcto.',
+  confirmIntro2: 'Si algo es incorrecto, háganoslo saber.',
+  firstCompetition: 'Esta es mi primera competición de la WCA',
+  preferredNamePrefix: 'Mi nombre preferido es',
+  genderPrefix: 'Mi identidad de género es',
+  birthdatePrefix: 'Mi fecha de nacimiento es',
+  citizenshipPrefix: 'Mi país de ciudadanía es',
+  parentalConsent: 'Tengo permiso de un padre/madre/tutor para competir',
+  solveSingle: (e) => `Sé resolver el ${e}`,
+  solveMultipleIntro: 'Sé resolver todos estos rompecabezas/eventos:',
+  genderMale: 'masculino',
+  genderFemale: 'femenino',
+  genderOther: 'no binario o no revelado',
+};
+
+const FIRST_TIMER_PT: FirstTimerSlipStrings = {
+  confirmIntro1: 'Marque as caixas para confirmar que está tudo correto.',
+  confirmIntro2: 'Se algo estiver incorreto, avise-nos.',
+  firstCompetition: 'Esta é a minha primeira competição da WCA',
+  preferredNamePrefix: 'Meu nome preferido é',
+  genderPrefix: 'Minha identidade de gênero é',
+  birthdatePrefix: 'Minha data de nascimento é',
+  citizenshipPrefix: 'Meu país de cidadania é',
+  parentalConsent: 'Tenho permissão de um pai/mãe/responsável para competir',
+  solveSingle: (e) => `Sei resolver o ${e}`,
+  solveMultipleIntro: 'Sei resolver todos estes quebra-cabeças/eventos:',
+  genderMale: 'masculino',
+  genderFemale: 'feminino',
+  genderOther: 'não binário ou não divulgado',
+};
+
+export function getFirstTimerSlipStrings(language: LocaleCode): FirstTimerSlipStrings {
+  return LOCALES[language].firstTimer;
+}
+
 // ── Nametag title strings ──────────────────────────────────────────────────────
 const NAMETAG_TITLE_EN: NametTagTitleStrings = {
   delegate:     () => 'DELEGATE',
@@ -492,14 +581,15 @@ interface LocaleBundle {
   scorecard: ScorecardStrings;
   schedule: ScheduleStrings;
   nametag: NametTagStrings;
+  firstTimer: FirstTimerSlipStrings;
   title: NametTagTitleStrings;
   shortNames: Record<string, string>;
   eventNames: Record<string, string>;
 }
 
 const LOCALES: Record<LocaleCode, LocaleBundle> = {
-  en: { scorecard: EN, schedule: SCHEDULE_EN, nametag: NAMETAG_EN, title: NAMETAG_TITLE_EN, shortNames: SHORT_NAMETAG_NAMES_EN, eventNames: EVENT_NAMES_EN },
-  fr: { scorecard: FR, schedule: SCHEDULE_FR, nametag: NAMETAG_FR, title: NAMETAG_TITLE_FR, shortNames: SHORT_NAMETAG_NAMES_FR, eventNames: EVENT_NAMES_FR },
-  es: { scorecard: ES, schedule: SCHEDULE_ES, nametag: NAMETAG_ES, title: NAMETAG_TITLE_ES, shortNames: SHORT_NAMETAG_NAMES_ES, eventNames: EVENT_NAMES_ES },
-  pt: { scorecard: PT, schedule: SCHEDULE_PT, nametag: NAMETAG_PT, title: NAMETAG_TITLE_PT, shortNames: SHORT_NAMETAG_NAMES_PT, eventNames: EVENT_NAMES_PT },
+  en: { scorecard: EN, schedule: SCHEDULE_EN, nametag: NAMETAG_EN, firstTimer: FIRST_TIMER_EN, title: NAMETAG_TITLE_EN, shortNames: SHORT_NAMETAG_NAMES_EN, eventNames: EVENT_NAMES_EN },
+  fr: { scorecard: FR, schedule: SCHEDULE_FR, nametag: NAMETAG_FR, firstTimer: FIRST_TIMER_FR, title: NAMETAG_TITLE_FR, shortNames: SHORT_NAMETAG_NAMES_FR, eventNames: EVENT_NAMES_FR },
+  es: { scorecard: ES, schedule: SCHEDULE_ES, nametag: NAMETAG_ES, firstTimer: FIRST_TIMER_ES, title: NAMETAG_TITLE_ES, shortNames: SHORT_NAMETAG_NAMES_ES, eventNames: EVENT_NAMES_ES },
+  pt: { scorecard: PT, schedule: SCHEDULE_PT, nametag: NAMETAG_PT, firstTimer: FIRST_TIMER_PT, title: NAMETAG_TITLE_PT, shortNames: SHORT_NAMETAG_NAMES_PT, eventNames: EVENT_NAMES_PT },
 };

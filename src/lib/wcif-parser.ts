@@ -30,6 +30,18 @@ export interface NametTagEntry {
   run: string[];
 }
 
+// ── First-timer slip types ───────────────────────────────────────────────────
+// One entry per accepted competitor with no WCA ID (a newcomer). Used to print a
+// confirmation slip the delegate attaches to the scorecard after the first solve.
+export interface FirstTimerEntry {
+  name: string;
+  gender: 'm' | 'f' | 'o';
+  // ISO date (YYYY-MM-DD) or null/undefined when the WCIF doesn't expose DOB.
+  birthdate?: string | null;
+  countryIso2: string;
+  eventIds: EventId[];
+}
+
 function buildDuties(
   assignments: Assignment[],
   code: Assignment['assignmentCode'],
@@ -128,6 +140,8 @@ export interface ParsedWCIF {
   // Final round of every event with 2+ rounds. Always blank.
   finals: ScorecardData[];
   nametags: NametTagEntry[];
+  // One confirmation slip per accepted newcomer (no WCA ID), sorted by name.
+  firstTimers: FirstTimerEntry[];
   // One blank scorecard per round per event (sorted by schedule order).
   extras: ScorecardData[];
   // Schedule tracker data in chronological (day-primary) order.
@@ -754,11 +768,24 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   }
 
   const nametags: NametTagEntry[] = [];
+  const firstTimers: FirstTimerEntry[] = [];
   for (const person of wcif.persons) {
     if (!person.registration || person.registration.status !== 'accepted') continue;
 
     const name = person.name.replace(/ \(.*\)$/, '');
     const isFemale = person.gender === 'f';
+
+    // Newcomers (no WCA ID) get a first-timer confirmation slip.
+    if (!person.wcaId) {
+      const registeredSet = new Set(person.registration.eventIds as string[]);
+      firstTimers.push({
+        name,
+        gender: person.gender,
+        birthdate: person.birthdate ?? null,
+        countryIso2: person.countryIso2,
+        eventIds: WCA_EVENT_ORDER.filter(e => registeredSet.has(e)),
+      });
+    }
 
     let role: NametTagRole;
     if (person.roles.some(r => r === 'delegate' || r === 'trainee-delegate')) {
@@ -799,6 +826,9 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     const p = rolePriority(a.role) - rolePriority(b.role);
     return p !== 0 ? p : a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
   });
+
+  // First-timer slips: alphabetical by name (matches the legacy script's sort).
+  firstTimers.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 
   // ── Extra scorecards ──────────────────────────────────────────────────────
   // Build minimum timeslot for each round (eventId-rN) from its child activities.
@@ -975,6 +1005,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     semis:  finalizeEntries(semisEntries),
     finals: finalizeEntries(finalsEntries),
     nametags,
+    firstTimers,
     extras: extrasEntries,
     scheduleDays,
     laterRoundsWithAssignments,

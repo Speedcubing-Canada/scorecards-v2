@@ -56,8 +56,8 @@ export function hasUnassignedIntermediate(parsed: ParsedWCIF): boolean {
 }
 
 // Produce a ParsedWCIF restricted to the chosen scope. Scoped modes ('latest'/'selected')
-// emit scorecard PDFs only — nametags, schedule tracker, and extras are pre-competition
-// artifacts and are cleared. Each kept bucket is re-finalized (sorted + padded + quad-
+// emit scorecard PDFs only — nametags, first-timer slips, schedule tracker, and extras are
+// pre-competition artifacts and are cleared. Each kept bucket is re-finalized (sorted + padded + quad-
 // reordered) so the cut-and-stack print order stays valid after filtering.
 export function filterParsedByScope(parsed: ParsedWCIF, scope: GenerationScope): ParsedWCIF {
   if (scope.mode === 'everything') return parsed;
@@ -82,6 +82,7 @@ export function filterParsedByScope(parsed: ParsedWCIF, scope: GenerationScope):
     finals: filterBucket(parsed.finals),
     extras: [],
     nametags: [],
+    firstTimers: [],
     scheduleDays: [],
   };
 }

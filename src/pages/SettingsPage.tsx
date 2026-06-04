@@ -62,6 +62,7 @@ export default function SettingsPage() {
   const [nametagQrMode, setNametagQrMode] = useState<NametTagQrMode>('back-only');
   const [nametagLayout, setNametagLayout] = useState<NametTagLayout>('vertical');
   const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
+  const [firstTimerSlips, setFirstTimerSlips] = useState<boolean>(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [scrambleDoubleCheck, setScrambleDoubleCheck] = useState<boolean>(false);
   const [scrambleDoubleCheckRounds, setScrambleDoubleCheckRounds] = useState<DoubleCheckRound[]>(['finals']);
@@ -225,6 +226,7 @@ export default function SettingsPage() {
       nametagQrMode,
       nametagLayout,
       customEvents: customEvents.filter(e => e.name.trim()),
+      firstTimerSlips,
       scrambleDoubleCheck,
       scrambleDoubleCheckRounds,
       scrambleDoubleCheckOverrides,
@@ -710,6 +712,22 @@ export default function SettingsPage() {
               <button style={s.addCustomBtn} onClick={addCustomEvent}>
                 {t('settings.advanced.add_custom_event')}
               </button>
+
+              <h3 style={{ ...s.sectionTitle, marginTop: 24 }}>
+                {t('settings.advanced.first_timer_slips_title')}
+              </h3>
+              <label style={{ ...s.optionCard, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={firstTimerSlips}
+                  onChange={e => setFirstTimerSlips(e.target.checked)}
+                  style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
+                />
+                <div>
+                  <div style={s.optionLabel}>{t('settings.advanced.first_timer_slips_enable')}</div>
+                  <div style={s.optionDesc}>{t('settings.advanced.first_timer_slips_desc')}</div>
+                </div>
+              </label>
             </div>
           )}
         </section>

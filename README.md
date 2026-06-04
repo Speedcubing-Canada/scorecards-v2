@@ -180,6 +180,7 @@ Each download is a ZIP containing one PDF per round stage plus a name-tag PDF if
 | `{id}_extras.pdf` | One blank spare scorecard per round per event (sorted by schedule order) |
 | `{id}_schedule.pdf` | Schedule tracker table: estimated start/end times with blank columns for actual times and competitor count |
 | `{id}_nametags.pdf` | Landscape sheet of competitor name tags (omitted if no nametag data is available) |
+| `{id}_first_timers.pdf` | Confirmation slips for newcomers (competitors with no WCA ID); only when enabled in Advanced settings, omitted if there are none |
 | `{id}_custom_{name}.pdf` | 4 blank scorecards for a custom/bonus event (one file per custom event added in Advanced settings) |
 
 A PDF is omitted from the ZIP if it would be empty (e.g., all events have only one round → no finals PDF). 2-round events skip straight from round 1 to finals; they never produce a round2 or semis PDF.
@@ -385,6 +386,35 @@ Output is written to `../current-output/`.
 
 ---
 
+## First-timer slip PDF
+
+`{id}_first_timers.pdf` is **opt-in**: enable *Print first-timer slips* in Advanced settings (off by default — most delegates don't need it). When on, it prints one confirmation slip per **newcomer** — an accepted competitor with no WCA ID. The delegate cuts the slips apart and uses each one to confirm the competitor's personal details (so their results can be linked to a freshly-created WCA profile). The component is `src/pdf/FirstTimerSlipDocument.tsx`.
+
+The slip follows the hand-made original (`original-output/… First-Timer Slips.pdf`): a flowing, vertically-stacked checklist with no borders or cut lines (slips are separated by whitespace and cut apart). Each slip is rendered `wrap={false}` so it is never split across a page. Layout: left margin 36pt, top 38pt, 11pt Helvetica, fixed 14pt line pitch, bold values, and a small bordered square as the tick box (standard PDF Helvetica has no ☐ glyph). The vertical spacing is tightened relative to the original so that **three large slips (4–5 events) reliably fit one page** (the original wasted paper, dropping to two big slips per page); slips flow and pack, so short single-event slips fit four per page.
+
+Each slip lists, in order:
+
+1. The "please check the boxes / let us know if anything is incorrect" intro.
+2. *This is my first WCA competition* · *My preferred name is …* · *My gender identity is …*
+3. *My birthdate is …* — **only when the WCIF exposes the birthdate** (see below).
+4. *I hold citizenship in …* (country name localized from `countryIso2`).
+5. *I have permission from a parent/guardian/caregiver to compete* — **only for a minor** (birthdate present and age < 18).
+6. The registered events — a single *I can solve the …* line, or an *I can solve all these puzzles/events:* header followed by one bulleted line per event.
+
+**Language:** the slip is rendered in the **primary** language only (no bilingual merge). Strings live in `FirstTimerSlipStrings` / `getFirstTimerSlipStrings` in `src/lib/i18n.ts` (en / fr / es / pt). Dates and country names are localized via `Intl.DateTimeFormat` / `Intl.DisplayNames`.
+
+**Birthdate availability:** the app requests only the `public manage_competitions` OAuth scope (no `dob`). Birthdates appear in the WCIF for competitions the authenticated user manages; when a birthdate is absent, both the birthdate line and the parental-consent line are omitted gracefully.
+
+### Development helper
+
+`generate-first-timer-slips.mjs` renders the slip PDF from a fixture (the real newcomers reconstructed from the original Gros Jouets PDF, including birthdates) for layout verification against `original-output/`:
+
+```
+node generate-first-timer-slips.mjs   # → ../current-output/GrosJouetsaMontreal2026_first_timers.pdf
+```
+
+---
+
 ## WCIF parsing
 
 The parser (`src/lib/wcif-parser.ts`) reads the competition's WCIF (WCA Interchange Format) JSON and produces a `ParsedWCIF` object:
@@ -569,8 +599,6 @@ Name tag role badges use the primary language on the **front** panel and the sec
 ---
 
 ## Planned features
-
-- **First-timer slips** — a small slip printed for competitors who have no WCA ID, given to the delegate to attach to their scorecard after the first solve. Lists the competitor's name and registrant ID so their results can be linked to a new WCA profile.
 
 - **Horizontal nametags** - Using the files in Sarah-scorecard/Nametags (Horizontal, English Only) to add an option to have different nametags orientations
 

@@ -10,6 +10,7 @@ import type { CompetitionSettings, CustomEvent } from '../types/settings';
 import { ScorecardDocument } from './ScorecardDocument';
 import { NametTagDocument } from './NametTagDocument';
 import { ScheduleTrackerDocument } from './ScheduleTrackerDocument';
+import { FirstTimerSlipDocument } from './FirstTimerSlipDocument';
 
 export type WorkerRequest = {
   parsed: ParsedWCIF;
@@ -61,6 +62,7 @@ export type WorkerResponse =
 const workerSelf = self as any;
 
 async function renderPdf(entries: ScorecardData[], settings: CompetitionSettings): Promise<Uint8Array> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const element = React.createElement(ScorecardDocument, { entries, settings }) as any;
   const blob = await pdf(element).toBlob();
   const ab = await blob.arrayBuffer();
@@ -70,6 +72,14 @@ async function renderPdf(entries: ScorecardData[], settings: CompetitionSettings
 async function renderNametags(parsed: ParsedWCIF, settings: CompetitionSettings): Promise<Uint8Array> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const element = React.createElement(NametTagDocument, { nametags: parsed.nametags, settings }) as any;
+  const blob = await pdf(element).toBlob();
+  const ab = await blob.arrayBuffer();
+  return new Uint8Array(ab);
+}
+
+async function renderFirstTimerSlips(parsed: ParsedWCIF, settings: CompetitionSettings): Promise<Uint8Array> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const element = React.createElement(FirstTimerSlipDocument, { entries: parsed.firstTimers, settings }) as any;
   const blob = await pdf(element).toBlob();
   const ab = await blob.arrayBuffer();
   return new Uint8Array(ab);
@@ -122,7 +132,8 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
   type PdfJob =
     | { kind: 'scorecards'; filename: string; entries: ScorecardData[]; label: string }
     | { kind: 'nametags';   filename: string; label: string }
-    | { kind: 'schedule';   filename: string; label: string };
+    | { kind: 'schedule';   filename: string; label: string }
+    | { kind: 'first-timers'; filename: string; label: string };
 
   const jobs: PdfJob[] = [];
   if (parsed.firstRound.length > 0)
@@ -139,6 +150,8 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
     jobs.push({ kind: 'schedule',   filename: `${id}_schedule.pdf`, label: 'Schedule Tracker' });
   if (parsed.nametags.length > 0)
     jobs.push({ kind: 'nametags',   filename: `${id}_nametags.pdf`, label: 'Name Tags' });
+  if (settings.firstTimerSlips && parsed.firstTimers.length > 0)
+    jobs.push({ kind: 'first-timers', filename: `${id}_first_timers.pdf`, label: 'First-Timer Slips' });
   for (const custom of settings.customEvents ?? []) {
     if (!custom.name.trim()) continue;
     const safeName = custom.name.trim().replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').slice(0, 40);
@@ -176,6 +189,8 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
           ? await renderNametags(parsed, settings)
           : job.kind === 'schedule'
           ? await renderScheduleTracker(parsed, settings)
+          : job.kind === 'first-timers'
+          ? await renderFirstTimerSlips(parsed, settings)
           : await renderPdf(job.entries, settings);
         clearInterval(timer);
         files[job.filename] = [data, { level: 0 }];

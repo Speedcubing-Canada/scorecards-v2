@@ -21,7 +21,7 @@ function cover(eventId: string, roundNum: number): CoverEntry {
 function mkParsed(over: Partial<ParsedWCIF> = {}): ParsedWCIF {
   return {
     firstRound: [], intermediate: [], semis: [], finals: [],
-    nametags: [], extras: [], scheduleDays: [],
+    nametags: [], firstTimers: [], extras: [], scheduleDays: [],
     laterRoundsWithAssignments: [],
     ...over,
   };

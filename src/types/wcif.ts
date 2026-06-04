@@ -65,6 +65,9 @@ export interface Person {
   wcaId: string | null;
   countryIso2: string;
   gender: 'm' | 'f' | 'o';
+  // ISO date (YYYY-MM-DD). Only present in the WCIF when the authenticated user
+  // can manage the competition (delegate/organizer); absent otherwise.
+  birthdate?: string | null;
   registration: Registration | null;
   avatar: { url: string; thumbUrl: string } | null;
   roles: string[];

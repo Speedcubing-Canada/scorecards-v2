@@ -1297,6 +1297,54 @@ describe('nametag entries', () => {
   });
 });
 
+describe('first-timer entries', () => {
+  const c = ch(100, '333', 1, 1);
+  const e = evt('333', [rSpec('a')]);
+  const r = room('Stage', [act('333', 1, [c])]);
+
+  // A newcomer = accepted registrant with no WCA ID.
+  function newcomer(id: number, name: string, birthdate?: string) {
+    return { ...per(id, [{ aid: 100 }], { name, wcaId: null }), birthdate };
+  }
+
+  it('includes accepted registrants with no WCA ID, and excludes returning competitors', () => {
+    const returning = per(1, [{ aid: 100 }], { name: 'Returning', wcaId: '2019TEST01' });
+    const result = parseWCIF(mkWCIF([e], [r], [returning, newcomer(2, 'Newbie')]), cfg());
+    expect(result.firstTimers.map(f => f.name)).toEqual(['Newbie']);
+  });
+
+  it('excludes pending newcomers', () => {
+    const pending = { ...per(2, [], { name: 'Pending', wcaId: null, status: 'pending' }) };
+    const result = parseWCIF(mkWCIF([e], [r], [pending]), cfg());
+    expect(result.firstTimers).toHaveLength(0);
+  });
+
+  it('strips a local name in parentheses', () => {
+    const result = parseWCIF(mkWCIF([e], [r], [newcomer(2, 'Yuki Tanaka (田中 雪)')]), cfg());
+    expect(result.firstTimers[0]?.name).toBe('Yuki Tanaka');
+  });
+
+  it('sorts newcomers alphabetically by name', () => {
+    const persons = [newcomer(3, 'Charlie'), newcomer(1, 'Alice'), newcomer(2, 'bob')];
+    const result = parseWCIF(mkWCIF([e], [r], persons), cfg());
+    expect(result.firstTimers.map(f => f.name)).toEqual(['Alice', 'bob', 'Charlie']);
+  });
+
+  it('carries birthdate through when present and leaves it null when absent', () => {
+    const persons = [newcomer(1, 'Has DOB', '2015-01-13'), newcomer(2, 'No DOB')];
+    const result = parseWCIF(mkWCIF([e], [r], persons), cfg());
+    const byName = Object.fromEntries(result.firstTimers.map(f => [f.name, f]));
+    expect(byName['Has DOB']?.birthdate).toBe('2015-01-13');
+    expect(byName['No DOB']?.birthdate ?? null).toBeNull();
+  });
+
+  it('captures country and registered events', () => {
+    const result = parseWCIF(mkWCIF([e], [r], [newcomer(2, 'Newbie')]), cfg());
+    expect(result.firstTimers[0]?.countryIso2).toBe('FR');
+    expect(result.firstTimers[0]?.eventIds).toEqual(['333']);
+  });
+});
+
 // ── Scramble double-checking ──────────────────────────────────────────────────
 describe('Scramble double-checking', () => {
   // 2-round event: round 1 (named) + finals (blank).

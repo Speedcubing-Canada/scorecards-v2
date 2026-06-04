@@ -120,7 +120,10 @@
       "time_limit_optional": "opcional, ej. 10:00",
       "icon_hint": "Ícono — haga clic en un ícono WCA o suba el suyo",
       "icon_selected": "Ícono seleccionado",
-      "add_custom_event": "+ Agregar evento personalizado"
+      "add_custom_event": "+ Agregar evento personalizado",
+      "first_timer_slips_title": "Fichas para principiantes",
+      "first_timer_slips_enable": "Imprimir fichas para principiantes",
+      "first_timer_slips_desc": "Agrega una ficha de confirmación para cada principiante (competidor sin WCA ID) para verificar su nombre, género, ciudadanía y eventos. Desactivado por defecto."
     },
     "generate_button": "Generar →"
   },

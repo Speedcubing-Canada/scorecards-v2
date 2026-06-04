@@ -120,7 +120,10 @@
       "time_limit_optional": "optional, e.g. 10:00",
       "icon_hint": "Icon — click a WCA icon or upload your own",
       "icon_selected": "Selected icon",
-      "add_custom_event": "+ Add custom event"
+      "add_custom_event": "+ Add custom event",
+      "first_timer_slips_title": "First-timer slips",
+      "first_timer_slips_enable": "Print first-timer slips",
+      "first_timer_slips_desc": "Add a confirmation slip for each newcomer (competitor with no WCA ID) to verify their name, gender, citizenship, and events. Off by default."
     },
     "generate_button": "Generate →"
   },
