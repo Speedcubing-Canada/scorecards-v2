@@ -241,6 +241,27 @@ describe('round categorisation', () => {
   });
 });
 
+// ── FMC-only competition ─────────────────────────────────────────────────────
+
+describe('FMC-only competition', () => {
+  it('produces no scorecards but still generates nametags and first-timer slips', () => {
+    const e = evt('333fm', [rSpec('3')]);
+    const r = room('Stage', [act('333fm', 1, [ch(100, '333fm', 1, 1), ch(101, '333fm', 1, 2)])]);
+    const veteran  = per(1, [{ aid: 100 }]);                  // has WCA ID → nametag only
+    const newcomer = per(2, [{ aid: 101 }], { wcaId: null }); // no WCA ID  → nametag + first-timer slip
+    const result = parseWCIF(mkWCIF([e], [r], [veteran, newcomer]), cfg());
+
+    expect(result.firstRound.length).toBe(0);
+    expect(result.intermediate.length).toBe(0);
+    expect(result.semis.length).toBe(0);
+    expect(result.finals.length).toBe(0);
+    expect(result.extras.length).toBe(0);
+
+    expect(result.nametags.length).toBe(2);
+    expect(result.firstTimers.length).toBe(1);
+  });
+});
+
 // ── Group labels ─────────────────────────────────────────────────────────────
 
 describe('group labels — single stage', () => {

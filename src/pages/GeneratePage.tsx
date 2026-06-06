@@ -99,7 +99,17 @@ export default function GeneratePage() {
   const scorecardCount = allEntries.filter(e => e.kind === 'scorecard').length;
   const coverCount     = allEntries.filter(e => e.kind === 'cover' && e.eventId).length;
   const pdfCount       = effectiveParsed
-    ? [effectiveParsed.firstRound, effectiveParsed.intermediate, effectiveParsed.semis, effectiveParsed.finals].filter(r => r.length > 0).length
+    ? [
+        effectiveParsed.firstRound,
+        effectiveParsed.intermediate,
+        effectiveParsed.semis,
+        effectiveParsed.finals,
+        effectiveParsed.extras,
+      ].filter(r => r.length > 0).length
+      + (effectiveParsed.scheduleDays.length > 0 ? 1 : 0)
+      + (effectiveParsed.nametags.length > 0 ? 1 : 0)
+      + (settings.firstTimerSlips && effectiveParsed.firstTimers.length > 0 ? 1 : 0)
+      + (settings.customEvents?.filter(c => c.name.trim()).length ?? 0)
     : 0;
   const filename       = `${settings.competitionId}_scorecards.zip`;
 
