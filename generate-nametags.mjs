@@ -64,19 +64,25 @@ const nametags = fakeWindow.competitors.map(c => ({
 }));
 
 // ── Page geometry ──────────────────────────────────────────────────────────
-// Both layouts share the same 4×2 portrait-slot grid (8 slots = 4 pairs/page).
-// Horizontal renders each card in a landscape frame (slot dims swapped) rotated
-// 90° into its slot — read sideways, same cut lines as vertical.
+// Vertical: landscape page, 4 cols × 2 rows, portrait slots (189×292pt LETTER).
+// Horizontal: portrait page, 2 cols × 4 rows, landscape slots (244×147pt).
+//   Cards sized for 90×55mm badge holders (same as vertical, rotated sideways)
+//   with ~2mm clearance per edge. No rotation needed — content fills slot directly.
 const CONFIGS = {
   LETTER: { panelW: 189, panelH: 292, margin: 12, gapH: 4, gapV: 4 },
   A4:     { panelW: 201, panelH: 283, margin: 12, gapH: 4, gapV: 4 },
 };
 
-function panelPositions(cfg) {
+const H_CONFIGS = {
+  LETTER: { panelW: 244, panelH: 147, margin: 15, gapH: 10, gapV: 10 },
+  A4:     { panelW: 244, panelH: 147, margin: 15, gapH: 10, gapV: 10 },
+};
+
+function panelPositions(cfg, cols = 4, rows = 2) {
   const { panelW, panelH, margin, gapH, gapV } = cfg;
   const pos = [];
-  for (let row = 0; row < 2; row++)
-    for (let col = 0; col < 4; col++)
+  for (let row = 0; row < rows; row++)
+    for (let col = 0; col < cols; col++)
       pos.push({ left: margin + col * (panelW + gapH), top: margin + row * (panelH + gapV) });
   return pos;
 }
@@ -131,7 +137,7 @@ const s = {
   },
   compName:   { fontSize: 8.5, textAlign: 'center', color: '#333', marginBottom: 4, fontFamily: FONT },
   name:       { textAlign: 'center', fontFamily: FONT, marginBottom: 6 },
-  badge:      { borderRadius: 2, paddingVertical: 5, marginBottom: 4 },
+  badge:      { borderRadius: 2, height: 22, justifyContent: 'center', marginBottom: 4 },
   badgeText:  { fontSize: 13, textAlign: 'center', fontFamily: FONT_BOLD },
   iconsRow:   { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 6, marginBottom: 4 },
   wcaId:      { fontSize: 13, textAlign: 'center', marginBottom: 4, color: '#222', fontFamily: FONT },
@@ -163,14 +169,14 @@ function DutyLines({ duties, fontSize }) {
 
 function PanelTop({ entry, panelW, compName, titleText, compact = false, showWcaId = true }) {
   const { bg, fg } = badgeColors(entry.titleEn);
-  const maxNameFs = compact ? 16 : 20;
+  const maxNameFs = compact ? 14 : 20;
   const nameFs = Math.min(maxNameFs, nameFontSize(entry.name, panelW));
-  const iconSz = compact ? 10 : 12;
-  const compNameStyle = compact ? { ...s.compName, fontSize: 7, marginBottom: 2 } : s.compName;
+  const iconSz = compact ? 9 : 12;
+  const compNameStyle = compact ? { ...s.compName, fontSize: 7, marginBottom: 1 } : s.compName;
   const badgeStyle = compact
-    ? { ...s.badge, backgroundColor: bg, paddingVertical: 3, marginBottom: 2 }
+    ? { ...s.badge, backgroundColor: bg, marginBottom: 2 }
     : { ...s.badge, backgroundColor: bg };
-  const badgeTextStyle = compact ? { ...s.badgeText, fontSize: 11, color: fg } : { ...s.badgeText, color: fg };
+  const badgeTextStyle = { ...s.badgeText, color: fg };
   return e(View, { style: { height: topSectionH('hidden', compact), flexDirection: 'column' } },
     e(Text, { style: compNameStyle }, compName),
     e(Text, { style: { ...s.name, fontSize: nameFs } }, entry.name),
@@ -178,7 +184,7 @@ function PanelTop({ entry, panelW, compName, titleText, compact = false, showWca
     e(View, { style: badgeStyle },
       e(Text, { style: badgeTextStyle }, titleText),
     ),
-    e(View, { style: { ...s.iconsRow, ...(compact ? { marginTop: 3, marginBottom: 2 } : {}) } },
+    e(View, { style: { ...s.iconsRow, ...(compact ? { marginTop: 2, marginBottom: 1 } : {}) } },
       ...entry.events.map(evId =>
         EVENT_ICONS[evId]
           ? e(Image, { key: evId, src: EVENT_ICONS[evId], style: { width: iconSz, height: iconSz, marginHorizontal: 1 } })
@@ -195,7 +201,7 @@ function QrSection({ entry, competitionId: compId, wcaLiveId: liveId, qrSize = 7
     ? `https://live.worldcubeassociation.org/competitions/${liveId}/competitors/${entry.wcaUserId}`
     : 'https://live.worldcubeassociation.org';
 
-  return e(View, { style: { ...s.qrSection, ...(compact ? { gap: 8 } : {}) } },
+  return e(View, { style: { ...s.qrSection, ...(compact ? { gap: 6 } : {}) } },
     e(View, { style: s.qrCol },
       e(QrSvg, { url: cgUrl, size: qrSize }),
       e(Text, { style: s.qrLabel }, 'competitiongroups.com'),
@@ -209,7 +215,7 @@ function QrSection({ entry, competitionId: compId, wcaLiveId: liveId, qrSize = 7
 
 // topH: empirical top-section height for space-evenly estimation.
 function topSectionH(logoMode, compact = false) {
-  if (compact) return logoMode === 'logo-only' ? 85 : 75;
+  if (compact) return logoMode === 'logo-only' ? 75 : 65;
   return logoMode === 'logo-only' ? 146 : 127;
 }
 
@@ -276,18 +282,41 @@ function BackPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName,
 
 function NametTagDocument({ nametags: tags, compName, compId, liveId, paperFormat, qrBothSides = false, nametagLayout = 'vertical' }) {
   const horizontal = nametagLayout === 'horizontal';
-  const cfg = CONFIGS[paperFormat] ?? CONFIGS.LETTER;
-  const pos = panelPositions(cfg);
   const personsPerPage = 4;
-  const qrSize = horizontal ? 60 : 75;
-  // Slot = portrait grid rectangle; horizontal swaps content dims and rotates 90°.
-  const slotW = cfg.panelW, slotH = cfg.panelH;
-  const panelW = horizontal ? cfg.panelH : cfg.panelW;
-  const panelH = horizontal ? cfg.panelW : cfg.panelH;
-
   const pages = [];
   for (let i = 0; i < tags.length; i += personsPerPage) pages.push(tags.slice(i, i + personsPerPage));
 
+  if (horizontal) {
+    // Portrait page, 2 cols × 4 rows. Each landscape slot (244×147pt) fits directly —
+    // no rotation needed. Cards sized for 90×55mm badge holders (~2mm clearance each edge).
+    const hcfg = H_CONFIGS[paperFormat] ?? H_CONFIGS.LETTER;
+    const pos = panelPositions(hcfg, 2, 4);
+    const { panelW, panelH } = hcfg;
+    const qrSize = 40;
+    return e(Document, { title: `${compName} — Name Tags`, author: 'WCA Scorecard Generator' },
+      ...pages.map((page, pi) =>
+        e(Page, { key: pi, size: paperFormat, orientation: 'portrait', style: { backgroundColor: '#ffffff' } },
+          ...page.flatMap((entry, ei) => {
+            const frontPos = pos[ei * 2];
+            const backPos  = pos[ei * 2 + 1];
+            if (!frontPos || !backPos) return [];
+            return [
+              e(FrontPanel, { key: `f${ei}`, entry, panelW, panelH, slotW: panelW, slotH: panelH, rotate: false, pos: frontPos,
+                              compName, competitionId: compId, wcaLiveId: liveId, qrBothSides, qrSize, compact: true }),
+              e(BackPanel,  { key: `b${ei}`, entry, panelW, panelH, slotW: panelW, slotH: panelH, rotate: false, pos: backPos,
+                              compName, competitionId: compId, wcaLiveId: liveId, qrSize, compact: true }),
+            ];
+          }),
+        ),
+      ),
+    );
+  }
+
+  // Vertical layout: landscape page, 4 cols × 2 rows.
+  const cfg = CONFIGS[paperFormat] ?? CONFIGS.LETTER;
+  const pos = panelPositions(cfg);
+  const { panelW, panelH } = cfg;
+  const qrSize = 75;
   return e(Document, { title: `${compName} — Name Tags`, author: 'WCA Scorecard Generator' },
     ...pages.map((page, pi) =>
       e(Page, { key: pi, size: paperFormat, orientation: 'landscape', style: { backgroundColor: '#ffffff' } },
@@ -296,10 +325,10 @@ function NametTagDocument({ nametags: tags, compName, compId, liveId, paperForma
           const backPos  = pos[ei * 2 + 1];
           if (!frontPos || !backPos) return [];
           return [
-            e(FrontPanel, { key: `f${ei}`, entry, panelW, panelH, slotW, slotH, rotate: horizontal, pos: frontPos, compName,
-                            competitionId: compId, wcaLiveId: liveId, qrBothSides, qrSize, compact: horizontal }),
-            e(BackPanel,  { key: `b${ei}`, entry, panelW, panelH, slotW, slotH, rotate: horizontal, pos: backPos, compName,
-                            competitionId: compId, wcaLiveId: liveId, qrSize, compact: horizontal }),
+            e(FrontPanel, { key: `f${ei}`, entry, panelW, panelH, slotW: panelW, slotH: panelH, rotate: false, pos: frontPos,
+                            compName, competitionId: compId, wcaLiveId: liveId, qrBothSides, qrSize, compact: false }),
+            e(BackPanel,  { key: `b${ei}`, entry, panelW, panelH, slotW: panelW, slotH: panelH, rotate: false, pos: backPos,
+                            compName, competitionId: compId, wcaLiveId: liveId, qrSize, compact: false }),
           ];
         }),
       ),

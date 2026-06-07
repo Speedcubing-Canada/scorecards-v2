@@ -123,7 +123,7 @@ Components call `useIsMobile()` and spread a small mobile-only style override in
 | `hideWcaLiveId` | `boolean` | When `true`, suppresses the `WCA Live: …` line on scorecard headers. Useful when generating blank scorecards where no competitor ID has been assigned yet. Defaults to `false` |
 | `nametagLogoMode` | `hidden \| with-name \| logo-only` | How the logo appears on name tags (see Name tag section) |
 | `nametagQrMode` | `back-only \| both-sides` | Which panels get QR codes (see Name tag section) |
-| `nametagLayout` | `vertical \| horizontal` | Card orientation, both 4 pairs/page on the same grid: portrait upright (default) or landscape rotated 90° (read sideways) |
+| `nametagLayout` | `vertical \| horizontal` | Card orientation: `vertical` (default) uses a landscape page 4×2 grid with portrait cards; `horizontal` uses a portrait page 2×4 grid with landscape cards sized for 90×55 mm badge holders |
 | `customEvents` | `CustomEvent[]` | Zero or more custom/bonus events (see Advanced section) |
 | `scrambleDoubleCheck` | `boolean` | Enables the optional second scrambler-signature column (see Scramble double-checking) |
 | `scrambleDoubleCheckRounds` | `DoubleCheckRound[]` | Which round categories get the column: `firstRound \| intermediate \| semis \| finals`. Defaults to `['finals']` |
@@ -179,7 +179,7 @@ Each download is a ZIP containing one PDF per round stage plus a name-tag PDF if
 | `{id}_finals.pdf` | Final round of every multi-round event; named when groups are assigned, otherwise blank scorecards |
 | `{id}_extras.pdf` | One blank spare scorecard per round per event (sorted by schedule order) |
 | `{id}_schedule.pdf` | Schedule tracker table: estimated start/end times with blank columns for actual times and competitor count |
-| `{id}_nametags.pdf` | Landscape sheet of competitor name tags (omitted if no nametag data is available) |
+| `{id}_nametags.pdf` | Sheet of competitor name tags — portrait (2×4 grid) for horizontal layout, landscape (4×2 grid) for vertical layout; omitted if no nametag data is available |
 | `{id}_first_timers.pdf` | Confirmation slips for newcomers (competitors with no WCA ID); only when enabled in Advanced settings, omitted if there are none |
 | `{id}_custom_{name}.pdf` | 4 blank scorecards for a custom/bonus event (one file per custom event added in Advanced settings) |
 
@@ -277,27 +277,41 @@ The `default` state is intended as the standard for Canadian competitions; compe
 
 ### Physical layout
 
-Name tags are printed on landscape pages. **Both orientations use the same 4-column × 2-row grid** — 8 panels = **4 front/back pairs per page**:
+The two layouts use **different page orientations and card sizes**; both produce 8 panels (4 front/back pairs) per page.
+
+**Vertical layout** (`nametagLayout: 'vertical'`, default) — landscape page, 4-column × 2-row grid:
 
 ```
 row 0: [Front_A] [Back_A] [Front_B] [Back_B]
 row 1: [Front_C] [Back_C] [Front_D] [Back_D]
 ```
 
-When cut between column pairs and folded front-to-back, each pair becomes one double-sided name tag.
-
 | Paper | Slot size | Margin | Gap |
 |---|---|---|---|
 | LETTER | 189 × 292 pt | 12 pt | 4 pt H, 4 pt V |
 | A4 | 201 × 283 pt | 12 pt | 4 pt H, 4 pt V |
 
-**Vertical layout** (`nametagLayout: 'vertical'`, default) — each card's content fills its portrait slot upright.
+Cut between column pairs (each [Front/Back] pair is adjacent) and fold front-to-back.
 
-**Horizontal layout** (`nametagLayout: 'horizontal'`) — each card's content is laid out in a **landscape frame** (the slot dimensions swapped — LETTER 292 × 189 pt, A4 283 × 201 pt) and **rotated 90°** about its centre to fit the same portrait slot. The printed sheet is then **read sideways**; the cut lines are identical to the vertical sheet, but every card reads as a landscape name tag. This replaces the earlier wide-panel horizontal layout (which fit only 3 pairs per page).
+---
 
-Implementation: `PanelFrame` wraps each card. For the rotated case it positions the landscape frame centred in the slot (`left = (slotW − contentW) / 2`, `top = (slotH − contentH) / 2`) with `transform: 'rotate(90deg)'`. Because react-pdf applies `overflow: hidden` clipping against the *un-rotated* layout box (before the transform), the rotated card must render with `overflow: 'visible'` or its content is clipped away; content is font-scaled to fit, so no clipping is needed.
+**Horizontal layout** (`nametagLayout: 'horizontal'`) — portrait page, 2-column × 4-row grid. Each row holds one person's front and back side-by-side:
 
-In horizontal mode the top section is compressed (≈ 75 pt vs 127–146 pt) and the WCA ID is omitted from the front panel to fit the shorter (189 pt) card height.
+```
+row 0: [Front_A] [Back_A]
+row 1: [Front_B] [Back_B]
+row 2: [Front_C] [Back_C]
+row 3: [Front_D] [Back_D]
+```
+
+| Paper | Slot size | Margin | Gap |
+|---|---|---|---|
+| LETTER | 244 × 147 pt (86 × 52 mm) | 15 pt | 10 pt H, 10 pt V |
+| A4 | 244 × 147 pt (86 × 52 mm) | 15 pt | 10 pt H, 10 pt V |
+
+Cards are sized to fit **90 × 55 mm badge holders** (the same holder as vertical, rotated sideways) with ~2 mm clearance per edge. Both paper formats use the same card size since it is holder-dictated, not paper-dictated. No rotation is applied — cards are rendered as landscape and slot directly into the portrait grid. Cut horizontally between rows and vertically down the centre; each row pair is then inserted into the badge holder front-and-back.
+
+In horizontal mode the top section is compressed (≈ 58 pt vs 127–146 pt) and the WCA ID is shown only on the back panel to fit the shorter (147 pt) card height.
 
 ### Panel contents
 

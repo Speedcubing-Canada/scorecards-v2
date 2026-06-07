@@ -10,31 +10,40 @@ import { resolveLogo } from '../lib/logo';
 Font.registerHyphenationCallback((word) => [word]);
 
 // ── Page geometry ─────────────────────────────────────────────────────────────
-// Both layouts use the SAME landscape-page grid: 4 panel slots wide × 2 tall =
-// 8 slots = 4 nametag pairs per page.
-// Layout per page (persons A, B, C, D):
-//   row 0: [Front_A] [Back_A] [Front_B] [Back_B]
-//   row 1: [Front_C] [Back_C] [Front_D] [Back_D]
-// When cut and folded front-to-back, each pair becomes one nametag.
+// Vertical layout: landscape page, 4 slots wide × 2 tall = 8 slots = 4 pairs.
+//   Layout per page (persons A, B, C, D):
+//     row 0: [Front_A] [Back_A] [Front_B] [Back_B]
+//     row 1: [Front_C] [Back_C] [Front_D] [Back_D]
 //
-// Vertical:   the card content fills its portrait slot upright (189×292 LETTER).
-// Horizontal: the SAME slots are used, but each card's content is rendered in a
-//   landscape frame (slot dims swapped → 292×189 LETTER) and rotated 90° to fit
-//   the portrait slot. The printed sheet is then read sideways; this fits 4 pairs
-//   per page on cut lines identical to the vertical sheet.
+// Horizontal layout: portrait page, 2 slots wide × 4 tall = 8 slots = 4 pairs.
+//   Layout per page (persons A, B, C, D):
+//     row 0: [Front_A] [Back_A]
+//     row 1: [Front_B] [Back_B]
+//     row 2: [Front_C] [Back_C]
+//     row 3: [Front_D] [Back_D]
+//   Cards are landscape (244×147pt LETTER = 86×52mm) and slot directly into the
+//   portrait slots — no rotation needed. Sized to fit 90×55mm badge holders
+//   (same holder as vertical, rotated sideways) with ~2mm clearance per edge.
 
 const CONFIGS = {
   LETTER: { panelW: 189, panelH: 292, margin: 12, gapH: 4, gapV: 4 },
   A4:     { panelW: 201, panelH: 283, margin: 12, gapH: 4, gapV: 4 },
 } as const;
 
+// Horizontal-specific configs: landscape slots sized for 90×55mm badge holders.
+// Both paper formats use the same card size (holder-dictated, not paper-dictated).
+const H_CONFIGS = {
+  LETTER: { panelW: 244, panelH: 147, margin: 15, gapH: 10, gapV: 10 },
+  A4:     { panelW: 244, panelH: 147, margin: 15, gapH: 10, gapV: 10 },
+} as const;
+
 type PF = keyof typeof CONFIGS;
 
-function panelPositions(cfg: (typeof CONFIGS)[PF]) {
+function panelPositions(cfg: { panelW: number; panelH: number; margin: number; gapH: number; gapV: number }, cols = 4, rows = 2) {
   const { panelW, panelH, margin, gapH, gapV } = cfg;
   const pos: { left: number; top: number }[] = [];
-  for (let row = 0; row < 2; row++)
-    for (let col = 0; col < 4; col++)
+  for (let row = 0; row < rows; row++)
+    for (let col = 0; col < cols; col++)
       pos.push({ left: margin + col * (panelW + gapH), top: margin + row * (panelH + gapV) });
   return pos;
 }
@@ -112,12 +121,12 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
   compact?: boolean; showWcaId?: boolean;
 }) {
   const { bg, fg } = badgeColors(entry.role);
-  const maxNameFs = compact ? 16 : 20;
+  const maxNameFs = compact ? 14 : 20;
   const nameFs = Math.min(maxNameFs, nameFontSize(entry.name, panelW));
-  const iconSz = compact ? 10 : 12;
-  const compNameStyle = compact ? [s.compName, { fontSize: 7, marginBottom: 2 }] : s.compName;
+  const iconSz = compact ? 9 : 12;
+  const compNameStyle = compact ? [s.compName, { fontSize: 7, marginBottom: 1 }] : s.compName;
   const badgeStyle = compact
-    ? [s.badge, { backgroundColor: bg, paddingVertical: 3, marginBottom: 2 }]
+    ? [s.badge, { backgroundColor: bg, marginBottom: 2 }]
     : [s.badge, { backgroundColor: bg }];
 
   return (
@@ -135,9 +144,9 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
       <Text style={[s.name, { fontSize: nameFs }]}>{entry.name}</Text>
       {!compact && <View style={{ flex: 1 }} />}
       <View style={badgeStyle}>
-        <Text style={[s.badgeText, { color: fg }, compact ? { fontSize: 11 } : {}]}>{titleText}</Text>
+        <Text style={[s.badgeText, { color: fg }]}>{titleText}</Text>
       </View>
-      <View style={[s.iconsRow, compact ? { marginTop: 3, marginBottom: 2 } : {}]}>
+      <View style={[s.iconsRow, compact ? { marginTop: 2, marginBottom: 1 } : {}]}>
         {entry.events.map(evId =>
           EVENT_ICONS[evId]
             ? <Image key={evId} src={EVENT_ICONS[evId]} style={{ width: iconSz, height: iconSz, marginHorizontal: 1 }} />
@@ -161,7 +170,7 @@ function QrSection({ entry, competitionId, wcaLiveId, wcaLivePersonIds, qrSize, 
     : 'https://live.worldcubeassociation.org';
 
   return (
-    <View style={[s.qrSection, compact ? { gap: 8 } : {}]}>
+    <View style={[s.qrSection, compact ? { gap: 6 } : {}]}>
       <View style={s.qrCol}>
         <QrSvg url={cgUrl} size={qrSize} />
         <Text style={s.qrLabel}>competitiongroups.com</Text>
@@ -176,9 +185,9 @@ function QrSection({ entry, competitionId, wcaLiveId, wcaLivePersonIds, qrSize, 
 
 // ── Empirical top-section height used for duty font-size estimation ────────────
 // 'logo-only' makes the header row taller (~28pt logo vs ~8.5pt text), adding ~19pt.
-// compact (horizontal layout) compresses the section to fit the shorter card height.
+// compact (horizontal layout) compresses the section to fit the shorter card (147pt).
 function topSectionH(logoMode: NametTagLogoMode, compact = false) {
-  if (compact) return logoMode === 'logo-only' ? 85 : 75;
+  if (compact) return logoMode === 'logo-only' ? 75 : 65;
   return logoMode === 'logo-only' ? 146 : 127;
 }
 
@@ -302,7 +311,7 @@ const s = StyleSheet.create({
   logoLarge:  { height: 28, objectFit: 'contain', alignSelf: 'center', marginBottom: 4 },
   compName:   { fontSize: 8.5, textAlign: 'center', color: '#333', marginBottom: 4, fontFamily: FONT },
   name:       { textAlign: 'center', fontFamily: FONT, marginBottom: 6 },
-  badge:      { borderRadius: 2, paddingVertical: 5, marginBottom: 4 },
+  badge:      { borderRadius: 2, height: 22, justifyContent: 'center', marginBottom: 4 },
   badgeText:  { fontSize: 13, textAlign: 'center', fontFamily: FONT_BOLD },
   iconsRow:   { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 6, marginBottom: 4 },
   wcaId:      { fontSize: 13, textAlign: 'center', marginBottom: 4, color: '#222', fontFamily: FONT },
@@ -323,25 +332,68 @@ interface Props {
 export function NametTagDocument({ nametags, settings }: Props) {
   const layout: NametTagLayout = settings.nametagLayout ?? 'vertical';
   const horizontal = layout === 'horizontal';
-  const cfg = CONFIGS[settings.paperFormat as PF] ?? CONFIGS.LETTER;
-  const pos = panelPositions(cfg);
-  const personsPerPage = 4;
-  // Slot = the portrait grid rectangle (same for both layouts). For horizontal the
-  // card content is a landscape frame (slot dims swapped) rotated 90° into the slot.
-  const slotW = cfg.panelW, slotH = cfg.panelH;
-  const panelW = horizontal ? cfg.panelH : cfg.panelW;
-  const panelH = horizontal ? cfg.panelW : cfg.panelH;
   const { competitionId, competitionName, wcaLiveId, wcaLivePersonIds, nametagLogoMode, nametagQrMode } = settings;
 
   // Custom logo (if any) wins; otherwise fall back to the bundled SCC logo when enabled.
   const logoDataUrl = resolveLogo(settings);
-
-  // If no logo is available at all, force any logo mode to hidden.
   const logoMode: NametTagLogoMode = logoDataUrl ? nametagLogoMode : 'hidden';
-  const qrSize = horizontal ? (logoMode === 'logo-only' ? 50 : 60) : (logoMode === 'logo-only' ? 65 : 75);
   const qrBothSides = nametagQrMode === 'both-sides';
   const nametTagStrings = getNametTagStrings(settings.language);
 
+  const personsPerPage = 4;
+
+  if (horizontal) {
+    // Portrait page, 2 cols × 4 rows. Each landscape slot (244×147pt) fits directly —
+    // no rotation needed. Cards are sized for 90×55mm badge holders (~2mm clearance).
+    const hcfg = H_CONFIGS[settings.paperFormat as PF] ?? H_CONFIGS.LETTER;
+    const pos = panelPositions(hcfg, 2, 4);
+    const { panelW, panelH } = hcfg;
+    const qrSize = logoMode === 'logo-only' ? 35 : 40;
+    const pages: NametTagEntry[][] = [];
+    for (let i = 0; i < nametags.length; i += personsPerPage) pages.push(nametags.slice(i, i + personsPerPage));
+    return (
+      <Document title={`${competitionName} — Name Tags`} author="WCA Scorecard Generator">
+        {pages.map((page, pi) => (
+          <Page key={pi} size={settings.paperFormat} orientation="portrait" style={{ backgroundColor: '#ffffff' }}>
+            {page.flatMap((entry, ei) => {
+              const frontPos = pos[ei * 2];
+              const backPos  = pos[ei * 2 + 1];
+              if (!frontPos || !backPos) return [];
+              return [
+                <FrontPanel
+                  key={`f${ei}`} entry={entry}
+                  panelW={panelW} panelH={panelH} slotW={panelW} slotH={panelH} rotate={false} pos={frontPos}
+                  compName={competitionName}
+                  competitionId={competitionId} wcaLiveId={wcaLiveId}
+                  wcaLivePersonIds={wcaLivePersonIds}
+                  logoMode={logoMode} logoDataUrl={logoDataUrl}
+                  qrBothSides={qrBothSides} qrSize={qrSize}
+                  nametTagStrings={nametTagStrings}
+                  compact={true}
+                />,
+                <BackPanel
+                  key={`b${ei}`} entry={entry}
+                  panelW={panelW} panelH={panelH} slotW={panelW} slotH={panelH} rotate={false} pos={backPos}
+                  compName={competitionName}
+                  competitionId={competitionId} wcaLiveId={wcaLiveId}
+                  wcaLivePersonIds={wcaLivePersonIds}
+                  logoMode={logoMode} logoDataUrl={logoDataUrl}
+                  qrSize={qrSize}
+                  compact={true}
+                />,
+              ];
+            })}
+          </Page>
+        ))}
+      </Document>
+    );
+  }
+
+  // Vertical layout: landscape page, 4 cols × 2 rows.
+  const cfg = CONFIGS[settings.paperFormat as PF] ?? CONFIGS.LETTER;
+  const pos = panelPositions(cfg);
+  const { panelW, panelH } = cfg;
+  const qrSize = logoMode === 'logo-only' ? 65 : 75;
   const pages: NametTagEntry[][] = [];
   for (let i = 0; i < nametags.length; i += personsPerPage) pages.push(nametags.slice(i, i + personsPerPage));
 
@@ -356,24 +408,24 @@ export function NametTagDocument({ nametags, settings }: Props) {
             return [
               <FrontPanel
                 key={`f${ei}`} entry={entry}
-                panelW={panelW} panelH={panelH} slotW={slotW} slotH={slotH} rotate={horizontal} pos={frontPos}
+                panelW={panelW} panelH={panelH} slotW={panelW} slotH={panelH} rotate={false} pos={frontPos}
                 compName={competitionName}
                 competitionId={competitionId} wcaLiveId={wcaLiveId}
                 wcaLivePersonIds={wcaLivePersonIds}
                 logoMode={logoMode} logoDataUrl={logoDataUrl}
                 qrBothSides={qrBothSides} qrSize={qrSize}
                 nametTagStrings={nametTagStrings}
-                compact={horizontal}
+                compact={false}
               />,
               <BackPanel
                 key={`b${ei}`} entry={entry}
-                panelW={panelW} panelH={panelH} slotW={slotW} slotH={slotH} rotate={horizontal} pos={backPos}
+                panelW={panelW} panelH={panelH} slotW={panelW} slotH={panelH} rotate={false} pos={backPos}
                 compName={competitionName}
                 competitionId={competitionId} wcaLiveId={wcaLiveId}
                 wcaLivePersonIds={wcaLivePersonIds}
                 logoMode={logoMode} logoDataUrl={logoDataUrl}
                 qrSize={qrSize}
-                compact={horizontal}
+                compact={false}
               />,
             ];
           })}

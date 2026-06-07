@@ -88,29 +88,21 @@ describe('Scorecard layout geometry', () => {
   }
 });
 
-// ── Nametag layout geometry (vertical + horizontal share one grid) ────────────
-// Both layouts render on landscape pages using the SAME 4-col × 2-row portrait-slot
-// grid = 8 slots = 4 nametag pairs per page. Slot sizes: LETTER 189×292pt,
-// A4 201×283pt. Margins 12pt, gaps 4pt.
-//
-// Vertical:   content fills its portrait slot upright.
-// Horizontal: content is laid out in a LANDSCAPE frame (slot dims swapped →
-//   LETTER 292×189, A4 283×201) and rotated 90° about its centre. A W×H box
-//   rotated 90° has a bounding box of H×W, so the rotated frame's bounding box
-//   equals the slot exactly. This fits 4 pairs/page on cut lines identical to the
-//   vertical sheet (vs. the old wide 382×193 panels that fit only 3 pairs).
+// ── Nametag vertical layout geometry ─────────────────────────────────────────
+// Landscape page, 4 cols × 2 rows = 8 portrait slots = 4 nametag pairs per page.
+// Slot sizes: LETTER 189×292pt, A4 201×283pt. Margins 12pt, gaps 4pt.
 
 const NAMETAG_LANDSCAPE_W = { LETTER: 792, A4: 841 };  // landscape page width (A4 841.89 truncated)
 const NAMETAG_LANDSCAPE_H = { LETTER: 612, A4: 595 };
 
-const NAMETAG_CONFIGS = {
+const NAMETAG_V_CONFIGS = {
   LETTER: { panelW: 189, panelH: 292, margin: 12, gapH: 4, gapV: 4 },
   A4:     { panelW: 201, panelH: 283, margin: 12, gapH: 4, gapV: 4 },
 } as const;
 
-describe('Nametag layout geometry (shared grid)', () => {
+describe('Nametag vertical layout geometry', () => {
   for (const fmt of ['LETTER', 'A4'] as const) {
-    const cfg = NAMETAG_CONFIGS[fmt];
+    const cfg = NAMETAG_V_CONFIGS[fmt];
 
     describe(fmt, () => {
       it('4 slots (2 pairs) fit horizontally within landscape page width', () => {
@@ -130,28 +122,63 @@ describe('Nametag layout geometry (shared grid)', () => {
         expect(rows).toBe(2);
       });
 
-      describe('horizontal (rotated) content frame', () => {
-        // The card content frame is the slot with width/height swapped.
-        const contentW = cfg.panelH;
-        const contentH = cfg.panelW;
+      it('portrait slots are taller than wide', () => {
+        expect(cfg.panelH).toBeGreaterThan(cfg.panelW);
+      });
+    });
+  }
+});
 
-        it('content frame is landscape (wider than tall)', () => {
-          expect(contentW).toBeGreaterThan(contentH);
-        });
+// ── Nametag horizontal layout geometry ───────────────────────────────────────
+// Portrait page, 2 cols × 4 rows = 8 landscape slots = 4 nametag pairs per page.
+// Slots sized for 90×55mm badge holders (same holder as vertical, rotated sideways)
+// with ~2mm clearance per edge. Both paper formats use the same slot dimensions
+// since the card size is holder-dictated, not paper-dictated.
 
-        it('rotating the frame 90° yields a bounding box equal to the slot', () => {
-          // 90° rotation maps a contentW×contentH box to contentH×contentW.
-          expect(contentH).toBe(cfg.panelW);
-          expect(contentW).toBe(cfg.panelH);
-        });
+const NAMETAG_PORTRAIT_W = { LETTER: 612, A4: 595 };
+const NAMETAG_PORTRAIT_H = { LETTER: 792, A4: 842 };
 
-        it('centred placement offsets are symmetric within the slot', () => {
-          // PanelFrame positions the inner frame at ((slotW-contentW)/2, (slotH-contentH)/2).
-          const offsetX = (cfg.panelW - contentW) / 2;
-          const offsetY = (cfg.panelH - contentH) / 2;
-          // Equal magnitude, opposite sign → rotation centre coincides with slot centre.
-          expect(offsetX).toBeCloseTo(-offsetY, 6);
-        });
+// 90mm × 55mm interior = 255pt × 156pt. Card leaves ~2mm clearance per edge.
+const HOLDER_INTERIOR_W = 255;  // 90mm in pt
+const HOLDER_INTERIOR_H = 156;  // 55mm in pt
+
+const NAMETAG_H_CONFIGS = {
+  LETTER: { panelW: 244, panelH: 147, margin: 15, gapH: 10, gapV: 10 },
+  A4:     { panelW: 244, panelH: 147, margin: 15, gapH: 10, gapV: 10 },
+} as const;
+
+describe('Nametag horizontal layout geometry', () => {
+  for (const fmt of ['LETTER', 'A4'] as const) {
+    const cfg = NAMETAG_H_CONFIGS[fmt];
+
+    describe(fmt, () => {
+      it('2 slots fit horizontally within portrait page width', () => {
+        const usedW = 2 * cfg.panelW + cfg.gapH + 2 * cfg.margin;
+        expect(usedW).toBeLessThanOrEqual(NAMETAG_PORTRAIT_W[fmt]);
+      });
+
+      it('4 rows fit vertically within portrait page height', () => {
+        const usedH = 4 * cfg.panelH + 3 * cfg.gapV + 2 * cfg.margin;
+        expect(usedH).toBeLessThanOrEqual(NAMETAG_PORTRAIT_H[fmt]);
+      });
+
+      it('at least 2 cols and 4 rows fit per page (8 slots = 4 pairs)', () => {
+        const cols = Math.floor((NAMETAG_PORTRAIT_W[fmt] - 2 * cfg.margin + cfg.gapH) / (cfg.panelW + cfg.gapH));
+        const rows = Math.floor((NAMETAG_PORTRAIT_H[fmt] - 2 * cfg.margin + cfg.gapV) / (cfg.panelH + cfg.gapV));
+        expect(cols).toBeGreaterThanOrEqual(2);
+        expect(rows).toBeGreaterThanOrEqual(4);
+      });
+
+      it('landscape slots are wider than tall', () => {
+        expect(cfg.panelW).toBeGreaterThan(cfg.panelH);
+      });
+
+      it('card width fits inside badge holder interior (90mm = 255pt)', () => {
+        expect(cfg.panelW).toBeLessThan(HOLDER_INTERIOR_W);
+      });
+
+      it('card height fits inside badge holder interior (55mm = 156pt)', () => {
+        expect(cfg.panelH).toBeLessThan(HOLDER_INTERIOR_H);
       });
     });
   }
