@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { CompetitionSettings, CustomEvent, DoubleCheckRound, LocaleCode, NametTagLayout, NametTagLogoMode, NametTagQrMode, PaperFormat, ScrambleDoubleCheckOverrides, SecondRoundMode } from '../types/settings';
 import type { GenerationScope } from '../lib/generationScope';
 import { LANGUAGES } from '../i18n/index';
-import { resolveDefaultPrimaryLanguage, secondaryLanguageRow } from '../lib/languageSelector';
+import { resolveDefaultPrimaryLanguage, secondaryLanguageRow, isCanadianLanguage } from '../lib/languageSelector';
 import { parseDoubleCheckOverrides } from '../lib/parseDoubleCheckOverrides';
 import { EVENT_ICONS } from '../assets/events';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
@@ -53,7 +53,9 @@ export default function SettingsPage() {
   const [secondRoundMode, setSecondRoundMode] = useState<SecondRoundMode>('prefilled');
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [logoName, setLogoName] = useState<string | null>(null);
-  const [useDefaultLogo, setUseDefaultLogo] = useState<boolean>(true);
+  const [useDefaultLogo, setUseDefaultLogo] = useState<boolean>(
+    isCanadianLanguage(i18n.resolvedLanguage ?? i18n.language),
+  );
   const [wcaLiveId, setWcaLiveId] = useState<string>('');
   const [wcaLivePersonIds, setWcaLivePersonIds] = useState<Record<number, string> | null>(null);
   const [wcaLiveFetchStatus, setWcaLiveFetchStatus] = useState<'loading' | 'found' | 'not-found'>('loading');

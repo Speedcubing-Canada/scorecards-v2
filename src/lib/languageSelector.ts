@@ -25,6 +25,19 @@ export interface SecondaryTile {
   selected: boolean;
 }
 
+const CANADIAN_LANGUAGE_CODES = ['en', 'fr'] as const;
+
+/**
+ * Returns true when the UI language is one of the Canadian-native languages
+ * (English or French). Used to decide whether the SCC logo is on by default —
+ * any language not in this allowlist defaults to no logo, so future additions
+ * don't accidentally show a Canadian org logo to non-Canadian users.
+ */
+export function isCanadianLanguage(uiLanguage: string | null | undefined): boolean {
+  const base = (uiLanguage ?? '').split('-')[0];
+  return (CANADIAN_LANGUAGE_CODES as readonly string[]).includes(base);
+}
+
 /**
  * Build the column-aligned secondary-language row. Columns mirror the primary
  * row (one language each); the column matching the selected `primary` becomes

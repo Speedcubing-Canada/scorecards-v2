@@ -2,7 +2,7 @@
   "common": {
     "back": "← Volver",
     "sign_out": "Cerrar sesión",
-    "app_title": "Generador de Hojas de Puntuación WCA",
+    "app_title": "Generador de Scorecards WCA",
     "remove": "Eliminar",
     "clear": "Limpiar",
     "upload": "Subir",
@@ -12,7 +12,7 @@
     "menu": "Menú"
   },
   "login": {
-    "subtitle": "Genere hojas de puntuación y etiquetas de nombre listas para imprimir para su competencia WCA.",
+    "subtitle": "Genere scorecards y etiquetas de nombre listas para imprimir para su competencia WCA.",
     "setup_required": "Configuración requerida:",
     "setup_env_instruction": "Configure {{key}} en su archivo .env.",
     "setup_oauth_instruction": "Cree una aplicación OAuth de WCA en",

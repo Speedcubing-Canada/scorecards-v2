@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveDefaultPrimaryLanguage, secondaryLanguageRow, type LanguageOption } from './languageSelector';
+import { resolveDefaultPrimaryLanguage, secondaryLanguageRow, isCanadianLanguage, type LanguageOption } from './languageSelector';
 
 const LANGUAGES: readonly LanguageOption[] = [
   { code: 'en', label: 'English' },
@@ -24,6 +24,24 @@ describe('resolveDefaultPrimaryLanguage', () => {
     expect(resolveDefaultPrimaryLanguage('', LANGUAGES)).toBe('en');
     expect(resolveDefaultPrimaryLanguage(undefined, LANGUAGES)).toBe('en');
     expect(resolveDefaultPrimaryLanguage(null, LANGUAGES)).toBe('en');
+  });
+});
+
+describe('isCanadianLanguage', () => {
+  it('returns true for en and fr (with and without region tags)', () => {
+    expect(isCanadianLanguage('en')).toBe(true);
+    expect(isCanadianLanguage('en-CA')).toBe(true);
+    expect(isCanadianLanguage('fr')).toBe(true);
+    expect(isCanadianLanguage('fr-CA')).toBe(true);
+  });
+
+  it('returns false for all other languages and empty values', () => {
+    expect(isCanadianLanguage('es')).toBe(false);
+    expect(isCanadianLanguage('pt')).toBe(false);
+    expect(isCanadianLanguage('pt-BR')).toBe(false);
+    expect(isCanadianLanguage(null)).toBe(false);
+    expect(isCanadianLanguage(undefined)).toBe(false);
+    expect(isCanadianLanguage('')).toBe(false);
   });
 });
 
