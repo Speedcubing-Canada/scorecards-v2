@@ -1,6 +1,6 @@
 import type { WCIF, Round, EventId, Assignment } from '../types/wcif';
 import type { CompetitionSettings, DoubleCheckRound } from '../types/settings';
-import { getStrings, getEventName, EVENT_NAMES_EN, getNametTagTitleStrings, getNametTagStrings, getShortNametTagNames, getScheduleStrings, type NametTagTitleStrings } from './i18n';
+import { getStrings, getEventName, getNametTagTitleStrings, getNametTagStrings, getShortNametTagNames, getScheduleStrings, type NametTagTitleStrings } from './i18n';
 
 export type ScorecardFormat = 'avg5' | 'bo2-avg5' | 'mo3' | 'bo1-mo3' | 'bo2';
 
