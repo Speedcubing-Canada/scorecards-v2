@@ -18,9 +18,9 @@ const BASE: CompetitionSettings = {
   language: 'en', secondaryLanguage: null, paperFormat: 'A4', secondRoundMode: 'blanks',
   logoDataUrl: null, useDefaultLogo: false, wcaLiveId: null, wcaLivePersonIds: null,
   hideWcaLiveId: false, nametagLogoMode: 'hidden', nametagQrMode: 'back-only', nametagLayout: 'vertical',
-  customEvents: [], firstTimerSlips: false,
+  customEvents: [],
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
-  generationScope: { mode: 'everything' },
+  generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false } },
 };
 const cfg = (o: Partial<CompetitionSettings> = {}): CompetitionSettings => ({ ...BASE, ...o });
 

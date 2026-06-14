@@ -228,7 +228,6 @@ export default function SettingsPage() {
       nametagQrMode,
       nametagLayout,
       customEvents: customEvents.filter(e => e.name.trim()),
-      firstTimerSlips,
       scrambleDoubleCheck,
       scrambleDoubleCheckRounds,
       scrambleDoubleCheckOverrides,

@@ -150,7 +150,7 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
     jobs.push({ kind: 'schedule',   filename: `${id}_schedule.pdf`, label: 'Schedule Tracker' });
   if (parsed.nametags.length > 0)
     jobs.push({ kind: 'nametags',   filename: `${id}_nametags.pdf`, label: 'Name Tags' });
-  if (settings.firstTimerSlips && parsed.firstTimers.length > 0)
+  if (parsed.firstTimers.length > 0)
     jobs.push({ kind: 'first-timers', filename: `${id}_first_timers.pdf`, label: 'First-Timer Slips' });
   for (const custom of settings.customEvents ?? []) {
     if (!custom.name.trim()) continue;

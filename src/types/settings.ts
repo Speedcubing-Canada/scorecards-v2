@@ -51,9 +51,6 @@ export interface CompetitionSettings {
   nametagQrMode: NametTagQrMode;
   nametagLayout: NametTagLayout;
   customEvents: CustomEvent[];
-  // Print a confirmation slip for each newcomer (competitor with no WCA ID).
-  // Off by default — most delegates don't use it.
-  firstTimerSlips: boolean;
   // Scramble double-checking (optional). When enabled, a second scrambler-signature
   // column is added to scorecards whose round is in `scrambleDoubleCheckRounds`, or
   // whose competitor+event appears in `scrambleDoubleCheckOverrides`.

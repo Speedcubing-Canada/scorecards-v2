@@ -28,6 +28,10 @@ function loadSettings(raw: string | null): CompetitionSettings | null {
   else if (s.language === 'bilingual-en') { s.language = 'en'; s.secondaryLanguage = 'fr'; }
   else if (s.secondaryLanguage === undefined) { s.secondaryLanguage = null; }
   if (s.generationScope === undefined) s.generationScope = { mode: 'everything' };
+  const gs = s.generationScope as Record<string, unknown>;
+  if (gs.documents === undefined) gs.documents = {
+    scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false,
+  };
   if (s.hideWcaLiveId === undefined) s.hideWcaLiveId = false;
   return s as unknown as CompetitionSettings;
 }
@@ -108,7 +112,7 @@ export default function GeneratePage() {
       ].filter(r => r.length > 0).length
       + (effectiveParsed.scheduleDays.length > 0 ? 1 : 0)
       + (effectiveParsed.nametags.length > 0 ? 1 : 0)
-      + (settings.firstTimerSlips && effectiveParsed.firstTimers.length > 0 ? 1 : 0)
+      + (effectiveParsed.firstTimers.length > 0 ? 1 : 0)
       + (settings.customEvents?.filter(c => c.name.trim()).length ?? 0)
     : 0;
   const filename       = `${settings.competitionId}_scorecards.zip`;

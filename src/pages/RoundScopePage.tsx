@@ -56,16 +56,16 @@ export default function RoundScopePage() {
           logoDataUrl: null, useDefaultLogo: true,
           wcaLiveId: null, wcaLivePersonIds: null, hideWcaLiveId: false,
           nametagLogoMode: 'with-name', nametagQrMode: 'back-only', nametagLayout: 'vertical',
-          customEvents: [], firstTimerSlips: false,
+          customEvents: [],
           scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
-          generationScope: { mode: 'everything' },
+          generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false } },
         };
         const result = parseWCIF(wcif, detectionSettings);
         if (cancelled) return;
 
         // Pre-competition (only Round 1 assigned): nothing to choose — go straight to Settings.
         if (result.laterRoundsWithAssignments.length === 0) {
-          persistScope({ mode: 'everything' }, hasUnassignedIntermediate(result));
+          persistScope({ mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false } }, hasUnassignedIntermediate(result));
           navigate('/settings', { replace: true });
           return;
         }
@@ -120,6 +120,7 @@ export default function RoundScopePage() {
 
   function handleContinue() {
     if (!parsed) return;
+    const documents = { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false };
     const scope: GenerationScope = scopeMode === 'selected'
       ? {
           mode: 'selected',
@@ -127,8 +128,9 @@ export default function RoundScopePage() {
             const [eventId, r] = k.split('|');
             return { eventId, roundNum: Number(r) };
           }),
+          documents,
         }
-      : { mode: scopeMode };
+      : { mode: scopeMode, documents };
     const showSecondRoundMode = hasUnassignedIntermediate(filterParsedByScope(parsed, scope));
     persistScope(scope, showSecondRoundMode);
     navigate('/settings');
