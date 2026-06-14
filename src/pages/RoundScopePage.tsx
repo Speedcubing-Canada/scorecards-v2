@@ -7,7 +7,7 @@ import { getCachedWcif, setCachedWcif } from '../lib/wcifCache';
 import { parseWCIF, type ParsedWCIF } from '../lib/wcif-parser';
 import {
   availableRounds, latestAssignedRound, filterParsedByScope, hasUnassignedIntermediate,
-  type GenerationScope,
+  type GenerationScope, type DocumentSelection,
 } from '../lib/generationScope';
 import type { CompetitionSettings, LocaleCode } from '../types/settings';
 import Header from '../components/Header';
@@ -34,9 +34,17 @@ export default function RoundScopePage() {
   const [status, setStatus] = useState<Status>('loading');
   const [statusMsg, setStatusMsg] = useState('');
   const [parsed, setParsed] = useState<ParsedWCIF | null>(null);
+  const [isMidComp, setIsMidComp] = useState(false);
+
+  // Round-scope state (mid-competition only)
   const [scopeMode, setScopeMode] = useState<'everything' | 'latest' | 'selected'>('latest');
-  // null ⇒ not customised yet; falls back to the latest round.
   const [selectedKeys, setSelectedKeys] = useState<Set<string> | null>(null);
+
+  // Document-type state — pre-comp defaults; overridden to mid-comp defaults once data loads
+  const [docScorecards, setDocScorecards] = useState(true);
+  const [docSchedule, setDocSchedule]     = useState(true);
+  const [docNametags, setDocNametags]     = useState(true);
+  const [docFirstTimers, setDocFirstTimers] = useState(false);
 
   useEffect(() => {
     if (!competitionId || !token) return;
@@ -63,11 +71,13 @@ export default function RoundScopePage() {
         const result = parseWCIF(wcif, detectionSettings);
         if (cancelled) return;
 
-        // Pre-competition (only Round 1 assigned): nothing to choose — go straight to Settings.
-        if (result.laterRoundsWithAssignments.length === 0) {
-          persistScope({ mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false } }, hasUnassignedIntermediate(result));
-          navigate('/settings', { replace: true });
-          return;
+        const midComp = result.laterRoundsWithAssignments.length > 0;
+        setIsMidComp(midComp);
+
+        if (midComp) {
+          // Mid-competition default: scorecards only
+          setDocSchedule(false);
+          setDocNametags(false);
         }
 
         setParsed(result);
@@ -120,23 +130,42 @@ export default function RoundScopePage() {
 
   function handleContinue() {
     if (!parsed) return;
-    const documents = { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false };
-    const scope: GenerationScope = scopeMode === 'selected'
-      ? {
-          mode: 'selected',
-          rounds: [...effectiveSelected].map(k => {
-            const [eventId, r] = k.split('|');
-            return { eventId, roundNum: Number(r) };
-          }),
-          documents,
-        }
-      : { mode: scopeMode, documents };
+
+    const documents: DocumentSelection = {
+      scorecards: docScorecards,
+      scheduleTracker: docSchedule,
+      nametags: docNametags,
+      firstTimerSlips: docFirstTimers,
+    };
+
+    const scope: GenerationScope = isMidComp
+      ? (scopeMode === 'selected'
+          ? {
+              mode: 'selected',
+              rounds: [...effectiveSelected].map(k => {
+                const [eventId, r] = k.split('|');
+                return { eventId, roundNum: Number(r) };
+              }),
+              documents,
+            }
+          : { mode: scopeMode, documents })
+      : { mode: 'everything', documents };
+
     const showSecondRoundMode = hasUnassignedIntermediate(filterParsedByScope(parsed, scope));
     persistScope(scope, showSecondRoundMode);
     navigate('/settings');
   }
 
-  const continueDisabled = scopeMode === 'selected' && effectiveSelected.size === 0;
+  const noDocsSelected = !docScorecards && !docSchedule && !docNametags && !docFirstTimers;
+  const continueDisabled =
+    (isMidComp && scopeMode === 'selected' && effectiveSelected.size === 0) || noDocsSelected;
+
+  const docOptions: { key: keyof DocumentSelection; label: string; checked: boolean; set: (v: boolean) => void }[] = [
+    { key: 'scorecards',      label: t('scope.doc_scorecards'),  checked: docScorecards,  set: setDocScorecards },
+    { key: 'scheduleTracker', label: t('scope.doc_schedule'),    checked: docSchedule,    set: setDocSchedule },
+    { key: 'nametags',        label: t('scope.doc_nametags'),    checked: docNametags,    set: setDocNametags },
+    { key: 'firstTimerSlips', label: t('scope.doc_first_timers'),checked: docFirstTimers, set: setDocFirstTimers },
+  ];
 
   return (
     <div style={s.page}>
@@ -161,41 +190,61 @@ export default function RoundScopePage() {
 
         {status === 'ready' && (
           <>
-            <p style={s.intro}>{t('scope.intro')}</p>
+            <p style={s.intro}>{isMidComp ? t('scope.intro') : t('scope.intro_pre')}</p>
 
+            {isMidComp && (
+              <>
+                <h3 style={s.sectionHeading}>{t('scope.rounds_heading')}</h3>
+                <div style={s.optionGroup}>
+                  {(['latest', 'everything', 'selected'] as const).map(mode => (
+                    <label key={mode} style={{ ...s.optionCard, ...(scopeMode === mode ? s.optionCardActive : {}) }}>
+                      <input
+                        type="radio"
+                        name="scope"
+                        checked={scopeMode === mode}
+                        onChange={() => setScopeMode(mode)}
+                        style={s.radio}
+                      />
+                      <div>
+                        <div style={s.optionLabel}>{t(`scope.${mode}.label`)}</div>
+                        <div style={s.optionDesc}>{t(`scope.${mode}.desc`)}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                {scopeMode === 'selected' && (
+                  <div style={{ ...s.optionGroup, marginTop: 10 }}>
+                    {roundOptions.map(o => (
+                      <label key={o.key} style={{ ...s.optionCard, ...(effectiveSelected.has(o.key) ? s.optionCardActive : {}) }}>
+                        <input
+                          type="checkbox"
+                          checked={effectiveSelected.has(o.key)}
+                          onChange={() => toggleRound(o.key)}
+                          style={s.radio}
+                        />
+                        <div style={s.optionLabel}>{o.label}</div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            <h3 style={{ ...s.sectionHeading, marginTop: isMidComp ? 24 : 0 }}>{t('scope.docs_title')}</h3>
             <div style={s.optionGroup}>
-              {(['latest', 'everything', 'selected'] as const).map(mode => (
-                <label key={mode} style={{ ...s.optionCard, ...(scopeMode === mode ? s.optionCardActive : {}) }}>
+              {docOptions.map(o => (
+                <label key={o.key} style={{ ...s.optionCard, ...(o.checked ? s.optionCardActive : {}) }}>
                   <input
-                    type="radio"
-                    name="scope"
-                    checked={scopeMode === mode}
-                    onChange={() => setScopeMode(mode)}
+                    type="checkbox"
+                    checked={o.checked}
+                    onChange={e => o.set(e.target.checked)}
                     style={s.radio}
                   />
-                  <div>
-                    <div style={s.optionLabel}>{t(`scope.${mode}.label`)}</div>
-                    <div style={s.optionDesc}>{t(`scope.${mode}.desc`)}</div>
-                  </div>
+                  <div style={s.optionLabel}>{o.label}</div>
                 </label>
               ))}
             </div>
-
-            {scopeMode === 'selected' && (
-              <div style={{ ...s.optionGroup, marginTop: 10 }}>
-                {roundOptions.map(o => (
-                  <label key={o.key} style={{ ...s.optionCard, ...(effectiveSelected.has(o.key) ? s.optionCardActive : {}) }}>
-                    <input
-                      type="checkbox"
-                      checked={effectiveSelected.has(o.key)}
-                      onChange={() => toggleRound(o.key)}
-                      style={s.radio}
-                    />
-                    <div style={s.optionLabel}>{o.label}</div>
-                  </label>
-                ))}
-              </div>
-            )}
 
             <button
               style={{ ...s.continueBtn, ...(continueDisabled ? s.continueBtnDisabled : {}) }}
@@ -220,6 +269,7 @@ const s: Record<string, React.CSSProperties> = {
     borderRadius: 6, padding: '4px 12px', fontSize: 13, fontWeight: 600, marginBottom: 8,
   },
   pageTitle: { margin: '0 0 8px', fontSize: 22, fontWeight: 700, color: 'var(--text)' },
+  sectionHeading: { margin: '0 0 12px', fontSize: 15, fontWeight: 700, color: 'var(--text)' },
   intro: { margin: '0 0 20px', fontSize: 14, color: 'var(--text-muted)' },
   statusBox: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
