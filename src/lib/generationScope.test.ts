@@ -94,42 +94,109 @@ describe('hasUnassignedIntermediate', () => {
 });
 
 describe('filterParsedByScope', () => {
+  const allDocs = { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: true };
   const base = mkParsed({
     firstRound: [sc('333', 1, 'A'), sc('333', 1, 'B')],
     intermediate: [sc('333', 2, 'A'), cover('333', 2)],
     finals: [sc('333', 3)],
     nametags: [{ name: 'x' } as never],
+    firstTimers: [{ name: 'y' } as never],
     extras: [sc('333', 1)],
     scheduleDays: [{ dayLabel: 'Day 1', stages: [] }],
     laterRoundsWithAssignments: [{ eventId: '333', roundNum: 2 }],
   });
 
-  it('everything → returns the input unchanged', () => {
-    expect(filterParsedByScope(base, { mode: 'everything' })).toBe(base);
+  it('everything with all docs → returns equivalent data', () => {
+    const out = filterParsedByScope(base, { mode: 'everything', documents: allDocs });
+    expect(out).toEqual(base);
   });
 
-  it('latest → keeps only the highest assigned round and clears extras/nametags/schedule', () => {
-    const out = filterParsedByScope(base, { mode: 'latest' });
+  it('everything with nametags:false → clears nametags', () => {
+    const out = filterParsedByScope(base, {
+      mode: 'everything',
+      documents: { ...allDocs, nametags: false },
+    });
+    expect(out.nametags).toHaveLength(0);
+    expect(out.scheduleDays).toHaveLength(1);
+  });
+
+  it('everything with scheduleTracker:false → clears scheduleDays', () => {
+    const out = filterParsedByScope(base, {
+      mode: 'everything',
+      documents: { ...allDocs, scheduleTracker: false },
+    });
+    expect(out.scheduleDays).toHaveLength(0);
+  });
+
+  it('everything with firstTimerSlips:false → clears firstTimers', () => {
+    const out = filterParsedByScope(base, {
+      mode: 'everything',
+      documents: { ...allDocs, firstTimerSlips: false },
+    });
+    expect(out.firstTimers).toHaveLength(0);
+  });
+
+  it('everything with scorecards:false → clears all scorecard buckets and extras', () => {
+    const out = filterParsedByScope(base, {
+      mode: 'everything',
+      documents: { ...allDocs, scorecards: false },
+    });
+    expect(out.firstRound).toHaveLength(0);
+    expect(out.intermediate).toHaveLength(0);
+    expect(out.finals).toHaveLength(0);
+    expect(out.extras).toHaveLength(0);
+    expect(out.nametags).toHaveLength(1);
+  });
+
+  it('latest + all docs → keeps only latest assigned round, keeps nametags/schedule', () => {
+    const out = filterParsedByScope(base, { mode: 'latest', documents: allDocs });
     expect(realScs(out.firstRound)).toHaveLength(0);
     expect(realScs(out.intermediate).map(s => s.name).sort()).toEqual(['A']);
     expect(realScs(out.finals)).toHaveLength(0);
     expect(out.extras).toHaveLength(0);
-    expect(out.nametags).toHaveLength(0);
-    expect(out.scheduleDays).toHaveLength(0);
+    expect(out.nametags).toHaveLength(1);
+    expect(out.scheduleDays).toHaveLength(1);
+    expect(out.firstTimers).toHaveLength(1);
   });
 
-  it('selected → keeps only the chosen event+round pairs', () => {
+  it('latest + nametags:false → keeps latest round scorecards, clears nametags', () => {
+    const out = filterParsedByScope(base, {
+      mode: 'latest',
+      documents: { ...allDocs, nametags: false },
+    });
+    expect(realScs(out.intermediate)).toHaveLength(1);
+    expect(out.nametags).toHaveLength(0);
+    expect(out.scheduleDays).toHaveLength(1);
+  });
+
+  it('latest + only schedule → clears scorecards but keeps schedule', () => {
+    const out = filterParsedByScope(base, {
+      mode: 'latest',
+      documents: { scorecards: false, scheduleTracker: true, nametags: false, firstTimerSlips: false },
+    });
+    expect(out.firstRound).toHaveLength(0);
+    expect(out.intermediate).toHaveLength(0);
+    expect(out.scheduleDays).toHaveLength(1);
+  });
+
+  it('selected + all docs → keeps only the chosen event+round pairs', () => {
     const out = filterParsedByScope(base, {
       mode: 'selected',
       rounds: [{ eventId: '333', roundNum: 1 }, { eventId: '333', roundNum: 3 }],
+      documents: allDocs,
     });
     expect(realScs(out.firstRound).map(s => s.name).sort()).toEqual(['A', 'B']);
     expect(realScs(out.intermediate)).toHaveLength(0);
     expect(realScs(out.finals)).toHaveLength(1);
+    expect(out.nametags).toHaveLength(1);
   });
 
   it('pads each non-empty kept bucket to a multiple of 4', () => {
-    const out = filterParsedByScope(base, { mode: 'selected', rounds: [{ eventId: '333', roundNum: 1 }] });
+    const out = filterParsedByScope(base, {
+      mode: 'selected',
+      rounds: [{ eventId: '333', roundNum: 1 }],
+      documents: allDocs,
+    });
     expect(out.firstRound.length % 4).toBe(0);
     expect(out.firstRound.length).toBeGreaterThan(0);
   });

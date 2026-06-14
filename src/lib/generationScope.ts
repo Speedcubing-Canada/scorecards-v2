@@ -1,12 +1,18 @@
 import type { ParsedWCIF, ScorecardData } from './wcif-parser';
 import { finalizeEntries } from './wcif-parser';
 
-// What the user chose to generate. Only relevant when the WCIF contains real group
-// assignments for rounds 2+ (mid-competition). Otherwise generation is always 'everything'.
+export interface DocumentSelection {
+  scorecards: boolean;
+  scheduleTracker: boolean;
+  nametags: boolean;
+  firstTimerSlips: boolean;
+}
+
+// What the user chose to generate.
 export type GenerationScope =
-  | { mode: 'everything' }
-  | { mode: 'latest' }
-  | { mode: 'selected'; rounds: RoundRef[] };
+  | { mode: 'everything'; documents: DocumentSelection }
+  | { mode: 'latest'; documents: DocumentSelection }
+  | { mode: 'selected'; rounds: RoundRef[]; documents: DocumentSelection };
 
 export interface RoundRef {
   eventId: string;
@@ -55,34 +61,44 @@ export function hasUnassignedIntermediate(parsed: ParsedWCIF): boolean {
   );
 }
 
-// Produce a ParsedWCIF restricted to the chosen scope. Scoped modes ('latest'/'selected')
-// emit scorecard PDFs only — nametags, first-timer slips, schedule tracker, and extras are
-// pre-competition artifacts and are cleared. Each kept bucket is re-finalized (sorted + padded + quad-
-// reordered) so the cut-and-stack print order stays valid after filtering.
+// Produce a ParsedWCIF restricted to the chosen scope.
+// Round filtering (latest/selected) applies to scorecard buckets only.
+// Document flags control which artifact types survive, regardless of mode.
 export function filterParsedByScope(parsed: ParsedWCIF, scope: GenerationScope): ParsedWCIF {
-  if (scope.mode === 'everything') return parsed;
-
-  let keep: (e: ScorecardData) => boolean;
-  if (scope.mode === 'latest') {
-    const latest = latestAssignedRound(parsed);
-    keep = (e) => e.roundNum === latest;
-  } else {
-    const set = new Set(scope.rounds.map((r) => `${r.eventId}-${r.roundNum}`));
-    keep = (e) => set.has(`${e.eventId}-${e.roundNum}`);
+  // Step 1: apply round-level filtering for scorecard buckets
+  let result = parsed;
+  if (scope.mode !== 'everything') {
+    let keep: (e: ScorecardData) => boolean;
+    if (scope.mode === 'latest') {
+      const latest = latestAssignedRound(parsed);
+      keep = (e) => e.roundNum === latest;
+    } else {
+      const set = new Set(scope.rounds.map((r) => `${r.eventId}-${r.roundNum}`));
+      keep = (e) => set.has(`${e.eventId}-${e.roundNum}`);
+    }
+    const filterBucket = (entries: ScorecardData[]) =>
+      finalizeEntries(realEntries(entries).filter(keep));
+    result = {
+      ...parsed,
+      firstRound: filterBucket(parsed.firstRound),
+      intermediate: filterBucket(parsed.intermediate),
+      semis: filterBucket(parsed.semis),
+      finals: filterBucket(parsed.finals),
+      extras: [],
+    };
   }
 
-  const filterBucket = (entries: ScorecardData[]) =>
-    finalizeEntries(realEntries(entries).filter(keep));
-
+  // Step 2: apply document-type flags
+  const { documents } = scope;
   return {
-    ...parsed,
-    firstRound: filterBucket(parsed.firstRound),
-    intermediate: filterBucket(parsed.intermediate),
-    semis: filterBucket(parsed.semis),
-    finals: filterBucket(parsed.finals),
-    extras: [],
-    nametags: [],
-    firstTimers: [],
-    scheduleDays: [],
+    ...result,
+    firstRound:   documents.scorecards      ? result.firstRound   : [],
+    intermediate: documents.scorecards      ? result.intermediate : [],
+    semis:        documents.scorecards      ? result.semis        : [],
+    finals:       documents.scorecards      ? result.finals       : [],
+    extras:       documents.scorecards      ? result.extras       : [],
+    nametags:     documents.nametags        ? result.nametags     : [],
+    scheduleDays: documents.scheduleTracker ? result.scheduleDays : [],
+    firstTimers:  documents.firstTimerSlips ? result.firstTimers  : [],
   };
 }
