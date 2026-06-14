@@ -144,6 +144,13 @@
   "scope": {
     "heading": "O que gerar",
     "intro": "Esta competição já tem grupos para uma rodada após a Rodada 1. Escolha o que imprimir — você pode ajustar o resto na próxima tela.",
+    "intro_pre": "Escolha quais documentos incluir. Você pode configurar as opções na próxima tela.",
+    "rounds_heading": "Quais rodadas?",
+    "docs_title": "Tipos de documentos",
+    "doc_scorecards": "Fichas de pontuação",
+    "doc_schedule": "Rastreamento de horário",
+    "doc_nametags": "Etiquetas de nome",
+    "doc_first_timers": "Fichas de estreante",
     "checking": "Verificando a competição…",
     "continue": "Continuar →",
     "latest": {

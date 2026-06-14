@@ -144,6 +144,13 @@
   "scope": {
     "heading": "What to generate",
     "intro": "This competition already has groups for a round after Round 1. Choose what to print — you can adjust everything else on the next screen.",
+    "intro_pre": "Choose which documents to include. You can configure all options on the next screen.",
+    "rounds_heading": "Which rounds?",
+    "docs_title": "Document types",
+    "doc_scorecards": "Scorecards",
+    "doc_schedule": "Schedule Tracker",
+    "doc_nametags": "Nametags",
+    "doc_first_timers": "First-Timer Slips",
     "checking": "Checking the competition…",
     "continue": "Continue →",
     "latest": {

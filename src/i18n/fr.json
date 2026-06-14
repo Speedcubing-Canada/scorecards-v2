@@ -144,6 +144,13 @@
   "scope": {
     "heading": "Que générer",
     "intro": "Cette compétition a déjà les groupes d’un tour après le tour 1. Choisissez quoi imprimer — vous pourrez régler le reste à l’écran suivant.",
+    "intro_pre": "Choisissez les documents à inclure. Vous pourrez configurer les options sur l'écran suivant.",
+    "rounds_heading": "Quelles rondes ?",
+    "docs_title": "Types de documents",
+    "doc_scorecards": "Feuilles de compétition",
+    "doc_schedule": "Suivi de l'horaire",
+    "doc_nametags": "Étiquettes nominatives",
+    "doc_first_timers": "Fiches de première participation",
     "checking": "Vérification de la compétition…",
     "continue": "Continuer →",
     "latest": {
