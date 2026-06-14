@@ -952,6 +952,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     }
   }
 
+  const schedStrings = getScheduleStrings(settings.language);
   const buildRows = (activities: RoomActivity[]): ScheduleRow[] => {
     const rows: ScheduleRow[] = [];
     const sorted = [...activities].sort((a, b) => a.startTime.localeCompare(b.startTime));
@@ -964,9 +965,11 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       if (!isFinite(roundNum)) continue;
       const totalRounds = allEventRoundCount[eid];
       if (totalRounds === undefined) continue;
-      const eventName = EVENT_NAMES_EN[eid] ?? eid;
+      const eventName = getEventName(eid, settings.language);
       const isLast = roundNum === totalRounds;
-      const roundLabel = totalRounds === 1 || isLast ? 'Final' : `Round ${roundNum}`;
+      const roundLabel = totalRounds === 1 || isLast
+        ? schedStrings.finalLabel
+        : schedStrings.roundLabel(roundNum);
       rows.push({
         startTime: formatLocalTime(activity.startTime),
         endTime: formatLocalTime(activity.endTime),

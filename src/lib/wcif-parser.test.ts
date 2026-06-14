@@ -1050,11 +1050,26 @@ describe('schedule tracker', () => {
     expect(labels[0]).toContain('—');
   });
 
-  it('eventRound uses English event names regardless of language setting', () => {
+  it('eventRound uses the selected language for event names and round labels', () => {
     const e = evt('333', [rSpec('a')]);
     const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
     const result = parseWCIF(mkWCIF([e], [r]), cfg({ language: 'fr' }));
-    expect(result.scheduleDays[0]?.stages[0]?.rows[0]?.eventRound).toContain('3x3x3 Cube');
+    expect(result.scheduleDays[0]?.stages[0]?.rows[0]?.eventRound).toContain('Cube 3x3x3');
+    expect(result.scheduleDays[0]?.stages[0]?.rows[0]?.eventRound).toContain('Final');
+  });
+
+  it('French: eventRound uses "Tour N" for intermediate and "Final" for last', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      act('333', 2, [ch(101, '333', 2, 1, '2024-01-01T11:00:00Z')]),
+      act('333', 3, [ch(102, '333', 3, 1, '2024-01-01T14:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg({ language: 'fr' }));
+    const rows = result.scheduleDays[0]?.stages[0]?.rows ?? [];
+    expect(rows[0]?.eventRound).toBe('Cube 3x3x3 Tour 1');
+    expect(rows[1]?.eventRound).toBe('Cube 3x3x3 Tour 2');
+    expect(rows[2]?.eventRound).toBe('Cube 3x3x3 Final');
   });
 
   it('single-round event uses "Final" label in eventRound', () => {
