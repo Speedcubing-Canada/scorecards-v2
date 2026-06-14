@@ -1,6 +1,6 @@
 import type { WCIF, Round, EventId, Assignment } from '../types/wcif';
 import type { CompetitionSettings, DoubleCheckRound } from '../types/settings';
-import { getStrings, getEventName, EVENT_NAMES_EN, getNametTagTitleStrings, getNametTagStrings, getShortNametTagNames, type NametTagTitleStrings } from './i18n';
+import { getStrings, getEventName, EVENT_NAMES_EN, getNametTagTitleStrings, getNametTagStrings, getShortNametTagNames, getScheduleStrings, type NametTagTitleStrings } from './i18n';
 
 export type ScorecardFormat = 'avg5' | 'bo2-avg5' | 'mo3' | 'bo1-mo3' | 'bo2';
 
@@ -921,12 +921,15 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
   const formatDayLabel = (localDate: string): string => {
     const dayNum = dateToDay[localDate] ?? 1;
+    const locale = settings.language === 'pt' ? 'pt-BR' : settings.language;
+    const prefix = getScheduleStrings(settings.language).dayPrefix;
     try {
-      const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'long' })
+      const weekday = new Intl.DateTimeFormat(locale, { weekday: 'long' })
         .format(new Date(`${localDate}T12:00:00Z`));
-      return `Day ${dayNum} — ${weekday}`;
+      const capitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+      return `${prefix} ${dayNum} — ${capitalized}`;
     } catch {
-      return `Day ${dayNum}`;
+      return `${prefix} ${dayNum}`;
     }
   };
 

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { CompetitionSettings, CustomEvent, DoubleCheckRound, LocaleCode, NametTagLayout, NametTagLogoMode, NametTagQrMode, PaperFormat, ScrambleDoubleCheckOverrides, SecondRoundMode } from '../types/settings';
-import type { GenerationScope } from '../lib/generationScope';
+import type { GenerationScope, DocumentSelection } from '../lib/generationScope';
 import { LANGUAGES } from '../i18n/index';
 import { resolveDefaultPrimaryLanguage, secondaryLanguageRow, isCanadianLanguage } from '../lib/languageSelector';
 import { parseDoubleCheckOverrides } from '../lib/parseDoubleCheckOverrides';
@@ -31,11 +31,15 @@ export default function SettingsPage() {
   // Decided on the scope step. When generating scorecards only (scope ≠ everything), the
   // Settings page shows just what's relevant to scorecards.
   const scopeRaw = sessionStorage.getItem('generation_scope');
-  const generationScope: GenerationScope = scopeRaw ? JSON.parse(scopeRaw) : { mode: 'everything' };
+  const generationScope: GenerationScope = scopeRaw
+    ? JSON.parse(scopeRaw)
+    : { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false } };
   const detectionRaw = sessionStorage.getItem('generation_detection');
   const detection = detectionRaw ? JSON.parse(detectionRaw) as { showSecondRoundMode?: boolean } : null;
   const everything = generationScope.mode === 'everything';
-  const showNametags = (generationScope as { documents?: { nametags?: boolean } }).documents?.nametags !== false;
+  const docs = (generationScope as { documents?: DocumentSelection }).documents;
+  const showScorecards = docs?.scorecards !== false;
+  const showNametags   = docs?.nametags   !== false;
   // Round 2 prefilled/blanks only matters when an unassigned Round 2 will actually be
   // generated. Absent detection (step bypassed) ⇒ show it, preserving prior behaviour.
   const showSecondRoundMode = detection?.showSecondRoundMode !== false;
@@ -318,7 +322,7 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {showSecondRoundMode && (
+        {showScorecards && showSecondRoundMode && (
         <section style={s.section}>
           <h3 style={s.sectionTitle}>{t('settings.subsequent_rounds.title')}</h3>
           <div style={s.optionGroup}>
@@ -342,6 +346,7 @@ export default function SettingsPage() {
         </section>
         )}
 
+        {showScorecards && (
         <section style={s.section}>
           <h3 style={s.sectionTitle}>
             {t('settings.double_check.title')}{' '}
@@ -410,7 +415,9 @@ export default function SettingsPage() {
             </div>
           )}
         </section>
+        )}
 
+        {showScorecards && (
         <section style={s.section}>
           <h3 style={s.sectionTitle}>
             {t('settings.wca_live.title')}{' '}
@@ -449,6 +456,7 @@ export default function SettingsPage() {
             </div>
           </label>
         </section>
+        )}
 
         <section style={s.section}>
           <h3 style={s.sectionTitle}>
@@ -579,7 +587,7 @@ export default function SettingsPage() {
         </section>
         )}
 
-        {everything && (
+        {everything && showScorecards && (
         <section style={s.section}>
           <button style={s.advancedToggle} onClick={() => setAdvancedOpen(o => !o)}>
             <span style={s.advancedToggleArrow}>{advancedOpen ? '▾' : '▸'}</span>

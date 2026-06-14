@@ -23,6 +23,7 @@ export interface ScheduleStrings {
   actualStart: string;
   actualEnd: string;
   numberOfCompetitors: string;
+  dayPrefix: string;
 }
 
 // ── Nametag duty strings ──────────────────────────────────────────────────────
@@ -308,6 +309,7 @@ const SCHEDULE_EN: ScheduleStrings = {
   actualStart: 'Actual\nStart Time',
   actualEnd: 'Actual\nEnd Time',
   numberOfCompetitors: 'Number of\nCompetitors',
+  dayPrefix: 'Day',
 };
 
 const SCHEDULE_FR: ScheduleStrings = {
@@ -318,6 +320,7 @@ const SCHEDULE_FR: ScheduleStrings = {
   actualStart: 'Heure de\ndébut réelle',
   actualEnd: 'Heure de\nfin réelle',
   numberOfCompetitors: 'Nombre de\ncompétiteurs',
+  dayPrefix: 'Jour',
 };
 
 const SCHEDULE_ES: ScheduleStrings = {
@@ -328,6 +331,7 @@ const SCHEDULE_ES: ScheduleStrings = {
   actualStart: 'Hora de\ninicio real',
   actualEnd: 'Hora de\nfin real',
   numberOfCompetitors: 'Número de\ncompetidores',
+  dayPrefix: 'Día',
 };
 
 const SCHEDULE_PT: ScheduleStrings = {
@@ -338,6 +342,7 @@ const SCHEDULE_PT: ScheduleStrings = {
   actualStart: 'Horário de\nInício Real',
   actualEnd: 'Horário de\nTérmino Real',
   numberOfCompetitors: 'Número de\nCompetidores',
+  dayPrefix: 'Dia',
 };
 
 export function getScheduleStrings(language: LocaleCode): ScheduleStrings {
