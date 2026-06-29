@@ -146,6 +146,10 @@ export interface ParsedWCIF {
   extras: ScorecardData[];
   // Schedule tracker data in chronological (day-primary) order.
   scheduleDays: ScheduleDay[];
+  // True once groups have been generated for this competition (the schedule has group
+  // child-activities). False for a fresh pre-competition WCIF, which is why scorecard
+  // counts read 0 — drives the "no groups assigned yet" warning.
+  hasGroups: boolean;
   // Rounds (>= 2) that have real competitor group assignments in the WCIF — i.e. groups
   // were generated mid-competition. Empty for a standard pre-competition WCIF. Drives the
   // generation-scope prompt on GeneratePage. Sorted by event order then round number.
@@ -1015,5 +1019,6 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     extras: extrasEntries,
     scheduleDays,
     laterRoundsWithAssignments,
+    hasGroups: Object.keys(numGroups).length > 0,
   };
 }

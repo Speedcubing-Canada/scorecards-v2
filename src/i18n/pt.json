@@ -136,7 +136,8 @@
       "scorecards": "Folhas de pontuação",
       "cover_cards": "Folhas de capa",
       "pdfs_in_zip": "PDFs no ZIP",
-      "paper": "Papel"
+      "paper": "Papel",
+      "total_pages": "Páginas"
     },
     "download_button": "⬇ Baixar {{filename}}",
     "building_button": "Criando ZIP…"
@@ -165,5 +166,18 @@
       "label": "Selecionar rodadas",
       "desc": "Escolha exatamente quais rodadas de cada evento imprimir."
     }
+  },
+  "warnings": {
+    "no_groups": "Ainda não foram atribuídos grupos para esta competição, por isso as contagens de folhas mostram 0. Atribua primeiro os grupos (no Groupifier ou no site da WCA) e depois volte aqui. Entretanto, pode gerar o acompanhamento do horário e os crachás."
+  },
+  "about": {
+    "trigger": "O que é isto?",
+    "title": "Sobre esta ferramenta",
+    "intro": "Esta ferramenta gera PDFs prontos para impressão de uma competição WCA: folhas de pontuação, crachás, acompanhamento do horário e fichas para estreantes (opcionais). Tudo é formatado para imprimir e recortar.",
+    "wcif_title": "O que é o WCIF?",
+    "wcif_body": "Os dados de cada competição WCA (provas, horário e competidores inscritos) estão no site da WCA num formato chamado WCIF. As atribuições de grupos são adicionadas antes, normalmente com uma ferramenta como o Groupifier.",
+    "workflow_title": "Onde se encaixa",
+    "workflow_body": "Este é o último passo antes de imprimir. Depois de atribuídos os grupos, lê o WCIF da competição e transforma-o nos documentos que imprime e recorta para o dia da competição.",
+    "close": "Entendido"
   }
 }

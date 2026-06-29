@@ -66,10 +66,10 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
 
 - **LoginPage** — initiates WCA OAuth PKCE; stores the code verifier in `sessionStorage`.
 - **AuthCallbackPage** — exchanges the code for a token; stores the token in `sessionStorage`.
-- **CompetitionPickerPage** — lists competitions managed by the logged-in user (WCA API `?managed_by_me=true`).
-- **RoundScopePage** — fetches the WCIF up front and detects whether any round ≥ 2 already has real group assignments (groups generated mid-competition). If not (the normal pre-competition case), it auto-advances straight to Settings. If so, it asks **what to generate** — latest round only (default) / everything / select specific event+rounds — and stores the choice. The WCIF is cached in memory (`lib/wcifCache.ts`) so GeneratePage reuses it without a second fetch.
-- **SettingsPage** — collects paper format, language, logo, etc.; auto-detects the WCA Live competition ID and per-competitor person IDs from the WCA Live API; stores settings in `sessionStorage`. It adapts to the scope: when generating scorecards only (scope ≠ everything) it shows just scorecard-relevant options and hides the name-tag and custom-event sections; it also hides the Round 2 prefilled/blanks control once Round 2 has real groups (so the choice no longer matters).
-- **GeneratePage** — gets the WCIF (cache or fetch), parses it, applies the chosen scope, and renders the download button. PDF rendering runs inside a Web Worker to keep the UI responsive.
+- **CompetitionPickerPage** — lists competitions managed by the logged-in user (WCA API `?managed_by_me=true`). An **"About this tool"** info button (ℹ) sits next to the heading; the same explainer is reachable from the login page (see below).
+- **RoundScopePage** — fetches the WCIF up front and detects whether any round ≥ 2 already has real group assignments (groups generated mid-competition). If not (the normal pre-competition case), it auto-advances straight to Settings. If so, it asks **what to generate** — latest round only (default) / everything / select specific event+rounds — and stores the choice. The WCIF is cached in memory (`lib/wcifCache.ts`) so GeneratePage reuses it without a second fetch. It also records whether groups have been generated yet (`parsed.hasGroups`) in `sessionStorage` under `competition_has_groups`, so the Settings page can warn without re-fetching.
+- **SettingsPage** — collects paper format, language, logo, etc.; auto-detects the WCA Live competition ID and per-competitor person IDs from the WCA Live API; stores settings in `sessionStorage`. It adapts to the scope: when generating scorecards only (scope ≠ everything) it shows just scorecard-relevant options and hides the name-tag and custom-event sections; it also hides the Round 2 prefilled/blanks control once Round 2 has real groups (so the choice no longer matters). When no groups have been generated for the competition yet, it shows a **"no groups assigned"** warning banner.
+- **GeneratePage** — gets the WCIF (cache or fetch), parses it, applies the chosen scope, and renders the download button. PDF rendering runs inside a Web Worker to keep the UI responsive. Before downloading, it shows preview stats — scorecards, cover cards, PDFs in the ZIP, **estimated total pages**, and paper size — and repeats the "no groups assigned" warning when `parsed.hasGroups` is false.
 
 Settings and auth state live in `sessionStorage` only — they are cleared when the tab is closed and are never sent to any server.
 
@@ -104,8 +104,20 @@ Components call `useIsMobile()` and spread a small mobile-only style override in
 - **Header** (`src/components/Header.tsx`) — on mobile the language dropdown, theme toggle, user info, and sign-out collapse behind a **hamburger button** that opens a dropdown panel (closes on outside click / sign-out). The desktop header markup is unchanged.
 - **Login** — card padding is reduced so it fits a narrow screen.
 - **Competition picker** — the card grid drops to a single column.
-- **Generate** — the stats grid goes from four columns to two, with a smaller value font.
+- **Generate** — the stats grid goes from five columns to two, with a smaller value font.
 - **Settings** — the custom-event "format" and "cutoff / time-limit" rows stack vertically.
+
+### "About this tool" dialog
+
+`src/components/AboutDialog.tsx` is a self-contained explainer (trigger + modal) that tells newcomers what the tool is, what the **WCIF** is, and where this tool sits in the workflow — it is the *final* step, turning a competition's already-assigned groups into print-ready, cuttable PDFs. It renders either a circular ℹ icon button (default) or a text link (`as="text"`). It is placed on the **login page** (text link under the sign-in button) and the **competition picker page** (icon next to the heading). All copy lives under the `about.*` i18n keys.
+
+### "No groups assigned" warning
+
+When a competition's groups have not been generated yet, scorecard counts read 0, which confused early users. The parser now exposes `parsed.hasGroups` (true once the schedule contains group child-activities). `src/components/WarningBanner.tsx` (amber notice, matching the login setup warning) surfaces the `warnings.no_groups` message on both the Settings and Generate pages, explaining that groups must be assigned upstream (Groupifier / the WCA website) first, while the schedule tracker and name tags can still be generated.
+
+### Page-count estimate
+
+The Generate-page stats include an **estimated total number of printed pages** so organizers can gauge the real print volume before downloading. `src/lib/pageEstimate.ts` (`estimateTotalPages`) computes it from the scope-filtered parse: exact for scorecards and name tags (both four-per-page — the per-page constants live in `src/pdf/layoutConstants.ts` and are shared with the PDF documents so they cannot drift), one page for the schedule tracker, and a greedy height-based estimate for first-timer slips (which auto-flow). The estimator is pure and deliberately free of any `@react-pdf` import so it stays out of the main bundle.
 
 ---
 

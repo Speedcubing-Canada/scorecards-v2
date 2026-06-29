@@ -6,6 +6,7 @@ import type { NametTagEntry, NametTagRole } from '../lib/wcif-parser';
 import { EVENT_ICONS } from '../assets/events';
 import { getNametTagStrings, type NametTagStrings } from '../lib/i18n';
 import { resolveLogo } from '../lib/logo';
+import { NAMETAGS_PER_PAGE } from './layoutConstants';
 
 Font.registerHyphenationCallback((word) => [word]);
 
@@ -340,7 +341,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
   const qrBothSides = nametagQrMode === 'both-sides';
   const nametTagStrings = getNametTagStrings(settings.language);
 
-  const personsPerPage = 4;
+  const personsPerPage = NAMETAGS_PER_PAGE;
 
   if (horizontal) {
     // Portrait page, 2 cols × 4 rows. Each landscape slot (244×147pt) fits directly —

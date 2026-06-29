@@ -4,6 +4,7 @@ import { CLIENT_ID } from '../auth/wca';
 import LanguageSelect from '../components/LanguageSelect';
 import ThemeToggle from '../components/ThemeToggle';
 import Logo from '../components/Logo';
+import AboutDialog from '../components/AboutDialog';
 import { useIsMobile } from '../lib/useIsMobile';
 
 export default function LoginPage() {
@@ -42,6 +43,10 @@ export default function LoginPage() {
             {t('login.sign_in_button')}
           </button>
         )}
+
+        <div style={styles.aboutRow}>
+          <AboutDialog as="text" />
+        </div>
       </div>
     </div>
   );
@@ -65,6 +70,7 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'center',
   },
   cardMobile: { padding: '32px 20px' },
+  aboutRow: { marginTop: 20, textAlign: 'center' },
   langRow: {
     display: 'flex',
     justifyContent: 'flex-end',

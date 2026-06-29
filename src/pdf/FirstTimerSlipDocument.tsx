@@ -3,6 +3,10 @@ import type { CompetitionSettings, LocaleCode } from '../types/settings';
 import type { FirstTimerEntry } from '../lib/wcif-parser';
 import { getFirstTimerSlipStrings, type FirstTimerSlipStrings } from '../lib/i18n';
 import { buildSlipLines, type SlipLine } from './firstTimerSlipLines';
+import {
+  SLIP_LINE_H, SLIP_PAGE_PAD_TOP, SLIP_PAGE_PAD_BOTTOM,
+  SLIP_MARGIN_BOTTOM, SLIP_INTRO_MARGIN_BOTTOM,
+} from './layoutConstants';
 
 Font.registerHyphenationCallback((word) => [word]);
 
@@ -16,25 +20,25 @@ const FONT_BOLD = 'Helvetica-Bold';
 // big slips per page. Fixed-height rows give a predictable pitch (@react-pdf
 // inflates lineHeight by a constant factor, so lineHeight tuning is unreliable).
 // Slips flow and pack: short single-event slips fit four per page.
-const LINE_H = 14;
+const LINE_H = SLIP_LINE_H;
 
 const styles = StyleSheet.create({
   page: {
     backgroundColor: '#ffffff',
     paddingLeft: 36,
     paddingRight: 36,
-    paddingTop: 38,
-    paddingBottom: 36,
+    paddingTop: SLIP_PAGE_PAD_TOP,
+    paddingBottom: SLIP_PAGE_PAD_BOTTOM,
     fontFamily: FONT,
     fontSize: 11,
     color: '#000000',
   },
   // One newcomer's checklist; wrap={false} keeps it whole across page breaks.
   slip: {
-    marginBottom: 18,
+    marginBottom: SLIP_MARGIN_BOTTOM,
   },
   intro: {
-    marginBottom: 20,
+    marginBottom: SLIP_INTRO_MARGIN_BOTTOM,
   },
   // alignSelf flex-start shrinks the row to its content so the checkbox hugs the
   // end of the text (as in the original) instead of stretching to the right margin.

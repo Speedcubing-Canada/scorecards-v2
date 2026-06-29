@@ -136,7 +136,8 @@
       "scorecards": "Feuilles de score",
       "cover_cards": "Feuilles de couverture",
       "pdfs_in_zip": "PDFs dans le ZIP",
-      "paper": "Papier"
+      "paper": "Papier",
+      "total_pages": "Pages"
     },
     "download_button": "⬇ Télécharger {{filename}}",
     "building_button": "Création du ZIP…"
@@ -165,5 +166,18 @@
       "label": "Choisir les tours",
       "desc": "Choisissez précisément quels tours d'épreuves imprimer."
     }
+  },
+  "warnings": {
+    "no_groups": "Aucun groupe n'a encore été assigné pour cette compétition, donc le nombre de feuilles affiche 0. Assignez d'abord les groupes (dans Groupifier ou sur le site de la WCA), puis revenez ici. Vous pouvez tout de même générer le suivi d'horaire et les porte-noms entre-temps."
+  },
+  "about": {
+    "trigger": "Qu'est-ce que c'est ?",
+    "title": "À propos de cet outil",
+    "intro": "Cet outil génère des PDF prêts à imprimer pour une compétition WCA : feuilles de score, porte-noms, suivi d'horaire et fiches pour nouveaux participants (optionnelles). Tout est mis en page pour l'impression et la découpe.",
+    "wcif_title": "Qu'est-ce que le WCIF ?",
+    "wcif_body": "Les données de chaque compétition WCA (épreuves, horaire et participants inscrits) se trouvent sur le site de la WCA dans un format appelé WCIF. Les assignations de groupes sont ajoutées en amont, généralement avec un outil comme Groupifier.",
+    "workflow_title": "Où cela s'insère",
+    "workflow_body": "C'est la dernière étape avant l'impression. Une fois les groupes assignés, l'outil lit le WCIF de la compétition et le transforme en documents à imprimer et à découper pour le jour de la compétition.",
+    "close": "Compris"
   }
 }

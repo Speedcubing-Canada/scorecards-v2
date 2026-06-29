@@ -7,8 +7,10 @@ import { getCachedWcif, setCachedWcif } from '../lib/wcifCache';
 import type { CompetitionSettings } from '../types/settings';
 import { parseWCIF, type ParsedWCIF } from '../lib/wcif-parser';
 import { filterParsedByScope, type GenerationScope } from '../lib/generationScope';
+import { estimateTotalPages } from '../lib/pageEstimate';
 import type { WorkerRequest, WorkerResponse } from '../pdf/scorecardWorker';
 import Header from '../components/Header';
+import WarningBanner from '../components/WarningBanner';
 import { useIsMobile } from '../lib/useIsMobile';
 import { downloadButtonFontSize } from '../lib/downloadButtonFontSize';
 import i18n from '../i18n/index';
@@ -115,6 +117,7 @@ export default function GeneratePage() {
       + (effectiveParsed.firstTimers.length > 0 ? 1 : 0)
       + (settings.customEvents?.filter(c => c.name.trim()).length ?? 0)
     : 0;
+  const totalPages     = effectiveParsed ? estimateTotalPages(effectiveParsed, settings) : 0;
   const filename       = `${settings.competitionId}_scorecards.zip`;
 
   function handleDownload() {
@@ -191,11 +194,16 @@ export default function GeneratePage() {
 
         {(status === 'ready' || status === 'building') && (
           <>
+            {status === 'ready' && parsed?.hasGroups === false && (
+              <WarningBanner>{t('warnings.no_groups')}</WarningBanner>
+            )}
+
             {status === 'ready' && (
               <div style={{ ...s.stats, ...(isMobile ? s.statsMobile : {}) }}>
                 <Stat label={t('generate.stats.scorecards')} value={scorecardCount} />
                 <Stat label={t('generate.stats.cover_cards')} value={coverCount} />
                 <Stat label={t('generate.stats.pdfs_in_zip')} value={pdfCount} />
+                <Stat label={t('generate.stats.total_pages')} value={totalPages} />
                 <Stat label={t('generate.stats.paper')} value={settings.paperFormat} />
               </div>
             )}
@@ -261,7 +269,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   statusError: { borderColor: 'var(--danger)', backgroundColor: 'var(--primary-soft-bg)' },
   stats: {
-    display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24,
+    display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 24,
   },
   statsMobile: { gridTemplateColumns: 'repeat(2, 1fr)' },
   stat: {

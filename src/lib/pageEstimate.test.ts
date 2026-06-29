@@ -1,0 +1,90 @@
+import { describe, it, expect } from 'vitest';
+import { estimateTotalPages } from './pageEstimate';
+import type { ParsedWCIF, ScorecardData, ScorecardEntry, FirstTimerEntry, NametTagEntry, ScheduleDay } from './wcif-parser';
+import type { CompetitionSettings, CustomEvent } from '../types/settings';
+
+// ── Builders ──────────────────────────────────────────────────────────────────
+function sc(): ScorecardEntry {
+  return {
+    kind: 'scorecard', timeslot: 'a01', eventId: '333', eventName: '333',
+    roundLabel: 'Round 1', roundNum: 1, group: 'Group 1 of 1',
+    name: '', wcaId: '', liveId: '', gender: 'm', cutoff: '', limit: '',
+    format: 'avg5', isCumulative: false,
+  };
+}
+const scards = (n: number): ScorecardData[] => Array.from({ length: n }, sc);
+// Only the array length matters for these two.
+const tags = (n: number) => Array.from({ length: n }, () => ({})) as unknown as NametTagEntry[];
+const days = (n: number) => Array.from({ length: n }, () => ({})) as unknown as ScheduleDay[];
+
+function ft(eventIds: string[] = ['333']): FirstTimerEntry {
+  return { name: 'A', gender: 'm', countryIso2: 'CA', eventIds: eventIds as FirstTimerEntry['eventIds'] };
+}
+
+function mkParsed(over: Partial<ParsedWCIF> = {}): ParsedWCIF {
+  return {
+    firstRound: [], intermediate: [], semis: [], finals: [],
+    nametags: [], firstTimers: [], extras: [], scheduleDays: [],
+    laterRoundsWithAssignments: [], hasGroups: true,
+    ...over,
+  };
+}
+
+function mkSettings(over: Partial<CompetitionSettings> = {}): CompetitionSettings {
+  return {
+    competitionId: 'Test2026', competitionName: 'Test 2026',
+    language: 'en', secondaryLanguage: null, paperFormat: 'LETTER',
+    secondRoundMode: 'blanks', logoDataUrl: null, useDefaultLogo: true,
+    wcaLiveId: null, wcaLivePersonIds: null, hideWcaLiveId: false,
+    nametagLogoMode: 'with-name', nametagQrMode: 'back-only', nametagLayout: 'vertical',
+    customEvents: [],
+    scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
+    generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false } },
+    ...over,
+  } as CompetitionSettings;
+}
+
+const customEvent = (name: string): CustomEvent =>
+  ({ name, format: 'avg5', cutoff: '', limit: '', iconDataUrl: null }) as unknown as CustomEvent;
+
+describe('estimateTotalPages', () => {
+  it('returns 0 for an empty selection', () => {
+    expect(estimateTotalPages(mkParsed(), mkSettings())).toBe(0);
+  });
+
+  it('paginates scorecards at four per page (rounds up)', () => {
+    expect(estimateTotalPages(mkParsed({ firstRound: scards(5) }), mkSettings())).toBe(2);
+    expect(estimateTotalPages(mkParsed({ firstRound: scards(8) }), mkSettings())).toBe(2);
+    expect(estimateTotalPages(mkParsed({ firstRound: scards(1) }), mkSettings())).toBe(1);
+  });
+
+  it('sums each scorecard round independently', () => {
+    // firstRound 4 → 1 page, finals 8 → 2 pages
+    expect(estimateTotalPages(mkParsed({ firstRound: scards(4), finals: scards(8) }), mkSettings())).toBe(3);
+  });
+
+  it('paginates name tags at four per page', () => {
+    expect(estimateTotalPages(mkParsed({ nametags: tags(9) }), mkSettings())).toBe(3);
+  });
+
+  it('counts the schedule tracker as one page', () => {
+    expect(estimateTotalPages(mkParsed({ scheduleDays: days(2) }), mkSettings())).toBe(1);
+  });
+
+  it('counts one page per named custom event', () => {
+    const settings = mkSettings({ customEvents: [customEvent('Mirror'), customEvent('Skewb Relay'), customEvent('  ')] });
+    expect(estimateTotalPages(mkParsed(), settings)).toBe(2);
+  });
+
+  it('greedily packs first-timer slips by height', () => {
+    // A single-event slip is 7 lines (136pt); five fit a LETTER page (718pt content).
+    expect(estimateTotalPages(mkParsed({ firstTimers: Array.from({ length: 5 }, () => ft()) }), mkSettings())).toBe(1);
+    expect(estimateTotalPages(mkParsed({ firstTimers: Array.from({ length: 6 }, () => ft()) }), mkSettings())).toBe(2);
+  });
+
+  it('adds page counts across document types', () => {
+    const parsed = mkParsed({ firstRound: scards(8), nametags: tags(4), scheduleDays: days(1) });
+    // scorecards 2 + nametags 1 + schedule 1
+    expect(estimateTotalPages(parsed, mkSettings())).toBe(4);
+  });
+});

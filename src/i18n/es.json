@@ -136,7 +136,8 @@
       "scorecards": "Hojas de puntuación",
       "cover_cards": "Hojas de portada",
       "pdfs_in_zip": "PDFs en el ZIP",
-      "paper": "Papel"
+      "paper": "Papel",
+      "total_pages": "Páginas"
     },
     "download_button": "⬇ Descargar {{filename}}",
     "building_button": "Creando ZIP…"
@@ -165,5 +166,18 @@
       "label": "Seleccionar rondas",
       "desc": "Elige exactamente qué rondas de cada evento imprimir."
     }
+  },
+  "warnings": {
+    "no_groups": "Todavía no se han asignado grupos para esta competición, por lo que los recuentos de hojas muestran 0. Asigna primero los grupos (en Groupifier o en el sitio web de la WCA) y luego vuelve aquí. Mientras tanto, puedes generar el seguimiento del horario y las acreditaciones."
+  },
+  "about": {
+    "trigger": "¿Qué es esto?",
+    "title": "Acerca de esta herramienta",
+    "intro": "Esta herramienta genera PDF listos para imprimir de una competición WCA: hojas de puntuación, acreditaciones, seguimiento del horario y hojas para debutantes (opcionales). Todo está maquetado para imprimir y recortar.",
+    "wcif_title": "¿Qué es el WCIF?",
+    "wcif_body": "Los datos de cada competición WCA (pruebas, horario y competidores inscritos) están en el sitio web de la WCA en un formato llamado WCIF. Las asignaciones de grupos se añaden antes, normalmente con una herramienta como Groupifier.",
+    "workflow_title": "Dónde encaja",
+    "workflow_body": "Este es el último paso antes de imprimir. Una vez asignados los grupos, lee el WCIF de la competición y lo convierte en los documentos que imprimes y recortas para el día de la competición.",
+    "close": "Entendido"
   }
 }

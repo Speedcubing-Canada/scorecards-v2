@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { fetchManagedCompetitions } from '../auth/wca';
 import type { WCACompetition } from '../types/wcif';
 import Header from '../components/Header';
+import AboutDialog from '../components/AboutDialog';
 import { useIsMobile } from '../lib/useIsMobile';
 
 export default function CompetitionPickerPage() {
@@ -42,7 +43,10 @@ export default function CompetitionPickerPage() {
       <Header showUser showSignOut />
 
       <main style={{ ...styles.main, ...(isMobile ? styles.mainMobile : {}) }}>
-        <h2 style={styles.heading}>{t('picker.heading')}</h2>
+        <div style={styles.headingRow}>
+          <h2 style={styles.heading}>{t('picker.heading')}</h2>
+          <AboutDialog />
+        </div>
         <p style={styles.hint}>{t('picker.hint')}</p>
 
         {isLoading && <p style={styles.status}>{t('picker.loading')}</p>}
@@ -90,7 +94,8 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '40px 24px',
   },
   mainMobile: { padding: '24px 16px' },
-  heading: { margin: '0 0 8px', fontSize: 22, fontWeight: 700, color: 'var(--text)' },
+  headingRow: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 },
+  heading: { margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--text)' },
   hint: { margin: '0 0 28px', fontSize: 14, color: 'var(--text-muted)' },
   status: { fontSize: 15, color: 'var(--text-muted)', textAlign: 'center', padding: '32px 0' },
   grid: {

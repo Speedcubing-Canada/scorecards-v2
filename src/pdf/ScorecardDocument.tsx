@@ -4,6 +4,7 @@ import type { ScorecardData, ScorecardFormat } from '../lib/wcif-parser';
 import { getStrings } from '../lib/i18n';
 import { EVENT_ICONS } from '../assets/events';
 import { logoState, resolveLogo } from '../lib/logo';
+import { SCORECARDS_PER_PAGE } from './layoutConstants';
 
 // Prevent react-pdf from hyphenating words — lets computed font size control line breaks instead.
 Font.registerHyphenationCallback((word) => [word]);
@@ -346,7 +347,7 @@ export function ScorecardDocument({ entries, settings }: Props) {
   const size   = settings.paperFormat;
   const config = CONFIGS[size];
   const pages: ScorecardData[][] = [];
-  for (let i = 0; i < entries.length; i += 4) pages.push(entries.slice(i, i + 4));
+  for (let i = 0; i < entries.length; i += SCORECARDS_PER_PAGE) pages.push(entries.slice(i, i + SCORECARDS_PER_PAGE));
 
   return (
     <Document title={`${settings.competitionName} — Scorecards`} author="WCA Scorecard Generator">

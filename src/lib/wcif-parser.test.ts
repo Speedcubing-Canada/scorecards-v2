@@ -1550,3 +1550,20 @@ describe('mid-competition named later rounds', () => {
     expect(result.laterRoundsWithAssignments).toEqual([]);
   });
 });
+
+describe('hasGroups', () => {
+  it('is true when the schedule has group child-activities', () => {
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const result = parseWCIF(mkWCIF([e], [r], [per(1, [{ aid: 100 }])]), cfg());
+    expect(result.hasGroups).toBe(true);
+  });
+
+  it('is false for a pre-competition WCIF with no groups generated', () => {
+    // Round activity exists but no group children — groups not yet assigned.
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [])]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    expect(result.hasGroups).toBe(false);
+  });
+});

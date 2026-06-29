@@ -9,6 +9,7 @@ import { parseDoubleCheckOverrides } from '../lib/parseDoubleCheckOverrides';
 import { EVENT_ICONS } from '../assets/events';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 import Header from '../components/Header';
+import WarningBanner from '../components/WarningBanner';
 import { useIsMobile } from '../lib/useIsMobile';
 import { fetchWcaLiveId, fetchWcaLivePersonIds } from '../auth/wca';
 
@@ -27,6 +28,9 @@ export default function SettingsPage() {
 
   const competitionId = sessionStorage.getItem('selected_competition_id') ?? '';
   const competitionName = sessionStorage.getItem('selected_competition_name') ?? '';
+  // Set on the scope step from the parsed WCIF. When groups haven't been generated yet,
+  // scorecard counts will read 0 — warn so organizers aren't confused.
+  const noGroups = sessionStorage.getItem('competition_has_groups') === 'false';
 
   // Decided on the scope step. When generating scorecards only (scope ≠ everything), the
   // Settings page shows just what's relevant to scorecards.
@@ -260,6 +264,8 @@ export default function SettingsPage() {
       <main style={{ ...s.main, ...(isMobile ? s.mainMobile : {}) }}>
         <div style={s.compBadge}>{competitionName}</div>
         <h2 style={s.heading}>{t('settings.heading')}</h2>
+
+        {noGroups && <WarningBanner>{t('warnings.no_groups')}</WarningBanner>}
 
         <section style={s.section}>
           <h3 style={s.sectionTitle}>{t('settings.language.title')}</h3>

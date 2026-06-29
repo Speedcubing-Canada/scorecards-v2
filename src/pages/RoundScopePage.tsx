@@ -71,6 +71,10 @@ export default function RoundScopePage() {
         const result = parseWCIF(wcif, detectionSettings);
         if (cancelled) return;
 
+        // Surface whether groups have been generated so the Settings page can warn
+        // without re-fetching the WCIF (scope always runs before settings).
+        sessionStorage.setItem('competition_has_groups', String(result.hasGroups));
+
         const midComp = result.laterRoundsWithAssignments.length > 0;
         setIsMidComp(midComp);
 
