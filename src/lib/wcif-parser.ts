@@ -84,6 +84,10 @@ export interface ScorecardEntry {
   // generation-scope filter to select cards by (eventId, roundNum) without re-parsing labels.
   roundNum: number;
   group: string;
+  // Stage/colour sort key (e.g. "bleu", "rouge"). Keeps stages grouped in finalizeEntries
+  // when `group` is a station number that omits the stage (stationary rounds). Optional:
+  // blank/prefilled entries leave it undefined and fall through to group sorting unchanged.
+  stage?: string;
   name: string;
   wcaId: string;
   liveId: string;
@@ -106,6 +110,8 @@ export interface CoverEntry {
   roundLabel: string;
   roundNum: number;
   group: string;
+  // See ScorecardEntry.stage — keeps a stationary round's cover with its own stage's cards.
+  stage?: string;
   numScorecards: number;
 }
 
@@ -192,7 +198,10 @@ function reorderQuadrants<T>(items: T[]): T[] {
   return result;
 }
 
-// Standard finalize: sort by timeslot → eventId → group → cover-before-scorecard → name.
+// Standard finalize: sort by timeslot → eventId → stage → group → cover-before-scorecard → name.
+// The stage key keeps each stage's cards grouped even on stationary rounds, where `group` is a
+// station number that omits the stage (otherwise stations numbered across stages interleave).
+// For rotation rounds it is a no-op: the stage is already the prefix of the group label.
 // Sorting by group before kind keeps each group's cover immediately before its own scorecards,
 // so that after quad-reorder the cut-and-stack produces one correctly ordered pile per group.
 export function finalizeEntries(entries: ScorecardData[]): ScorecardData[] {
@@ -202,6 +211,8 @@ export function finalizeEntries(entries: ScorecardData[]): ScorecardData[] {
     if (ts !== 0) return ts;
     const ev = a.eventId.localeCompare(b.eventId);
     if (ev !== 0) return ev;
+    const st = (a.stage ?? '').localeCompare(b.stage ?? '');
+    if (st !== 0) return st;
     const gr = a.group.localeCompare(b.group);
     if (gr !== 0) return gr;
     const kd = a.kind.localeCompare(b.kind);
@@ -479,6 +490,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         roundLabel: getRoundLabel(eventId, roundNum),
         roundNum,
         group,
+        stage,
         name,
         wcaId,
         liveId,
@@ -537,6 +549,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       roundLabel: getRoundLabel(eventId, roundNum),
       roundNum,
       group: resolveGroupLabel(rid, gNum, stage, totalGroups),
+      stage,
       numScorecards: ids.size,
     });
   }

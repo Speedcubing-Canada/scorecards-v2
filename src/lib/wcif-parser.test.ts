@@ -117,6 +117,16 @@ const scs = (entries: ScorecardData[]) =>
 const cvs = (entries: ScorecardData[]) =>
   entries.filter((e): e is CoverEntry => e.kind === 'cover' && !!e.eventId);
 
+// Invert the 4-up quadrant imposition applied by finalizeEntries: reading the printed
+// pages column-by-column with stride 4 (one quadrant pile at a time) reconstructs the
+// logical sorted order. Use this to assert on sort order rather than print layout.
+const unimpose = <T,>(arr: T[]): T[] => {
+  const out: T[] = [];
+  for (let col = 0; col < 4; col++)
+    for (let i = col; i < arr.length; i += 4) out.push(arr[i]);
+  return out;
+};
+
 // ── Format selection ─────────────────────────────────────────────────────────
 
 describe('scorecard format selection', () => {
@@ -338,6 +348,48 @@ describe('group labels — multi-stage (event across multiple rooms)', () => {
     expect(groups).toContain('Group 1 of 1');
     expect(groups).not.toContain('Rouge 1 of 1');
     expect(groups).not.toContain('Bleu 1 of 1');
+  });
+});
+
+// ── Stationary rounds (fixed station-number assignments) ────────────────────
+
+describe('stationary rounds (station-number assignments)', () => {
+  // Round 1 across two stages (Rouge g1, Bleu g2). Competitors sit at fixed stations
+  // numbered across both stages: Rouge → 1,3,5  Bleu → 2,4,6. Because the visible group
+  // label becomes the station number (stage is dropped), sorting purely by that label used
+  // to interleave the stages (Rouge,Bleu,Rouge,Bleu…). The stage sort key must keep each
+  // stage's cards together (Sarah's "latest rounds only" report).
+  function mkStationary() {
+    const e = evt('333', [rSpec('a')]);
+    const rRouge = room('Scène Rouge', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const rBleu  = room('Scène Bleu',  [act('333', 1, [ch(101, '333', 1, 2)])]);
+    const persons = [
+      per(1, [{ aid: 100, station: 1 }]),
+      per(3, [{ aid: 100, station: 3 }]),
+      per(5, [{ aid: 100, station: 5 }]),
+      per(2, [{ aid: 101, station: 2 }]),
+      per(4, [{ aid: 101, station: 4 }]),
+      per(6, [{ aid: 101, station: 6 }]),
+    ];
+    return parseWCIF(mkWCIF([e], [rRouge, rBleu], persons), cfg());
+  }
+
+  it('station number drives the visible group label (stage omitted on the card)', () => {
+    const groups = new Set(scs(mkStationary().firstRound).map(s => s.group));
+    expect(groups).toContain('Station 01');
+    expect(groups).toContain('Station 06');
+  });
+
+  it('scorecards are grouped by stage, not interleaved by station number', () => {
+    const ordered = scs(unimpose(mkStationary().firstRound)).filter(s => s.eventId === '333');
+    const stages = ordered.map(s => s.stage);
+    expect(stages.length).toBe(6);
+    // One full stage block, then the other — never alternating.
+    const firstStage = stages[0];
+    const switchIdx = stages.findIndex(st => st !== firstStage);
+    expect(switchIdx).toBeGreaterThan(0);
+    expect(stages.slice(0, switchIdx).every(st => st === firstStage)).toBe(true);
+    expect(stages.slice(switchIdx).every(st => st !== firstStage)).toBe(true);
   });
 });
 

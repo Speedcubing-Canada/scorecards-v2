@@ -496,6 +496,8 @@ Group labels are built from the activity code's group number and the room/stage 
 
 For finals with a single group, seat numbers replace group labels: `Seat 01`, `Seat 02`, … (or `Siège 01`, `Siège 02`, … in French). This is detected when `numGroups[rid] === 1`.
 
+**Stationary rounds.** When a competitor's assignment carries a `stationNumber`, the visible group label becomes a station label instead (`Station 01`, … / `Siège 01`, …), so the stage/colour is not shown on the card. Each entry still keeps the stage as a separate sort key, and `finalizeEntries` sorts by `timeslot → eventId → stage → group → …`. This keeps every stage's cards in one contiguous pile (all of one stage, then the next) instead of interleaving stages whose stations happen to be numbered across stages. The per-stack cover card identifies each stage. For rotation rounds the stage key is a no-op, since the stage is already the prefix of the group label.
+
 ### Advancement condition and blank count
 
 When the previous round has `advancementCondition.type === 'ranking'`, the number of blank scorecards per group in finals/intermediate is `ceil(level / totalGroups) + 2` (a small buffer above the exact cut). Otherwise 16 blanks are printed per group.
