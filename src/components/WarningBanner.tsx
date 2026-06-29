@@ -9,9 +9,9 @@ export default function WarningBanner({ children }: { children: ReactNode }) {
 const style: React.CSSProperties = {
   backgroundColor: 'var(--warning-bg)',
   border: '1px solid var(--warning-border)',
-  borderRadius: 8,
+  borderRadius: 'var(--radius-md)',
   padding: '14px 16px',
-  fontSize: 13,
+  fontSize: 'var(--fs-label)',
   textAlign: 'left',
   lineHeight: 1.6,
   color: 'var(--warning-text)',

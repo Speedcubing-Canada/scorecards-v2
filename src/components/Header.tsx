@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Menu, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
 import { WCA_API_URL } from '../auth/wca';
@@ -65,11 +66,7 @@ export default function Header({ showBack, onBack, showUser, showSignOut = true 
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((o) => !o)}
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
+            {menuOpen ? <X size={22} strokeWidth={2} /> : <Menu size={22} strokeWidth={2} />}
           </button>
 
           {menuOpen && (
@@ -124,27 +121,27 @@ const s: Record<string, React.CSSProperties> = {
   right: { display: 'flex', alignItems: 'center', gap: 8 },
   logo: { height: 26, display: 'block' },
   divider: { width: 1, height: 22, backgroundColor: 'var(--border)' },
-  title: { fontSize: 13, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' },
+  title: { fontSize: 'var(--fs-label)', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' },
   back: {
     background: 'none',
     border: '1px solid var(--border-strong)',
     color: 'var(--text-muted)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-sm)',
     padding: '4px 12px',
-    fontSize: 13,
+    fontSize: 'var(--fs-label)',
     fontWeight: 500,
     cursor: 'pointer',
     fontFamily: 'inherit',
   },
   avatar: { width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' },
-  userName: { fontSize: 13, fontWeight: 500, color: 'var(--text)' },
+  userName: { fontSize: 'var(--fs-label)', fontWeight: 500, color: 'var(--text)' },
   logoutBtn: {
     background: 'none',
     border: '1px solid var(--border-strong)',
     color: 'var(--text-muted)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-sm)',
     padding: '4px 12px',
-    fontSize: 13,
+    fontSize: 'var(--fs-label)',
     fontWeight: 500,
     cursor: 'pointer',
     fontFamily: 'inherit',
@@ -168,7 +165,7 @@ const s: Record<string, React.CSSProperties> = {
     minWidth: 200,
     backgroundColor: 'var(--surface)',
     border: '1px solid var(--border)',
-    borderRadius: 10,
+    borderRadius: 'var(--radius-lg)',
     boxShadow: 'var(--shadow-lg)',
     padding: 12,
     display: 'flex',
@@ -188,9 +185,9 @@ const s: Record<string, React.CSSProperties> = {
     background: 'none',
     border: '1px solid var(--border-strong)',
     color: 'var(--text-muted)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-sm)',
     padding: '8px 12px',
-    fontSize: 14,
+    fontSize: 'var(--fs-body)',
     fontWeight: 500,
     cursor: 'pointer',
     fontFamily: 'inherit',

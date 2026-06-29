@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
@@ -11,6 +12,7 @@ import {
 } from '../lib/generationScope';
 import type { CompetitionSettings, LocaleCode } from '../types/settings';
 import Header from '../components/Header';
+import Skeleton from '../components/Skeleton';
 import { useIsMobile } from '../lib/useIsMobile';
 
 type Status = 'loading' | 'ready' | 'error';
@@ -180,15 +182,20 @@ export default function RoundScopePage() {
         <h2 style={s.pageTitle}>{t('scope.heading')}</h2>
 
         {status === 'loading' && (
-          <div style={s.statusBox}>
-            <span style={{ fontSize: 24 }}>⏳</span>
-            <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>{t('scope.checking')}</span>
+          <div role="status" aria-label={t('scope.checking')}>
+            <Skeleton width="55%" height={14} style={{ marginBottom: 20 }} />
+            <Skeleton width={140} height={15} style={{ marginBottom: 12 }} />
+            <div style={s.optionGroup}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} height={62} radius="var(--radius-md)" />
+              ))}
+            </div>
           </div>
         )}
         {status === 'error' && (
           <div style={{ ...s.statusBox, ...s.statusError }}>
-            <span style={{ fontSize: 24 }}>❌</span>
-            <span style={{ fontSize: 14, color: 'var(--danger)' }}>{statusMsg}</span>
+            <XCircle size={28} strokeWidth={2} color="var(--danger)" />
+            <span style={{ fontSize: 'var(--fs-body)', color: 'var(--danger)' }}>{statusMsg}</span>
           </div>
         )}
 
@@ -270,15 +277,15 @@ const s: Record<string, React.CSSProperties> = {
   mainMobile: { padding: '24px 16px' },
   compBadge: {
     display: 'inline-block', backgroundColor: 'var(--primary-soft-bg)', color: 'var(--primary-soft-text)',
-    borderRadius: 6, padding: '4px 12px', fontSize: 13, fontWeight: 600, marginBottom: 8,
+    borderRadius: 'var(--radius-sm)', padding: '4px 12px', fontSize: 'var(--fs-label)', fontWeight: 700, marginBottom: 8,
   },
-  pageTitle: { margin: '0 0 8px', fontSize: 22, fontWeight: 700, color: 'var(--text)' },
-  sectionHeading: { margin: '0 0 12px', fontSize: 15, fontWeight: 700, color: 'var(--text)' },
-  intro: { margin: '0 0 20px', fontSize: 14, color: 'var(--text-muted)' },
+  pageTitle: { margin: '0 0 8px', fontSize: 'var(--fs-display)', fontWeight: 700, color: 'var(--text)' },
+  sectionHeading: { margin: '0 0 12px', fontSize: 'var(--fs-heading)', fontWeight: 700, color: 'var(--text)' },
+  intro: { margin: '0 0 20px', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' },
   statusBox: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
     backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
-    borderRadius: 10, padding: '40px 24px', textAlign: 'center', marginBottom: 24,
+    borderRadius: 'var(--radius-lg)', padding: '40px 24px', textAlign: 'center', marginBottom: 24,
   },
   statusError: { borderColor: 'var(--danger)', backgroundColor: 'var(--primary-soft-bg)' },
   optionGroup: { display: 'flex', flexDirection: 'column', gap: 8 },
@@ -286,15 +293,15 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'flex-start', gap: 12,
     backgroundColor: 'var(--surface)',
     borderWidth: 2, borderStyle: 'solid', borderColor: 'var(--border)',
-    borderRadius: 8, padding: '12px 16px', cursor: 'pointer',
+    borderRadius: 'var(--radius-md)', padding: '12px 16px', cursor: 'pointer',
   },
   optionCardActive: { borderColor: 'var(--primary)', backgroundColor: 'var(--primary-soft-bg)' },
   radio: { marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 },
-  optionLabel: { fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 2 },
-  optionDesc: { fontSize: 13, color: 'var(--text-muted)' },
+  optionLabel: { fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--text)', marginBottom: 2 },
+  optionDesc: { fontSize: 'var(--fs-label)', color: 'var(--text-muted)' },
   continueBtn: {
     display: 'block', marginTop: 24, backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)',
-    border: 'none', borderRadius: 8, padding: '16px', fontSize: 15,
+    border: 'none', borderRadius: 'var(--radius-md)', padding: '16px', fontSize: 'var(--fs-heading)',
     fontWeight: 700, textAlign: 'center', cursor: 'pointer', width: '100%',
     fontFamily: 'inherit', letterSpacing: '-0.01em',
   },

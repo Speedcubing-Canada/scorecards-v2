@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '../lib/useIsMobile';
+import Tooltip from './Tooltip';
 
 /**
  * "About this tool" explainer. Renders a trigger (a small circular "i" button, or a
@@ -30,13 +32,11 @@ export default function AboutDialog({ as = 'icon' }: { as?: 'icon' | 'text' }) {
           {t('about.trigger')}
         </button>
       ) : (
-        <button style={s.iconTrigger} aria-label={t('about.trigger')} onClick={() => setOpen(true)}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="11" x2="12" y2="16" />
-            <line x1="12" y1="8" x2="12.01" y2="8" />
-          </svg>
-        </button>
+        <Tooltip label={t('about.trigger')} placement="bottom">
+          <button style={s.iconTrigger} aria-label={t('about.trigger')} onClick={() => setOpen(true)}>
+            <Info size={18} strokeWidth={2} />
+          </button>
+        </Tooltip>
       )}
 
       {open && (
@@ -74,28 +74,29 @@ const s: Record<string, React.CSSProperties> = {
   textTrigger: {
     background: 'none', border: 'none', padding: 0,
     color: 'var(--text-muted)', cursor: 'pointer',
-    fontFamily: 'inherit', fontSize: 13, textDecoration: 'underline',
+    fontFamily: 'inherit', fontSize: 'var(--fs-label)', fontWeight: 500,
+    textDecoration: 'underline',
   },
   overlay: {
     position: 'fixed', inset: 0, zIndex: 100,
     backgroundColor: 'rgba(0,0,0,0.5)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: 24,
+    padding: 'var(--space-6)',
   },
   card: {
     backgroundColor: 'var(--surface)', color: 'var(--text)',
-    borderRadius: 12, boxShadow: 'var(--shadow-lg)',
+    borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
     padding: '32px 36px', maxWidth: 520, width: '100%',
     maxHeight: '85vh', overflowY: 'auto', textAlign: 'left',
   },
   cardMobile: { padding: '24px 20px' },
-  title: { margin: '0 0 12px', fontSize: 20, fontWeight: 700, color: 'var(--text)' },
-  section: { margin: '20px 0 6px', fontSize: 14, fontWeight: 700, color: 'var(--text)' },
-  body: { margin: 0, fontSize: 14, lineHeight: 1.6, color: 'var(--text-muted)' },
+  title: { margin: '0 0 12px', fontSize: 'var(--fs-title)', fontWeight: 700, color: 'var(--text)' },
+  section: { margin: '20px 0 6px', fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--text)' },
+  body: { margin: 0, fontSize: 'var(--fs-body)', fontWeight: 400, lineHeight: 1.6, color: 'var(--text-muted)' },
   close: {
-    marginTop: 24,
+    marginTop: 'var(--space-6)',
     backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)',
-    border: 'none', borderRadius: 8, padding: '12px 20px',
-    fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', width: '100%',
+    border: 'none', borderRadius: 'var(--radius-md)', padding: '12px 20px',
+    fontSize: 'var(--fs-body)', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', width: '100%',
   },
 };

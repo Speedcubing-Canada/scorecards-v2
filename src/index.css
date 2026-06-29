@@ -36,6 +36,48 @@
   /* Shadows */
   --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 4px 24px rgba(0, 0, 0, 0.08);
+
+  /* Focus ring */
+  --focus-ring: 0 0 0 3px rgba(211, 47, 47, 0.35);
+}
+
+/*
+ * Design tokens shared by every component. The app styles via per-component
+ * inline `s` objects, so these CSS variables are the single source of truth for
+ * type scale, weight hierarchy, spacing, and radii. Keep weights to 400/500/700.
+ */
+:root {
+  /* Type scale */
+  --fs-stat: 28px;     /* large stat numbers */
+  --fs-display: 22px;  /* page titles */
+  --fs-title: 20px;    /* dialog titles */
+  --fs-heading: 15px;  /* section headings */
+  --fs-body: 14px;     /* body text, inputs, buttons */
+  --fs-label: 13px;    /* labels, hints, nav */
+  --fs-caption: 12px;  /* captions, tooltips, badges */
+
+  /* Weight hierarchy — only these three weights are used anywhere */
+  --fw-regular: 400;   /* body, descriptions, hints */
+  --fw-medium: 500;    /* labels, secondary buttons, nav */
+  --fw-bold: 700;      /* headings, primary buttons, stat values */
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+[data-theme='dark'] {
+  --focus-ring: 0 0 0 3px rgba(240, 106, 106, 0.4);
 }
 
 [data-theme='dark'] {
@@ -100,5 +142,46 @@ code {
   font-size: 13px;
   background: var(--surface-2);
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
+}
+
+/* Visible keyboard focus on all interactive elements, mouse clicks excepted. */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+/* Skeleton loading primitive. The `.skeleton` base is themed via surface tokens;
+   the pulse keyframes animate the shimmer. Reduced-motion disables the pulse. */
+.skeleton {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* Indeterminate spinner used by status icons (e.g. Lucide Loader2). */
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .spin {
+    animation: none;
+  }
 }

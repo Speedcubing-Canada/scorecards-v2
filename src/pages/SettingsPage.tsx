@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, type ChangeEvent } from 'react';
+import { Check, ChevronDown, ChevronRight, RectangleHorizontal, RectangleVertical, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { CompetitionSettings, CustomEvent, DoubleCheckRound, LocaleCode, NametTagLayout, NametTagLogoMode, NametTagQrMode, PaperFormat, ScrambleDoubleCheckOverrides, SecondRoundMode } from '../types/settings';
@@ -10,6 +11,7 @@ import { EVENT_ICONS } from '../assets/events';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
+import Tooltip from '../components/Tooltip';
 import { useIsMobile } from '../lib/useIsMobile';
 import { fetchWcaLiveId, fetchWcaLivePersonIds } from '../auth/wca';
 
@@ -375,7 +377,7 @@ export default function SettingsPage() {
 
           {scrambleDoubleCheck && (
             <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>
                 {t('settings.double_check.rounds_title')}
               </div>
               <div style={s.optionGroup}>
@@ -394,7 +396,7 @@ export default function SettingsPage() {
                 ))}
               </div>
 
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', margin: '16px 0 8px' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: '16px 0 8px' }}>
                 {t('settings.double_check.overrides_title')}
               </div>
               <p style={s.hint}>{t('settings.double_check.overrides_hint')}</p>
@@ -432,7 +434,9 @@ export default function SettingsPage() {
               <span style={s.wcaLiveLoading}> {t('settings.wca_live.fetching')}</span>
             )}
             {wcaLiveFetchStatus === 'found' && (
-              <span style={s.wcaLiveFound}> ✓ {t('settings.wca_live.auto_detected')}</span>
+              <span style={s.wcaLiveFound}>
+                <Check size={14} strokeWidth={2.5} /> {t('settings.wca_live.auto_detected')}
+              </span>
             )}
           </h3>
           {wcaLiveFetchStatus === 'not-found' && (
@@ -517,7 +521,7 @@ export default function SettingsPage() {
 
           {(logoDataUrl || useDefaultLogo) && (
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>
                 {t('settings.nametag.logo_on_nametags')}
               </div>
               <div style={s.optionGroup}>
@@ -541,7 +545,7 @@ export default function SettingsPage() {
             </div>
           )}
 
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>
             {t('settings.nametag.qr_codes')}
           </div>
           <div style={s.optionGroup}>
@@ -563,7 +567,7 @@ export default function SettingsPage() {
             ))}
           </div>
 
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 8, marginTop: 20 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 8, marginTop: 20 }}>
             {t('settings.nametag.layout')}
           </div>
           <div style={s.segmentedControl}>
@@ -573,9 +577,7 @@ export default function SettingsPage() {
               aria-pressed={nametagLayout === 'vertical'}
               style={{ ...s.segment, ...(nametagLayout === 'vertical' ? s.segmentActive : s.segmentInactive) }}
             >
-              <svg width="12" height="17" viewBox="0 0 12 17" fill="none" aria-hidden="true">
-                <rect x="0.75" y="0.75" width="10.5" height="15.5" rx="2" stroke="currentColor" strokeWidth="1.5" fill={nametagLayout === 'vertical' ? 'rgba(255,255,255,0.15)' : 'none'} />
-              </svg>
+              <RectangleVertical size={16} strokeWidth={2} aria-hidden="true" />
               {t('settings.nametag.layout_vertical')}
             </button>
             <button
@@ -584,9 +586,7 @@ export default function SettingsPage() {
               aria-pressed={nametagLayout === 'horizontal'}
               style={{ ...s.segment, ...(nametagLayout === 'horizontal' ? s.segmentActive : s.segmentInactive) }}
             >
-              <svg width="17" height="12" viewBox="0 0 17 12" fill="none" aria-hidden="true">
-                <rect x="0.75" y="0.75" width="15.5" height="10.5" rx="2" stroke="currentColor" strokeWidth="1.5" fill={nametagLayout === 'horizontal' ? 'rgba(255,255,255,0.15)' : 'none'} />
-              </svg>
+              <RectangleHorizontal size={16} strokeWidth={2} aria-hidden="true" />
               {t('settings.nametag.layout_horizontal')}
             </button>
           </div>
@@ -595,8 +595,10 @@ export default function SettingsPage() {
 
         {everything && showScorecards && (
         <section style={s.section}>
-          <button style={s.advancedToggle} onClick={() => setAdvancedOpen(o => !o)}>
-            <span style={s.advancedToggleArrow}>{advancedOpen ? '▾' : '▸'}</span>
+          <button style={s.advancedToggle} onClick={() => setAdvancedOpen(o => !o)} aria-expanded={advancedOpen}>
+            <span style={s.advancedToggleArrow}>
+              {advancedOpen ? <ChevronDown size={16} strokeWidth={2.5} /> : <ChevronRight size={16} strokeWidth={2.5} />}
+            </span>
             {t('settings.advanced.toggle')}
           </button>
 
@@ -692,19 +694,22 @@ export default function SettingsPage() {
                           <span style={s.iconLabel}>{WCA_EVENT_LABELS[id] ?? id}</span>
                         </div>
                       ))}
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        style={{
-                          ...s.iconBtn,
-                          ...(custom.iconDataUrl && !Object.values(EVENT_ICONS).includes(custom.iconDataUrl) ? s.iconBtnActive : {}),
-                        }}
-                        onClick={() => customIconRefs.current[i]?.click()}
-                        onKeyDown={e => e.key === 'Enter' && customIconRefs.current[i]?.click()}
-                      >
-                        <span style={{ fontSize: 18, lineHeight: '20px' }}>↑</span>
-                        <span style={s.iconLabel}>{t('common.upload')}</span>
-                      </div>
+                      <Tooltip label={t('settings.advanced.icon_hint')}>
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          aria-label={t('common.upload')}
+                          style={{
+                            ...s.iconBtn,
+                            ...(custom.iconDataUrl && !Object.values(EVENT_ICONS).includes(custom.iconDataUrl) ? s.iconBtnActive : {}),
+                          }}
+                          onClick={() => customIconRefs.current[i]?.click()}
+                          onKeyDown={e => e.key === 'Enter' && customIconRefs.current[i]?.click()}
+                        >
+                          <Upload size={18} strokeWidth={2} />
+                          <span style={s.iconLabel}>{t('common.upload')}</span>
+                        </div>
+                      </Tooltip>
                     </div>
                     <input
                       ref={el => { customIconRefs.current[i] = el; }}
@@ -749,21 +754,24 @@ const s: Record<string, React.CSSProperties> = {
   mainMobile: { padding: '24px 16px 80px' },
   compBadge: {
     display: 'inline-block', backgroundColor: 'var(--primary-soft-bg)', color: 'var(--primary-soft-text)',
-    borderRadius: 6, padding: '4px 12px', fontSize: 13, fontWeight: 600, marginBottom: 12,
+    borderRadius: 'var(--radius-sm)', padding: '4px 12px', fontSize: 'var(--fs-label)', fontWeight: 700, marginBottom: 12,
   },
-  heading: { margin: '0 0 28px', fontSize: 22, fontWeight: 700, color: 'var(--text)' },
+  heading: { margin: '0 0 28px', fontSize: 'var(--fs-display)', fontWeight: 700, color: 'var(--text)' },
   section: { marginBottom: 32 },
-  sectionTitle: { margin: '0 0 12px', fontSize: 15, fontWeight: 700, color: 'var(--text)' },
-  optional: { fontWeight: 400, color: 'var(--text-subtle)', fontSize: 13 },
-  wcaLiveLoading: { fontWeight: 400, color: 'var(--text-subtle)', fontSize: 12 },
-  wcaLiveFound: { fontWeight: 600, color: 'var(--success)', fontSize: 12 },
-  hint: { margin: '0 0 12px', fontSize: 13, color: 'var(--text-muted)' },
+  sectionTitle: { margin: '0 0 12px', fontSize: 'var(--fs-heading)', fontWeight: 700, color: 'var(--text)' },
+  optional: { fontWeight: 400, color: 'var(--text-subtle)', fontSize: 'var(--fs-label)' },
+  wcaLiveLoading: { fontWeight: 400, color: 'var(--text-subtle)', fontSize: 'var(--fs-caption)' },
+  wcaLiveFound: {
+    display: 'inline-flex', alignItems: 'center', gap: 4,
+    fontWeight: 700, color: 'var(--success)', fontSize: 'var(--fs-caption)',
+  },
+  hint: { margin: '0 0 12px', fontSize: 'var(--fs-label)', color: 'var(--text-muted)' },
   optionGroup: { display: 'flex', flexDirection: 'column', gap: 8 },
   optionCard: {
     display: 'flex', alignItems: 'flex-start', gap: 12,
     backgroundColor: 'var(--surface)',
     borderWidth: 2, borderStyle: 'solid', borderColor: 'var(--border)',
-    borderRadius: 8, padding: '12px 16px', cursor: 'pointer',
+    borderRadius: 'var(--radius-md)', padding: '12px 16px', cursor: 'pointer',
   },
   optionCardActive: { borderColor: 'var(--primary)', backgroundColor: 'var(--primary-soft-bg)' },
   radio: { marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 },
@@ -775,7 +783,7 @@ const s: Record<string, React.CSSProperties> = {
   langTile: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
     gap: 7, padding: '10px 6px', width: 78,
-    borderWidth: 2, borderStyle: 'solid', borderColor: 'var(--border)', borderRadius: 12,
+    borderWidth: 2, borderStyle: 'solid', borderColor: 'var(--border)', borderRadius: 'var(--radius-lg)',
     cursor: 'pointer', backgroundColor: 'var(--surface)', userSelect: 'none',
     fontFamily: 'inherit', outline: 'none',
     transition: 'border-color 120ms ease, background-color 120ms ease',
@@ -783,54 +791,55 @@ const s: Record<string, React.CSSProperties> = {
   langTileActive: { borderColor: 'var(--primary)', backgroundColor: 'var(--primary-soft-bg)' },
   langBadge: {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    width: 36, height: 36, borderRadius: 9,
+    width: 36, height: 36, borderRadius: 'var(--radius-md)',
     backgroundColor: 'var(--border)', color: 'var(--text-muted)',
-    fontSize: 13, fontWeight: 800, letterSpacing: '0.03em',
+    fontSize: 'var(--fs-label)', fontWeight: 700, letterSpacing: '0.03em',
     transition: 'background-color 120ms ease, color 120ms ease',
   },
   langBadgeActive: { backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)' },
-  langTileLabel: { fontSize: 12, fontWeight: 600, color: 'var(--text)' },
-  optionLabel: { fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 2 },
-  optionDesc: { fontSize: 13, color: 'var(--text-muted)' },
+  langTileLabel: { fontSize: 'var(--fs-caption)', fontWeight: 500, color: 'var(--text)' },
+  optionLabel: { fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--text)', marginBottom: 2 },
+  optionDesc: { fontSize: 'var(--fs-label)', color: 'var(--text-muted)' },
   logoPreview: {
     display: 'flex', alignItems: 'center', gap: 16,
     backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
-    borderRadius: 8, padding: '12px 16px',
+    borderRadius: 'var(--radius-md)', padding: '12px 16px',
   },
-  logoImg: { width: 64, height: 64, objectFit: 'contain', borderRadius: 4 },
+  logoImg: { width: 64, height: 64, objectFit: 'contain', borderRadius: 'var(--radius-sm)' },
   logoMeta: { display: 'flex', flexDirection: 'column', gap: 6 },
-  logoName: { fontSize: 13, color: 'var(--text-muted)' },
+  logoName: { fontSize: 'var(--fs-label)', color: 'var(--text-muted)' },
   removeBtn: {
-    background: 'none', border: '1px solid var(--border-strong)', borderRadius: 5,
-    padding: '3px 10px', fontSize: 12, cursor: 'pointer', color: 'var(--text-muted)',
+    background: 'none', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
+    padding: '3px 10px', fontSize: 'var(--fs-caption)', cursor: 'pointer', color: 'var(--text-muted)',
+    fontFamily: 'inherit',
   },
   uploadBtn: {
-    backgroundColor: 'var(--surface)', border: '2px dashed var(--border-strong)', borderRadius: 8,
-    padding: '14px 24px', fontSize: 14, cursor: 'pointer', color: 'var(--text-muted)',
-    width: '100%',
+    backgroundColor: 'var(--surface)', border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-md)',
+    padding: '14px 24px', fontSize: 'var(--fs-body)', cursor: 'pointer', color: 'var(--text-muted)',
+    width: '100%', fontFamily: 'inherit',
   },
   textInput: {
     width: '100%', boxSizing: 'border-box',
     backgroundColor: 'var(--surface)', color: 'var(--text)',
-    border: '2px solid var(--border)', borderRadius: 8,
-    padding: '10px 14px', fontSize: 14, fontFamily: 'inherit',
+    border: '2px solid var(--border)', borderRadius: 'var(--radius-md)',
+    padding: '10px 14px', fontSize: 'var(--fs-body)', fontFamily: 'inherit',
     outline: 'none',
   },
   footer: { marginTop: 40 },
   submitBtn: {
     backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)', border: 'none',
-    borderRadius: 8, padding: '14px 32px', fontSize: 15, fontWeight: 700,
+    borderRadius: 'var(--radius-md)', padding: '14px 32px', fontSize: 'var(--fs-heading)', fontWeight: 700,
     cursor: 'pointer', width: '100%', fontFamily: 'inherit', letterSpacing: '-0.01em',
   },
   advancedToggle: {
     background: 'none', border: 'none', padding: 0,
-    fontSize: 15, fontWeight: 700, color: 'var(--text)', cursor: 'pointer',
-    display: 'flex', alignItems: 'center', gap: 6,
+    fontSize: 'var(--fs-heading)', fontWeight: 700, color: 'var(--text)', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit',
   },
-  advancedToggleArrow: { fontSize: 13, color: 'var(--text-muted)' },
+  advancedToggleArrow: { display: 'inline-flex', alignItems: 'center', color: 'var(--text-muted)' },
   customEventCard: {
     backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
-    borderRadius: 8, padding: '14px 16px', marginBottom: 12,
+    borderRadius: 'var(--radius-md)', padding: '14px 16px', marginBottom: 12,
   },
   customEventHeader: { display: 'flex', alignItems: 'center', gap: 10 },
   iconGrid: { display: 'flex', flexWrap: 'wrap', gap: 6 },
@@ -838,15 +847,15 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', flexDirection: 'column', alignItems: 'center',
     gap: 3, padding: '5px 6px',
     borderWidth: 2, borderStyle: 'solid', borderColor: 'var(--border)',
-    borderRadius: 6, cursor: 'pointer', backgroundColor: 'var(--surface)',
-    minWidth: 38, userSelect: 'none', outline: 'none',
+    borderRadius: 'var(--radius-sm)', cursor: 'pointer', backgroundColor: 'var(--surface)',
+    minWidth: 38, userSelect: 'none', outline: 'none', color: 'var(--text-muted)',
   },
   iconBtnActive: { borderColor: 'var(--primary)', backgroundColor: 'var(--primary-soft-bg)' },
   iconLabel: { fontSize: 9, color: 'var(--text-muted)', textAlign: 'center', lineHeight: '1.1' },
   segmentedControl: {
     display: 'flex',
     border: '2px solid var(--border)',
-    borderRadius: 8,
+    borderRadius: 'var(--radius-md)',
     overflow: 'hidden',
   },
   segment: {
@@ -857,8 +866,8 @@ const s: Record<string, React.CSSProperties> = {
     gap: 8,
     padding: '10px 0',
     border: 'none',
-    fontSize: 13,
-    fontWeight: 600,
+    fontSize: 'var(--fs-label)',
+    fontWeight: 700,
     fontFamily: 'inherit',
     cursor: 'pointer',
   },
@@ -872,8 +881,8 @@ const s: Record<string, React.CSSProperties> = {
   },
   addCustomBtn: {
     backgroundColor: 'var(--surface)', border: '2px dashed var(--border-strong)',
-    borderRadius: 8, padding: '10px 20px', fontSize: 14,
+    borderRadius: 'var(--radius-md)', padding: '10px 20px', fontSize: 'var(--fs-body)',
     cursor: 'pointer', color: 'var(--text-muted)', width: '100%',
-    marginTop: 4,
+    marginTop: 4, fontFamily: 'inherit',
   },
 };

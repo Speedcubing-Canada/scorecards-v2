@@ -7,6 +7,7 @@ A browser-only React app that generates competition scorecards and competitor na
 - **React 19 + TypeScript + Vite** — SPA, no backend required for normal use
 - **`@react-pdf/renderer` v4 (browser build)** — renders scorecards and name tags to PDF entirely in the browser
 - **`fflate`** — bundles all PDFs into a single ZIP for download
+- **`lucide-react`** — the single icon pack used across the UI (no hand-rolled SVGs or emoji icons)
 - **WCA OAuth 2.0 (PKCE)** — authenticates the user against the WCA API
 
 ---
@@ -77,6 +78,24 @@ Settings and auth state live in `sessionStorage` only — they are cleared when 
 
 ## User interface
 
+### Design system
+
+The UI styles itself with per-component inline `React.CSSProperties` objects (no CSS framework), so a shared set of **CSS custom properties** in `src/index.css` is the single source of truth that keeps those inline styles consistent. Beyond the theme colors (see [Dark mode](#dark-mode)), `:root` defines:
+
+- **Type scale** — `--fs-stat`, `--fs-display`, `--fs-title`, `--fs-heading`, `--fs-body`, `--fs-label`, `--fs-caption`. Components reference these for `fontSize` instead of magic numbers.
+- **Weight hierarchy** — only **three** weights are used anywhere: `400` (body, descriptions, hints), `500` (controls, nav, secondary buttons), and `700` (headings, primary buttons, stat values, option titles). The Montserrat `<link>` in `index.html` loads exactly `@400;500;700`. Keep new UI on these three weights — don't reintroduce 600/800.
+- **Spacing** (`--space-1`…`--space-8`) and **radii** (`--radius-sm/md/lg`) for consistent gaps, padding, and corners.
+- A global `:focus-visible` ring (`--focus-ring`) so every interactive element has a visible keyboard focus state.
+
+The app's typeface is **Montserrat**, set on `body` and inherited everywhere (`fontFamily: 'inherit'` on form controls/buttons).
+
+**Icons** come exclusively from `lucide-react` at a consistent size/stroke (e.g. theme toggle `Sun`/`Moon`, header `Menu`/`X`, status `XCircle`, `Check`, `Upload`, `ChevronDown/Right`, `RectangleVertical/Horizontal`). The WCA event icons in `src/assets/events.ts` stay PNGs — they're artwork rendered into the PDFs, not UI chrome.
+
+**Shared UI primitives:**
+
+- `src/components/Tooltip.tsx` — a lightweight, dependency-free tooltip (hover + keyboard focus, `role="tooltip"`, themed via the tokens). Wrap any icon-only or jargon control to explain it. Used on the theme toggle, the About trigger, and the custom-event icon upload button.
+- `src/components/Skeleton.tsx` — a pulsing placeholder (configurable width/height/radius) driven by the global `.skeleton` rule and `skeleton-pulse` keyframes in `index.css`. Loading states render skeletons that mirror the eventual layout (competition cards on the picker, scope option cards, the five-stat grid on Generate) instead of bare text/emoji. The pulse and icon spinners respect `prefers-reduced-motion`.
+
 ### Interface language
 
 The header (and the login page) carries a **language dropdown** (`src/components/LanguageSelect.tsx`) that switches the *interface* language via `i18next`. The available languages are defined once in `src/i18n/index.ts` as the exported `LANGUAGES` registry (code + native label) — this same registry also drives the scorecard language pickers on the SettingsPage, so adding a locale there (plus its translation JSON) makes it appear in both places automatically, no per-language wiring needed. The chosen interface language is persisted by `i18next-browser-languagedetector` under the `i18nextLng` localStorage key.
@@ -85,9 +104,9 @@ This is independent of the printed-output `language` / `secondaryLanguage` *sett
 
 ### Dark mode
 
-A theme toggle (🌙/☀️) sits next to the language dropdown in the header and on the login page. Theming is implemented with **CSS custom properties**:
+A theme toggle (Lucide `Moon`/`Sun`) sits next to the language dropdown in the header and on the login page. Theming is implemented with **CSS custom properties**:
 
-- `src/index.css` defines the full token set under `:root` (light) and `[data-theme='dark']` (dark) — surfaces, text shades, borders, brand, status colors, and shadows. All UI components reference these via `var(--token)` rather than hardcoded hex.
+- `src/index.css` defines the full token set under `:root` (light) and `[data-theme='dark']` (dark) — surfaces, text shades, borders, brand, status colors, shadows, plus the shared type scale, weight hierarchy, spacing, and radii (see [Design system](#design-system)). All UI components reference these via `var(--token)` rather than hardcoded hex.
 - `src/theme/ThemeContext.tsx` (`ThemeProvider` + `useTheme`) sets the `data-theme` attribute on `<html>`. It defaults to the OS `prefers-color-scheme` and, while no explicit choice is stored, follows live OS changes. Once the user toggles, the choice is persisted under the `theme` localStorage key and wins over the OS preference.
 - `src/theme/theme.ts` holds the pure `resolveInitialTheme(stored, prefersDark)` helper (covered by `theme.test.ts`).
 

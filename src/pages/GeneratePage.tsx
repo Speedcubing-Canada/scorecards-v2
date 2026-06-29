@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
@@ -11,6 +12,7 @@ import { estimateTotalPages } from '../lib/pageEstimate';
 import type { WorkerRequest, WorkerResponse } from '../pdf/scorecardWorker';
 import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
+import Skeleton from '../components/Skeleton';
 import { useIsMobile } from '../lib/useIsMobile';
 import { downloadButtonFontSize } from '../lib/downloadButtonFontSize';
 import i18n from '../i18n/index';
@@ -177,9 +179,12 @@ export default function GeneratePage() {
         <div style={s.compBadge}>{settings.competitionName}</div>
         <h2 style={s.pageTitle}>{t('generate.title')}</h2>
 
-        {status === 'fetching' && <StatusBox icon="⏳" text={t('generate.fetching')} />}
-        {status === 'parsing'  && <StatusBox icon="⚙️" text={t('generate.parsing')} />}
-        {status === 'error'    && <StatusBox icon="❌" text={statusMsg} isError />}
+        {(status === 'fetching' || status === 'parsing') && (
+          <StatsSkeleton isMobile={isMobile} label={status === 'fetching' ? t('generate.fetching') : t('generate.parsing')} />
+        )}
+        {status === 'error'    && (
+          <StatusBox icon={<XCircle size={28} strokeWidth={2} color="var(--danger)" />} text={statusMsg} isError />
+        )}
         {status === 'building' && (
           <div style={s.progressBox}>
             <div style={s.progressHeader}>
@@ -234,11 +239,32 @@ export default function GeneratePage() {
   );
 }
 
-function StatusBox({ icon, text, isError = false }: { icon: string; text: string; isError?: boolean }) {
+function StatusBox({ icon, text, isError = false }: { icon: React.ReactNode; text: string; isError?: boolean }) {
   return (
     <div style={{ ...s.statusBox, ...(isError ? s.statusError : {}) }}>
-      <span style={{ fontSize: 24 }}>{icon}</span>
-      <span style={{ fontSize: 14, color: isError ? 'var(--danger)' : 'var(--text-muted)' }}>{text}</span>
+      {icon}
+      <span style={{ fontSize: 'var(--fs-body)', color: isError ? 'var(--danger)' : 'var(--text-muted)' }}>{text}</span>
+    </div>
+  );
+}
+
+/**
+ * Loading placeholder shown while the WCIF is fetched and parsed. Mirrors the
+ * five-card stats grid and the download button so the layout doesn't shift once
+ * the real numbers arrive. The status label is announced for screen readers.
+ */
+function StatsSkeleton({ isMobile, label }: { isMobile: boolean; label: string }) {
+  return (
+    <div role="status" aria-label={label}>
+      <div style={{ ...s.stats, ...(isMobile ? s.statsMobile : {}) }}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} style={s.stat}>
+            <Skeleton width={isMobile ? 48 : 56} height={isMobile ? 22 : 28} style={{ margin: '0 auto 8px' }} />
+            <Skeleton width="70%" height={10} style={{ margin: '0 auto' }} />
+          </div>
+        ))}
+      </div>
+      <Skeleton height={56} radius="var(--radius-md)" />
     </div>
   );
 }
@@ -259,13 +285,13 @@ const s: Record<string, React.CSSProperties> = {
   mainMobile: { padding: '24px 16px' },
   compBadge: {
     display: 'inline-block', backgroundColor: 'var(--primary-soft-bg)', color: 'var(--primary-soft-text)',
-    borderRadius: 6, padding: '4px 12px', fontSize: 13, fontWeight: 600, marginBottom: 8,
+    borderRadius: 'var(--radius-sm)', padding: '4px 12px', fontSize: 'var(--fs-label)', fontWeight: 700, marginBottom: 8,
   },
-  pageTitle: { margin: '0 0 24px', fontSize: 22, fontWeight: 700, color: 'var(--text)' },
+  pageTitle: { margin: '0 0 24px', fontSize: 'var(--fs-display)', fontWeight: 700, color: 'var(--text)' },
   statusBox: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
     backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
-    borderRadius: 10, padding: '40px 24px', textAlign: 'center', marginBottom: 24,
+    borderRadius: 'var(--radius-lg)', padding: '40px 24px', textAlign: 'center', marginBottom: 24,
   },
   statusError: { borderColor: 'var(--danger)', backgroundColor: 'var(--primary-soft-bg)' },
   stats: {
@@ -274,14 +300,14 @@ const s: Record<string, React.CSSProperties> = {
   statsMobile: { gridTemplateColumns: 'repeat(2, 1fr)' },
   stat: {
     backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
-    borderRadius: 8, padding: '16px', textAlign: 'center',
+    borderRadius: 'var(--radius-md)', padding: '16px', textAlign: 'center',
   },
-  statValue: { fontSize: 28, fontWeight: 700, color: 'var(--primary)', marginBottom: 4 },
-  statValueMobile: { fontSize: 22 },
-  statLabel: { fontSize: 12, color: 'var(--text-muted)' },
+  statValue: { fontSize: 'var(--fs-stat)', fontWeight: 700, color: 'var(--primary)', marginBottom: 4 },
+  statValueMobile: { fontSize: 'var(--fs-display)' },
+  statLabel: { fontSize: 'var(--fs-caption)', color: 'var(--text-muted)' },
   downloadBtn: {
     display: 'block', backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)',
-    border: 'none', borderRadius: 8, padding: '16px', fontSize: 15,
+    border: 'none', borderRadius: 'var(--radius-md)', padding: '16px', fontSize: 'var(--fs-heading)',
     fontWeight: 700, textAlign: 'center', cursor: 'pointer', width: '100%',
     fontFamily: 'inherit', letterSpacing: '-0.01em', overflowWrap: 'anywhere',
   },
@@ -290,13 +316,13 @@ const s: Record<string, React.CSSProperties> = {
   },
   progressBox: {
     backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
-    borderRadius: 10, padding: '24px 28px', marginBottom: 24,
+    borderRadius: 'var(--radius-lg)', padding: '24px 28px', marginBottom: 24,
   },
   progressHeader: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12,
   },
-  progressLabel: { fontSize: 14, color: 'var(--text-muted)' },
-  progressPct: { fontSize: 20, fontWeight: 700, color: 'var(--primary)' },
+  progressLabel: { fontSize: 'var(--fs-body)', color: 'var(--text-muted)' },
+  progressPct: { fontSize: 'var(--fs-title)', fontWeight: 700, color: 'var(--primary)' },
   progressTrack: {
     height: 10, backgroundColor: 'var(--primary-soft-bg)', borderRadius: 5, overflow: 'hidden',
   },

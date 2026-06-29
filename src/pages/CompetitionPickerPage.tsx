@@ -6,6 +6,7 @@ import { fetchManagedCompetitions } from '../auth/wca';
 import type { WCACompetition } from '../types/wcif';
 import Header from '../components/Header';
 import AboutDialog from '../components/AboutDialog';
+import Skeleton from '../components/Skeleton';
 import { useIsMobile } from '../lib/useIsMobile';
 
 export default function CompetitionPickerPage() {
@@ -49,7 +50,16 @@ export default function CompetitionPickerPage() {
         </div>
         <p style={styles.hint}>{t('picker.hint')}</p>
 
-        {isLoading && <p style={styles.status}>{t('picker.loading')}</p>}
+        {isLoading && (
+          <div role="status" aria-label={t('picker.loading')} style={{ ...styles.grid, ...(isMobile ? styles.gridMobile : {}) }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} style={styles.compCard}>
+                <Skeleton width="75%" height={16} />
+                <Skeleton width="50%" height={13} />
+              </div>
+            ))}
+          </div>
+        )}
         {error && <p style={{ ...styles.status, color: 'var(--danger)' }}>{t('picker.error', { message: error })}</p>}
 
         {!isLoading && !error && competitions.length === 0 && (
@@ -95,9 +105,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   mainMobile: { padding: '24px 16px' },
   headingRow: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 },
-  heading: { margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--text)' },
-  hint: { margin: '0 0 28px', fontSize: 14, color: 'var(--text-muted)' },
-  status: { fontSize: 15, color: 'var(--text-muted)', textAlign: 'center', padding: '32px 0' },
+  heading: { margin: 0, fontSize: 'var(--fs-display)', fontWeight: 700, color: 'var(--text)' },
+  hint: { margin: '0 0 28px', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' },
+  status: { fontSize: 'var(--fs-heading)', color: 'var(--text-muted)', textAlign: 'center', padding: '32px 0' },
   grid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
@@ -107,7 +117,7 @@ const styles: Record<string, React.CSSProperties> = {
   compCard: {
     backgroundColor: 'var(--surface)',
     border: '1px solid var(--border)',
-    borderRadius: 10,
+    borderRadius: 'var(--radius-lg)',
     padding: '20px 24px',
     textAlign: 'left',
     cursor: 'pointer',
@@ -116,6 +126,6 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 6,
     transition: 'border-color 0.15s, box-shadow 0.15s',
   },
-  compName: { fontSize: 16, fontWeight: 600, color: 'var(--text)' },
-  compMeta: { fontSize: 13, color: 'var(--text-muted)' },
+  compName: { fontSize: 16, fontWeight: 700, color: 'var(--text)' },
+  compMeta: { fontSize: 'var(--fs-label)', color: 'var(--text-muted)' },
 };
