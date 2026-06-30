@@ -9,11 +9,23 @@ export const SCORECARDS_PER_PAGE = 4;
 // Four people per page in both name-tag layouts (each uses a front + back panel).
 export const NAMETAGS_PER_PAGE = 4;
 
+// Event icons appear only on the side WITHOUT QR codes — but only in the compact
+// (horizontal) layout, where space is tight and Sarah asked to declutter the QR
+// side. The vertical layout keeps icons on both panels as before.
+export function eventIconsVisible({ isQrSide, compact }: { isQrSide: boolean; compact: boolean }): boolean {
+  return !(isQrSide && compact);
+}
+
 // First-timer slip pitch. Each line is LINE_H tall; a slip adds its bottom margin plus
 // the intro block's bottom margin. @react-pdf inflates lineHeight by a constant factor,
 // so fixed-height rows give a predictable pitch.
-export const SLIP_LINE_H = 14;
+// Font size + line pitch reduced from 11/14 so that three large slips (4–5 events)
+// still fit one page after the inter-slip gap grew by a full line (Sarah's feedback).
+export const SLIP_FONT_SIZE = 10;
+export const SLIP_LINE_H = 13;
 export const SLIP_PAGE_PAD_TOP = 38;
 export const SLIP_PAGE_PAD_BOTTOM = 36;
-export const SLIP_MARGIN_BOTTOM = 18;
+// Gap between consecutive slips. One extra blank line (SLIP_LINE_H) beyond the
+// base 18pt makes the cut point between slips more obvious (Sarah's feedback).
+export const SLIP_MARGIN_BOTTOM = 18 + SLIP_LINE_H;
 export const SLIP_INTRO_MARGIN_BOTTOM = 20;

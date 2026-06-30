@@ -344,6 +344,10 @@ Cards are sized to fit **90 × 55 mm badge holders** (the same holder as vertica
 
 In horizontal mode the top section is compressed (≈ 58 pt vs 127–146 pt) and the WCA ID is shown only on the back panel to fit the shorter (147 pt) card height.
 
+**Event icons appear only on the side without the QR codes** (the front / duties panel in horizontal layout). The back panel carries the QR codes, so its icons are hidden. The single source of truth for this rule is `eventIconsVisible({ isQrSide, compact })` in `src/pdf/layoutConstants.ts` (icons hidden only when a panel is the QR side *and* the layout is compact); the vertical layout keeps icons on both panels as before.
+
+In compact layout the competition name, competitor name, and role badge are **top-packed with equal gaps on both panels**. Because the layout is top-packed (not space-distributed), the role badge lands at the same Y regardless of what follows it — event icons + duties on the front, QR codes on the back — so the two "ROLE" badges **align across the front/back pair**, with even spacing on both sides. (A very dense duty list can still push the front's section taller, in which case the pair may not align — an accepted trade-off.)
+
 ### Panel contents
 
 Every panel (front and back) starts with the same top section:
@@ -351,7 +355,7 @@ Every panel (front and back) starts with the same top section:
 - **Logo or competition name** — controlled by `nametagLogoMode` (see below)
 - **Competitor name** — auto-sized to fill available width (see formula below)
 - **Role badge** — DÉLÉGUÉ / COMPÉTITEUR / COMPÉTITRICE / NOUVEAU COMPÉTITEUR / etc. (or English equivalents on the back panel), coloured by role. The badge is pinned at a fixed vertical position within the top section so it appears at the same height regardless of name length
-- **Event icons** — one icon per registered event
+- **Event icons** — one icon per registered event (in horizontal layout, only on the non-QR side — see above)
 - **WCA ID** — or a blank placeholder for first-timers
 
 **Front panel** (French title) — duty assignments grouped by role:
@@ -424,7 +428,7 @@ Output is written to `../current-output/`.
 
 `{id}_first_timers.pdf` is **opt-in**: enable *Print first-timer slips* in Advanced settings (off by default — most delegates don't need it). When on, it prints one confirmation slip per **newcomer** — an accepted competitor with no WCA ID. The delegate cuts the slips apart and uses each one to confirm the competitor's personal details (so their results can be linked to a freshly-created WCA profile). The component is `src/pdf/FirstTimerSlipDocument.tsx`.
 
-The slip follows the hand-made original (`original-output/… First-Timer Slips.pdf`): a flowing, vertically-stacked checklist with no borders or cut lines (slips are separated by whitespace and cut apart). Each slip is rendered `wrap={false}` so it is never split across a page. Layout: left margin 36pt, top 38pt, 11pt Helvetica, fixed 14pt line pitch, bold values, and a small bordered square as the tick box (standard PDF Helvetica has no ☐ glyph). The vertical spacing is tightened relative to the original so that **three large slips (4–5 events) reliably fit one page** (the original wasted paper, dropping to two big slips per page); slips flow and pack, so short single-event slips fit four per page.
+The slip follows the hand-made original (`original-output/… First-Timer Slips.pdf`): a flowing, vertically-stacked checklist with no borders or cut lines (slips are separated by whitespace and cut apart). Each slip is rendered `wrap={false}` so it is never split across a page. Layout: left margin 36pt, top 38pt, 10pt Helvetica (`SLIP_FONT_SIZE`), fixed 13pt line pitch (`SLIP_LINE_H`), bold values, and a small bordered square as the tick box (standard PDF Helvetica has no ☐ glyph). The gap between consecutive slips is `SLIP_MARGIN_BOTTOM` = 31 pt — the base 18 pt plus one extra blank line (`SLIP_LINE_H` = 13 pt) so the cut point between slips is obvious (Sarah's feedback). The font + line pitch were reduced from 11/14 to 10/13 so that **three large slips (4–5 events) still reliably fit one page** even with the larger inter-slip gap; short single-event slips fit five per page.
 
 Each slip lists, in order:
 
@@ -512,6 +516,8 @@ The parser assigns each child activity a short timeslot key (e.g., `A01`, `B03`)
 ### Group labels
 
 Group labels are built from the activity code's group number and the room/stage name. If the stage name matches a room name prefix, it is replaced with `"Group"`. Falls back to `"Group {N}"` if the heuristic does not match. Labels are translated to French for `fr` / `bilingual-fr` languages (`Groupe X de Y`).
+
+**Greyed "of Y".** On scorecards (and cover cards), the trailing connector + total of every "X of Y" label — the `of 2` in `Group 1 of 2`, the `de 3` in `Tour 1 de 3`, etc. — is rendered in grey (`#808080`) to de-emphasise it and draw attention to the current group/round number (Sarah's feedback). The connector word per language is `ofConnector` in `src/lib/i18n.ts` (`of` for EN, `de` for FR/ES/PT); `splitLabelTotal(label, connector)` splits the label on the **last** connector occurrence (so colour/stage names like `Bleu 1 de 2` keep their colour black) and returns `tail: null` for labels with no connector (e.g. `Final Round` / `Tour Final`), which render entirely in the normal colour. The `LabelWithGreyTotal` component in `src/pdf/ScorecardDocument.tsx` does the rendering.
 
 For finals with a single group, seat numbers replace group labels: `Seat 01`, `Seat 02`, … (or `Siège 01`, `Siège 02`, … in French). This is detected when `numGroups[rid] === 1`.
 

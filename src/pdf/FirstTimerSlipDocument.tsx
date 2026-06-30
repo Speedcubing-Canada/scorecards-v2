@@ -4,7 +4,7 @@ import type { FirstTimerEntry } from '../lib/wcif-parser';
 import { getFirstTimerSlipStrings, type FirstTimerSlipStrings } from '../lib/i18n';
 import { buildSlipLines, type SlipLine } from './firstTimerSlipLines';
 import {
-  SLIP_LINE_H, SLIP_PAGE_PAD_TOP, SLIP_PAGE_PAD_BOTTOM,
+  SLIP_LINE_H, SLIP_FONT_SIZE, SLIP_PAGE_PAD_TOP, SLIP_PAGE_PAD_BOTTOM,
   SLIP_MARGIN_BOTTOM, SLIP_INTRO_MARGIN_BOTTOM,
 } from './layoutConstants';
 
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     paddingTop: SLIP_PAGE_PAD_TOP,
     paddingBottom: SLIP_PAGE_PAD_BOTTOM,
     fontFamily: FONT,
-    fontSize: 11,
+    fontSize: SLIP_FONT_SIZE,
     color: '#000000',
   },
   // One newcomer's checklist; wrap={false} keeps it whole across page breaks.

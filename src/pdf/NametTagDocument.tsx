@@ -6,7 +6,7 @@ import type { NametTagEntry, NametTagRole } from '../lib/wcif-parser';
 import { EVENT_ICONS } from '../assets/events';
 import { getNametTagStrings, type NametTagStrings } from '../lib/i18n';
 import { resolveLogo } from '../lib/logo';
-import { NAMETAGS_PER_PAGE } from './layoutConstants';
+import { NAMETAGS_PER_PAGE, eventIconsVisible } from './layoutConstants';
 
 Font.registerHyphenationCallback((word) => [word]);
 
@@ -116,16 +116,23 @@ function DutyLines({ duties, fontSize }: { duties: string[]; fontSize: number })
 //   'hidden'    → comp name text only
 //   'with-name' → small logo + comp name text side-by-side
 //   'logo-only' → large logo centred, no comp name text
-function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, compact = false, showWcaId = true }: {
+function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, compact = false, showWcaId = true, showEvents = true }: {
   entry: NametTagEntry; panelW: number; compName: string; titleText: string;
   logoMode: NametTagLogoMode; logoDataUrl: string | null;
-  compact?: boolean; showWcaId?: boolean;
+  compact?: boolean; showWcaId?: boolean; showEvents?: boolean;
 }) {
   const { bg, fg } = badgeColors(entry.role);
   const maxNameFs = compact ? 14 : 20;
   const nameFs = Math.min(maxNameFs, nameFontSize(entry.name, panelW));
   const iconSz = compact ? 9 : 12;
-  const compNameStyle = compact ? [s.compName, { fontSize: 7, marginBottom: 1 }] : s.compName;
+  // Compact (horizontal) tags: top-pack competition name / name / role with EQUAL
+  // gaps on BOTH sides. Because the layout is top-packed, the role badge lands at
+  // the same Y on the front (icons + duties below) and the back (QR below), so the
+  // two "ROLE" badges align across the pair (unless a very dense duty list pushes
+  // the front's section over). Event icons follow the badge, so hiding them on the
+  // QR side does not move the badge.
+  const compNameStyle = compact ? [s.compName, { fontSize: 7, marginBottom: 4 }] : s.compName;
+  const nameStyle = compact ? [s.name, { fontSize: nameFs, marginBottom: 4 }] : [s.name, { fontSize: nameFs }];
   const badgeStyle = compact
     ? [s.badge, { backgroundColor: bg, marginBottom: 2 }]
     : [s.badge, { backgroundColor: bg }];
@@ -142,18 +149,20 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
       ) : (
         <Text style={compNameStyle}>{compName}</Text>
       )}
-      <Text style={[s.name, { fontSize: nameFs }]}>{entry.name}</Text>
+      <Text style={nameStyle}>{entry.name}</Text>
       {!compact && <View style={{ flex: 1 }} />}
       <View style={badgeStyle}>
         <Text style={[s.badgeText, { color: fg }]}>{titleText}</Text>
       </View>
-      <View style={[s.iconsRow, compact ? { marginTop: 2, marginBottom: 1 } : {}]}>
-        {entry.events.map(evId =>
-          EVENT_ICONS[evId]
-            ? <Image key={evId} src={EVENT_ICONS[evId]} style={{ width: iconSz, height: iconSz, marginHorizontal: 1 }} />
-            : null
-        )}
-      </View>
+      {showEvents && (
+        <View style={[s.iconsRow, compact ? { marginTop: 2, marginBottom: 1 } : {}]}>
+          {entry.events.map(evId =>
+            EVENT_ICONS[evId]
+              ? <Image key={evId} src={EVENT_ICONS[evId]} style={{ width: iconSz, height: iconSz, marginHorizontal: 1 }} />
+              : null
+          )}
+        </View>
+      )}
       {showWcaId && !compact && <Text style={s.wcaId}>{entry.wcaId || ' '}</Text>}
     </View>
   );
@@ -246,7 +255,7 @@ function FrontPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName
 
   if (qrBothSides) {
     return frame(<>
-      <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleFront} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} showWcaId={!compact} />
+      <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleFront} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} showWcaId={!compact} showEvents={eventIconsVisible({ isQrSide: true, compact })} />
       <QrSection entry={entry} competitionId={competitionId} wcaLiveId={wcaLiveId} wcaLivePersonIds={wcaLivePersonIds} qrSize={qrSize} compact={compact} />
     </>);
   }
@@ -292,7 +301,7 @@ function BackPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName,
 }) {
   return (
     <PanelFrame pos={pos} slotW={slotW} slotH={slotH} panelW={panelW} panelH={panelH} rotate={rotate}>
-      <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleBack} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} />
+      <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleBack} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} showEvents={eventIconsVisible({ isQrSide: true, compact })} />
       {compact && <Text style={[s.wcaId, { marginTop: 2, marginBottom: 2 }]}>{entry.wcaId || ' '}</Text>}
       <QrSection entry={entry} competitionId={competitionId} wcaLiveId={wcaLiveId} wcaLivePersonIds={wcaLivePersonIds} qrSize={qrSize} compact={compact} />
     </PanelFrame>

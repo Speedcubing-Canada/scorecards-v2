@@ -1,7 +1,8 @@
 import { Document, Page, View, Text, Image, StyleSheet, Font } from '@react-pdf/renderer';
 import type { CompetitionSettings } from '../types/settings';
 import type { ScorecardData, ScorecardFormat } from '../lib/wcif-parser';
-import { getStrings } from '../lib/i18n';
+import { getStrings, splitLabelTotal } from '../lib/i18n';
+import type { Style } from '@react-pdf/types';
 import { EVENT_ICONS } from '../assets/events';
 import { logoState, resolveLogo } from '../lib/logo';
 import { SCORECARDS_PER_PAGE } from './layoutConstants';
@@ -164,6 +165,22 @@ function AttemptRow({ num, rowH, isMBF, doubleCheck }: { num: number | ''; rowH:
   );
 }
 
+// Render a round/group label with the trailing "of Y" (connector + total) greyed
+// (#808080) to de-emphasise it. Labels without a connector (e.g. "Final Round")
+// render entirely in the base style. `extra` lets the caller append text (e.g. a
+// trailing space + group) that stays in the base colour.
+const GREY = '#808080';
+function LabelWithGreyTotal({ label, connector, style }: {
+  label: string; connector: string; style: Style | Style[];
+}) {
+  const { head, tail } = splitLabelTotal(label, connector);
+  return (
+    <Text style={style}>
+      {head}{tail && <Text style={{ color: GREY }}>{tail}</Text>}
+    </Text>
+  );
+}
+
 // ── Scorecard ─────────────────────────────────────────────────────────────
 function ScorecardCard({
   card, settings, cardW, cardH, pos,
@@ -241,8 +258,8 @@ function ScorecardCard({
       <View style={styles.eventRow}>
         {icon && <Image src={icon} style={styles.eventIcon} />}
         <Text style={styles.eventCell}>{card.eventName}</Text>
-        <Text style={styles.roundCell}>{card.roundLabel}</Text>
-        <Text style={styles.groupCell}>{card.group}</Text>
+        <LabelWithGreyTotal label={card.roundLabel} connector={strings.ofConnector} style={styles.roundCell} />
+        <LabelWithGreyTotal label={card.group} connector={strings.ofConnector} style={styles.groupCell} />
       </View>
 
       {/* Pre-cutoff attempts */}
@@ -297,12 +314,16 @@ function CoverCard({
   pos: { left: number; top: number };
 }) {
   if (!card.eventId) return null;
-  const cover = getStrings(settings.language).cover;
+  const strings = getStrings(settings.language);
+  const cover = strings.cover;
+  const round = splitLabelTotal(card.roundLabel, strings.ofConnector);
   return (
     <View style={[styles.coverCard, { position: 'absolute', left: pos.left, top: pos.top, width: cardW, height: cardH }]}>
       <Text style={styles.coverCompName}>{settings.competitionName}</Text>
-      <Text style={[styles.coverEventRound, { fontSize: coverEventFontSize(`${card.eventName} ${card.roundLabel}`) }]}>{card.eventName} {card.roundLabel}</Text>
-      <Text style={styles.coverGroup}>{card.group}</Text>
+      <Text style={[styles.coverEventRound, { fontSize: coverEventFontSize(`${card.eventName} ${card.roundLabel}`) }]}>
+        {card.eventName} {round.head}{round.tail && <Text style={{ color: GREY }}>{round.tail}</Text>}
+      </Text>
+      <LabelWithGreyTotal label={card.group} connector={strings.ofConnector} style={styles.coverGroup} />
 
       <View style={styles.coverDividerRow}>
         <View style={styles.coverDividerLine} />

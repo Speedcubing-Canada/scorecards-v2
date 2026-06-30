@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { buildSlipLines } from './firstTimerSlipLines';
+import {
+  SLIP_LINE_H, SLIP_INTRO_MARGIN_BOTTOM, SLIP_MARGIN_BOTTOM,
+  SLIP_PAGE_PAD_TOP, SLIP_PAGE_PAD_BOTTOM,
+} from './layoutConstants';
 import { getFirstTimerSlipStrings, type FirstTimerSlipStrings } from '../lib/i18n';
 import type { FirstTimerEntry } from '../lib/wcif-parser';
 import type { LocaleCode } from '../types/settings';
@@ -108,12 +112,17 @@ describe('first-timer slip i18n completeness', () => {
 // wrap={false}, so a single slip that exceeded the page's content height would be
 // clipped. This guards that even a worst-case slip (every WCA event) fits a page.
 describe('first-timer slip geometry', () => {
-  const LINE_H = 14;
-  const INTRO_GAP = 20;     // styles.intro marginBottom
-  const SLIP_GAP = 18;      // styles.slip marginBottom
-  const PAD_TOP = 38;
-  const PAD_BOTTOM = 36;
+  const LINE_H = SLIP_LINE_H;
+  const INTRO_GAP = SLIP_INTRO_MARGIN_BOTTOM;  // styles.intro marginBottom
+  const SLIP_GAP = SLIP_MARGIN_BOTTOM;         // styles.slip marginBottom (18 + one line)
+  const PAD_TOP = SLIP_PAGE_PAD_TOP;
+  const PAD_BOTTOM = SLIP_PAGE_PAD_BOTTOM;
   const PAGE_H = { LETTER: 792, A4: 842 } as const;
+
+  it('separates slips by one blank line beyond the base 18pt gap (cut clarity)', () => {
+    // Sarah's feedback: one extra blank line between slips makes the cut obvious.
+    expect(SLIP_GAP).toBe(18 + LINE_H);
+  });
 
   function slipHeight(lineCount: number): number {
     // 2 intro lines + INTRO_GAP, then the remaining checklist lines.
@@ -140,10 +149,11 @@ describe('first-timer slip geometry', () => {
     const lines = buildSlipLines(
       entry({ eventIds: ['444', '555', '666', '777', 'minx'], birthdate: '2015-01-13' }), EN, 'en',
     );
-    // Three full cycles (slip + its bottom margin); the third margin may hang into
-    // the bottom padding, so the strict 3× bound here is a conservative guarantee.
-    const threeCycles = 3 * (slipHeight(lines.length) + SLIP_GAP);
+    // Three slips plus the two gaps that separate them. The last slip's bottom
+    // margin is trailing — it hangs into the bottom padding and doesn't need to
+    // fit — so only the two interior gaps count toward the usable height.
+    const threeSlips = 3 * slipHeight(lines.length) + 2 * SLIP_GAP;
     const usable = PAGE_H.LETTER - PAD_TOP - PAD_BOTTOM;
-    expect(threeCycles).toBeLessThanOrEqual(usable);
+    expect(threeSlips).toBeLessThanOrEqual(usable);
   });
 });

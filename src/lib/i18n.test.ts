@@ -1,5 +1,41 @@
 import { describe, it, expect } from 'vitest';
-import { getStrings, getScheduleStrings, getNametTagStrings, getNametTagTitleStrings, getShortNametTagNames, getEventName } from './i18n';
+import { getStrings, getScheduleStrings, getNametTagStrings, getNametTagTitleStrings, getShortNametTagNames, getEventName, splitLabelTotal } from './i18n';
+
+describe('ofConnector', () => {
+  it('is "of" in English and "de" in FR/ES/PT', () => {
+    expect(getStrings('en').ofConnector).toBe('of');
+    expect(getStrings('fr').ofConnector).toBe('de');
+    expect(getStrings('es').ofConnector).toBe('de');
+    expect(getStrings('pt').ofConnector).toBe('de');
+  });
+
+  it('uses the primary language connector when merged (labels are primary-only)', () => {
+    expect(getStrings('fr', 'en').ofConnector).toBe('de');
+    expect(getStrings('en', 'fr').ofConnector).toBe('of');
+  });
+});
+
+describe('splitLabelTotal', () => {
+  it('splits the trailing "of Y" off a group/round label', () => {
+    expect(splitLabelTotal('Group 1 of 2', 'of')).toEqual({ head: 'Group 1', tail: ' of 2' });
+    expect(splitLabelTotal('Round 1 of 3', 'of')).toEqual({ head: 'Round 1', tail: ' of 3' });
+  });
+
+  it('splits "de Y" for French/Spanish/Portuguese labels', () => {
+    expect(splitLabelTotal('Groupe 1 de 2', 'de')).toEqual({ head: 'Groupe 1', tail: ' de 2' });
+    expect(splitLabelTotal('Grupo 1 de 3', 'de')).toEqual({ head: 'Grupo 1', tail: ' de 3' });
+  });
+
+  it('splits on the LAST connector so colour/stage names are untouched', () => {
+    // "Bleu 1 de 2" — the colour stays in head, only " de 2" is the tail.
+    expect(splitLabelTotal('Bleu 1 de 2', 'de')).toEqual({ head: 'Bleu 1', tail: ' de 2' });
+  });
+
+  it('returns tail null when there is no connector (e.g. final rounds)', () => {
+    expect(splitLabelTotal('Final Round', 'of')).toEqual({ head: 'Final Round', tail: null });
+    expect(splitLabelTotal('Tour Final', 'de')).toEqual({ head: 'Tour Final', tail: null });
+  });
+});
 
 describe('getStrings', () => {
   it('returns Spanish strings for "es"', () => {

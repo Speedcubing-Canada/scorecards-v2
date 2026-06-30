@@ -56,14 +56,14 @@ const EVENT_NAMES = {
 const LANG = 'en';
 
 // ── Styles (mirror FirstTimerSlipDocument.tsx) ──────────────────────────────────
-const LINE_H = 14;
+const LINE_H = 13;
 const styles = StyleSheet.create({
   page: {
     backgroundColor: '#ffffff',
     paddingLeft: 36, paddingRight: 36, paddingTop: 38, paddingBottom: 36,
-    fontFamily: FONT, fontSize: 11, color: '#000000',
+    fontFamily: FONT, fontSize: 10, color: '#000000',
   },
-  slip: { marginBottom: 18 },
+  slip: { marginBottom: 31 },  // 18 + one line (13) — extra gap to mark the cut point
   intro: { marginBottom: 20 },
   row: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', height: LINE_H },
   bold: { fontFamily: FONT_BOLD },

@@ -77,7 +77,8 @@ describe('estimateTotalPages', () => {
   });
 
   it('greedily packs first-timer slips by height', () => {
-    // A single-event slip is 7 lines (136pt); five fit a LETTER page (718pt content).
+    // A single-event slip is 7 lines (7×13) + intro (20) + inter-slip gap (31) = 142pt;
+    // five fit a LETTER page (718pt content), the sixth spills to a second page.
     expect(estimateTotalPages(mkParsed({ firstTimers: Array.from({ length: 5 }, () => ft()) }), mkSettings())).toBe(1);
     expect(estimateTotalPages(mkParsed({ firstTimers: Array.from({ length: 6 }, () => ft()) }), mkSettings())).toBe(2);
   });

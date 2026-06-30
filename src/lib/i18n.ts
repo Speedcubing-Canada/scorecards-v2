@@ -88,6 +88,9 @@ export interface ScorecardStrings {
   groupLabel: (gNum: string | number, total: number) => string;
   colorGroupLabel: (color: string, gNum: string | number, total: number) => string;
   blankGroupLabel: (total: number) => string;
+  // Connector word in "X of Y" / "X de Y" labels (e.g. 'of', 'de'). Used to grey
+  // the trailing "of Y" portion of round/group labels on the scorecard.
+  ofConnector: string;
   stationLabel: (n: string) => string;
   seatLabel: (n: string) => string;
   cover: CoverCardStrings;
@@ -118,6 +121,7 @@ const EN: ScorecardStrings = {
   groupLabel: (gNum, total) => `Group ${gNum} of ${total}`,
   colorGroupLabel: (color, gNum, total) => `${color} ${gNum} of ${total}`,
   blankGroupLabel: (total) => `Group _ of ${total}`,
+  ofConnector: 'of',
   stationLabel: (n) => `Station ${n}`,
   seatLabel: (n) => `Seat ${n}`,
   cover: {
@@ -159,6 +163,7 @@ const FR: ScorecardStrings = {
   groupLabel: (gNum, total) => `Groupe ${gNum} de ${total}`,
   colorGroupLabel: (color, gNum, total) => `${color} ${gNum} de ${total}`,
   blankGroupLabel: (total) => `Groupe _ de ${total}`,
+  ofConnector: 'de',
   stationLabel: (n) => `Siège ${n}`,
   seatLabel: (n) => `Siège ${n}`,
   cover: {
@@ -200,6 +205,7 @@ const ES: ScorecardStrings = {
   groupLabel: (gNum, total) => `Grupo ${gNum} de ${total}`,
   colorGroupLabel: (color, gNum, total) => `${color} ${gNum} de ${total}`,
   blankGroupLabel: (total) => `Grupo _ de ${total}`,
+  ofConnector: 'de',
   stationLabel: (n) => `Estación ${n}`,
   seatLabel: (n) => `Asiento ${n}`,
   cover: {
@@ -241,6 +247,7 @@ const PT: ScorecardStrings = {
   groupLabel: (gNum, total) => `Grupo ${gNum} de ${total}`,
   colorGroupLabel: (color, gNum, total) => `${color} ${gNum} de ${total}`,
   blankGroupLabel: (total) => `Grupo _ de ${total}`,
+  ofConnector: 'de',
   stationLabel: (n) => `Estação ${n}`,
   seatLabel: (n) => `Assento ${n}`,
   cover: {
@@ -286,6 +293,7 @@ function mergeScorecardStrings(primary: ScorecardStrings, secondary: ScorecardSt
     groupLabel: (gNum, total) => primary.groupLabel(gNum, total),
     colorGroupLabel: (color, gNum, total) => primary.colorGroupLabel(color, gNum, total),
     blankGroupLabel: (total) => primary.blankGroupLabel(total),
+    ofConnector: primary.ofConnector,
     stationLabel: (n) => primary.stationLabel(n),
     seatLabel: (n) => primary.seatLabel(n),
     cover: primary.cover,
@@ -300,6 +308,23 @@ export function getStrings(language: LocaleCode, secondary?: LocaleCode | null):
   const primary = LOCALES[language].scorecard;
   if (!secondary || secondary === language) return primary;
   return mergeScorecardStrings(primary, LOCALES[secondary].scorecard);
+}
+
+/**
+ * Split a "X of Y" / "X de Y" label into the part that stays normal (`head`) and
+ * the trailing connector + total (`tail`, e.g. " of 2") that should be greyed.
+ * Splits on the LAST ` <connector> ` so colour/stage names (e.g. "Bleu 1 de 2")
+ * are never affected. Returns `tail: null` when there is no connector (e.g.
+ * "Final Round" / "Tour Final"), so the whole label renders in the normal colour.
+ */
+export function splitLabelTotal(
+  label: string,
+  connector: string,
+): { head: string; tail: string | null } {
+  const marker = ` ${connector} `;
+  const idx = label.lastIndexOf(marker);
+  if (idx === -1) return { head: label, tail: null };
+  return { head: label.slice(0, idx), tail: label.slice(idx) };
 }
 
 // ── Schedule tracker strings ───────────────────────────────────────────────────

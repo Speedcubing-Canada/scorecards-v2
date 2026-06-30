@@ -167,24 +167,29 @@ function DutyLines({ duties, fontSize }) {
   );
 }
 
-function PanelTop({ entry, panelW, compName, titleText, compact = false, showWcaId = true }) {
+function PanelTop({ entry, panelW, compName, titleText, compact = false, showWcaId = true, showEvents = true }) {
   const { bg, fg } = badgeColors(entry.titleEn);
   const maxNameFs = compact ? 14 : 20;
   const nameFs = Math.min(maxNameFs, nameFontSize(entry.name, panelW));
   const iconSz = compact ? 9 : 12;
-  const compNameStyle = compact ? { ...s.compName, fontSize: 7, marginBottom: 1 } : s.compName;
+  // Compact (horizontal) tags: top-pack competition name / name / role with EQUAL
+  // gaps on BOTH sides, so the role badge lands at the same Y on the front (icons +
+  // duties below) and the back (QR below) and the two "ROLE" badges align. Icons
+  // follow the badge, so hiding them on the QR side does not move the badge.
+  const compNameStyle = compact ? { ...s.compName, fontSize: 7, marginBottom: 4 } : s.compName;
+  const nameStyle = compact ? { ...s.name, fontSize: nameFs, marginBottom: 4 } : { ...s.name, fontSize: nameFs };
   const badgeStyle = compact
     ? { ...s.badge, backgroundColor: bg, marginBottom: 2 }
     : { ...s.badge, backgroundColor: bg };
   const badgeTextStyle = { ...s.badgeText, color: fg };
   return e(View, { style: { height: topSectionH('hidden', compact), flexDirection: 'column' } },
     e(Text, { style: compNameStyle }, compName),
-    e(Text, { style: { ...s.name, fontSize: nameFs } }, entry.name),
+    e(Text, { style: nameStyle }, entry.name),
     !compact && e(View, { style: { flex: 1 } }),
     e(View, { style: badgeStyle },
       e(Text, { style: badgeTextStyle }, titleText),
     ),
-    e(View, { style: { ...s.iconsRow, ...(compact ? { marginTop: 2, marginBottom: 1 } : {}) } },
+    showEvents && e(View, { style: { ...s.iconsRow, ...(compact ? { marginTop: 2, marginBottom: 1 } : {}) } },
       ...entry.events.map(evId =>
         EVENT_ICONS[evId]
           ? e(Image, { key: evId, src: EVENT_ICONS[evId], style: { width: iconSz, height: iconSz, marginHorizontal: 1 } })
@@ -240,7 +245,8 @@ function FrontPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName
 
   if (qrBothSides) {
     return frame(
-      e(PanelTop, { entry, panelW, compName, titleText: entry.titleFr, compact, showWcaId: !compact }),
+      // This panel carries QR codes, so hide event icons on it in compact layout.
+      e(PanelTop, { entry, panelW, compName, titleText: entry.titleFr, compact, showWcaId: !compact, showEvents: !compact }),
       e(QrSection, { entry, competitionId, wcaLiveId, qrSize, compact }),
     );
   }
@@ -274,7 +280,7 @@ function FrontPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName
 
 function BackPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName, competitionId, wcaLiveId, qrSize = 75, compact = false }) {
   return e(PanelFrame, { pos, slotW, slotH, panelW, panelH, rotate },
-    e(PanelTop, { entry, panelW, compName, titleText: entry.titleEn, compact }),
+    e(PanelTop, { entry, panelW, compName, titleText: entry.titleEn, compact, showEvents: !compact }),
     compact && e(Text, { style: { ...s.wcaId, marginTop: 2, marginBottom: 2 } }, entry.wcaId || ' '),
     e(QrSection, { entry, competitionId, wcaLiveId, qrSize, compact }),
   );
