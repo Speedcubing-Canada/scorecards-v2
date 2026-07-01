@@ -229,6 +229,16 @@ Controlled by the `secondRoundMode` setting:
 
 These two modes only apply to a round that has **not** been assigned yet — see below.
 
+**Later rounds scheduled without groups.** The blank/prefilled buckets (Round 2, semis,
+finals) and the extras are built from the schedule's **group child-activities**. Some
+organizers schedule a later round as a bare time block and never create groups for it (e.g.
+UtepsaWelcomeSCZ2026 scheduled 3x3 R2 and the final with zero groups). In that case the
+parser falls back to treating the round activity **itself as a single implicit group**, so
+its blank/prefilled scorecards still generate and the second-round-mode option still appears.
+The fallback only applies to rounds ≥ 2 that have no real groups anywhere; it never
+synthesizes a group for Round 1 and never flips `parsed.hasGroups` (which stays tied to real
+group child-activities). See `groupUnitsOf` in `src/lib/wcif-parser.ts`.
+
 ### Mid-competition generation (live group assignments)
 
 Scorecards are normally generated before a competition, when the WCIF only contains

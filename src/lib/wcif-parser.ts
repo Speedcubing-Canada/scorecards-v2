@@ -1,4 +1,4 @@
-import type { WCIF, Round, EventId, Assignment } from '../types/wcif';
+import type { WCIF, Round, EventId, Assignment, ChildActivity } from '../types/wcif';
 import type { CompetitionSettings, DoubleCheckRound } from '../types/settings';
 import { getStrings, getEventName, getNametTagTitleStrings, getNametTagStrings, getShortNametTagNames, getScheduleStrings, type NametTagTitleStrings } from './i18n';
 
@@ -272,6 +272,39 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   const nametTagDutyStrings = getNametTagStrings(language);
   const shortNametTagNames = getShortNametTagNames(language);
 
+  // ── Real-group pre-pass ─────────────────────────────────────────────────────
+  // Round keys ("eventId-rN") that have at least one real group child-activity in the
+  // schedule. Drives two things: the hasGroups flag, and the single-implicit-group
+  // fallback below (a later round is only synthesized when it has no real groups anywhere).
+  const roundsWithRealGroups = new Set<string>();
+  for (const venue of wcif.schedule.venues)
+    for (const room of venue.rooms)
+      for (const activity of room.activities)
+        if (activity.childActivities.length > 0) {
+          const p = activity.activityCode.split('-');
+          if (p.length >= 2) roundsWithRealGroups.add(`${p[0]}-${p[1]}`);
+        }
+
+  // Yield the group-level units for a schedule activity. Normally these are the child
+  // activities (one per scheduled group). When a Round >= 2 was scheduled as a bare time
+  // block with no groups assigned, fall back to a single implicit group derived from the
+  // round activity itself, so its blank/prefilled scorecards still generate. Round 1 and
+  // rounds that already have real groups are never synthesized.
+  interface GroupUnit { id: number; activityCode: string; startTime: string; synthetic: boolean; }
+  function groupUnitsOf(activity: { id: number; activityCode: string; startTime: string; childActivities: ChildActivity[] }): GroupUnit[] {
+    if (activity.childActivities.length > 0)
+      return activity.childActivities.map(c => ({
+        id: c.id, activityCode: c.activityCode, startTime: c.startTime, synthetic: false,
+      }));
+    const p = activity.activityCode.split('-');
+    if (p.length === 2 && p[1].startsWith('r')) {
+      const roundNum = parseInt(p[1].slice(1), 10);
+      if (roundNum >= 2 && !roundsWithRealGroups.has(activity.activityCode))
+        return [{ id: activity.id, activityCode: `${activity.activityCode}-g1`, startTime: activity.startTime, synthetic: true }];
+    }
+    return [];
+  }
+
   // ── Activity maps ─────────────────────────────────────────────────────────
   const activityCode: Record<number, string> = {};
   const activityStage: Record<number, string> = {};
@@ -289,7 +322,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       const color = (words.length > 1 ? words.slice(1).join(' ') : words[0]).toLowerCase();
       for (const activity of room.activities) {
         let groupCount = 0;
-        for (const child of activity.childActivities) {
+        for (const child of groupUnitsOf(activity)) {
           activityCode[child.id] = child.activityCode;
           activityStage[child.id] = color;
           if (!startTimes[child.startTime]) startTimes[child.startTime] = [];
@@ -565,7 +598,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   for (const venue of wcif.schedule.venues) {
     for (const room of venue.rooms) {
       for (const activity of room.activities) {
-        for (const child of activity.childActivities) {
+        for (const child of groupUnitsOf(activity)) {
           const parts = child.activityCode.split('-');
           if (parts.length < 3) continue;
           const [eventId, roundPart, groupPart] = parts;
@@ -1032,6 +1065,8 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     extras: extrasEntries,
     scheduleDays,
     laterRoundsWithAssignments,
-    hasGroups: Object.keys(numGroups).length > 0,
+    // Real (non-synthesized) round-1+ groups only, so a fresh WCIF whose later rounds get
+    // an implicit single group still reports "no groups assigned yet".
+    hasGroups: roundsWithRealGroups.size > 0,
   };
 }

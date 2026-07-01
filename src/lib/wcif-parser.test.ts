@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { parseWCIF } from './wcif-parser';
+import { hasUnassignedIntermediate } from './generationScope';
 import type { ScorecardEntry, CoverEntry, ScorecardData, NametTagEntry } from './wcif-parser';
 import type {
   WCIF, Event, Round, RoundFormat, Activity, ChildActivity,
@@ -1617,5 +1618,108 @@ describe('hasGroups', () => {
     const r = room('Stage', [act('333', 1, [])]);
     const result = parseWCIF(mkWCIF([e], [r]), cfg());
     expect(result.hasGroups).toBe(false);
+  });
+});
+
+// Regression: UtepsaWelcomeSCZ2026 scheduled 3x3 R2 and the final as bare time blocks with
+// no group child-activities, so no R2/final cards were generated and the second-round-mode
+// option never appeared. A later round with no groups now falls back to a single implicit group.
+describe('later rounds scheduled without groups (single implicit group fallback)', () => {
+  // A round activity scheduled as a bare time block — no group child-activities.
+  function bareAct(eventId: string, r: number, t: string): Activity {
+    return {
+      id: uid(), name: '',
+      activityCode: `${eventId}-r${r}`,
+      startTime: t, endTime: t,
+      childActivities: [], scrambleSets: [],
+    };
+  }
+
+  // 3x3 with 3 rounds: R1 has real groups + assignments; R2 and R3 are bare blocks.
+  // R1 advances by percent, R2 by ranking top 12 (mirrors the reported competition).
+  function mkBareLaterRounds(mode: 'blanks' | 'prefilled' = 'blanks') {
+    const e = evt('333', [
+      rSpec('a', { adv: { type: 'percent', level: 60 } }),
+      rSpec('a', { adv: { type: 'ranking', level: 12 } }),
+      rSpec('a'),
+    ]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)]),
+      bareAct('333', 2, '2024-01-01T12:00:00Z'),
+      bareAct('333', 3, '2024-01-01T16:00:00Z'),
+    ]);
+    const persons = [per(1, [{ aid: 100 }]), per(2, [{ aid: 101 }])];
+    return parseWCIF(mkWCIF([e], [r], persons), cfg({ secondRoundMode: mode }));
+  }
+
+  it('generates round 2 scorecards from an implicit single group', () => {
+    const result = mkBareLaterRounds();
+    expect(scs(result.intermediate).filter(s => s.eventId === '333').length).toBeGreaterThan(0);
+    // single implicit group → exactly one cover
+    expect(cvs(result.intermediate).length).toBe(1);
+  });
+
+  it('generates the final from an implicit single group', () => {
+    const result = mkBareLaterRounds();
+    expect(scs(result.finals).filter(s => s.eventId === '333').length).toBeGreaterThan(0);
+  });
+
+  it('final blank count honors R2 ranking advancement (ceil(12/1)+2 = 14)', () => {
+    const result = mkBareLaterRounds();
+    expect(scs(result.finals).filter(s => s.eventId === '333' && s.roundNum === 3).length).toBe(14);
+  });
+
+  it('extras include both bare later rounds', () => {
+    const result = mkBareLaterRounds();
+    const extraRounds = new Set(scs(result.extras).filter(s => s.eventId === '333').map(s => s.roundNum));
+    expect(extraRounds.has(2)).toBe(true);
+    expect(extraRounds.has(3)).toBe(true);
+  });
+
+  it('surfaces the second-round-mode option (hasUnassignedIntermediate is true)', () => {
+    expect(hasUnassignedIntermediate(mkBareLaterRounds())).toBe(true);
+  });
+
+  it('prefilled mode fills round 2 with all round-1 participants', () => {
+    const result = mkBareLaterRounds('prefilled');
+    const names = scs(result.intermediate).filter(s => s.name !== '').map(s => s.name);
+    expect(names).toContain('P1');
+    expect(names).toContain('P2');
+  });
+
+  it('does not flip hasGroups when the only scheduled activities are bare rounds', () => {
+    // No real groups anywhere (R1 bare too): synthetic later-round groups must not set hasGroups.
+    const e = evt('333', [
+      rSpec('a'),
+      rSpec('a', { adv: { type: 'ranking', level: 8 } }),
+      rSpec('a'),
+    ]);
+    const r = room('Stage', [
+      bareAct('333', 1, '2024-01-01T09:00:00Z'),
+      bareAct('333', 2, '2024-01-01T12:00:00Z'),
+      bareAct('333', 3, '2024-01-01T16:00:00Z'),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    expect(result.hasGroups).toBe(false);
+  });
+
+  it('does not synthesize a group when the round has real groups in another room', () => {
+    // R2 has a real group in Rouge and a bare block in Bleu — must count as one group, not two.
+    const e = evt('333', [
+      rSpec('a', { adv: { type: 'ranking', level: 16 } }),
+      rSpec('a'),
+      rSpec('a'),
+    ]);
+    const rRouge = room('Scène Rouge', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      act('333', 2, [ch(110, '333', 2, 1, '2024-01-01T12:00:00Z')]),
+    ]);
+    const rBleu = room('Scène Bleu', [
+      act('333', 1, [ch(101, '333', 1, 1)]),
+      bareAct('333', 2, '2024-01-01T12:00:00Z'),
+    ]);
+    const persons = Array.from({ length: 4 }, (_, i) => per(i + 1, [{ aid: 100 + (i % 2) }]));
+    const result = parseWCIF(mkWCIF([e], [rRouge, rBleu], persons), cfg({ secondRoundMode: 'blanks' }));
+    expect(cvs(result.intermediate).length).toBe(1);
   });
 });
