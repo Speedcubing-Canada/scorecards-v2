@@ -285,11 +285,29 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
           if (p.length >= 2) roundsWithRealGroups.add(`${p[0]}-${p[1]}`);
         }
 
+  // Scramble-set count per round id ("333-r2") — used to pick how many implicit groups to
+  // synthesize for a bare later round (organizers configure this when setting up the round).
+  const roundScrambleSetCount: Record<string, number> = {};
+  for (const event of wcif.events)
+    for (const round of event.rounds)
+      roundScrambleSetCount[round.id] = round.scrambleSetCount;
+
+  // Accepted registrations per event id — the Round-1 field size for the advancement chain.
+  const registeredCount: Record<string, number> = {};
+  for (const person of wcif.persons) {
+    if (!person.registration || person.registration.status !== 'accepted') continue;
+    for (const eid of person.registration.eventIds)
+      registeredCount[eid] = (registeredCount[eid] ?? 0) + 1;
+  }
+
   // Yield the group-level units for a schedule activity. Normally these are the child
   // activities (one per scheduled group). When a Round >= 2 was scheduled as a bare time
-  // block with no groups assigned, fall back to a single implicit group derived from the
-  // round activity itself, so its blank/prefilled scorecards still generate. Round 1 and
-  // rounds that already have real groups are never synthesized.
+  // block with no groups assigned, fall back to synthesizing implicit groups derived from the
+  // round activity itself (as many as the round has scramble sets, min 1), so its blank/
+  // prefilled scorecards still generate. Round 1 and rounds that already have real groups are
+  // never synthesized. Synthetic ids are deterministic negatives (-(activity.id*100+g)) so the
+  // two call sites agree, they never collide with real positive WCA ids, and they stay
+  // invisible to the assignment-driven named/cover/nametag loops.
   interface GroupUnit { id: number; activityCode: string; startTime: string; synthetic: boolean; }
   function groupUnitsOf(activity: { id: number; activityCode: string; startTime: string; childActivities: ChildActivity[] }): GroupUnit[] {
     if (activity.childActivities.length > 0)
@@ -299,8 +317,18 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     const p = activity.activityCode.split('-');
     if (p.length === 2 && p[1].startsWith('r')) {
       const roundNum = parseInt(p[1].slice(1), 10);
-      if (roundNum >= 2 && !roundsWithRealGroups.has(activity.activityCode))
-        return [{ id: activity.id, activityCode: `${activity.activityCode}-g1`, startTime: activity.startTime, synthetic: true }];
+      if (roundNum >= 2 && !roundsWithRealGroups.has(activity.activityCode)) {
+        const n = Math.max(1, roundScrambleSetCount[activity.activityCode] ?? 1);
+        const units: GroupUnit[] = [];
+        for (let g = 1; g <= n; g++)
+          units.push({
+            id: -(activity.id * 100 + g),
+            activityCode: `${activity.activityCode}-g${g}`,
+            startTime: activity.startTime,
+            synthetic: true,
+          });
+        return units;
+      }
     }
     return [];
   }
@@ -375,7 +403,6 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   const roundLimit: Record<string, string> = {};
   const roundFormat: Record<string, ScorecardFormat> = {};
   const roundCumulative: Record<string, boolean> = {};
-  const roundAdvancement: Record<string, { type: string; level: number } | null> = {};
 
   for (const event of wcif.events) {
     const eid = event.id;
@@ -389,7 +416,25 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       roundFormat[rid] = getScorecardFormat(eid, round);
       roundCumulative[rid] = round.timeLimit
         ? round.timeLimit.cumulativeRoundIds.length > 0 : false;
-      roundAdvancement[rid] = round.advancementCondition;
+    }
+  }
+
+  // Expected field size per round id ("333-r2"), chained forward from event registrations.
+  // Round 1's field is the accepted registration count; each later round applies the previous
+  // round's advancement condition: ranking → top X (exactly that many advance), percent →
+  // floor(level/100 × previous field). The chain stops at an attemptResult/absent condition
+  // (downstream field unknown), so those rounds keep the flat blank fallback below.
+  const roundFieldSize: Record<string, number> = {};
+  for (const event of wcif.events) {
+    const eid = event.id;
+    if (eid === '333fm') continue;
+    let field: number | null = registeredCount[eid] ?? 0;
+    for (let j = 0; j < event.rounds.length - 1; j++) {
+      const adv = event.rounds[j].advancementCondition;
+      if (adv?.type === 'ranking') field = adv.level;
+      else if (adv?.type === 'percent') field = Math.floor((adv.level / 100) * field);
+      else { field = null; break; }
+      roundFieldSize[`${eid}-r${j + 2}`] = field;
     }
   }
 
@@ -650,8 +695,6 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   for (const { eventId, roundNum, rid, groups } of Object.values(finalsRounds)) {
     const totalGroups = groups[0]?.totalGroups ?? groups.length;
     const numStages = roundStages[rid]?.size ?? 1;
-    const prevRid = `${eventId}-r${roundNum - 1}`;
-    const advCond = roundAdvancement[prevRid];
     // One logical group split across multiple stages simultaneously: each stage
     // gets its own labeled stack ("Rouge 1", "Bleu 1", …).
     const isMultiStageSingleGroup = totalGroups === 1 && numStages > 1;
@@ -659,15 +702,14 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     // identifies the stack; adding a group label would be redundant noise).
     const useSeatNumbers = totalGroups === 1 && numStages <= 1;
     const stageCount = isMultiStageSingleGroup ? groups.length : totalGroups;
+    const field = roundFieldSize[rid];
 
     for (const { gNum, stage, timeslot } of sortGroups(groups)) {
       const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
       const coverLabel = isMultiStageSingleGroup
         ? `${stageName} ${gNum}`
         : resolveGroupLabel(rid, gNum, stage, totalGroups);
-      const blankCount = advCond?.type === 'ranking'
-        ? Math.ceil(advCond.level / stageCount) + 2
-        : 16;
+      const blankCount = field != null ? Math.ceil(field / stageCount) + 2 : 16;
 
       for (let i = 0; i < blankCount; i++) {
         const cardGroup = useSeatNumbers
@@ -698,17 +740,14 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     const numStages = roundStages[rid]?.size ?? 1;
     const isMultiStageSingleGroup = totalGroups === 1 && numStages > 1;
     const stageCount = isMultiStageSingleGroup ? groups.length : totalGroups;
-    const prevRid = `${eventId}-r${roundNum - 1}`;
-    const advCond = roundAdvancement[prevRid];
+    const field = roundFieldSize[rid];
 
     for (const { gNum, stage, timeslot } of sortGroups(groups)) {
       const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
       const groupLabel = isMultiStageSingleGroup
         ? `${stageName} ${gNum}`
         : resolveGroupLabel(rid, gNum, stage, totalGroups);
-      const blankCount = advCond?.type === 'ranking'
-        ? Math.ceil(advCond.level / stageCount) + 2
-        : 16;
+      const blankCount = field != null ? Math.ceil(field / stageCount) + 2 : 16;
 
       for (let i = 0; i < blankCount; i++) {
         semisEntries.push({
@@ -736,15 +775,12 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     const numStages = roundStages[rid]?.size ?? 1;
     const isMultiStageSingleGroup = totalGroups === 1 && numStages > 1;
     const stageCount = isMultiStageSingleGroup ? groups.length : totalGroups;
-    const prevRid = `${eventId}-r${roundNum - 1}`;
-    const advCond = roundAdvancement[prevRid];
+    const field = roundFieldSize[rid];
 
     if (secondRoundMode === 'prefilled') {
       // Distribute qualifiers as evenly as possible: base per group, remainder
       // absorbed one-by-one by the first groups so the total is always exact.
-      const totalQualified = advCond?.type === 'ranking'
-        ? advCond.level
-        : (round1Participants[eventId]?.length ?? 0);
+      const totalQualified = field ?? (round1Participants[eventId]?.length ?? 0);
       const baseCount = Math.floor(totalQualified / stageCount);
       const extraGroups = totalQualified % stageCount;
 
@@ -779,9 +815,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       }
     } else {
       // Blanks mode: blank entries per group
-      const blankCount = advCond?.type === 'ranking'
-        ? Math.ceil(advCond.level / stageCount) + 2
-        : 16;
+      const blankCount = field != null ? Math.ceil(field / stageCount) + 2 : 16;
 
       for (const { gNum, stage, timeslot } of sortGroups(groups)) {
         const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);

@@ -233,11 +233,25 @@ These two modes only apply to a round that has **not** been assigned yet — see
 finals) and the extras are built from the schedule's **group child-activities**. Some
 organizers schedule a later round as a bare time block and never create groups for it (e.g.
 UtepsaWelcomeSCZ2026 scheduled 3x3 R2 and the final with zero groups). In that case the
-parser falls back to treating the round activity **itself as a single implicit group**, so
-its blank/prefilled scorecards still generate and the second-round-mode option still appears.
-The fallback only applies to rounds ≥ 2 that have no real groups anywhere; it never
-synthesizes a group for Round 1 and never flips `parsed.hasGroups` (which stays tied to real
-group child-activities). See `groupUnitsOf` in `src/lib/wcif-parser.ts`.
+parser falls back to synthesizing implicit groups from the round activity itself — as many as
+the round has **scramble sets** (`Round.scrambleSetCount`, floor of 1) — so its blank/prefilled
+scorecards still generate and the second-round-mode option still appears. The fallback only
+applies to rounds ≥ 2 that have no real groups anywhere; it never synthesizes a group for
+Round 1 and never flips `parsed.hasGroups` (which stays tied to real group child-activities).
+See `groupUnitsOf` in `src/lib/wcif-parser.ts`.
+
+**Sizing unassigned later rounds (advancement chain).** How many scorecards each *unassigned*
+later round gets is derived from a per-event field-size chain rather than a flat guess. Round 1's
+field is the number of **accepted registrations** for the event; each later round applies the
+previous round's advancement condition to the previous field: `ranking` → top *X* (exactly that
+many advance), `percent` → `floor(level/100 × previous field)`. Blank stacks then hold
+`ceil(field / groups) + 2` cards per group, and prefilled Round-2 cover counts sum to the field.
+If the chain hits an `attemptResult` (or absent) condition the downstream field is unknown, so
+those rounds fall back to the flat **16** blanks. This sizing applies to *all* unassigned later
+rounds (bare or with real-but-unassigned groups), never to assigned rounds (which use real
+names/groups). For UtepsaWelcomeSCZ2026 (35 registered, R1 percent 60 → R2 ranking 12): R2 gets
+2 groups (2 scramble sets) sized to field 21 → 13 cards each; the final gets 1 group sized to
+field 12 → 14 cards. See `roundFieldSize` in `src/lib/wcif-parser.ts`.
 
 ### Mid-competition generation (live group assignments)
 

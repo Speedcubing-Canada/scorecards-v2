@@ -33,14 +33,15 @@ function rSpec(format: RoundFormat, opts: {
   limitCs?: number | null;
   cumulative?: string[];
   adv?: AdvancementCondition | null;
+  sets?: number;
 } = {}): RoundSpec {
-  const { cutoffCs, limitCs, cumulative = [], adv = null } = opts;
+  const { cutoffCs, limitCs, cumulative = [], adv = null, sets = 1 } = opts;
   return {
     format,
     timeLimit: limitCs === null ? null : { centiseconds: limitCs ?? 18000, cumulativeRoundIds: cumulative },
     cutoff: cutoffCs !== undefined ? { numberOfAttempts: 2, attemptResult: cutoffCs } : null,
     advancementCondition: adv,
-    scrambleSetCount: 1,
+    scrambleSetCount: sets,
     results: [],
   };
 }
@@ -1635,6 +1636,9 @@ describe('later rounds scheduled without groups (single implicit group fallback)
     };
   }
 
+  // N accepted registrations for 333 (no assignments) — sets the Round-1 field size.
+  const manyRegistered = (n: number) => Array.from({ length: n }, (_, i) => per(i + 1, []));
+
   // 3x3 with 3 rounds: R1 has real groups + assignments; R2 and R3 are bare blocks.
   // R1 advances by percent, R2 by ranking top 12 (mirrors the reported competition).
   function mkBareLaterRounds(mode: 'blanks' | 'prefilled' = 'blanks') {
@@ -1721,5 +1725,91 @@ describe('later rounds scheduled without groups (single implicit group fallback)
     const persons = Array.from({ length: 4 }, (_, i) => per(i + 1, [{ aid: 100 + (i % 2) }]));
     const result = parseWCIF(mkWCIF([e], [rRouge, rBleu], persons), cfg({ secondRoundMode: 'blanks' }));
     expect(cvs(result.intermediate).length).toBe(1);
+  });
+
+  // ── Scramble-set group count + advancement-based field size ──────────────
+  it('synthesizes scrambleSetCount groups (2 sets → 2 groups) and sizes them by the percent field', () => {
+    // Mirrors UtepsaWelcomeSCZ2026: 35 registered, R1 percent 60 → R2 field 21, R2 has 2 sets.
+    const e = evt('333', [
+      rSpec('a', { adv: { type: 'percent', level: 60 } }),
+      rSpec('a', { adv: { type: 'ranking', level: 12 }, sets: 2 }),
+      rSpec('a'),
+    ]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      bareAct('333', 2, '2024-01-01T12:00:00Z'),
+      bareAct('333', 3, '2024-01-01T16:00:00Z'),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r], manyRegistered(35)), cfg({ secondRoundMode: 'blanks' }));
+    expect(cvs(result.intermediate).length).toBe(2);                 // 2 synthesized groups
+    const perGroup = Math.ceil(21 / 2) + 2;                          // field 21 over 2 groups → 13
+    expect(scs(result.intermediate).filter(s => s.eventId === '333' && s.roundNum === 2).length).toBe(perGroup * 2); // 26
+    // Chained: R2 ranking 12 → final field 12, 1 set → ceil(12/1)+2 = 14
+    expect(scs(result.finals).filter(s => s.eventId === '333' && s.roundNum === 3).length).toBe(14);
+  });
+
+  it('falls back to a single group when the bare round has no scramble sets', () => {
+    const e = evt('333', [
+      rSpec('a', { adv: { type: 'ranking', level: 12 } }),
+      rSpec('a', { sets: 0 }),
+    ]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      bareAct('333', 2, '2024-01-01T12:00:00Z'),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r], manyRegistered(20)), cfg({ secondRoundMode: 'blanks' }));
+    expect(cvs(result.finals).length).toBe(1);                       // one implicit group
+  });
+
+  it('sizes an unassigned round with REAL groups from percent advancement (not the flat 16)', () => {
+    // R2 has two real but UNassigned groups; the improvement applies here too, not just to
+    // bare synthesized rounds.
+    const e = evt('333', [
+      rSpec('a', { adv: { type: 'percent', level: 50 } }),
+      rSpec('a', { adv: { type: 'ranking', level: 8 } }),
+      rSpec('a'),
+    ]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      act('333', 2, [
+        ch(200, '333', 2, 1, '2024-01-01T12:00:00Z'),
+        ch(201, '333', 2, 2, '2024-01-01T13:00:00Z'),
+      ]),
+      act('333', 3, [ch(300, '333', 3, 1, '2024-01-01T16:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r], manyRegistered(40)), cfg({ secondRoundMode: 'blanks' }));
+    const perGroup = Math.ceil(20 / 2) + 2;                          // field floor(0.5*40)=20 over 2 groups → 12
+    expect(scs(result.intermediate).filter(s => s.eventId === '333' && s.roundNum === 2).length).toBe(perGroup * 2); // 24
+  });
+
+  it('keeps the flat 16 blank fallback when the previous round advances by attemptResult', () => {
+    // 2-round event: R2 is the final; a non-count advancement leaves the field unknown.
+    const e = evt('333', [
+      rSpec('a', { adv: { type: 'attemptResult', level: 1200 } }),
+      rSpec('a'),
+    ]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      bareAct('333', 2, '2024-01-01T12:00:00Z'),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r], manyRegistered(30)), cfg({ secondRoundMode: 'blanks' }));
+    expect(scs(result.finals).filter(s => s.eventId === '333' && s.roundNum === 2).length).toBe(16);
+  });
+
+  it('prefilled cover counts use the percent field size', () => {
+    // 35 registered, R1 percent 60 → R2 field 21; prefilled covers should sum to 21.
+    const e = evt('333', [
+      rSpec('a', { adv: { type: 'percent', level: 60 } }),
+      rSpec('a', { adv: { type: 'ranking', level: 12 }, sets: 2 }),
+      rSpec('a'),
+    ]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      bareAct('333', 2, '2024-01-01T12:00:00Z'),
+      bareAct('333', 3, '2024-01-01T16:00:00Z'),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r], manyRegistered(35)), cfg({ secondRoundMode: 'prefilled' }));
+    const covers = cvs(result.intermediate).filter(c => c.eventId === '333' && c.roundNum === 2);
+    expect(covers.reduce((sum, c) => sum + c.numScorecards, 0)).toBe(21);
   });
 });
