@@ -28,7 +28,9 @@
     "hint": "Affichage des compétitions que vous gérez ou déléguez.",
     "loading": "Chargement des compétitions…",
     "error": "Erreur : {{message}}",
-    "empty": "Aucune compétition trouvée. Assurez-vous d'être délégué ou organisateur."
+    "empty": "Aucune compétition trouvée. Assurez-vous d'être délégué ou organisateur.",
+    "create_custom_title": "Créer une compétition personnalisée",
+    "create_custom_desc": "Compétition non officielle — définissez les épreuves manuellement et imprimez les feuilles"
   },
   "settings": {
     "heading": "Configurer vos paramètres d'impression",
@@ -114,12 +116,22 @@
       "format_label": "Format",
       "avg5": "Moyenne de 5",
       "mo3": "Moyenne de 3",
+      "bo3": "Meilleur de 3",
+      "bo2": "Meilleur de 2",
+      "bo1": "Meilleur de 1",
       "cutoff_label": "Seuil",
       "cutoff_optional": "optionnel, ex. 1:30",
       "time_limit_label": "Limite de temps",
       "time_limit_optional": "optionnel, ex. 10:00",
+      "round_label": "Libellé de ronde",
+      "round_label_optional": "optionnel, ex. Finale",
+      "round_label_placeholder": "ex. Ronde 1 ou Finale",
       "icon_hint": "Icône — cliquez sur une icône WCA ou téléchargez la vôtre",
       "icon_selected": "Icône sélectionnée",
+      "csv_label": "Compétiteurs (CSV)",
+      "csv_optional": "optionnel",
+      "csv_hint": "Un compétiteur par ligne : Nom ou Nom,WCAID. Imprime une feuille nominative par ligne (plus des feuilles vides pour compléter la dernière page) au lieu de 4 feuilles vides. Les lignes commençant par # sont ignorées.",
+      "csv_count": "{{count}} compétiteur(s) chargé(s)",
       "add_custom_event": "+ Ajouter une épreuve personnalisée",
       "first_timer_slips_title": "Fiches pour nouveaux venus",
       "first_timer_slips_enable": "Imprimer les fiches pour nouveaux venus",
@@ -179,5 +191,13 @@
     "workflow_title": "Où cela s'insère",
     "workflow_body": "C'est la dernière étape avant l'impression. Une fois les groupes assignés, l'outil lit le WCIF de la compétition et le transforme en documents à imprimer et à découper pour le jour de la compétition.",
     "close": "Compris"
+  },
+  "custom": {
+    "heading": "Compétition personnalisée",
+    "hint": "Définissez vos épreuves manuellement. Chaque épreuve imprime une page de 4 feuilles vides, ou une feuille par compétiteur si vous téléversez un CSV.",
+    "name_label": "Nom de la compétition",
+    "name_placeholder": "ex. Open du Club de Cube 2026",
+    "events_title": "Épreuves",
+    "continue": "Continuer →"
   }
 }

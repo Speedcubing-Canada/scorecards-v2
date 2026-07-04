@@ -28,7 +28,9 @@
     "hint": "Mostrando competencias que usted gestiona o delega.",
     "loading": "Cargando competencias…",
     "error": "Error: {{message}}",
-    "empty": "No se encontraron competencias. Asegúrese de ser delegado u organizador."
+    "empty": "No se encontraron competencias. Asegúrese de ser delegado u organizador.",
+    "create_custom_title": "Crear una competencia personalizada",
+    "create_custom_desc": "Competencia no oficial — defina los eventos manualmente e imprima las hojas"
   },
   "settings": {
     "heading": "Configurar ajustes de impresión",
@@ -114,12 +116,22 @@
       "format_label": "Formato",
       "avg5": "Promedio de 5",
       "mo3": "Media de 3",
+      "bo3": "Mejor de 3",
+      "bo2": "Mejor de 2",
+      "bo1": "Mejor de 1",
       "cutoff_label": "Corte",
       "cutoff_optional": "opcional, ej. 1:30",
       "time_limit_label": "Límite de tiempo",
       "time_limit_optional": "opcional, ej. 10:00",
+      "round_label": "Etiqueta de ronda",
+      "round_label_optional": "opcional, ej. Final",
+      "round_label_placeholder": "ej. Ronda 1 o Final",
       "icon_hint": "Ícono — haga clic en un ícono WCA o suba el suyo",
       "icon_selected": "Ícono seleccionado",
+      "csv_label": "Competidores (CSV)",
+      "csv_optional": "opcional",
+      "csv_hint": "Un competidor por línea: Nombre o Nombre,WCAID. Imprime una hoja con nombre por línea (más hojas en blanco para completar la última página) en lugar de 4 hojas en blanco. Las líneas que comienzan con # se ignoran.",
+      "csv_count": "{{count}} competidor(es) cargado(s)",
       "add_custom_event": "+ Agregar evento personalizado",
       "first_timer_slips_title": "Fichas para principiantes",
       "first_timer_slips_enable": "Imprimir fichas para principiantes",
@@ -179,5 +191,13 @@
     "workflow_title": "Dónde encaja",
     "workflow_body": "Este es el último paso antes de imprimir. Una vez asignados los grupos, lee el WCIF de la competición y lo convierte en los documentos que imprimes y recortas para el día de la competición.",
     "close": "Entendido"
+  },
+  "custom": {
+    "heading": "Competencia personalizada",
+    "hint": "Defina sus eventos manualmente. Cada evento imprime una página de 4 hojas en blanco, o una hoja por competidor si sube un CSV.",
+    "name_label": "Nombre de la competencia",
+    "name_placeholder": "ej. Open del Club de Cubos 2026",
+    "events_title": "Eventos",
+    "continue": "Continuar →"
   }
 }

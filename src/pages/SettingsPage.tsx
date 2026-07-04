@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type ChangeEvent } from 'react';
-import { Check, ChevronDown, ChevronRight, RectangleHorizontal, RectangleVertical, Upload } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, RectangleHorizontal, RectangleVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { CompetitionSettings, CustomEvent, DoubleCheckRound, LocaleCode, NametTagLayout, NametTagLogoMode, NametTagQrMode, PaperFormat, ScrambleDoubleCheckOverrides, SecondRoundMode } from '../types/settings';
@@ -7,21 +7,12 @@ import type { GenerationScope, DocumentSelection } from '../lib/generationScope'
 import { LANGUAGES } from '../i18n/index';
 import { resolveDefaultPrimaryLanguage, secondaryLanguageRow, isCanadianLanguage } from '../lib/languageSelector';
 import { parseDoubleCheckOverrides } from '../lib/parseDoubleCheckOverrides';
-import { EVENT_ICONS } from '../assets/events';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
-import Tooltip from '../components/Tooltip';
+import CustomEventEditor from '../components/CustomEventEditor';
 import { useIsMobile } from '../lib/useIsMobile';
 import { fetchWcaLiveId, fetchWcaLivePersonIds } from '../auth/wca';
-
-const WCA_EVENT_LABELS: Record<string, string> = {
-  '222': '2×2', '333': '3×3', '444': '4×4', '555': '5×5',
-  '666': '6×6', '777': '7×7', '333bf': '3BLD', '333fm': 'FMC',
-  '333oh': 'OH', 'clock': 'Clock', 'minx': 'Mega', 'pyram': 'Pyra',
-  'skewb': 'Skewb', 'sq1': 'SQ1', '444bf': '4BLD', '555bf': '5BLD',
-  '333mbf': 'MBLD',
-};
 
 export default function SettingsPage() {
   const { t, i18n } = useTranslation();
@@ -30,6 +21,8 @@ export default function SettingsPage() {
 
   const competitionId = sessionStorage.getItem('selected_competition_id') ?? '';
   const competitionName = sessionStorage.getItem('selected_competition_name') ?? '';
+  // Custom (non-WCA) competition: no WCIF, no WCA Live, events defined on /custom.
+  const isCustom = sessionStorage.getItem('custom_competition') === 'true';
   // Set on the scope step from the parsed WCIF. When groups haven't been generated yet,
   // scorecard counts will read 0 — warn so organizers aren't confused.
   const noGroups = sessionStorage.getItem('competition_has_groups') === 'false';
@@ -74,7 +67,15 @@ export default function SettingsPage() {
   const [nametagLogoMode, setNametagLogoMode] = useState<NametTagLogoMode>('with-name');
   const [nametagQrMode, setNametagQrMode] = useState<NametTagQrMode>('back-only');
   const [nametagLayout, setNametagLayout] = useState<NametTagLayout>('vertical');
-  const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
+  // For a custom competition the events were defined on /custom and ride along here.
+  const [customEvents, setCustomEvents] = useState<CustomEvent[]>(() => {
+    if (!isCustom) return [];
+    try {
+      return JSON.parse(sessionStorage.getItem('custom_competition_events') ?? '[]') as CustomEvent[];
+    } catch {
+      return [];
+    }
+  });
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [scrambleDoubleCheck, setScrambleDoubleCheck] = useState<boolean>(false);
   const [scrambleDoubleCheckRounds, setScrambleDoubleCheckRounds] = useState<DoubleCheckRound[]>(['finals']);
@@ -82,10 +83,10 @@ export default function SettingsPage() {
   const [dcOverridesName, setDcOverridesName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dcFileInputRef = useRef<HTMLInputElement>(null);
-  const customIconRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
-    if (!competitionId) return;
+    // Custom competitions are unofficial — they never exist on WCA Live.
+    if (!competitionId || isCustom) return;
     fetchWcaLiveId(competitionId).then(async id => {
       if (id) {
         setWcaLiveId(id);
@@ -184,43 +185,6 @@ export default function SettingsPage() {
     if (dcFileInputRef.current) dcFileInputRef.current.value = '';
   }
 
-  function addCustomEvent() {
-    setCustomEvents(prev => [...prev, { name: '', iconDataUrl: null, format: 'avg5', cutoff: '', limit: '' }]);
-  }
-
-  function removeCustomEvent(i: number) {
-    setCustomEvents(prev => prev.filter((_, idx) => idx !== i));
-    customIconRefs.current.splice(i, 1);
-  }
-
-  function updateCustomName(i: number, name: string) {
-    setCustomEvents(prev => prev.map((e, idx) => idx === i ? { ...e, name } : e));
-  }
-
-  function updateCustomIcon(i: number, iconDataUrl: string | null) {
-    setCustomEvents(prev => prev.map((e, idx) => idx === i ? { ...e, iconDataUrl } : e));
-  }
-
-  function updateCustomFormat(i: number, format: 'avg5' | 'mo3') {
-    setCustomEvents(prev => prev.map((e, idx) => idx === i ? { ...e, format } : e));
-  }
-
-  function updateCustomCutoff(i: number, cutoff: string) {
-    setCustomEvents(prev => prev.map((e, idx) => idx === i ? { ...e, cutoff } : e));
-  }
-
-  function updateCustomLimit(i: number, limit: string) {
-    setCustomEvents(prev => prev.map((e, idx) => idx === i ? { ...e, limit } : e));
-  }
-
-  function handleCustomIconUpload(i: number, e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => updateCustomIcon(i, reader.result as string);
-    reader.readAsDataURL(file);
-  }
-
   function handleSubmit() {
     const settings: CompetitionSettings = {
       competitionId,
@@ -231,17 +195,20 @@ export default function SettingsPage() {
       secondRoundMode,
       logoDataUrl,
       useDefaultLogo,
-      wcaLiveId: wcaLiveId.trim() || null,
-      wcaLivePersonIds,
-      hideWcaLiveId,
+      // Custom competitions are unofficial: no WCA Live id, and the card's
+      // "WCA Live:" line is forced off (it prints whenever hideWcaLiveId is false).
+      wcaLiveId: isCustom ? null : (wcaLiveId.trim() || null),
+      wcaLivePersonIds: isCustom ? null : wcaLivePersonIds,
+      hideWcaLiveId: isCustom ? true : hideWcaLiveId,
       nametagLogoMode,
       nametagQrMode,
       nametagLayout,
       customEvents: customEvents.filter(e => e.name.trim()),
-      scrambleDoubleCheck,
+      scrambleDoubleCheck: isCustom ? false : scrambleDoubleCheck,
       scrambleDoubleCheckRounds,
       scrambleDoubleCheckOverrides,
       generationScope,
+      isCustomCompetition: isCustom,
     };
     sessionStorage.setItem('competition_settings', JSON.stringify(settings));
     navigate('/generate');
@@ -261,7 +228,7 @@ export default function SettingsPage() {
 
   return (
     <div style={s.page}>
-      <Header showBack onBack={() => navigate('/competitions')} showSignOut />
+      <Header showBack onBack={() => navigate(isCustom ? '/custom' : '/competitions')} showSignOut />
 
       <main style={{ ...s.main, ...(isMobile ? s.mainMobile : {}) }}>
         <div style={s.compBadge}>{competitionName}</div>
@@ -354,7 +321,7 @@ export default function SettingsPage() {
         </section>
         )}
 
-        {showScorecards && (
+        {showScorecards && !isCustom && (
         <section style={s.section}>
           <h3 style={s.sectionTitle}>
             {t('settings.double_check.title')}{' '}
@@ -425,7 +392,7 @@ export default function SettingsPage() {
         </section>
         )}
 
-        {showScorecards && (
+        {showScorecards && !isCustom && (
         <section style={s.section}>
           <h3 style={s.sectionTitle}>
             {t('settings.wca_live.title')}{' '}
@@ -593,7 +560,7 @@ export default function SettingsPage() {
         </section>
         )}
 
-        {everything && showScorecards && (
+        {everything && showScorecards && !isCustom && (
         <section style={s.section}>
           <button style={s.advancedToggle} onClick={() => setAdvancedOpen(o => !o)} aria-expanded={advancedOpen}>
             <span style={s.advancedToggleArrow}>
@@ -610,129 +577,7 @@ export default function SettingsPage() {
               </h3>
               <p style={s.hint}>{t('settings.advanced.custom_events_hint')}</p>
 
-              {customEvents.map((custom, i) => (
-                <div key={i} style={s.customEventCard}>
-                  <div style={s.customEventHeader}>
-                    <input
-                      type="text"
-                      placeholder={t('settings.advanced.event_name_placeholder')}
-                      value={custom.name}
-                      onChange={e => updateCustomName(i, e.target.value)}
-                      style={{ ...s.textInput, flex: 1 }}
-                    />
-                    <button style={s.removeBtn} onClick={() => removeCustomEvent(i)}>{t('common.remove')}</button>
-                  </div>
-
-                  <div style={{ marginTop: 12, display: 'flex', gap: isMobile ? 8 : 16, alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row' }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>{t('settings.advanced.format_label')}</span>
-                    {(['avg5', 'mo3'] as const).map(fmt => (
-                      <label key={fmt} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontSize: 13 }}>
-                        <input
-                          type="radio"
-                          checked={custom.format === fmt}
-                          onChange={() => updateCustomFormat(i, fmt)}
-                          style={{ accentColor: 'var(--primary)' }}
-                        />
-                        {fmt === 'avg5' ? t('settings.advanced.avg5') : t('settings.advanced.mo3')}
-                      </label>
-                    ))}
-                  </div>
-
-                  <div style={{ marginTop: 10, display: 'flex', gap: 12, flexDirection: isMobile ? 'column' : 'row' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>
-                        {t('settings.advanced.cutoff_label')}{' '}
-                        <span style={{ color: 'var(--text-faint)' }}>({t('settings.advanced.cutoff_optional')})</span>
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="M:SS"
-                        value={custom.cutoff}
-                        onChange={e => updateCustomCutoff(i, e.target.value)}
-                        style={{ ...s.textInput, padding: '7px 10px' }}
-                      />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>
-                        {t('settings.advanced.time_limit_label')}{' '}
-                        <span style={{ color: 'var(--text-faint)' }}>({t('settings.advanced.time_limit_optional')})</span>
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="M:SS"
-                        value={custom.limit}
-                        onChange={e => updateCustomLimit(i, e.target.value)}
-                        style={{ ...s.textInput, padding: '7px 10px' }}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: 12 }}>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
-                      {t('settings.advanced.icon_hint')}
-                      {custom.iconDataUrl && (
-                        <button style={{ ...s.removeBtn, marginLeft: 10 }} onClick={() => updateCustomIcon(i, null)}>
-                          {t('common.clear')}
-                        </button>
-                      )}
-                    </div>
-                    <div style={s.iconGrid}>
-                      {Object.entries(EVENT_ICONS).map(([id, dataUrl]) => (
-                        <div
-                          key={id}
-                          role="button"
-                          tabIndex={0}
-                          title={WCA_EVENT_LABELS[id] ?? id}
-                          onClick={() => updateCustomIcon(i, custom.iconDataUrl === dataUrl ? null : dataUrl)}
-                          onKeyDown={e => e.key === 'Enter' && updateCustomIcon(i, custom.iconDataUrl === dataUrl ? null : dataUrl)}
-                          style={{
-                            ...s.iconBtn,
-                            ...(custom.iconDataUrl === dataUrl ? s.iconBtnActive : {}),
-                          }}
-                        >
-                          <img src={dataUrl} alt={id} style={{ width: 20, height: 20 }} />
-                          <span style={s.iconLabel}>{WCA_EVENT_LABELS[id] ?? id}</span>
-                        </div>
-                      ))}
-                      <Tooltip label={t('settings.advanced.icon_hint')}>
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          aria-label={t('common.upload')}
-                          style={{
-                            ...s.iconBtn,
-                            ...(custom.iconDataUrl && !Object.values(EVENT_ICONS).includes(custom.iconDataUrl) ? s.iconBtnActive : {}),
-                          }}
-                          onClick={() => customIconRefs.current[i]?.click()}
-                          onKeyDown={e => e.key === 'Enter' && customIconRefs.current[i]?.click()}
-                        >
-                          <Upload size={18} strokeWidth={2} />
-                          <span style={s.iconLabel}>{t('common.upload')}</span>
-                        </div>
-                      </Tooltip>
-                    </div>
-                    <input
-                      ref={el => { customIconRefs.current[i] = el; }}
-                      type="file"
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                      onChange={e => handleCustomIconUpload(i, e)}
-                    />
-                  </div>
-
-                  {custom.iconDataUrl && (
-                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <img src={custom.iconDataUrl} alt="selected icon" style={{ width: 28, height: 28, objectFit: 'contain' }} />
-                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.advanced.icon_selected')}</span>
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              <button style={s.addCustomBtn} onClick={addCustomEvent}>
-                {t('settings.advanced.add_custom_event')}
-              </button>
-
+              <CustomEventEditor events={customEvents} onChange={setCustomEvents} />
             </div>
           )}
         </section>
@@ -837,21 +682,6 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit',
   },
   advancedToggleArrow: { display: 'inline-flex', alignItems: 'center', color: 'var(--text-muted)' },
-  customEventCard: {
-    backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-md)', padding: '14px 16px', marginBottom: 12,
-  },
-  customEventHeader: { display: 'flex', alignItems: 'center', gap: 10 },
-  iconGrid: { display: 'flex', flexWrap: 'wrap', gap: 6 },
-  iconBtn: {
-    display: 'flex', flexDirection: 'column', alignItems: 'center',
-    gap: 3, padding: '5px 6px',
-    borderWidth: 2, borderStyle: 'solid', borderColor: 'var(--border)',
-    borderRadius: 'var(--radius-sm)', cursor: 'pointer', backgroundColor: 'var(--surface)',
-    minWidth: 38, userSelect: 'none', outline: 'none', color: 'var(--text-muted)',
-  },
-  iconBtnActive: { borderColor: 'var(--primary)', backgroundColor: 'var(--primary-soft-bg)' },
-  iconLabel: { fontSize: 9, color: 'var(--text-muted)', textAlign: 'center', lineHeight: '1.1' },
   segmentedControl: {
     display: 'flex',
     border: '2px solid var(--border)',
@@ -878,11 +708,5 @@ const s: Record<string, React.CSSProperties> = {
   segmentInactive: {
     backgroundColor: 'var(--surface)',
     color: 'var(--text-muted)',
-  },
-  addCustomBtn: {
-    backgroundColor: 'var(--surface)', border: '2px dashed var(--border-strong)',
-    borderRadius: 'var(--radius-md)', padding: '10px 20px', fontSize: 'var(--fs-body)',
-    cursor: 'pointer', color: 'var(--text-muted)', width: '100%',
-    marginTop: 4, fontFamily: 'inherit',
   },
 };

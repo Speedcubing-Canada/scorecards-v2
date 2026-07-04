@@ -4,6 +4,7 @@ import { ThemeProvider } from './theme/ThemeContext';
 import LoginPage from './pages/LoginPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import CompetitionPickerPage from './pages/CompetitionPickerPage';
+import CustomCompetitionPage from './pages/CustomCompetitionPage';
 import RoundScopePage from './pages/RoundScopePage';
 import SettingsPage from './pages/SettingsPage';
 import GeneratePage from './pages/GeneratePage';
@@ -19,6 +20,7 @@ function AppRoutes() {
       <Route path="/" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route path="/competitions" element={<ProtectedRoute><CompetitionPickerPage /></ProtectedRoute>} />
+      <Route path="/custom" element={<ProtectedRoute><CustomCompetitionPage /></ProtectedRoute>} />
       <Route path="/scope" element={<ProtectedRoute><RoundScopePage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
       <Route path="/generate" element={<ProtectedRoute><GeneratePage /></ProtectedRoute>} />

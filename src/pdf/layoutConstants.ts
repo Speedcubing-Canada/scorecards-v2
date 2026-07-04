@@ -6,6 +6,13 @@
 // Four scorecards per printed page (2×2 grid).
 export const SCORECARDS_PER_PAGE = 4;
 
+// Attempt-row heights per scorecard format. Tuned so the two flex spacers around
+// the provisional label stay ~6–8pt each (see the budget formula in
+// ScorecardDocument.tsx and the guard in scorecard-layout.test.ts).
+export const ROW_HEIGHTS = {
+  avg5: 34, 'bo2-avg5': 31, mo3: 51, 'bo1-mo3': 49, bo2: 55, bo1: 100,
+} as const;
+
 // Four people per page in both name-tag layouts (each uses a front + back panel).
 export const NAMETAGS_PER_PAGE = 4;
 

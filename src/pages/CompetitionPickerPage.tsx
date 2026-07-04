@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
@@ -34,6 +35,9 @@ export default function CompetitionPickerPage() {
   }, [token]);
 
   function selectCompetition(comp: WCACompetition) {
+    // Drop any stale custom-competition state so it never leaks into a WCA flow.
+    sessionStorage.removeItem('custom_competition');
+    sessionStorage.removeItem('custom_competition_events');
     sessionStorage.setItem('selected_competition_id', comp.id);
     sessionStorage.setItem('selected_competition_name', comp.name);
     navigate('/scope');
@@ -80,6 +84,17 @@ export default function CompetitionPickerPage() {
             </button>
           ))}
         </div>
+
+        {/* Niche flow: keep it discoverable but secondary, below the WCA list. */}
+        {!isLoading && !error && (
+          <button style={styles.customCard} onClick={() => navigate('/custom')}>
+            <span style={styles.customCardTitle}>
+              <Plus size={16} strokeWidth={2.5} aria-hidden="true" />
+              {t('picker.create_custom_title')}
+            </span>
+            <span style={styles.compMeta}>{t('picker.create_custom_desc')}</span>
+          </button>
+        )}
       </main>
     </div>
   );
@@ -128,4 +143,22 @@ const styles: Record<string, React.CSSProperties> = {
   },
   compName: { fontSize: 16, fontWeight: 700, color: 'var(--text)' },
   compMeta: { fontSize: 'var(--fs-label)', color: 'var(--text-muted)' },
+  customCard: {
+    backgroundColor: 'var(--surface)',
+    border: '2px dashed var(--border-strong)',
+    borderRadius: 'var(--radius-lg)',
+    padding: '14px 20px',
+    marginTop: 16,
+    width: '100%',
+    textAlign: 'left',
+    cursor: 'pointer',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+    transition: 'border-color 0.15s, box-shadow 0.15s',
+  },
+  customCardTitle: {
+    display: 'inline-flex', alignItems: 'center', gap: 6,
+    fontSize: 16, fontWeight: 700, color: 'var(--text)',
+  },
 };

@@ -1,5 +1,6 @@
 import type { ParsedWCIF } from './wcif-parser';
 import type { CompetitionSettings, PaperFormat } from '../types/settings';
+import { customEventPageCount } from './customScorecards';
 import { getFirstTimerSlipStrings } from './i18n';
 import { buildSlipLines } from '../pdf/firstTimerSlipLines';
 import {
@@ -29,8 +30,10 @@ export function estimateTotalPages(parsed: ParsedWCIF, settings: CompetitionSett
     if (round.length > 0) pages += Math.ceil(round.length / SCORECARDS_PER_PAGE);
   }
 
-  // Custom events — each is its own PDF of four identical blanks → one page.
-  pages += (settings.customEvents ?? []).filter((c) => c.name.trim() !== '').length;
+  // Custom events — each is its own PDF: one page of blanks, or ceil(n/4) with CSV competitors.
+  pages += (settings.customEvents ?? [])
+    .filter((c) => c.name.trim() !== '')
+    .reduce((n, c) => n + customEventPageCount(c), 0);
 
   // Name tags — four people per page (exact).
   if (parsed.nametags.length > 0) pages += Math.ceil(parsed.nametags.length / NAMETAGS_PER_PAGE);

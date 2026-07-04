@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getStrings } from '../lib/i18n';
+import { ROW_HEIGHTS } from './layoutConstants';
 
 // ── Layout geometry constraints ──────────────────────────────────────────────
 // Dimensions measured from the original Sarah-scorecard LETTER PDF:
@@ -86,6 +87,50 @@ describe('Scorecard layout geometry', () => {
       });
     });
   }
+});
+
+// ── Attempt-row heights ──────────────────────────────────────────────────────
+// Card inner height budget (LETTER): 335pt. Fixed blocks: header 56, event row 25,
+// table header 19, provisional line 19, plus the extra/provisional attempt row
+// (one more rowH) and a 13pt cutoff line for the split formats. What remains is
+// split into the two flex spacers around the provisional label.
+
+const INNER_H = 335;
+const FIXED_H = 56 + 25 + 19 + 19; // header + eventRow + tableHeader + provLine
+const CUTOFF_LINE_H = 13;
+
+// rows = pre + post attempt rows; extra/provisional row adds one more rowH.
+const FORMAT_ROWS: Record<keyof typeof ROW_HEIGHTS, { rows: number; cutoffLine: boolean }> = {
+  avg5:       { rows: 5, cutoffLine: false },
+  'bo2-avg5': { rows: 5, cutoffLine: true },
+  mo3:        { rows: 3, cutoffLine: false },
+  'bo1-mo3':  { rows: 3, cutoffLine: true },
+  bo2:        { rows: 2, cutoffLine: false },
+  bo1:        { rows: 1, cutoffLine: false },
+};
+
+describe('Scorecard attempt-row heights', () => {
+  it('every scorecard format has a row height', () => {
+    expect(Object.keys(ROW_HEIGHTS).sort()).toEqual(
+      ['avg5', 'bo2-avg5', 'mo3', 'bo1-mo3', 'bo2', 'bo1'].sort(),
+    );
+  });
+
+  for (const [fmt, { rows, cutoffLine }] of Object.entries(FORMAT_ROWS)) {
+    it(`${fmt} content fits the card with non-negative spacers`, () => {
+      const rowH = ROW_HEIGHTS[fmt as keyof typeof ROW_HEIGHTS];
+      const used = FIXED_H + (cutoffLine ? CUTOFF_LINE_H : 0) + (rows + 1) * rowH;
+      expect(used).toBeLessThanOrEqual(INNER_H);
+    });
+  }
+
+  it('bo1 spacers stay in the same visual band as avg5 (single row fills the card)', () => {
+    const spacer = (fmt: 'avg5' | 'bo1') =>
+      (INNER_H - FIXED_H - (FORMAT_ROWS[fmt].rows + 1) * ROW_HEIGHTS[fmt]) / 2;
+    expect(spacer('bo1')).toBeGreaterThanOrEqual(4);
+    expect(spacer('bo1')).toBeLessThanOrEqual(12);
+    expect(Math.abs(spacer('bo1') - spacer('avg5'))).toBeLessThanOrEqual(4);
+  });
 });
 
 // ── Nametag vertical layout geometry ─────────────────────────────────────────

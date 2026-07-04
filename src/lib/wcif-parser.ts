@@ -2,7 +2,7 @@ import type { WCIF, Round, EventId, Assignment, ChildActivity } from '../types/w
 import type { CompetitionSettings, DoubleCheckRound } from '../types/settings';
 import { getStrings, getEventName, getNametTagTitleStrings, getNametTagStrings, getShortNametTagNames, getScheduleStrings, type NametTagTitleStrings } from './i18n';
 
-export type ScorecardFormat = 'avg5' | 'bo2-avg5' | 'mo3' | 'bo1-mo3' | 'bo2';
+export type ScorecardFormat = 'avg5' | 'bo2-avg5' | 'mo3' | 'bo1-mo3' | 'bo2' | 'bo1';
 
 // ── Nametag types ─────────────────────────────────────────────────────────────
 
@@ -160,6 +160,23 @@ export interface ParsedWCIF {
   // were generated mid-competition. Empty for a standard pre-competition WCIF. Drives the
   // generation-scope prompt on GeneratePage. Sorted by event order then round number.
   laterRoundsWithAssignments: { eventId: string; roundNum: number }[];
+}
+
+// A ParsedWCIF with nothing in it — used by custom (non-WCA) competitions, which
+// have no WCIF at all: only settings.customEvents drive the generated PDFs.
+export function emptyParsedWcif(): ParsedWCIF {
+  return {
+    firstRound: [],
+    intermediate: [],
+    semis: [],
+    finals: [],
+    nametags: [],
+    firstTimers: [],
+    extras: [],
+    scheduleDays: [],
+    hasGroups: true,
+    laterRoundsWithAssignments: [],
+  };
 }
 
 const EMPTY_COVER: CoverEntry = {

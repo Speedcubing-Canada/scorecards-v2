@@ -1,11 +1,11 @@
 import { Document, Page, View, Text, Image, StyleSheet, Font } from '@react-pdf/renderer';
 import type { CompetitionSettings } from '../types/settings';
-import type { ScorecardData, ScorecardFormat } from '../lib/wcif-parser';
+import type { ScorecardData } from '../lib/wcif-parser';
 import { getStrings, splitLabelTotal } from '../lib/i18n';
 import type { Style } from '@react-pdf/types';
 import { EVENT_ICONS } from '../assets/events';
 import { logoState, resolveLogo } from '../lib/logo';
-import { SCORECARDS_PER_PAGE } from './layoutConstants';
+import { SCORECARDS_PER_PAGE, ROW_HEIGHTS } from './layoutConstants';
 
 // Prevent react-pdf from hyphenating words — lets computed font size control line breaks instead.
 Font.registerHyphenationCallback((word) => [word]);
@@ -54,12 +54,10 @@ const COL_DC = { scrambler: '13%', scramblerCheck: '12%', attempt: '10%', result
 const COLS_5 = ['scrambler', 'attempt', 'result', 'judge', 'competitor'] as const;
 const COLS_6 = ['scrambler', 'scramblerCheck', 'attempt', 'result', 'judge', 'competitor'] as const;
 
-// Row heights tuned so the two flex spacers around the provisional label are ~6–8pt each.
+// Row heights (ROW_HEIGHTS, in layoutConstants.ts) are tuned so the two flex spacers
+// around the provisional label are ~6–8pt each.
 // Formula: spacer = (inner(335) - header(56) - eventRow(25) - tableHeader(19)
 //                   - [cutoff(13)] - rows×rowH - provLine(19) - extraRow) / 2
-const ROW_HEIGHTS: Record<ScorecardFormat, number> = {
-  avg5: 34, 'bo2-avg5': 31, mo3: 51, 'bo1-mo3': 49, bo2: 55,
-};
 
 // Scale cover-card event+round text to fit the card width (Helvetica-Bold ~0.6pt/pt/char).
 // cardW(257) - 2×paddingH(8) = 241pt available.
@@ -219,6 +217,7 @@ function ScorecardCard({
                  : card.format === 'bo2-avg5'   ? [1,2]
                  : card.format === 'mo3'        ? [1,2,3]
                  : card.format === 'bo2'        ? [1,2]   // 6x6, 7x7 (bo2 non-MBF)
+                 : card.format === 'bo1'        ? [1]     // custom-event single attempt
                  : [1];                                    // 'bo1-mo3': 1 pre-cutoff row
   const postRows = card.format === 'bo2-avg5' ? [3,4,5] : card.format === 'bo1-mo3' ? [2,3] : [];
   const hasCutoff = card.cutoff !== '';

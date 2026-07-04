@@ -22,6 +22,7 @@ const BASE: CompetitionSettings = {
   customEvents: [],
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
   generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false } },
+  isCustomCompetition: false,
 };
 const cfg = (o: Partial<CompetitionSettings> = {}): CompetitionSettings => ({ ...BASE, ...o });
 

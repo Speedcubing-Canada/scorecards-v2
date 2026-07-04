@@ -6,9 +6,10 @@ import { useAuth } from '../auth/AuthContext';
 import { fetchWcif } from '../auth/wca';
 import { getCachedWcif, setCachedWcif } from '../lib/wcifCache';
 import type { CompetitionSettings } from '../types/settings';
-import { parseWCIF, type ParsedWCIF } from '../lib/wcif-parser';
+import { parseWCIF, emptyParsedWcif, type ParsedWCIF } from '../lib/wcif-parser';
 import { filterParsedByScope, type GenerationScope } from '../lib/generationScope';
 import { estimateTotalPages } from '../lib/pageEstimate';
+import { customEventPageCount } from '../lib/customScorecards';
 import type { WorkerRequest, WorkerResponse } from '../pdf/scorecardWorker';
 import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
@@ -37,6 +38,7 @@ function loadSettings(raw: string | null): CompetitionSettings | null {
     scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false,
   };
   if (s.hideWcaLiveId === undefined) s.hideWcaLiveId = false;
+  if (s.isCustomCompetition === undefined) s.isCustomCompetition = false;
   return s as unknown as CompetitionSettings;
 }
 
@@ -65,6 +67,13 @@ export default function GeneratePage() {
     let cancelled = false;
 
     async function run() {
+      // Custom competitions have no WCIF — only settings.customEvents drive the PDFs.
+      if (settings!.isCustomCompetition) {
+        setParsed(emptyParsedWcif());
+        setStatus('ready');
+        return;
+      }
+
       setStatus('fetching');
       try {
         const wcif = getCachedWcif(settings!.competitionId)
@@ -104,7 +113,11 @@ export default function GeneratePage() {
   const allEntries = effectiveParsed
     ? [...effectiveParsed.firstRound, ...effectiveParsed.intermediate, ...effectiveParsed.semis, ...effectiveParsed.finals]
     : [];
-  const scorecardCount = allEntries.filter(e => e.kind === 'scorecard').length;
+  // Custom-event cards (4 per page: blanks, or named + pads) ship in the ZIP too.
+  const customCardCount = (settings.customEvents ?? [])
+    .filter(c => c.name.trim())
+    .reduce((n, c) => n + customEventPageCount(c) * 4, 0);
+  const scorecardCount = allEntries.filter(e => e.kind === 'scorecard').length + customCardCount;
   const coverCount     = allEntries.filter(e => e.kind === 'cover' && e.eventId).length;
   const pdfCount       = effectiveParsed
     ? [

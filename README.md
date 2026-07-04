@@ -63,11 +63,13 @@ In development, `vite.config.ts` provides this endpoint as a Vite dev-server mid
 
 ```
 LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → GeneratePage (download)
+                     └→ CustomCompetitionPage ────────────↑   (custom competitions skip /scope)
 ```
 
 - **LoginPage** — initiates WCA OAuth PKCE; stores the code verifier in `sessionStorage`.
 - **AuthCallbackPage** — exchanges the code for a token; stores the token in `sessionStorage`.
-- **CompetitionPickerPage** — lists competitions managed by the logged-in user (WCA API `?managed_by_me=true`). An **"About this tool"** info button (ℹ) sits next to the heading; the same explainer is reachable from the login page (see below).
+- **CompetitionPickerPage** — lists competitions managed by the logged-in user (WCA API `?managed_by_me=true`). An **"About this tool"** info button (ℹ) sits next to the heading; the same explainer is reachable from the login page (see below). A dashed **"Create a custom competition"** tile below the competition grid (a deliberately secondary placement for a niche flow) leads to the custom-competition builder; selecting a WCA competition clears any stale `custom_competition*` sessionStorage keys so custom state never leaks into a WCA flow.
+- **CustomCompetitionPage** (`/custom`) — builder for **custom (non-WCA) competitions** (see [Custom competitions](#custom-competitions-non-wca)). Collects a competition name and a manually defined event list (same `CustomEventEditor` component as the Advanced settings section), then writes the same sessionStorage contract the WCA flow uses — plus `custom_competition: 'true'` and `custom_competition_events` — and continues straight to Settings (no WCIF ⇒ `/scope` is skipped).
 - **RoundScopePage** — fetches the WCIF up front and detects whether any round ≥ 2 already has real group assignments (groups generated mid-competition). If not (the normal pre-competition case), it auto-advances straight to Settings. If so, it asks **what to generate** — latest round only (default) / everything / select specific event+rounds — and stores the choice. The WCIF is cached in memory (`lib/wcifCache.ts`) so GeneratePage reuses it without a second fetch. It also records whether groups have been generated yet (`parsed.hasGroups`) in `sessionStorage` under `competition_has_groups`, so the Settings page can warn without re-fetching.
 - **SettingsPage** — collects paper format, language, logo, etc.; auto-detects the WCA Live competition ID and per-competitor person IDs from the WCA Live API; stores settings in `sessionStorage`. It adapts to the scope: when generating scorecards only (scope ≠ everything) it shows just scorecard-relevant options and hides the name-tag and custom-event sections; it also hides the Round 2 prefilled/blanks control once Round 2 has real groups (so the choice no longer matters). When no groups have been generated for the competition yet, it shows a **"no groups assigned"** warning banner.
 - **GeneratePage** — gets the WCIF (cache or fetch), parses it, applies the chosen scope, and renders the download button. PDF rendering runs inside a Web Worker to keep the UI responsive. Before downloading, it shows preview stats — scorecards, cover cards, PDFs in the ZIP, **estimated total pages**, and paper size — and repeats the "no groups assigned" warning when `parsed.hasGroups` is false.
@@ -155,7 +157,8 @@ The Generate-page stats include an **estimated total number of printed pages** s
 | `nametagLogoMode` | `hidden \| with-name \| logo-only` | How the logo appears on name tags (see Name tag section) |
 | `nametagQrMode` | `back-only \| both-sides` | Which panels get QR codes (see Name tag section) |
 | `nametagLayout` | `vertical \| horizontal` | Card orientation: `vertical` (default) uses a landscape page 4×2 grid with portrait cards; `horizontal` uses a portrait page 2×4 grid with landscape cards sized for 90×55 mm badge holders |
-| `customEvents` | `CustomEvent[]` | Zero or more custom/bonus events (see Advanced section) |
+| `customEvents` | `CustomEvent[]` | Zero or more custom/bonus events: name, icon, format (`avg5 \| mo3 \| bo3 \| bo2 \| bo1`), cutoff, time limit, optional `roundLabel`, optional `competitors` CSV list (see Custom events section) |
+| `isCustomCompetition` | `boolean` | `true` for custom (non-WCA) competitions: GeneratePage skips the WCIF fetch, only `customEvents` are rendered, and all WCA Live fields are forced off (`wcaLiveId: null`, `hideWcaLiveId: true`). Defaults to `false` |
 | `scrambleDoubleCheck` | `boolean` | Enables the optional second scrambler-signature column (see Scramble double-checking) |
 | `scrambleDoubleCheckRounds` | `DoubleCheckRound[]` | Which round categories get the column: `firstRound \| intermediate \| semis \| finals`. Defaults to `['finals']` |
 | `scrambleDoubleCheckOverrides` | `Record<string, string[]>` | Map of `WCA ID → event IDs` that are always double-checked for that competitor, in every round (named cards only) |
@@ -212,7 +215,7 @@ Each download is a ZIP containing one PDF per round stage plus a name-tag PDF if
 | `{id}_schedule.pdf` | Schedule tracker table: estimated start/end times with blank columns for actual times and competitor count |
 | `{id}_nametags.pdf` | Sheet of competitor name tags — portrait (2×4 grid) for horizontal layout, landscape (4×2 grid) for vertical layout; omitted if no nametag data is available |
 | `{id}_first_timers.pdf` | Confirmation slips for newcomers (competitors with no WCA ID); only when enabled in Advanced settings, omitted if there are none |
-| `{id}_custom_{name}.pdf` | 4 blank scorecards for a custom/bonus event (one file per custom event added in Advanced settings) |
+| `{id}_custom_{name}.pdf` | One file per custom event: 4 blank scorecards by default, or — when a competitor CSV was uploaded — one named scorecard per competitor padded with blanks to fill the last 4-card page |
 
 A PDF is omitted from the ZIP if it would be empty (e.g., all events have only one round → no finals PDF). 2-round events skip straight from round 1 to finals; they never produce a round2 or semis PDF.
 
@@ -583,26 +586,44 @@ Times are formatted in the venue's local timezone (from `wcif.schedule.venues[0]
 
 ## Custom events (Advanced settings)
 
-The **Advanced** section of the Settings page lets organisers add custom events — side puzzles or bonus events that are not part of the official WCIF schedule. Each custom event produces a separate PDF containing **4 blank scorecards** with the event name pre-filled but group, round, name, and all result fields left blank.
+The **Advanced** section of the Settings page lets organisers add custom events — side puzzles or bonus events that are not part of the official WCIF schedule. The editor itself is the shared `src/components/CustomEventEditor.tsx` component (also used by the custom-competition builder). By default each custom event produces a separate PDF containing **4 blank scorecards** with the event name pre-filled but group, name, and all result fields left blank; an optional **round label** and an optional **competitor CSV** change that (below).
 
 ### Scorecard format
 
-Each custom event has three format options:
+Each custom event has these options:
 
 | UI field | Values | Effect |
 |---|---|---|
-| Format | Average of 5 (default) / Mean of 3 | Sets the number of attempt rows |
-| Cutoff | Empty (no cutoff) / `M:SS` string | Converts the format to `bo2-avg5` or `bo1-mo3` and prints the cutoff line |
+| Format | Average of 5 (default) / Mean of 3 / Best of 3 / Best of 2 / Best of 1 | Sets the number of attempt rows |
+| Cutoff | Empty (no cutoff) / `M:SS` string | Converts avg5/mo3/bo3 to the split `bo2-avg5` / `bo1-mo3` layouts and prints the cutoff line. Hidden (and cleared) for Best of 2 / Best of 1, which have no post-cutoff phase |
 | Time limit | Empty (no limit) / `M:SS` string | Printed in the result-column header |
+| Round label | Empty / free text (e.g. `Final`) | Printed in the card's round field (blank by default) |
+| Competitors (CSV) | Optional file upload | One named scorecard per row instead of 4 blanks (see below) |
 
-The `ScorecardFormat` derivation mirrors the standard rounds:
+The `ScorecardFormat` derivation (`resolveCustomFormat` in `src/lib/customScorecards.ts`) mirrors the standard rounds — Best of 3 uses the same 3-row layout as Mean of 3 (exactly how WCIF format `'3'` is handled), and `bo1` is a dedicated single-row layout added for custom events:
 
 | Format radio | Cutoff set? | Resulting `ScorecardFormat` |
 |---|---|---|
 | Average of 5 | No | `avg5` |
 | Average of 5 | Yes | `bo2-avg5` |
-| Mean of 3 | No | `mo3` |
-| Mean of 3 | Yes | `bo1-mo3` |
+| Mean of 3 / Best of 3 | No | `mo3` |
+| Mean of 3 / Best of 3 | Yes | `bo1-mo3` |
+| Best of 2 | (ignored) | `bo2` |
+| Best of 1 | (ignored) | `bo1` |
+
+### Competitor CSV
+
+Uploading a CSV for an event switches its PDF from 4 identical blanks to **one named scorecard per row**, padded with blank cards of the same event to fill the last 4-card page (spares for cutting). Parsed by `src/lib/parseCompetitorCsv.ts`:
+
+```
+# one competitor per line, WCA ID optional
+Alice Martin
+Bob Tremblay,2021TREM02
+```
+
+- Format: `Name` or `Name,WCAID` — no quoting needed; a comma-containing name works as long as the WCA ID (if any) is the last field (`Doe, John,2019DOEJ01`).
+- The WCA ID is recognised by shape (`4 digits + 4 letters + 2 digits`) and upper-cased; rows without one print an empty WCA ID field.
+- Blank lines and `#` comments are ignored; an optional `Name,...` header row is skipped; a leading UTF-8 BOM is stripped; duplicate rows are kept (two rows = two cards).
 
 ### Icon selection
 
@@ -615,7 +636,21 @@ If no icon is selected, the event-name cell expands to fill the full width (same
 
 ### Output
 
-Each custom event is rendered using the same `ScorecardDocument` component as regular scorecards. The output filename is `{competitionId}_custom_{sanitized_name}.pdf`, where `sanitized_name` replaces non-alphanumeric characters with underscores (max 40 chars).
+Each custom event is rendered using the same `ScorecardDocument` component as regular scorecards (`buildCustomEntries` in `src/lib/customScorecards.ts` builds the entries). The output filename is `{competitionId}_custom_{sanitized_name}.pdf`, where `sanitized_name` replaces non-alphanumeric characters with underscores (max 40 chars).
+
+---
+
+## Custom competitions (non-WCA)
+
+The competition picker's **"Create a custom competition"** tile opens `/custom` (`src/pages/CustomCompetitionPage.tsx`), a builder for unofficial competitions that don't exist on the WCA website. The user names the competition and defines events with the same editor as above — every option (format, cutoff, time limit, icon, round label, competitor CSV) is available. Continue requires a non-empty name and at least one named event.
+
+Because there is no WCIF, the flow skips `/scope` and goes straight to Settings. The builder writes the standard sessionStorage contract (`selected_competition_id` = `custom_` + slugified name, `selected_competition_name`, `competition_has_groups: 'true'`, a scorecards-only `generation_scope`, `generation_detection: { showSecondRoundMode: false }`) plus two custom keys: `custom_competition: 'true'` and `custom_competition_events` (the JSON event list).
+
+Downstream behaviour when `custom_competition` is set:
+
+- **SettingsPage** shows only Language, Paper format, and Logo. The WCA Live, scramble double-check, subsequent-rounds, name-tag, and Advanced custom-event sections are hidden (events were already defined on `/custom`); the WCA Live auto-detect fetch is skipped. On submit it forces `wcaLiveId: null`, `hideWcaLiveId: true`, and `isCustomCompetition: true` — custom competitions are unofficial, so the `WCA Live:` line **never** appears on their scorecards. The back button returns to `/custom` (entries are preserved).
+- **GeneratePage** skips the WCIF fetch entirely (`emptyParsedWcif()` from `src/lib/wcif-parser.ts`) and renders one PDF per custom event; the scorecard/page stats count the custom cards (`customEventPageCount`).
+- Selecting a WCA competition on the picker clears both custom keys, so a stale custom flag can never leak into a WCA flow.
 
 ---
 

@@ -76,6 +76,16 @@ describe('estimateTotalPages', () => {
     expect(estimateTotalPages(mkParsed(), settings)).toBe(2);
   });
 
+  it('counts ceil(n/4) pages for a custom event with CSV competitors', () => {
+    const withCompetitors: CustomEvent = {
+      ...customEvent('Kilominx'),
+      competitors: Array.from({ length: 5 }, (_, i) => ({ name: `P${i}`, wcaId: '' })),
+    };
+    // Kilominx 5 competitors → 2 pages, Mirror blank → 1 page
+    const settings = mkSettings({ customEvents: [withCompetitors, customEvent('Mirror')] });
+    expect(estimateTotalPages(mkParsed(), settings)).toBe(3);
+  });
+
   it('greedily packs first-timer slips by height', () => {
     // A single-event slip is 7 lines (7×13) + intro (20) + inter-slip gap (31) = 142pt;
     // five fit a LETTER page (718pt content), the sixth spills to a second page.

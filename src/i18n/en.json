@@ -28,7 +28,9 @@
     "hint": "Showing competitions you manage or delegate.",
     "loading": "Loading competitions…",
     "error": "Error: {{message}}",
-    "empty": "No competitions found. Make sure you are a delegate or organizer."
+    "empty": "No competitions found. Make sure you are a delegate or organizer.",
+    "create_custom_title": "Create a custom competition",
+    "create_custom_desc": "Unofficial competition — define events manually and print scorecards"
   },
   "settings": {
     "heading": "Configure your print settings",
@@ -114,12 +116,22 @@
       "format_label": "Format",
       "avg5": "Average of 5",
       "mo3": "Mean of 3",
+      "bo3": "Best of 3",
+      "bo2": "Best of 2",
+      "bo1": "Best of 1",
       "cutoff_label": "Cutoff",
       "cutoff_optional": "optional, e.g. 1:30",
       "time_limit_label": "Time limit",
       "time_limit_optional": "optional, e.g. 10:00",
+      "round_label": "Round label",
+      "round_label_optional": "optional, e.g. Final",
+      "round_label_placeholder": "e.g. Round 1 or Final",
       "icon_hint": "Icon — click a WCA icon or upload your own",
       "icon_selected": "Selected icon",
+      "csv_label": "Competitors (CSV)",
+      "csv_optional": "optional",
+      "csv_hint": "One competitor per line: Name or Name,WCAID. Prints one named scorecard per row (plus blanks to fill the last page) instead of 4 blank cards. Lines starting with # are ignored.",
+      "csv_count": "{{count}} competitor(s) loaded",
       "add_custom_event": "+ Add custom event",
       "first_timer_slips_title": "First-timer slips",
       "first_timer_slips_enable": "Print first-timer slips",
@@ -179,5 +191,13 @@
     "workflow_title": "Where this fits",
     "workflow_body": "This is the last step before printing. Once groups have been assigned, it reads the competition's WCIF and turns it into the documents you print and cut for the day of the competition.",
     "close": "Got it"
+  },
+  "custom": {
+    "heading": "Custom competition",
+    "hint": "Define your events manually. Each event prints a page of 4 blank scorecards, or one scorecard per competitor if you upload a CSV.",
+    "name_label": "Competition name",
+    "name_placeholder": "e.g. Cube Club Open 2026",
+    "events_title": "Events",
+    "continue": "Continue →"
   }
 }

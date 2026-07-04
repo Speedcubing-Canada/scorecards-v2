@@ -69,6 +69,7 @@ export default function RoundScopePage() {
           customEvents: [],
           scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
           generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false } },
+          isCustomCompetition: false,
         };
         const result = parseWCIF(wcif, detectionSettings);
         if (cancelled) return;

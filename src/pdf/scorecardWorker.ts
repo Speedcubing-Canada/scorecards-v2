@@ -5,8 +5,9 @@ import './bufferPolyfill';
 import React from 'react';
 import { pdf } from '@react-pdf/renderer';
 import { zipSync } from 'fflate';
-import type { ScorecardData, ScorecardEntry, ParsedWCIF } from '../lib/wcif-parser';
-import type { CompetitionSettings, CustomEvent } from '../types/settings';
+import type { ScorecardData, ParsedWCIF } from '../lib/wcif-parser';
+import type { CompetitionSettings } from '../types/settings';
+import { buildCustomEntries } from '../lib/customScorecards';
 import { ScorecardDocument } from './ScorecardDocument';
 import { NametTagDocument } from './NametTagDocument';
 import { ScheduleTrackerDocument } from './ScheduleTrackerDocument';
@@ -83,32 +84,6 @@ async function renderFirstTimerSlips(parsed: ParsedWCIF, settings: CompetitionSe
   const blob = await pdf(element).toBlob();
   const ab = await blob.arrayBuffer();
   return new Uint8Array(ab);
-}
-
-function buildCustomEntries(custom: CustomEvent): ScorecardData[] {
-  const hasCutoff = custom.cutoff.trim() !== '';
-  const format = custom.format === 'mo3'
-    ? (hasCutoff ? 'bo1-mo3' : 'mo3')
-    : (hasCutoff ? 'bo2-avg5' : 'avg5');
-  const entry: ScorecardEntry = {
-    kind: 'scorecard',
-    timeslot: 'ZZZ',
-    eventId: 'custom',
-    eventName: custom.name,
-    roundLabel: '',
-    roundNum: 0,
-    group: '',
-    name: '',
-    wcaId: '',
-    liveId: '',
-    gender: '',
-    cutoff: custom.cutoff.trim(),
-    limit: custom.limit.trim(),
-    format,
-    isCumulative: false,
-    iconDataUrl: custom.iconDataUrl ?? undefined,
-  };
-  return [entry, entry, entry, entry];
 }
 
 async function renderScheduleTracker(parsed: ParsedWCIF, settings: CompetitionSettings): Promise<Uint8Array> {
