@@ -39,6 +39,8 @@ function loadSettings(raw: string | null): CompetitionSettings | null {
   };
   if (s.hideWcaLiveId === undefined) s.hideWcaLiveId = false;
   if (s.isCustomCompetition === undefined) s.isCustomCompetition = false;
+  // Settings saved before the checking-mode option existed keep the original behaviour.
+  if (s.scorecardCheckMode === undefined) s.scorecardCheckMode = 'per-group-card';
   return s as unknown as CompetitionSettings;
 }
 
@@ -67,7 +69,7 @@ export default function GeneratePage() {
     let cancelled = false;
 
     async function run() {
-      // Custom competitions have no WCIF — only settings.customEvents drive the PDFs.
+      // Custom competitions have no WCIF - only settings.customEvents drive the PDFs.
       if (settings!.isCustomCompetition) {
         setParsed(emptyParsedWcif());
         setStatus('ready');
@@ -128,6 +130,7 @@ export default function GeneratePage() {
         effectiveParsed.extras,
       ].filter(r => r.length > 0).length
       + (effectiveParsed.scheduleDays.length > 0 ? 1 : 0)
+      + (settings.scorecardCheckMode === 'checking-sheet' && effectiveParsed.checkingDays.length > 0 ? 1 : 0)
       + (effectiveParsed.nametags.length > 0 ? 1 : 0)
       + (effectiveParsed.firstTimers.length > 0 ? 1 : 0)
       + (settings.customEvents?.filter(c => c.name.trim()).length ?? 0)

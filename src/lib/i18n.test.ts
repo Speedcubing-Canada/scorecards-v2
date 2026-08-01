@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getStrings, getScheduleStrings, getNametTagStrings, getNametTagTitleStrings, getShortNametTagNames, getEventName, splitLabelTotal } from './i18n';
+import { getStrings, getScheduleStrings, getCheckingSheetStrings, getNametTagStrings, getNametTagTitleStrings, getShortNametTagNames, getEventName, splitLabelTotal } from './i18n';
 
 describe('ofConnector', () => {
   it('is "of" in English and "de" in FR/ES/PT', () => {
@@ -27,7 +27,7 @@ describe('splitLabelTotal', () => {
   });
 
   it('splits on the LAST connector so colour/stage names are untouched', () => {
-    // "Bleu 1 de 2" — the colour stays in head, only " de 2" is the tail.
+    // "Bleu 1 de 2" - the colour stays in head, only " de 2" is the tail.
     expect(splitLabelTotal('Bleu 1 de 2', 'de')).toEqual({ head: 'Bleu 1', tail: ' de 2' });
   });
 
@@ -161,7 +161,7 @@ describe('getScheduleStrings', () => {
   it('returns English strings by default', () => {
     const s = getScheduleStrings('en');
     expect(s.event).toBe('Event');
-    expect(s.title).toBe('— Schedule Tracker');
+    expect(s.title).toBe('- Schedule Tracker');
     expect(s.estimatedStart).toBe('Estimated\nStart Time');
     expect(s.numberOfCompetitors).toBe('Number of\nCompetitors');
   });
@@ -169,13 +169,13 @@ describe('getScheduleStrings', () => {
   it('returns French strings for fr', () => {
     const s = getScheduleStrings('fr');
     expect(s.event).toBe('Épreuve');
-    expect(s.title).toBe('— Suivi du calendrier');
+    expect(s.title).toBe('- Suivi du calendrier');
   });
 
   it('returns Spanish strings for es', () => {
     const s = getScheduleStrings('es');
     expect(s.event).toBe('Evento');
-    expect(s.title).toBe('— Seguimiento del Horario');
+    expect(s.title).toBe('- Seguimiento del Horario');
     expect(s.estimatedStart).toBe('Hora de\ninicio estimada');
     expect(s.numberOfCompetitors).toBe('Número de\ncompetidores');
   });
@@ -183,11 +183,62 @@ describe('getScheduleStrings', () => {
   it('returns Portuguese strings for pt', () => {
     const s = getScheduleStrings('pt');
     expect(s.event).toBe('Evento');
-    expect(s.title).toBe('— Acompanhamento de Horário');
+    expect(s.title).toBe('- Acompanhamento de Horário');
     expect(s.estimatedStart).toBe('Horário de\nInício Estimado');
     expect(s.numberOfCompetitors).toBe('Número de\nCompetidores');
   });
 
+});
+
+describe('getCheckingSheetStrings', () => {
+  const LOCALES = ['en', 'fr', 'es', 'pt'] as const;
+
+  it('returns English strings by default', () => {
+    const s = getCheckingSheetStrings('en');
+    expect(s.title).toBe('- Scorecard Checking');
+    expect(s.event).toBe('Event');
+    expect(s.groupsDone).toBe('Groups\ncollected');
+    expect(s.takenBy).toBe('Scorecards\ntaken by');
+  });
+
+  it('is translated in every locale (no English leaking through)', () => {
+    for (const lc of LOCALES) {
+      const s = getCheckingSheetStrings(lc);
+      for (const v of Object.values(s)) expect(v.length).toBeGreaterThan(0);
+      if (lc !== 'en') expect(s.title).not.toBe(getCheckingSheetStrings('en').title);
+    }
+  });
+
+  it('starts the title with an em dash, like the schedule tracker', () => {
+    for (const lc of LOCALES) {
+      expect(getCheckingSheetStrings(lc).title.startsWith('-')).toBe(true);
+    }
+  });
+
+  it('wraps the multi-word headers onto two lines so they fit their columns', () => {
+    for (const lc of LOCALES) {
+      const s = getCheckingSheetStrings(lc);
+      for (const key of ['start', 'groupsDone', 'scorecards', 'dataEntry', 'doubleCheck', 'takenBy'] as const) {
+        expect(s[key]).toContain('\n');
+      }
+    }
+  });
+});
+
+describe('cover.allGroups', () => {
+  it('is defined for every locale and reflects the count', () => {
+    for (const lc of ['en', 'fr', 'es', 'pt'] as const) {
+      const f = getStrings(lc).cover.allGroups;
+      expect(f(3)).toContain('3');
+      expect(f(1).length).toBeGreaterThan(0);
+      // Singular and plural must differ - the card reads as a sentence.
+      expect(f(1)).not.toBe(f(3));
+    }
+  });
+
+  it('stays primary-language only when a secondary language is set', () => {
+    expect(getStrings('fr', 'en').cover.allGroups(2)).toBe(getStrings('fr').cover.allGroups(2));
+  });
 });
 
 describe('getNametTagStrings', () => {
@@ -256,7 +307,7 @@ describe('getEventName', () => {
 });
 
 describe('getNametTagTitleStrings', () => {
-  it('English — no gender distinction', () => {
+  it('English - no gender distinction', () => {
     const { front, back } = getNametTagTitleStrings('en');
     expect(front.delegate(false)).toBe('DELEGATE');
     expect(front.delegate(true)).toBe('DELEGATE');
@@ -266,7 +317,7 @@ describe('getNametTagTitleStrings', () => {
     expect(back.delegate(false)).toBe('DELEGATE');
   });
 
-  it('French — gender-aware titles', () => {
+  it('French - gender-aware titles', () => {
     const { front, back } = getNametTagTitleStrings('fr');
     expect(front.delegate(false)).toBe('DÉLÉGUÉ');
     expect(front.delegate(true)).toBe('DÉLÉGUÉE');
@@ -279,7 +330,7 @@ describe('getNametTagTitleStrings', () => {
     expect(back.delegate(false)).toBe('DÉLÉGUÉ');
   });
 
-  it('Spanish — gender-aware titles', () => {
+  it('Spanish - gender-aware titles', () => {
     const { front, back } = getNametTagTitleStrings('es');
     expect(front.delegate(false)).toBe('DELEGADO');
     expect(front.delegate(true)).toBe('DELEGADA');
@@ -292,7 +343,7 @@ describe('getNametTagTitleStrings', () => {
     expect(back.delegate(false)).toBe('DELEGADO');
   });
 
-  it('Portuguese — gender-aware titles', () => {
+  it('Portuguese - gender-aware titles', () => {
     const { front, back } = getNametTagTitleStrings('pt');
     expect(front.delegate(false)).toBe('DELEGADO');
     expect(front.delegate(true)).toBe('DELEGADA');

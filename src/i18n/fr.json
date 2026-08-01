@@ -30,7 +30,7 @@
     "error": "Erreur : {{message}}",
     "empty": "Aucune compétition trouvée. Assurez-vous d'être délégué ou organisateur.",
     "create_custom_title": "Créer une compétition personnalisée",
-    "create_custom_desc": "Compétition non officielle — définissez les épreuves manuellement et imprimez les feuilles"
+    "create_custom_desc": "Compétition non officielle - définissez les épreuves manuellement et imprimez les feuilles"
   },
   "settings": {
     "heading": "Configurer vos paramètres d'impression",
@@ -43,20 +43,32 @@
     "paper": {
       "title": "Format de papier",
       "a4": "A4",
-      "a4_desc": "210 × 297 mm — chaque feuille est A6 (105 × 148,5 mm)",
+      "a4_desc": "210 × 297 mm - chaque feuille est A6 (105 × 148,5 mm)",
       "letter": "Letter",
-      "letter_desc": "8,5 × 11 po — chaque feuille est 107,95 × 139,7 mm"
+      "letter_desc": "8,5 × 11 po - chaque feuille est 107,95 × 139,7 mm"
     },
     "subsequent_rounds": {
       "title": "Rondes suivantes",
       "prefilled": "Préremplies avec les noms",
       "prefilled_desc": "Imprimer les feuilles pour tous les qualifiés (nécessite les résultats WCA Live)",
       "blanks": "Épreuve + ronde remplie, nom vide",
-      "blanks_desc": "Imprimer des cases de nom vides — à remplir à la main lors de la compétition"
+      "blanks_desc": "Imprimer des cases de nom vides - à remplir à la main lors de la compétition"
+    },
+    "check_mode": {
+      "title": "Suivi des feuilles",
+      "hint": "Où imprimer la liste de vérification du délégué et du saisisseur de résultats.",
+      "per_group": "Carte couverture par groupe",
+      "per_group_desc": "Une carte de vérification devant les feuilles de chaque groupe (par défaut).",
+      "per_round": "Carte couverture par tour",
+      "per_round_desc": "Une carte de vérification par tour d'épreuve plutôt que par groupe - moins de cartes à imprimer.",
+      "checking_sheet": "Feuille de suivi séparée",
+      "checking_sheet_desc": "Aucune carte couverture. Une feuille distincte liste chaque tour par jour, avec des colonnes pour les groupes, la saisie, la double vérification et qui a repris les feuilles.",
+      "none": "Aucun",
+      "none_desc": "Ni carte couverture ni feuille de suivi."
     },
     "double_check": {
       "title": "Double vérification des mélanges",
-      "optional_note": "optionnel — pour les grands championnats",
+      "optional_note": "optionnel - pour les grands championnats",
       "hint": "Ajoute une deuxième colonne de signature du mélangeur pour vérifier les mélanges de façon indépendante.",
       "enable": "Activer la double vérification des mélanges",
       "enable_desc": "Ajoute une deuxième colonne de signature du mélangeur aux feuilles sélectionnées.",
@@ -66,19 +78,19 @@
       "round_semis": "Demi-finales",
       "round_finals": "Finales",
       "overrides_title": "Toujours double-vérifier certains compétiteurs (optionnel)",
-      "overrides_hint": "Téléverser un fichier CSV — une ligne par compétiteur : WCAID,épreuve1,épreuve2 (ex. 2015FOOB01,333,444). Ces compétiteurs sont double-vérifiés pour ces épreuves à toutes les rondes.",
+      "overrides_hint": "Téléverser un fichier CSV - une ligne par compétiteur : WCAID,épreuve1,épreuve2 (ex. 2015FOOB01,333,444). Ces compétiteurs sont double-vérifiés pour ces épreuves à toutes les rondes.",
       "overrides_count": "{{count}} compétiteur(s) chargé(s)"
     },
     "wca_live": {
       "title": "ID WCA Live",
-      "optional_note": "optionnel — pour les QR codes des badges",
+      "optional_note": "optionnel - pour les QR codes des badges",
       "fetching": "Récupération depuis WCA Live…",
       "auto_detected": "Détecté automatiquement",
-      "not_found": "Introuvable sur WCA Live pour l'instant — entrez-le manuellement si nécessaire",
+      "not_found": "Introuvable sur WCA Live pour l'instant - entrez-le manuellement si nécessaire",
       "hint": "ID numérique de la compétition sur WCA Live. Utilisé pour générer des QR codes WCA Live sur les badges.",
       "placeholder": "ex. 9667",
       "hide_label": "Masquer l'ID WCA Live sur les feuilles de score",
-      "hide_desc": "Supprime la ligne « WCA Live : … » — utile pour les feuilles vierges."
+      "hide_desc": "Supprime la ligne « WCA Live : … » - utile pour les feuilles vierges."
     },
     "logo": {
       "title": "Logo de la compétition",
@@ -97,12 +109,12 @@
       "logo_with_name": "Petit logo + nom de la compétition",
       "logo_with_name_desc": "Petit logo à côté du nom de la compétition en haut de chaque panneau",
       "logo_only": "Grand logo, remplace le nom",
-      "logo_only_desc": "Le logo remplace le texte du nom de la compétition — les QR codes sont légèrement plus petits",
+      "logo_only_desc": "Le logo remplace le texte du nom de la compétition - les QR codes sont légèrement plus petits",
       "qr_codes": "Codes QR",
       "qr_back_only": "Dos seulement",
       "qr_back_only_desc": "Avant = attributions de groupes (FR), dos = codes QR (EN)",
       "qr_both_sides": "Les deux côtés",
-      "qr_both_sides_desc": "Codes QR sur les deux côtés — utile quand le logo prend de la place",
+      "qr_both_sides_desc": "Codes QR sur les deux côtés - utile quand le logo prend de la place",
       "layout": "Orientation des badges",
       "layout_vertical": "Vertical (portrait)",
       "layout_horizontal": "Horizontal (paysage)"
@@ -126,7 +138,7 @@
       "round_label": "Libellé de ronde",
       "round_label_optional": "optionnel, ex. Finale",
       "round_label_placeholder": "ex. Ronde 1 ou Finale",
-      "icon_hint": "Icône — cliquez sur une icône WCA ou téléchargez la vôtre",
+      "icon_hint": "Icône - cliquez sur une icône WCA ou téléchargez la vôtre",
       "icon_selected": "Icône sélectionnée",
       "csv_label": "Compétiteurs (CSV)",
       "csv_optional": "optionnel",
@@ -156,7 +168,7 @@
   },
   "scope": {
     "heading": "Que générer",
-    "intro": "Cette compétition a déjà les groupes d’un tour après le tour 1. Choisissez quoi imprimer — vous pourrez régler le reste à l’écran suivant.",
+    "intro": "Cette compétition a déjà les groupes d’un tour après le tour 1. Choisissez quoi imprimer - vous pourrez régler le reste à l’écran suivant.",
     "intro_pre": "Choisissez les documents à inclure. Vous pourrez configurer les options sur l'écran suivant.",
     "rounds_heading": "Quelles rondes ?",
     "docs_title": "Types de documents",

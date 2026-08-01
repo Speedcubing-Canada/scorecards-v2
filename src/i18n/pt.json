@@ -30,7 +30,7 @@
     "error": "Erro: {{message}}",
     "empty": "Nenhuma competição encontrada. Verifique se você é delegado ou organizador.",
     "create_custom_title": "Criar uma competição personalizada",
-    "create_custom_desc": "Competição não oficial — defina os eventos manualmente e imprima as folhas"
+    "create_custom_desc": "Competição não oficial - defina os eventos manualmente e imprima as folhas"
   },
   "settings": {
     "heading": "Configurar opções de impressão",
@@ -43,20 +43,32 @@
     "paper": {
       "title": "Formato do papel",
       "a4": "A4",
-      "a4_desc": "210 × 297 mm — cada folha é A6 (105 × 148,5 mm)",
+      "a4_desc": "210 × 297 mm - cada folha é A6 (105 × 148,5 mm)",
       "letter": "Carta",
-      "letter_desc": "8,5 × 11 pol — cada folha é 107,95 × 139,7 mm"
+      "letter_desc": "8,5 × 11 pol - cada folha é 107,95 × 139,7 mm"
     },
     "subsequent_rounds": {
       "title": "Rodadas seguintes",
       "prefilled": "Preenchidas com nomes",
       "prefilled_desc": "Imprimir folhas para todos os classificados (requer resultados do WCA Live)",
       "blanks": "Evento + rodada preenchidos, nome em branco",
-      "blanks_desc": "Imprimir espaços de nome em branco — preencher à mão na competição"
+      "blanks_desc": "Imprimir espaços de nome em branco - preencher à mão na competição"
+    },
+    "check_mode": {
+      "title": "Acompanhamento de folhas",
+      "hint": "Onde a lista de verificação do delegado e do anotador é impressa.",
+      "per_group": "Capa por grupo",
+      "per_group_desc": "Um cartão de verificação na frente das folhas de cada grupo (padrão).",
+      "per_round": "Capa por rodada",
+      "per_round_desc": "Um cartão de verificação por rodada de evento em vez de por grupo - menos cartões para imprimir.",
+      "checking_sheet": "Folha de acompanhamento separada",
+      "checking_sheet_desc": "Sem capas. Uma folha separada lista cada rodada por dia, com colunas para grupos, entrada de dados, dupla verificação e quem levou as folhas.",
+      "none": "Nenhum",
+      "none_desc": "Sem capas e sem folha de acompanhamento."
     },
     "double_check": {
       "title": "Dupla verificação de misturas",
-      "optional_note": "opcional — para grandes campeonatos",
+      "optional_note": "opcional - para grandes campeonatos",
       "hint": "Adiciona uma segunda coluna de assinatura do misturador para verificar as misturas de forma independente.",
       "enable": "Ativar a dupla verificação de misturas",
       "enable_desc": "Adiciona uma segunda coluna de assinatura do misturador às folhas selecionadas.",
@@ -66,19 +78,19 @@
       "round_semis": "Semifinais",
       "round_finals": "Finais",
       "overrides_title": "Sempre verificar competidores específicos (opcional)",
-      "overrides_hint": "Envie um arquivo CSV — uma linha por competidor: WCAID,evento1,evento2 (ex. 2015FOOB01,333,444). Esses competidores são verificados duas vezes nesses eventos em todas as rodadas.",
+      "overrides_hint": "Envie um arquivo CSV - uma linha por competidor: WCAID,evento1,evento2 (ex. 2015FOOB01,333,444). Esses competidores são verificados duas vezes nesses eventos em todas as rodadas.",
       "overrides_count": "{{count}} competidor(es) carregado(s)"
     },
     "wca_live": {
       "title": "ID do WCA Live",
-      "optional_note": "opcional — para QR codes dos crachás",
+      "optional_note": "opcional - para QR codes dos crachás",
       "fetching": "Buscando no WCA Live…",
       "auto_detected": "Detectado automaticamente",
-      "not_found": "Ainda não encontrado no WCA Live — insira manualmente se necessário",
+      "not_found": "Ainda não encontrado no WCA Live - insira manualmente se necessário",
       "hint": "ID numérico da competição no WCA Live. Usado para gerar QR codes do WCA Live nos crachás.",
       "placeholder": "ex. 9667",
       "hide_label": "Ocultar ID do WCA Live nas folhas de pontuação",
-      "hide_desc": "Remove a linha «WCA Live: …» — útil para folhas em branco."
+      "hide_desc": "Remove a linha «WCA Live: …» - útil para folhas em branco."
     },
     "logo": {
       "title": "Logo da competição",
@@ -97,12 +109,12 @@
       "logo_with_name": "Logo pequeno + nome da competição",
       "logo_with_name_desc": "Logo pequeno ao lado do nome da competição no topo de cada painel",
       "logo_only": "Logo grande, substitui o nome",
-      "logo_only_desc": "O logo substitui o texto do nome da competição — os QR codes ficam um pouco menores",
+      "logo_only_desc": "O logo substitui o texto do nome da competição - os QR codes ficam um pouco menores",
       "qr_codes": "QR codes",
       "qr_back_only": "Somente verso",
       "qr_back_only_desc": "Frente = atribuições de grupos (FR), verso = QR codes (EN)",
       "qr_both_sides": "Ambos os lados",
-      "qr_both_sides_desc": "QR codes em ambos os lados — útil quando o logo ocupa espaço",
+      "qr_both_sides_desc": "QR codes em ambos os lados - útil quando o logo ocupa espaço",
       "layout": "Orientação dos crachás",
       "layout_vertical": "Vertical (retrato)",
       "layout_horizontal": "Horizontal (paisagem)"
@@ -126,7 +138,7 @@
       "round_label": "Rótulo da rodada",
       "round_label_optional": "opcional, ex. Final",
       "round_label_placeholder": "ex. Rodada 1 ou Final",
-      "icon_hint": "Ícone — clique em um ícone da WCA ou envie o seu",
+      "icon_hint": "Ícone - clique em um ícone da WCA ou envie o seu",
       "icon_selected": "Ícone selecionado",
       "csv_label": "Competidores (CSV)",
       "csv_optional": "opcional",
@@ -156,7 +168,7 @@
   },
   "scope": {
     "heading": "O que gerar",
-    "intro": "Esta competição já tem grupos para uma rodada após a Rodada 1. Escolha o que imprimir — você pode ajustar o resto na próxima tela.",
+    "intro": "Esta competição já tem grupos para uma rodada após a Rodada 1. Escolha o que imprimir - você pode ajustar o resto na próxima tela.",
     "intro_pre": "Escolha quais documentos incluir. Você pode configurar as opções na próxima tela.",
     "rounds_heading": "Quais rodadas?",
     "docs_title": "Tipos de documentos",

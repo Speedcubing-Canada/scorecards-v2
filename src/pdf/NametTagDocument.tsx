@@ -23,7 +23,7 @@ Font.registerHyphenationCallback((word) => [word]);
 //     row 2: [Front_C] [Back_C]
 //     row 3: [Front_D] [Back_D]
 //   Cards are landscape (244×147pt LETTER = 86×52mm) and slot directly into the
-//   portrait slots — no rotation needed. Sized to fit 90×55mm badge holders
+//   portrait slots - no rotation needed. Sized to fit 90×55mm badge holders
 //   (same holder as vertical, rotated sideways) with ~2mm clearance per edge.
 
 const CONFIGS = {
@@ -90,7 +90,7 @@ function badgeColors(role: NametTagRole) {
   return { bg: '#DCDCDC', fg: 'black' };
 }
 
-// ── Duty lines — flex-wrap row, each item is its own Text so no dash artifacts ─
+// ── Duty lines - flex-wrap row, each item is its own Text so no dash artifacts ─
 function DutyLines({ duties, fontSize }: { duties: string[]; fontSize: number }) {
   const sorted = [...duties].sort();
   return (
@@ -353,7 +353,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
   const personsPerPage = NAMETAGS_PER_PAGE;
 
   if (horizontal) {
-    // Portrait page, 2 cols × 4 rows. Each landscape slot (244×147pt) fits directly —
+    // Portrait page, 2 cols × 4 rows. Each landscape slot (244×147pt) fits directly -
     // no rotation needed. Cards are sized for 90×55mm badge holders (~2mm clearance).
     const hcfg = H_CONFIGS[settings.paperFormat as PF] ?? H_CONFIGS.LETTER;
     const pos = panelPositions(hcfg, 2, 4);
@@ -362,7 +362,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
     const pages: NametTagEntry[][] = [];
     for (let i = 0; i < nametags.length; i += personsPerPage) pages.push(nametags.slice(i, i + personsPerPage));
     return (
-      <Document title={`${competitionName} — Name Tags`} author="WCA Scorecard Generator">
+      <Document title={`${competitionName} - Name Tags`} author="WCA Scorecard Generator">
         {pages.map((page, pi) => (
           <Page key={pi} size={settings.paperFormat} orientation="portrait" style={{ backgroundColor: '#ffffff' }}>
             {page.flatMap((entry, ei) => {
@@ -408,7 +408,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
   for (let i = 0; i < nametags.length; i += personsPerPage) pages.push(nametags.slice(i, i + personsPerPage));
 
   return (
-    <Document title={`${competitionName} — Name Tags`} author="WCA Scorecard Generator">
+    <Document title={`${competitionName} - Name Tags`} author="WCA Scorecard Generator">
       {pages.map((page, pi) => (
         <Page key={pi} size={settings.paperFormat} orientation="landscape" style={{ backgroundColor: '#ffffff' }}>
           {page.flatMap((entry, ei) => {

@@ -22,11 +22,11 @@ export function resolveCustomFormat(format: CustomEventFormat, hasCutoff: boolea
 /**
  * Build the scorecards for one custom event: without competitors, a page of 4
  * identical blank cards; with competitors, one named card per row padded with
- * blank cards to fill the last 4-card page. liveId is always '' — custom
+ * blank cards to fill the last 4-card page. liveId is always '' - custom
  * competitions are unofficial and never reference WCA Live.
  */
 export function buildCustomEntries(custom: CustomEvent): ScorecardData[] {
-  // bo2/bo1 have no post-cutoff phase — drop any stray cutoff value.
+  // bo2/bo1 have no post-cutoff phase - drop any stray cutoff value.
   const hasCutoff = custom.cutoff.trim() !== '' && custom.format !== 'bo2' && custom.format !== 'bo1';
   const format = resolveCustomFormat(custom.format, hasCutoff);
   const blank: ScorecardEntry = {

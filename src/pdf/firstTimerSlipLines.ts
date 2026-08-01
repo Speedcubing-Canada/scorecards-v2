@@ -47,7 +47,7 @@ function genderWord(gender: 'm' | 'f' | 'o', s: FirstTimerSlipStrings): string {
   return s.genderOther;
 }
 
-// Pure derivation of a slip's lines from one entry — the single source of the slip's
+// Pure derivation of a slip's lines from one entry - the single source of the slip's
 // conditional rules (birthdate omitted when absent; parental consent only for a
 // present-birthdate minor; single- vs multi-event wording). Unit-tested directly.
 export function buildSlipLines(

@@ -20,7 +20,7 @@ const MOBILE_QUERY = `(max-width: ${MOBILE_BREAKPOINT}px)`;
  *
  * Because every component in this app styles itself with inline
  * `React.CSSProperties` objects (no CSS classes), CSS media queries can't
- * override those styles — so the breakpoint has to be read in JS and used to
+ * override those styles - so the breakpoint has to be read in JS and used to
  * pick between style objects.
  */
 export function useIsMobile(): boolean {

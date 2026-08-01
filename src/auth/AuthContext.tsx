@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.removeItem('oauth_state');
     sessionStorage.removeItem('pkce_verifier');
 
-    if (returnedState !== savedState) throw new Error('OAuth state mismatch — possible CSRF');
+    if (returnedState !== savedState) throw new Error('OAuth state mismatch - possible CSRF');
     if (!verifier) throw new Error('Missing PKCE verifier');
 
     setIsLoading(true);

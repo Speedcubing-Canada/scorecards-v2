@@ -23,7 +23,7 @@ describe('resolveCustomFormat', () => {
     // bo3 renders with the mo3 layout, mirroring WCIF format '3'
     expect(resolveCustomFormat('bo3', false)).toBe('mo3');
     expect(resolveCustomFormat('bo3', true)).toBe('bo1-mo3');
-    // bo2/bo1 take no cutoff — the cutoff flag is ignored
+    // bo2/bo1 take no cutoff - the cutoff flag is ignored
     expect(resolveCustomFormat('bo2', false)).toBe('bo2');
     expect(resolveCustomFormat('bo2', true)).toBe('bo2');
     expect(resolveCustomFormat('bo1', false)).toBe('bo1');

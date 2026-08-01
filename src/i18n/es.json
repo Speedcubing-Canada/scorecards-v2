@@ -30,7 +30,7 @@
     "error": "Error: {{message}}",
     "empty": "No se encontraron competencias. Asegúrese de ser delegado u organizador.",
     "create_custom_title": "Crear una competencia personalizada",
-    "create_custom_desc": "Competencia no oficial — defina los eventos manualmente e imprima las hojas"
+    "create_custom_desc": "Competencia no oficial - defina los eventos manualmente e imprima las hojas"
   },
   "settings": {
     "heading": "Configurar ajustes de impresión",
@@ -43,20 +43,32 @@
     "paper": {
       "title": "Formato de papel",
       "a4": "A4",
-      "a4_desc": "210 × 297 mm — cada hoja es A6 (105 × 148,5 mm)",
+      "a4_desc": "210 × 297 mm - cada hoja es A6 (105 × 148,5 mm)",
       "letter": "Carta",
-      "letter_desc": "8,5 × 11 in — cada hoja es 107,95 × 139,7 mm"
+      "letter_desc": "8,5 × 11 in - cada hoja es 107,95 × 139,7 mm"
     },
     "subsequent_rounds": {
       "title": "Rondas siguientes",
       "prefilled": "Prellenadas con nombres",
       "prefilled_desc": "Imprimir hojas para todos los clasificados (requiere resultados de WCA Live)",
       "blanks": "Evento + ronda rellenos, nombre en blanco",
-      "blanks_desc": "Imprimir espacios de nombre en blanco — rellenar a mano en la competencia"
+      "blanks_desc": "Imprimir espacios de nombre en blanco - rellenar a mano en la competencia"
+    },
+    "check_mode": {
+      "title": "Seguimiento de hojas",
+      "hint": "Dónde se imprime la lista de verificación del delegado y del anotador.",
+      "per_group": "Carátula por grupo",
+      "per_group_desc": "Una tarjeta de verificación delante de las hojas de cada grupo (predeterminado).",
+      "per_round": "Carátula por ronda",
+      "per_round_desc": "Una tarjeta de verificación por ronda de evento en lugar de por grupo - menos tarjetas que imprimir.",
+      "checking_sheet": "Hoja de seguimiento aparte",
+      "checking_sheet_desc": "Sin carátulas. Una hoja separada lista cada ronda por día, con columnas para grupos, ingreso de datos, doble verificación y quién retiró las hojas.",
+      "none": "Ninguno",
+      "none_desc": "Sin carátulas ni hoja de seguimiento."
     },
     "double_check": {
       "title": "Doble verificación de mezclas",
-      "optional_note": "opcional — para grandes campeonatos",
+      "optional_note": "opcional - para grandes campeonatos",
       "hint": "Añade una segunda columna de firma del mezclador para verificar las mezclas de forma independiente.",
       "enable": "Activar la doble verificación de mezclas",
       "enable_desc": "Añade una segunda columna de firma del mezclador a las hojas seleccionadas.",
@@ -66,19 +78,19 @@
       "round_semis": "Semifinales",
       "round_finals": "Finales",
       "overrides_title": "Verificar siempre a competidores específicos (opcional)",
-      "overrides_hint": "Sube un archivo CSV — una línea por competidor: WCAID,evento1,evento2 (ej. 2015FOOB01,333,444). Estos competidores se verifican dos veces en esos eventos en todas las rondas.",
+      "overrides_hint": "Sube un archivo CSV - una línea por competidor: WCAID,evento1,evento2 (ej. 2015FOOB01,333,444). Estos competidores se verifican dos veces en esos eventos en todas las rondas.",
       "overrides_count": "{{count}} competidor(es) cargado(s)"
     },
     "wca_live": {
       "title": "ID de WCA Live",
-      "optional_note": "opcional — para códigos QR de etiquetas",
+      "optional_note": "opcional - para códigos QR de etiquetas",
       "fetching": "Obteniendo de WCA Live…",
       "auto_detected": "Detectado automáticamente",
-      "not_found": "No encontrado en WCA Live aún — ingrese manualmente si es necesario",
+      "not_found": "No encontrado en WCA Live aún - ingrese manualmente si es necesario",
       "hint": "ID numérico de la competencia en WCA Live. Usado para generar códigos QR de WCA Live en las etiquetas de nombre.",
       "placeholder": "ej. 9667",
       "hide_label": "Ocultar ID de WCA Live en las hojas de puntuación",
-      "hide_desc": "Elimina la línea «WCA Live: …» — útil para hojas en blanco."
+      "hide_desc": "Elimina la línea «WCA Live: …» - útil para hojas en blanco."
     },
     "logo": {
       "title": "Logo de la competencia",
@@ -97,12 +109,12 @@
       "logo_with_name": "Logo pequeño + nombre de competencia",
       "logo_with_name_desc": "Logo pequeño junto al nombre de la competencia en la parte superior de cada panel",
       "logo_only": "Logo grande, reemplaza el nombre",
-      "logo_only_desc": "El logo reemplaza el texto del nombre de la competencia — los códigos QR son ligeramente más pequeños",
+      "logo_only_desc": "El logo reemplaza el texto del nombre de la competencia - los códigos QR son ligeramente más pequeños",
       "qr_codes": "Códigos QR",
       "qr_back_only": "Solo reverso",
       "qr_back_only_desc": "Frente = asignaciones de grupos (FR), reverso = códigos QR (EN)",
       "qr_both_sides": "Ambos lados",
-      "qr_both_sides_desc": "Códigos QR en ambos lados — útil cuando el logo ocupa espacio",
+      "qr_both_sides_desc": "Códigos QR en ambos lados - útil cuando el logo ocupa espacio",
       "layout": "Orientación de credenciales",
       "layout_vertical": "Vertical (retrato)",
       "layout_horizontal": "Horizontal (paisaje)"
@@ -126,7 +138,7 @@
       "round_label": "Etiqueta de ronda",
       "round_label_optional": "opcional, ej. Final",
       "round_label_placeholder": "ej. Ronda 1 o Final",
-      "icon_hint": "Ícono — haga clic en un ícono WCA o suba el suyo",
+      "icon_hint": "Ícono - haga clic en un ícono WCA o suba el suyo",
       "icon_selected": "Ícono seleccionado",
       "csv_label": "Competidores (CSV)",
       "csv_optional": "opcional",
@@ -156,7 +168,7 @@
   },
   "scope": {
     "heading": "Qué generar",
-    "intro": "Esta competición ya tiene grupos para una ronda posterior a la Ronda 1. Elige qué imprimir — podrás ajustar el resto en la siguiente pantalla.",
+    "intro": "Esta competición ya tiene grupos para una ronda posterior a la Ronda 1. Elige qué imprimir - podrás ajustar el resto en la siguiente pantalla.",
     "intro_pre": "Elige qué documentos incluir. Podrás configurar las opciones en la siguiente pantalla.",
     "rounds_heading": "¿Qué rondas?",
     "docs_title": "Tipos de documentos",

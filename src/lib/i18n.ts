@@ -12,6 +12,22 @@ export interface CoverCardStrings {
   scoretakerInitials: string;
   incidentsLogged: string;
   resultsChecked: string;
+  // Subtitle of a 'per-round-card' cover, which covers a whole round instead of one group.
+  allGroups: (n: number) => string;
+}
+
+// ── Checking sheet strings ────────────────────────────────────────────────────
+// Standalone delegate/scoretaker tracking sheet: one row per round, grouped by day
+// and room. Every column but "groups" is blank for hand-writing.
+export interface CheckingSheetStrings {
+  title: string;
+  start: string;
+  event: string;
+  groupsDone: string;
+  scorecards: string;
+  dataEntry: string;
+  doubleCheck: string;
+  takenBy: string;
 }
 
 // ── Schedule tracker strings ──────────────────────────────────────────────────
@@ -135,6 +151,7 @@ const EN: ScorecardStrings = {
     scoretakerInitials: 'Scoretaker Initials ______',
     incidentsLogged: '5. Incidents logged by Delegate',
     resultsChecked: '6. Results checked by Delegate',
+    allGroups: (n) => (n === 1 ? 'Only 1 group' : `All ${n} groups`),
   },
 };
 
@@ -158,13 +175,13 @@ const FR: ScorecardStrings = {
   provisionalLine: '─── Essai extra ou provisoire (Initiales du Délégué _______) ───',
   newCompetitor: 'Nouveau Compétiteur',
   newCompetitorF: 'Nouvelle Compétitrice',
-  roundName: (n, total) => `Tour ${n} de ${total}`,
+  roundName: (n, total) => `Tour ${n} sur ${total}`,
   finalRound: 'Tour Final',
-  groupLabel: (gNum, total) => `Groupe ${gNum} de ${total}`,
-  colorGroupLabel: (color, gNum, total) => `${color} ${gNum} de ${total}`,
-  blankGroupLabel: (total) => `Groupe _ de ${total}`,
-  ofConnector: 'de',
-  stationLabel: (n) => `Siège ${n}`,
+  groupLabel: (gNum, total) => `Groupe ${gNum} sur ${total}`,
+  colorGroupLabel: (color, gNum, total) => `${color} ${gNum} sur ${total}`,
+  blankGroupLabel: (total) => `Groupe _ sur ${total}`,
+  ofConnector: 'sur',
+  stationLabel: (n) => `Station ${n}`,
   seatLabel: (n) => `Siège ${n}`,
   cover: {
     forDelegate: 'POUR LE DÉLÉGUÉ',
@@ -173,10 +190,11 @@ const FR: ScorecardStrings = {
     incidentsCount: '3. Nombre de feuilles avec incidents : _____',
     delegateInitials: 'Initiales du Délégué ______',
     forDataEntry: 'POUR LA SAISIE DES DONNÉES',
-    resultsEntered: '4. Résultats saisis par le Marqueur',
-    scoretakerInitials: 'Initiales du Marqueur ______',
+    resultsEntered: '4. Résultats entrés par le saisisseur de résultats',
+    scoretakerInitials: 'Initiales du Saisisseur ______',
     incidentsLogged: '5. Incidents enregistrés par le Délégué',
     resultsChecked: '6. Résultats vérifiés par le Délégué',
+    allGroups: (n) => (n === 1 ? 'Un seul groupe' : `Les ${n} groupes`),
   },
 };
 
@@ -219,6 +237,7 @@ const ES: ScorecardStrings = {
     scoretakerInitials: 'Iniciales del Anotador ______',
     incidentsLogged: '5. Incidentes registrados por el Delegado',
     resultsChecked: '6. Resultados verificados por el Delegado',
+    allGroups: (n) => (n === 1 ? 'Solo un grupo' : `Los ${n} grupos`),
   },
 };
 
@@ -261,6 +280,7 @@ const PT: ScorecardStrings = {
     scoretakerInitials: 'Iniciais do Anotador ______',
     incidentsLogged: '5. Incidentes registrados pelo Delegado',
     resultsChecked: '6. Resultados verificados pelo Delegado',
+    allGroups: (n) => (n === 1 ? 'O único grupo' : `Os ${n} grupos`),
   },
 };
 
@@ -269,7 +289,7 @@ const PT: ScorecardStrings = {
  * Column headers and the cut-off/provisional lines stack both languages
  * (`primary\nsecondary`); everything else (round/group/seat labels, cover) uses
  * the primary language only. This is the single place that defines which fields
- * are bilingual — adding a language never touches it.
+ * are bilingual - adding a language never touches it.
  */
 function mergeScorecardStrings(primary: ScorecardStrings, secondary: ScorecardStrings): ScorecardStrings {
   return {
@@ -329,7 +349,7 @@ export function splitLabelTotal(
 
 // ── Schedule tracker strings ───────────────────────────────────────────────────
 const SCHEDULE_EN: ScheduleStrings = {
-  title: '— Schedule Tracker',
+  title: '- Schedule Tracker',
   estimatedStart: 'Estimated\nStart Time',
   estimatedEnd: 'Estimated\nEnd Time',
   event: 'Event',
@@ -342,7 +362,7 @@ const SCHEDULE_EN: ScheduleStrings = {
 };
 
 const SCHEDULE_FR: ScheduleStrings = {
-  title: '— Suivi du calendrier',
+  title: '- Suivi du calendrier',
   estimatedStart: 'Heure de\ndébut estimée',
   estimatedEnd: 'Heure de\nfin estimée',
   event: 'Épreuve',
@@ -355,7 +375,7 @@ const SCHEDULE_FR: ScheduleStrings = {
 };
 
 const SCHEDULE_ES: ScheduleStrings = {
-  title: '— Seguimiento del Horario',
+  title: '- Seguimiento del Horario',
   estimatedStart: 'Hora de\ninicio estimada',
   estimatedEnd: 'Hora de\nfin estimada',
   event: 'Evento',
@@ -368,7 +388,7 @@ const SCHEDULE_ES: ScheduleStrings = {
 };
 
 const SCHEDULE_PT: ScheduleStrings = {
-  title: '— Acompanhamento de Horário',
+  title: '- Acompanhamento de Horário',
   estimatedStart: 'Horário de\nInício Estimado',
   estimatedEnd: 'Horário de\nTérmino Estimado',
   event: 'Evento',
@@ -382,6 +402,55 @@ const SCHEDULE_PT: ScheduleStrings = {
 
 export function getScheduleStrings(language: LocaleCode): ScheduleStrings {
   return LOCALES[language].schedule;
+}
+
+// ── Checking sheet strings ─────────────────────────────────────────────────────
+const CHECKING_EN: CheckingSheetStrings = {
+  title: '- Scorecard Checking',
+  start: 'Start\nTime',
+  event: 'Event',
+  groupsDone: 'Groups\ncollected',
+  scorecards: 'Scorecards\nchecked',
+  dataEntry: 'Data entry\n(initials)',
+  doubleCheck: 'Double-check\n(initials)',
+  takenBy: 'Scorecards\ntaken by',
+};
+
+const CHECKING_FR: CheckingSheetStrings = {
+  title: '- Suivi des feuilles',
+  start: 'Heure de\ndébut',
+  event: 'Épreuve',
+  groupsDone: 'Groupes\nregroupés',
+  scorecards: 'Feuilles\nvérifiées',
+  dataEntry: 'Saisie\n(initiales)',
+  doubleCheck: 'Double vérif.\n(initiales)',
+  takenBy: 'Feuilles\nreprises par',
+};
+
+const CHECKING_ES: CheckingSheetStrings = {
+  title: '- Seguimiento de Hojas',
+  start: 'Hora de\ninicio',
+  event: 'Evento',
+  groupsDone: 'Grupos\nagrupados',
+  scorecards: 'Hojas\nverificadas',
+  dataEntry: 'Ingreso\n(iniciales)',
+  doubleCheck: 'Doble verif.\n(iniciales)',
+  takenBy: 'Hojas\nretiradas por',
+};
+
+const CHECKING_PT: CheckingSheetStrings = {
+  title: '- Acompanhamento de Folhas',
+  start: 'Horário de\nInício',
+  event: 'Evento',
+  groupsDone: 'Grupos\nagrupados',
+  scorecards: 'Folhas\nverificadas',
+  dataEntry: 'Entrada\n(iniciais)',
+  doubleCheck: 'Dupla verif.\n(iniciais)',
+  takenBy: 'Folhas\nlevadas por',
+};
+
+export function getCheckingSheetStrings(language: LocaleCode): CheckingSheetStrings {
+  return LOCALES[language].checking;
 }
 
 // ── Nametag duty strings ───────────────────────────────────────────────────────
@@ -620,6 +689,7 @@ export function getEventName(eventId: string, language: LocaleCode): string {
 interface LocaleBundle {
   scorecard: ScorecardStrings;
   schedule: ScheduleStrings;
+  checking: CheckingSheetStrings;
   nametag: NametTagStrings;
   firstTimer: FirstTimerSlipStrings;
   title: NametTagTitleStrings;
@@ -628,8 +698,8 @@ interface LocaleBundle {
 }
 
 const LOCALES: Record<LocaleCode, LocaleBundle> = {
-  en: { scorecard: EN, schedule: SCHEDULE_EN, nametag: NAMETAG_EN, firstTimer: FIRST_TIMER_EN, title: NAMETAG_TITLE_EN, shortNames: SHORT_NAMETAG_NAMES_EN, eventNames: EVENT_NAMES_EN },
-  fr: { scorecard: FR, schedule: SCHEDULE_FR, nametag: NAMETAG_FR, firstTimer: FIRST_TIMER_FR, title: NAMETAG_TITLE_FR, shortNames: SHORT_NAMETAG_NAMES_FR, eventNames: EVENT_NAMES_FR },
-  es: { scorecard: ES, schedule: SCHEDULE_ES, nametag: NAMETAG_ES, firstTimer: FIRST_TIMER_ES, title: NAMETAG_TITLE_ES, shortNames: SHORT_NAMETAG_NAMES_ES, eventNames: EVENT_NAMES_ES },
-  pt: { scorecard: PT, schedule: SCHEDULE_PT, nametag: NAMETAG_PT, firstTimer: FIRST_TIMER_PT, title: NAMETAG_TITLE_PT, shortNames: SHORT_NAMETAG_NAMES_PT, eventNames: EVENT_NAMES_PT },
+  en: { scorecard: EN, schedule: SCHEDULE_EN, checking: CHECKING_EN, nametag: NAMETAG_EN, firstTimer: FIRST_TIMER_EN, title: NAMETAG_TITLE_EN, shortNames: SHORT_NAMETAG_NAMES_EN, eventNames: EVENT_NAMES_EN },
+  fr: { scorecard: FR, schedule: SCHEDULE_FR, checking: CHECKING_FR, nametag: NAMETAG_FR, firstTimer: FIRST_TIMER_FR, title: NAMETAG_TITLE_FR, shortNames: SHORT_NAMETAG_NAMES_FR, eventNames: EVENT_NAMES_FR },
+  es: { scorecard: ES, schedule: SCHEDULE_ES, checking: CHECKING_ES, nametag: NAMETAG_ES, firstTimer: FIRST_TIMER_ES, title: NAMETAG_TITLE_ES, shortNames: SHORT_NAMETAG_NAMES_ES, eventNames: EVENT_NAMES_ES },
+  pt: { scorecard: PT, schedule: SCHEDULE_PT, checking: CHECKING_PT, nametag: NAMETAG_PT, firstTimer: FIRST_TIMER_PT, title: NAMETAG_TITLE_PT, shortNames: SHORT_NAMETAG_NAMES_PT, eventNames: EVENT_NAMES_PT },
 };

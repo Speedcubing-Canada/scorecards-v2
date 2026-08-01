@@ -1,4 +1,4 @@
-# Document Type Selection — Design Spec
+# Document Type Selection - Design Spec
 Date: 2026-06-14
 
 ## Problem
@@ -23,7 +23,7 @@ targeting.
 
 No change to `App.tsx` routes. The `/scope` route already exists. Currently
 `RoundScopePage` auto-redirects to `/settings` when there are no
-`laterRoundsWithAssignments`. That early redirect is removed — the page now
+`laterRoundsWithAssignments`. That early redirect is removed - the page now
 always renders.
 
 ### Data Model (`src/lib/generationScope.ts`)
@@ -50,7 +50,7 @@ scheduleDays, and firstTimers. This decouples document type from round scope.
 
 ### CompetitionSettings (`src/types/settings.ts`)
 
-Remove `firstTimerSlips: boolean` — its responsibility moves to
+Remove `firstTimerSlips: boolean` - its responsibility moves to
 `GenerationScope.documents.firstTimerSlips`.
 
 ---
@@ -59,12 +59,12 @@ Remove `firstTimerSlips: boolean` — its responsibility moves to
 
 The page is restructured into two conditional sections:
 
-**Section 1 — Round scope** (mid-competition only, i.e., when
+**Section 1 - Round scope** (mid-competition only, i.e., when
 `laterRoundsWithAssignments` is non-empty):
 - Existing radio buttons: Latest assigned round / All rounds / Select specific rounds
 - Hidden/disabled when Scorecards document type is unchecked
 
-**Section 2 — Document types** (always shown):
+**Section 2 - Document types** (always shown):
 - Scorecards checkbox
 - Schedule Tracker checkbox
 - Nametags checkbox
@@ -116,7 +116,7 @@ Update tests in `src/lib/generationScope.test.ts`:
 
 ## Verification
 
-1. Run `npm test` — all existing tests pass, new scope tests pass
+1. Run `npm test` - all existing tests pass, new scope tests pass
 2. Start dev server, pick a pre-competition comp:
    - Scope page shows only document type checkboxes, no round-scope section
    - All except First-Timer Slips are checked by default

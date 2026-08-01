@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
  *  - Montserrat is loaded with only those three weights.
  *
  * Scope is the on-screen UI (src/components + src/pages). PDF documents under
- * src/pdf are intentionally excluded — they use @react-pdf primitives (incl. Svg)
+ * src/pdf are intentionally excluded - they use @react-pdf primitives (incl. Svg)
  * and their own StyleSheet, and must not be constrained by these UI rules.
  */
 

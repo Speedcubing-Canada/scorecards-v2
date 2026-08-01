@@ -56,7 +56,7 @@
   --fs-label: 13px;    /* labels, hints, nav */
   --fs-caption: 12px;  /* captions, tooltips, badges */
 
-  /* Weight hierarchy — only these three weights are used anywhere */
+  /* Weight hierarchy - only these three weights are used anywhere */
   --fw-regular: 400;   /* body, descriptions, hints */
   --fw-medium: 500;    /* labels, secondary buttons, nav */
   --fw-bold: 700;      /* headings, primary buttons, stat values */

@@ -7,7 +7,7 @@ import { EVENT_ICONS } from '../assets/events';
 import { logoState, resolveLogo } from '../lib/logo';
 import { SCORECARDS_PER_PAGE, ROW_HEIGHTS } from './layoutConstants';
 
-// Prevent react-pdf from hyphenating words — lets computed font size control line breaks instead.
+// Prevent react-pdf from hyphenating words - lets computed font size control line breaks instead.
 Font.registerHyphenationCallback((word) => [word]);
 
 // ── Page/card geometry (points) ───────────────────────────────────────────
@@ -48,7 +48,7 @@ const FONT_BOLD   = 'Helvetica-Bold';
 const COL = { scrambler: '13%', attempt: '10%', result: '52%', judge: '12%', competitor: '13%' };
 // Scramble double-checking: a second scrambler-signature column is inserted after the
 // first one. Its 13% is taken entirely from `result` (52% → 39%) so every other column
-// — and the card's outer geometry — stays unchanged. Both variants sum to 100%.
+// - and the card's outer geometry - stays unchanged. Both variants sum to 100%.
 const COL_DC = { scrambler: '13%', scramblerCheck: '12%', attempt: '10%', result: '40%', judge: '12%', competitor: '13%' };
 // Column key order for the header/rows, with and without the double-check column.
 const COLS_5 = ['scrambler', 'attempt', 'result', 'judge', 'competitor'] as const;
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   nameText: { fontFamily: FONT_BOLD, textAlign: 'center' },
   idText: { fontSize: 7.5, textAlign: 'center', marginTop: 2, color: '#222' },
 
-  // Event row — underlined text only, no box, icon is left clear
+  // Event row - underlined text only, no box, icon is left clear
   eventRow: {
     flexDirection: 'row', alignItems: 'stretch',
     marginTop: 4, marginBottom: 6,
@@ -322,7 +322,11 @@ function CoverCard({
       <Text style={[styles.coverEventRound, { fontSize: coverEventFontSize(`${card.eventName} ${card.roundLabel}`) }]}>
         {card.eventName} {round.head}{round.tail && <Text style={{ color: GREY }}>{round.tail}</Text>}
       </Text>
-      <LabelWithGreyTotal label={card.group} connector={strings.ofConnector} style={styles.coverGroup} />
+      {/* 'per-round-card' covers carry no group label - they stand for the whole round,
+          so the group line becomes the group count instead. */}
+      {card.group === ''
+        ? <Text style={styles.coverGroup}>{cover.allGroups(card.numGroups)}</Text>
+        : <LabelWithGreyTotal label={card.group} connector={strings.ofConnector} style={styles.coverGroup} />}
 
       <View style={styles.coverDividerRow}>
         <View style={styles.coverDividerLine} />
@@ -370,7 +374,7 @@ export function ScorecardDocument({ entries, settings }: Props) {
   for (let i = 0; i < entries.length; i += SCORECARDS_PER_PAGE) pages.push(entries.slice(i, i + SCORECARDS_PER_PAGE));
 
   return (
-    <Document title={`${settings.competitionName} — Scorecards`} author="WCA Scorecard Generator">
+    <Document title={`${settings.competitionName} - Scorecards`} author="WCA Scorecard Generator">
       {pages.map((page, pi) => (
         <Page key={pi} size={size} style={styles.page}>
           {page.map((entry, ei) => {

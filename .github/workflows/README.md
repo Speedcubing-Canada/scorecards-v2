@@ -17,8 +17,8 @@ gcloud services enable \
   --project=scorecards-v2-prod
 ```
 
-- `iamcredentials.googleapis.com` — required by Workload Identity Federation to mint short-lived tokens
-- `cloudbuild.googleapis.com` — `gcloud app deploy` delegates builds to Cloud Build; the staging bucket (`staging.<project>.appspot.com`) is created when this API is enabled
+- `iamcredentials.googleapis.com` - required by Workload Identity Federation to mint short-lived tokens
+- `cloudbuild.googleapis.com` - `gcloud app deploy` delegates builds to Cloud Build; the staging bucket (`staging.<project>.appspot.com`) is created when this API is enabled
 
 After enabling Cloud Build, grant the App Engine default service account access to
 that staging bucket (it is not granted automatically):
@@ -144,7 +144,7 @@ gcloud secrets add-iam-policy-binding WCA_CLIENT_SECRET \
 ```
 
 To rotate the secret later, add a new version with `gcloud secrets versions add`
-— the server reads the `latest` alias on startup, so the new value takes effect
+- the server reads the `latest` alias on startup, so the new value takes effect
 on the next instance start (or after `gcloud app versions migrate`).
 
 ---

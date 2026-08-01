@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { Check, ChevronDown, ChevronRight, RectangleHorizontal, RectangleVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import type { CompetitionSettings, CustomEvent, DoubleCheckRound, LocaleCode, NametTagLayout, NametTagLogoMode, NametTagQrMode, PaperFormat, ScrambleDoubleCheckOverrides, SecondRoundMode } from '../types/settings';
+import type { CompetitionSettings, CustomEvent, DoubleCheckRound, LocaleCode, NametTagLayout, NametTagLogoMode, NametTagQrMode, PaperFormat, ScorecardCheckMode, ScrambleDoubleCheckOverrides, SecondRoundMode } from '../types/settings';
 import type { GenerationScope, DocumentSelection } from '../lib/generationScope';
 import { LANGUAGES } from '../i18n/index';
 import { resolveDefaultPrimaryLanguage, secondaryLanguageRow, isCanadianLanguage } from '../lib/languageSelector';
@@ -24,7 +24,7 @@ export default function SettingsPage() {
   // Custom (non-WCA) competition: no WCIF, no WCA Live, events defined on /custom.
   const isCustom = sessionStorage.getItem('custom_competition') === 'true';
   // Set on the scope step from the parsed WCIF. When groups haven't been generated yet,
-  // scorecard counts will read 0 — warn so organizers aren't confused.
+  // scorecard counts will read 0 - warn so organizers aren't confused.
   const noGroups = sessionStorage.getItem('competition_has_groups') === 'false';
 
   // Decided on the scope step. When generating scorecards only (scope ≠ everything), the
@@ -67,6 +67,7 @@ export default function SettingsPage() {
   const [nametagLogoMode, setNametagLogoMode] = useState<NametTagLogoMode>('with-name');
   const [nametagQrMode, setNametagQrMode] = useState<NametTagQrMode>('back-only');
   const [nametagLayout, setNametagLayout] = useState<NametTagLayout>('vertical');
+  const [scorecardCheckMode, setScorecardCheckMode] = useState<ScorecardCheckMode>('per-group-card');
   // For a custom competition the events were defined on /custom and ride along here.
   const [customEvents, setCustomEvents] = useState<CustomEvent[]>(() => {
     if (!isCustom) return [];
@@ -85,7 +86,7 @@ export default function SettingsPage() {
   const dcFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Custom competitions are unofficial — they never exist on WCA Live.
+    // Custom competitions are unofficial - they never exist on WCA Live.
     if (!competitionId || isCustom) return;
     fetchWcaLiveId(competitionId).then(async id => {
       if (id) {
@@ -116,7 +117,7 @@ export default function SettingsPage() {
   }
 
   // A compact, tappable language tile (monogram badge + native label) in the
-  // spirit of an event-icon selector — far less form-like than a radio list.
+  // spirit of an event-icon selector - far less form-like than a radio list.
   const renderLangTile = (o: { key: string; badge: string; label: string; selected: boolean; onClick: () => void }) => (
     <button
       key={o.key}
@@ -203,6 +204,7 @@ export default function SettingsPage() {
       nametagLogoMode,
       nametagQrMode,
       nametagLayout,
+      scorecardCheckMode,
       customEvents: customEvents.filter(e => e.name.trim()),
       scrambleDoubleCheck: isCustom ? false : scrambleDoubleCheck,
       scrambleDoubleCheckRounds,
@@ -223,6 +225,13 @@ export default function SettingsPage() {
   const qrModeOptions: { value: NametTagQrMode; label: string; description: string }[] = [
     { value: 'back-only',  label: t('settings.nametag.qr_back_only'),  description: t('settings.nametag.qr_back_only_desc') },
     { value: 'both-sides', label: t('settings.nametag.qr_both_sides'), description: t('settings.nametag.qr_both_sides_desc') },
+  ];
+
+  const checkModeOptions: { value: ScorecardCheckMode; label: string; description: string }[] = [
+    { value: 'per-group-card', label: t('settings.check_mode.per_group'),      description: t('settings.check_mode.per_group_desc') },
+    { value: 'per-round-card', label: t('settings.check_mode.per_round'),      description: t('settings.check_mode.per_round_desc') },
+    { value: 'checking-sheet', label: t('settings.check_mode.checking_sheet'), description: t('settings.check_mode.checking_sheet_desc') },
+    { value: 'none',           label: t('settings.check_mode.none'),           description: t('settings.check_mode.none_desc') },
   ];
 
 
@@ -259,7 +268,7 @@ export default function SettingsPage() {
               return renderLangTile(tile.value === null
                 ? {
                     key: 'none',
-                    badge: '—',
+                    badge: '-',
                     label: t('settings.language.secondary_none'),
                     selected: tile.selected,
                     onClick: () => setSecondaryLanguage(null),
@@ -309,6 +318,31 @@ export default function SettingsPage() {
                   value={opt.value}
                   checked={secondRoundMode === opt.value}
                   onChange={() => setSecondRoundMode(opt.value)}
+                  style={s.radio}
+                />
+                <div>
+                  <div style={s.optionLabel}>{opt.label}</div>
+                  <div style={s.optionDesc}>{opt.description}</div>
+                </div>
+              </label>
+            ))}
+          </div>
+        </section>
+        )}
+
+        {showScorecards && !isCustom && (
+        <section style={s.section}>
+          <h3 style={s.sectionTitle}>{t('settings.check_mode.title')}</h3>
+          <p style={s.hint}>{t('settings.check_mode.hint')}</p>
+          <div style={s.optionGroup}>
+            {checkModeOptions.map(opt => (
+              <label key={opt.value} style={{ ...s.optionCard, ...(scorecardCheckMode === opt.value ? s.optionCardActive : {}) }}>
+                <input
+                  type="radio"
+                  name="checkMode"
+                  value={opt.value}
+                  checked={scorecardCheckMode === opt.value}
+                  onChange={() => setScorecardCheckMode(opt.value)}
                   style={s.radio}
                 />
                 <div>

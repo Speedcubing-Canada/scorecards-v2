@@ -29,7 +29,7 @@ const CANADIAN_LANGUAGE_CODES = ['en', 'fr'] as const;
 
 /**
  * Returns true when the UI language is one of the Canadian-native languages
- * (English or French). Used to decide whether the SCC logo is on by default —
+ * (English or French). Used to decide whether the SCC logo is on by default -
  * any language not in this allowlist defaults to no logo, so future additions
  * don't accidentally show a Canadian org logo to non-Canadian users.
  */

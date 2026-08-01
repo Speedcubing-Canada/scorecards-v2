@@ -145,13 +145,13 @@ describe('first-timer slip geometry', () => {
     }
   });
 
-  it('three large slips (5 events, minor) fit on one LETTER page — no paper waste', () => {
+  it('three large slips (5 events, minor) fit on one LETTER page - no paper waste', () => {
     const lines = buildSlipLines(
       entry({ eventIds: ['444', '555', '666', '777', 'minx'], birthdate: '2015-01-13' }), EN, 'en',
     );
     // Three slips plus the two gaps that separate them. The last slip's bottom
-    // margin is trailing — it hangs into the bottom padding and doesn't need to
-    // fit — so only the two interior gaps count toward the usable height.
+    // margin is trailing - it hangs into the bottom padding and doesn't need to
+    // fit - so only the two interior gaps count toward the usable height.
     const threeSlips = 3 * slipHeight(lines.length) + 2 * SLIP_GAP;
     const usable = PAGE_H.LETTER - PAD_TOP - PAD_BOTTOM;
     expect(threeSlips).toBeLessThanOrEqual(usable);

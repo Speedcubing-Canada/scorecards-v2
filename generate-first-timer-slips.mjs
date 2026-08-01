@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     paddingLeft: 36, paddingRight: 36, paddingTop: 38, paddingBottom: 36,
     fontFamily: FONT, fontSize: 10, color: '#000000',
   },
-  slip: { marginBottom: 31 },  // 18 + one line (13) — extra gap to mark the cut point
+  slip: { marginBottom: 31 },  // 18 + one line (13) - extra gap to mark the cut point
   intro: { marginBottom: 20 },
   row: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', height: LINE_H },
   bold: { fontFamily: FONT_BOLD },
@@ -119,7 +119,7 @@ function Slip({ entry }) {
   );
 }
 
-const doc = e(Document, { title: 'Gros Jouets à Montréal 2026 — First-Timer Slips', author: 'WCA Scorecard Generator' },
+const doc = e(Document, { title: 'Gros Jouets à Montréal 2026 - First-Timer Slips', author: 'WCA Scorecard Generator' },
   e(Page, { size: 'LETTER', style: styles.page },
     ...ENTRIES.map((entry, i) => e(Slip, { key: i, entry })),
   ),

@@ -2,7 +2,7 @@ import { useId, useState } from 'react';
 
 /**
  * Lightweight tooltip. Wraps any element and shows a small bubble on hover or
- * keyboard focus — no dependency, themed via CSS variables to match the app's
+ * keyboard focus - no dependency, themed via CSS variables to match the app's
  * inline-style architecture. Use it to explain jargon or icon-only controls.
  *
  * The wrapper is inline-flex so it doesn't disturb layout. The bubble is

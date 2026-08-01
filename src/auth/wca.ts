@@ -2,7 +2,7 @@ import type { WCIF } from '../types/wcif';
 
 export const WCA_OAUTH_URL = 'https://www.worldcubeassociation.org/oauth/authorize';
 // In dev, route through the Vite proxy (WCA's token endpoint has no CORS headers).
-// In production, a backend proxy at /wca-token is required — see README.
+// In production, a backend proxy at /wca-token is required - see README.
 export const WCA_TOKEN_URL = import.meta.env.DEV
   ? '/wca-token'
   : '/wca-token';

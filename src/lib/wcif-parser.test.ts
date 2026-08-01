@@ -19,7 +19,7 @@ const BASE: CompetitionSettings = {
   language: 'en', secondaryLanguage: null, paperFormat: 'A4', secondRoundMode: 'blanks',
   logoDataUrl: null, useDefaultLogo: false, wcaLiveId: null, wcaLivePersonIds: null,
   hideWcaLiveId: false, nametagLogoMode: 'hidden', nametagQrMode: 'back-only', nametagLayout: 'vertical',
-  customEvents: [],
+  customEvents: [], scorecardCheckMode: 'per-group-card',
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
   generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false } },
   isCustomCompetition: false,
@@ -51,7 +51,7 @@ function evt(id: EventId, rounds: RoundSpec[]): Event {
   return { id, rounds: rounds.map((r, i) => ({ ...r, id: `${id}-r${i + 1}` })), qualification: null };
 }
 
-// Child activity — id must be unique within the test; use 100+ to avoid uid() collisions.
+// Child activity - id must be unique within the test; use 100+ to avoid uid() collisions.
 function ch(id: number, eventId: string, r: number, g: number, t = '2024-01-01T09:00:00Z'): ChildActivity {
   return {
     id, name: '',
@@ -161,11 +161,11 @@ describe('scorecard format selection', () => {
     expect(fmtFor('555bf', rSpec('2'))).toBe('mo3');
   });
 
-  it('333bf is NOT in blind set — stays avg5', () => {
+  it('333bf is NOT in blind set - stays avg5', () => {
     expect(fmtFor('333bf', rSpec('a'))).toBe('avg5');
   });
 
-  it('333mbf always bo2 — verified via finals blank cards', () => {
+  it('333mbf always bo2 - verified via finals blank cards', () => {
     // 333mbf persons are skipped in named assignments; test via blank finals cards.
     const c2 = ch(101, '333mbf', 2, 1, '2024-01-01T14:00:00Z');
     const e = evt('333mbf', [rSpec('2'), rSpec('2')]);
@@ -277,7 +277,7 @@ describe('FMC-only competition', () => {
 
 // ── Group labels ─────────────────────────────────────────────────────────────
 
-describe('group labels — single stage', () => {
+describe('group labels - single stage', () => {
   it('English: "Group 1 of 2" / "Group 2 of 2"', () => {
     const c1 = ch(100, '333', 1, 1); const c2 = ch(101, '333', 1, 2);
     const e = evt('333', [rSpec('a')]);
@@ -299,7 +299,7 @@ describe('group labels — single stage', () => {
   });
 
   it('single-stage event stays "Group N of M" even in a multi-room venue', () => {
-    // 5BLD in a single side room — never uses stage-colour labels
+    // 5BLD in a single side room - never uses stage-colour labels
     const c = ch(100, '555bf', 1, 1);
     const e = evt('555bf', [rSpec('2')]);
     const r = room('Salle Annexe', [act('555bf', 1, [c])]);
@@ -308,9 +308,9 @@ describe('group labels — single stage', () => {
   });
 });
 
-describe('group labels — multi-stage (event across multiple rooms)', () => {
+describe('group labels - multi-stage (event across multiple rooms)', () => {
   it('4 distinct groups across 2 stages → "Rouge N of 4" / "Bleu N of 4"', () => {
-    // rouge: g1, g2 — bleu: g3, g4 → 4 unique group codes
+    // rouge: g1, g2 - bleu: g3, g4 → 4 unique group codes
     const rRouge = room('Scène Rouge', [act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)])]);
     const rBleu  = room('Scène Bleu',  [act('333', 1, [ch(102, '333', 1, 3), ch(103, '333', 1, 4)])]);
     const e = evt('333', [rSpec('a')]);
@@ -387,7 +387,7 @@ describe('stationary rounds (station-number assignments)', () => {
     const ordered = scs(unimpose(mkStationary().firstRound)).filter(s => s.eventId === '333');
     const stages = ordered.map(s => s.stage);
     expect(stages.length).toBe(6);
-    // One full stage block, then the other — never alternating.
+    // One full stage block, then the other - never alternating.
     const firstStage = stages[0];
     const switchIdx = stages.findIndex(st => st !== firstStage);
     expect(switchIdx).toBeGreaterThan(0);
@@ -597,7 +597,7 @@ describe('intermediate round modes (3-round event, round 2)', () => {
     expect(named.every(s => s.group === 'Group _ of 2')).toBe(true);
   });
 
-  it('prefilled mode: cover cards exist — one per group', () => {
+  it('prefilled mode: cover cards exist - one per group', () => {
     const result = mk3Round('prefilled');
     expect(cvs(result.intermediate).length).toBe(2);
   });
@@ -820,7 +820,7 @@ describe('simultaneous multi-stage semis', () => {
 
 // ── 4-round events (semis) ────────────────────────────────────────────────────
 
-describe('4-round events — semi-finals bucket', () => {
+describe('4-round events - semi-finals bucket', () => {
   function mk4Round() {
     const e = evt('333', [
       rSpec('a', { adv: { type: 'ranking', level: 16 } }),
@@ -1102,7 +1102,7 @@ describe('schedule tracker', () => {
     const labels = result.scheduleDays.map(d => d.dayLabel);
     expect(labels[0]).toMatch(/^Day 1/);
     expect(labels[1]).toMatch(/^Day 2/);
-    expect(labels[0]).toContain('—');
+    expect(labels[0]).toContain('-');
   });
 
   it('eventRound uses the selected language for event names and round labels', () => {
@@ -1309,7 +1309,7 @@ describe('nametag entries', () => {
     expect(tags[0]?.wcaUserId).toBe(99999);
   });
 
-  it('registrantId and wcaUserId are kept separate — they are different numbers', () => {
+  it('registrantId and wcaUserId are kept separate - they are different numbers', () => {
     // registrantId is keyed into wcaLivePersonIds to get the WCA Live person URL ID.
     // wcaUserId is the WCA website account ID and must not be used for WCA Live URLs.
     const tags = mkNametag(5, 916687);
@@ -1591,7 +1591,7 @@ describe('mid-competition named later rounds', () => {
   });
 
   it('regression: an unassigned round 2 still produces prefilled/blank output (no behaviour change)', () => {
-    // Competitors only assigned to round 1 — the normal pre-competition WCIF.
+    // Competitors only assigned to round 1 - the normal pre-competition WCIF.
     const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a')]);
     const r = room('Stage', [
       act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)]),
@@ -1615,7 +1615,7 @@ describe('hasGroups', () => {
   });
 
   it('is false for a pre-competition WCIF with no groups generated', () => {
-    // Round activity exists but no group children — groups not yet assigned.
+    // Round activity exists but no group children - groups not yet assigned.
     const e = evt('333', [rSpec('a')]);
     const r = room('Stage', [act('333', 1, [])]);
     const result = parseWCIF(mkWCIF([e], [r]), cfg());
@@ -1627,7 +1627,7 @@ describe('hasGroups', () => {
 // no group child-activities, so no R2/final cards were generated and the second-round-mode
 // option never appeared. A later round with no groups now falls back to a single implicit group.
 describe('later rounds scheduled without groups (single implicit group fallback)', () => {
-  // A round activity scheduled as a bare time block — no group child-activities.
+  // A round activity scheduled as a bare time block - no group child-activities.
   function bareAct(eventId: string, r: number, t: string): Activity {
     return {
       id: uid(), name: '',
@@ -1637,7 +1637,7 @@ describe('later rounds scheduled without groups (single implicit group fallback)
     };
   }
 
-  // N accepted registrations for 333 (no assignments) — sets the Round-1 field size.
+  // N accepted registrations for 333 (no assignments) - sets the Round-1 field size.
   const manyRegistered = (n: number) => Array.from({ length: n }, (_, i) => per(i + 1, []));
 
   // 3x3 with 3 rounds: R1 has real groups + assignments; R2 and R3 are bare blocks.
@@ -1709,7 +1709,7 @@ describe('later rounds scheduled without groups (single implicit group fallback)
   });
 
   it('does not synthesize a group when the round has real groups in another room', () => {
-    // R2 has a real group in Rouge and a bare block in Bleu — must count as one group, not two.
+    // R2 has a real group in Rouge and a bare block in Bleu - must count as one group, not two.
     const e = evt('333', [
       rSpec('a', { adv: { type: 'ranking', level: 16 } }),
       rSpec('a'),
@@ -1812,5 +1812,208 @@ describe('later rounds scheduled without groups (single implicit group fallback)
     const result = parseWCIF(mkWCIF([e], [r], manyRegistered(35)), cfg({ secondRoundMode: 'prefilled' }));
     const covers = cvs(result.intermediate).filter(c => c.eventId === '333' && c.roundNum === 2);
     expect(covers.reduce((sum, c) => sum + c.numScorecards, 0)).toBe(21);
+  });
+});
+
+// ── Scorecard checking modes ─────────────────────────────────────────────────
+// Covers must be gated at emission time (not filtered afterwards), because
+// finalizeEntries sorts → pads to a multiple of 4 → quadrant-reorders for
+// cut-and-stack. These tests pin both the counts and the pile ordering.
+
+describe('scorecardCheckMode', () => {
+  // 333: 3 rounds (r1 named with 2 groups, r2 intermediate, r3 final).
+  function mkComp(mode: CompetitionSettings['scorecardCheckMode']) {
+    const e = evt('333', [rSpec('a'), rSpec('a', { sets: 2 }), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)]),
+      act('333', 2, [ch(110, '333', 2, 1, '2024-01-01T12:00:00Z')]),
+      act('333', 3, [ch(120, '333', 3, 1, '2024-01-01T16:00:00Z')]),
+    ]);
+    const persons = [
+      per(1, [{ aid: 100 }]), per(2, [{ aid: 100 }]), per(3, [{ aid: 101 }]),
+    ];
+    return parseWCIF(mkWCIF([e], [r], persons), cfg({ scorecardCheckMode: mode }));
+  }
+
+  it("'per-group-card' emits one cover per group (the default behaviour)", () => {
+    const result = mkComp('per-group-card');
+    const cov = cvs(result.firstRound);
+    expect(cov.map(c => c.group).sort()).toEqual(['Group 1 of 2', 'Group 2 of 2']);
+    expect(cov.every(c => c.numGroups === 1)).toBe(true);
+  });
+
+  it("'checking-sheet' emits no cover cards at all", () => {
+    for (const bucket of ['firstRound', 'intermediate', 'finals'] as const) {
+      expect(cvs(mkComp('checking-sheet')[bucket]).length).toBe(0);
+    }
+  });
+
+  it("'none' emits no cover cards at all", () => {
+    for (const bucket of ['firstRound', 'intermediate', 'finals'] as const) {
+      expect(cvs(mkComp('none')[bucket]).length).toBe(0);
+    }
+  });
+
+  it('dropping covers never changes the scorecards themselves', () => {
+    const withCovers = scs(mkComp('per-group-card').firstRound);
+    const without    = scs(mkComp('none').firstRound);
+    expect(without.map(s => `${s.group}|${s.name}`).sort())
+      .toEqual(withCovers.map(s => `${s.group}|${s.name}`).sort());
+  });
+
+  it('every bucket stays padded to a multiple of 4 after covers are dropped', () => {
+    const result = mkComp('none');
+    for (const bucket of [result.firstRound, result.intermediate, result.finals]) {
+      if (bucket.length > 0) expect(bucket.length % 4).toBe(0);
+    }
+  });
+
+  it("'per-round-card' collapses a round's group covers into one", () => {
+    const cov = cvs(mkComp('per-round-card').firstRound);
+    expect(cov.length).toBe(1);
+    expect(cov[0]?.roundNum).toBe(1);
+    // No group label - the card stands for the whole round.
+    expect(cov[0]?.group).toBe('');
+    expect(cov[0]?.numGroups).toBe(2);
+    // 2 competitors in g1 + 1 in g2.
+    expect(cov[0]?.numScorecards).toBe(3);
+  });
+
+  it("'per-round-card' keeps the collapsed cover ahead of the round's scorecards", () => {
+    // '' sorts before every real group label, so after finalize the cover must still
+    // be the first entry of its round in sorted (pre-quadrant) order.
+    const cov = cvs(mkComp('per-round-card').firstRound);
+    expect(cov[0]?.group).toBe('');
+    expect(cov[0]?.group < 'Group 1 of 2').toBe(true);
+  });
+
+  it("'per-round-card' takes the earliest timeslot of the round's groups", () => {
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [
+      ch(100, '333', 1, 1, '2024-01-01T14:00:00Z'),
+      ch(101, '333', 1, 2, '2024-01-01T09:00:00Z'),
+    ])]);
+    const persons = [per(1, [{ aid: 100 }]), per(2, [{ aid: 101 }])];
+    const perGroup = cvs(parseWCIF(mkWCIF([e], [r], persons), cfg({ scorecardCheckMode: 'per-group-card' })).firstRound);
+    const perRound = cvs(parseWCIF(mkWCIF([e], [r], persons), cfg({ scorecardCheckMode: 'per-round-card' })).firstRound);
+    const earliest = perGroup.map(c => c.timeslot).sort()[0];
+    expect(perRound.length).toBe(1);
+    expect(perRound[0]?.timeslot).toBe(earliest);
+  });
+
+  it("'per-round-card' gives a multi-stage named round one cover per stage", () => {
+    // Each stage is its own physical pile, so each needs its own head card.
+    const e = evt('333', [rSpec('a')]);
+    const rA = room('Scène Rouge', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const rB = room('Scène Bleu',  [act('333', 1, [ch(101, '333', 1, 2)])]);
+    const persons = [per(1, [{ aid: 100 }]), per(2, [{ aid: 101 }])];
+    const cov = cvs(parseWCIF(mkWCIF([e], [rA, rB], persons), cfg({ scorecardCheckMode: 'per-round-card' })).firstRound);
+    expect(cov.length).toBe(2);
+    expect(cov.map(c => c.stage).sort()).toEqual(['bleu', 'rouge']);
+    expect(cov.every(c => c.group === '')).toBe(true);
+  });
+
+  it("'per-round-card' collapses blank finals covers too", () => {
+    const e = evt('333', [rSpec('a'), rSpec('a', { sets: 3 })]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      bareAct2('333', 2, '2024-01-01T16:00:00Z'),
+    ]);
+    const persons = [per(1, [{ aid: 100 }])];
+    const wcif = mkWCIF([e], [r], persons);
+    const perGroup = cvs(parseWCIF(wcif, cfg({ scorecardCheckMode: 'per-group-card' })).finals);
+    const perRound = cvs(parseWCIF(wcif, cfg({ scorecardCheckMode: 'per-round-card' })).finals);
+    expect(perGroup.length).toBeGreaterThan(1);
+    expect(perRound.length).toBe(1);
+    expect(perRound[0]?.numGroups).toBe(perGroup.length);
+    expect(perRound[0]?.numScorecards)
+      .toBe(perGroup.reduce((sum, c) => sum + c.numScorecards, 0));
+  });
+});
+
+// Local copy of the bare (childless) round activity helper, which lives inside
+// another describe block above.
+function bareAct2(eventId: string, r: number, t: string): Activity {
+  return {
+    id: uid(), name: '',
+    activityCode: `${eventId}-r${r}`,
+    startTime: t, endTime: t,
+    childActivities: [], scrambleSets: [],
+  };
+}
+
+// ── Checking sheet data ──────────────────────────────────────────────────────
+
+describe('checking sheet', () => {
+  it('mirrors the schedule tracker day/stage partition', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    const rA = room('Stage A', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const rB = room('Stage B', [act('333', 2, [ch(101, '333', 2, 1)])]);
+    const result = parseWCIF(mkWCIF([e], [rA, rB]), cfg());
+    expect(result.checkingDays.length).toBe(result.scheduleDays.length);
+    expect(result.checkingDays[0]?.dayLabel).toBe(result.scheduleDays[0]?.dayLabel);
+    expect(result.checkingDays[0]?.stages.map(s => s.stageName))
+      .toEqual(result.scheduleDays[0]?.stages.map(s => s.stageName));
+  });
+
+  it('produces one row per round, matching the schedule rows', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)]),
+      act('333', 2, [ch(110, '333', 2, 1, '2024-01-01T11:00:00Z')]),
+      act('333', 3, [ch(120, '333', 3, 1, '2024-01-01T14:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    const rows = result.checkingDays[0]?.stages[0]?.rows ?? [];
+    expect(rows.length).toBe(3);
+    expect(rows.map(x => x.eventRound))
+      .toEqual(result.scheduleDays[0]?.stages[0]?.rows.map(x => x.eventRound));
+  });
+
+  it('counts the groups scheduled for each round', () => {
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [
+      ch(100, '333', 1, 1), ch(101, '333', 1, 2), ch(102, '333', 1, 3),
+    ])]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    expect(result.checkingDays[0]?.stages[0]?.rows[0]?.groupCount).toBe(3);
+  });
+
+  it('counts groups per room for a round split across two stages', () => {
+    const e = evt('333', [rSpec('a')]);
+    const rA = room('Stage A', [act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)])]);
+    const rB = room('Stage B', [act('333', 1, [ch(102, '333', 1, 3)])]);
+    const result = parseWCIF(mkWCIF([e], [rA, rB]), cfg());
+    const day = result.checkingDays[0];
+    expect(day?.stages[0]?.rows[0]?.groupCount).toBe(2);
+    expect(day?.stages[1]?.rows[0]?.groupCount).toBe(1);
+  });
+
+  it('groupCount is 0 for a round with no groups generated yet', () => {
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [bareAct2('333', 1, '2024-01-01T09:00:00Z')]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    expect(result.checkingDays[0]?.stages[0]?.rows[0]?.groupCount).toBe(0);
+  });
+
+  it('is built regardless of the checking mode (the mode only gates rendering)', () => {
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    for (const mode of ['per-group-card', 'per-round-card', 'checking-sheet', 'none'] as const) {
+      const result = parseWCIF(mkWCIF([e], [r]), cfg({ scorecardCheckMode: mode }));
+      expect(result.checkingDays.length).toBe(1);
+    }
+  });
+
+  it('orders days chronologically', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 2, [ch(101, '333', 2, 1, '2024-01-02T09:00:00Z')]),
+      act('333', 1, [ch(100, '333', 1, 1, '2024-01-01T09:00:00Z')]),
+    ]);
+    const result = parseWCIF(mkWCIF([e], [r]), cfg());
+    expect(result.checkingDays.length).toBe(2);
+    expect(result.checkingDays[0]?.stages[0]?.rows[0]?.eventRound).toContain('Round 1');
+    expect(result.checkingDays[1]?.stages[0]?.rows[0]?.eventRound).toContain('Final');
   });
 });

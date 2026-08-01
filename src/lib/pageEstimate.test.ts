@@ -24,7 +24,7 @@ function ft(eventIds: string[] = ['333']): FirstTimerEntry {
 function mkParsed(over: Partial<ParsedWCIF> = {}): ParsedWCIF {
   return {
     firstRound: [], intermediate: [], semis: [], finals: [],
-    nametags: [], firstTimers: [], extras: [], scheduleDays: [],
+    nametags: [], firstTimers: [], extras: [], scheduleDays: [], checkingDays: [],
     laterRoundsWithAssignments: [], hasGroups: true,
     ...over,
   };
@@ -37,7 +37,7 @@ function mkSettings(over: Partial<CompetitionSettings> = {}): CompetitionSetting
     secondRoundMode: 'blanks', logoDataUrl: null, useDefaultLogo: true,
     wcaLiveId: null, wcaLivePersonIds: null, hideWcaLiveId: false,
     nametagLogoMode: 'with-name', nametagQrMode: 'back-only', nametagLayout: 'vertical',
-    customEvents: [],
+    customEvents: [], scorecardCheckMode: 'per-group-card',
     scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
     generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false } },
     ...over,
@@ -69,6 +69,18 @@ describe('estimateTotalPages', () => {
 
   it('counts the schedule tracker as one page', () => {
     expect(estimateTotalPages(mkParsed({ scheduleDays: days(2) }), mkSettings())).toBe(1);
+  });
+
+  it('counts the checking sheet as one page when that mode is selected', () => {
+    const parsed = mkParsed({ checkingDays: [{ dayLabel: 'Day 1', stages: [] }] });
+    expect(estimateTotalPages(parsed, mkSettings({ scorecardCheckMode: 'checking-sheet' }))).toBe(1);
+  });
+
+  it('ignores checkingDays in every other checking mode', () => {
+    const parsed = mkParsed({ checkingDays: [{ dayLabel: 'Day 1', stages: [] }] });
+    for (const mode of ['per-group-card', 'per-round-card', 'none'] as const) {
+      expect(estimateTotalPages(parsed, mkSettings({ scorecardCheckMode: mode }))).toBe(0);
+    }
   });
 
   it('counts one page per named custom event', () => {

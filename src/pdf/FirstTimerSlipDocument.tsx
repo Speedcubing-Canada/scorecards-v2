@@ -16,7 +16,7 @@ const FONT_BOLD = 'Helvetica-Bold';
 // Layout follows the original "Gros Jouets à Montréal – First-Timer Slips" PDF
 // (left margin 36pt, top 38pt, 11pt Helvetica, flowing checklist, no borders/cut
 // lines) but with tightened vertical spacing so three large slips (4–5 events)
-// reliably fit one LETTER/A4 page — the original wasted paper, dropping to two
+// reliably fit one LETTER/A4 page - the original wasted paper, dropping to two
 // big slips per page. Fixed-height rows give a predictable pitch (@react-pdf
 // inflates lineHeight by a constant factor, so lineHeight tuning is unreliable).
 // Slips flow and pack: short single-event slips fit four per page.
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   },
 });
 
-// A plain text row (no checkbox) — used for the intro and the multi-event header.
+// A plain text row (no checkbox) - used for the intro and the multi-event header.
 function TextRow({ children }: { children: string }) {
   return (
     <View style={styles.row}>
@@ -110,7 +110,7 @@ export function FirstTimerSlipDocument({ entries, settings }: Props) {
   const s = getFirstTimerSlipStrings(settings.language);
 
   return (
-    <Document title={`${settings.competitionName} — First-Timer Slips`} author="WCA Scorecard Generator">
+    <Document title={`${settings.competitionName} - First-Timer Slips`} author="WCA Scorecard Generator">
       <Page size={settings.paperFormat} style={styles.page}>
         {entries.map((entry, i) => (
           <Slip key={i} entry={entry} s={s} language={settings.language} />

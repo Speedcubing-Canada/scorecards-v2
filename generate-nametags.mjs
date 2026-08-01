@@ -67,7 +67,7 @@ const nametags = fakeWindow.competitors.map(c => ({
 // Vertical: landscape page, 4 cols × 2 rows, portrait slots (189×292pt LETTER).
 // Horizontal: portrait page, 2 cols × 4 rows, landscape slots (244×147pt).
 //   Cards sized for 90×55mm badge holders (same as vertical, rotated sideways)
-//   with ~2mm clearance per edge. No rotation needed — content fills slot directly.
+//   with ~2mm clearance per edge. No rotation needed - content fills slot directly.
 const CONFIGS = {
   LETTER: { panelW: 189, panelH: 292, margin: 12, gapH: 4, gapV: 4 },
   A4:     { panelW: 201, panelH: 283, margin: 12, gapH: 4, gapV: 4 },
@@ -293,13 +293,13 @@ function NametTagDocument({ nametags: tags, compName, compId, liveId, paperForma
   for (let i = 0; i < tags.length; i += personsPerPage) pages.push(tags.slice(i, i + personsPerPage));
 
   if (horizontal) {
-    // Portrait page, 2 cols × 4 rows. Each landscape slot (244×147pt) fits directly —
+    // Portrait page, 2 cols × 4 rows. Each landscape slot (244×147pt) fits directly -
     // no rotation needed. Cards sized for 90×55mm badge holders (~2mm clearance each edge).
     const hcfg = H_CONFIGS[paperFormat] ?? H_CONFIGS.LETTER;
     const pos = panelPositions(hcfg, 2, 4);
     const { panelW, panelH } = hcfg;
     const qrSize = 40;
-    return e(Document, { title: `${compName} — Name Tags`, author: 'WCA Scorecard Generator' },
+    return e(Document, { title: `${compName} - Name Tags`, author: 'WCA Scorecard Generator' },
       ...pages.map((page, pi) =>
         e(Page, { key: pi, size: paperFormat, orientation: 'portrait', style: { backgroundColor: '#ffffff' } },
           ...page.flatMap((entry, ei) => {
@@ -323,7 +323,7 @@ function NametTagDocument({ nametags: tags, compName, compId, liveId, paperForma
   const pos = panelPositions(cfg);
   const { panelW, panelH } = cfg;
   const qrSize = 75;
-  return e(Document, { title: `${compName} — Name Tags`, author: 'WCA Scorecard Generator' },
+  return e(Document, { title: `${compName} - Name Tags`, author: 'WCA Scorecard Generator' },
     ...pages.map((page, pi) =>
       e(Page, { key: pi, size: paperFormat, orientation: 'landscape', style: { backgroundColor: '#ffffff' } },
         ...page.flatMap((entry, ei) => {

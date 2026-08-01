@@ -2,7 +2,7 @@
  * The download button label embeds the zip filename
  * (`<competitionId>_scorecards.zip`), which is a single unbreakable token. For
  * competitions with a long ID the label would otherwise overflow the
- * fixed-width button — especially on phones — so the font shrinks in steps as
+ * fixed-width button - especially on phones - so the font shrinks in steps as
  * the label gets longer. (`overflowWrap` on the button is the final safety net
  * for pathologically long IDs.)
  *

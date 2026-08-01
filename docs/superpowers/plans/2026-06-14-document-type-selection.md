@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Let users choose which document types to generate (scorecards, schedule tracker, nametags, first-timer slips) on the RoundScopePage — which now always appears, even pre-competition.
+**Goal:** Let users choose which document types to generate (scorecards, schedule tracker, nametags, first-timer slips) on the RoundScopePage - which now always appears, even pre-competition.
 
 **Architecture:** Add a `documents: DocumentSelection` field to `GenerationScope`; update `filterParsedByScope` to use it instead of the hardcoded `mode === 'everything'` check. The RoundScopePage always renders (removes its early /settings redirect for pre-comp), shows document-type checkboxes for all flows, and the round-scope radio buttons only appear mid-competition. The firstTimerSlips boolean moves out of CompetitionSettings entirely (it's now a documents flag), so the Advanced section toggle in SettingsPage is removed.
 
@@ -293,11 +293,11 @@ In `src/types/settings.ts`, delete these two lines (around line 56):
 
 ```typescript
   // Print a confirmation slip for each newcomer (competitor with no WCA ID).
-  // Off by default — most delegates don't use it.
+  // Off by default - most delegates don't use it.
   firstTimerSlips: boolean;
 ```
 
-- [ ] **Step 2.2: Update scorecardWorker.ts — remove settings.firstTimerSlips guard**
+- [ ] **Step 2.2: Update scorecardWorker.ts - remove settings.firstTimerSlips guard**
 
 In `src/pdf/scorecardWorker.ts`, change line 153 from:
 
@@ -313,7 +313,7 @@ to:
 
 `filterParsedByScope` now clears `firstTimers` when `documents.firstTimerSlips` is false, so the settings guard is redundant.
 
-- [ ] **Step 2.3: Update GeneratePage.tsx — backfill documents + fix pdfCount**
+- [ ] **Step 2.3: Update GeneratePage.tsx - backfill documents + fix pdfCount**
 
 In `src/pages/GeneratePage.tsx`, update the `loadSettings` backfill block (around line 30) from:
 
@@ -489,7 +489,7 @@ export default function RoundScopePage() {
   const [scopeMode, setScopeMode] = useState<'everything' | 'latest' | 'selected'>('latest');
   const [selectedKeys, setSelectedKeys] = useState<Set<string> | null>(null);
 
-  // Document-type state — pre-comp defaults (overridden to mid-comp defaults in useEffect)
+  // Document-type state - pre-comp defaults (overridden to mid-comp defaults in useEffect)
   const [docScorecards, setDocScorecards] = useState(true);
   const [docSchedule, setDocSchedule]     = useState(true);
   const [docNametags, setDocNametags]     = useState(true);
@@ -548,7 +548,7 @@ export default function RoundScopePage() {
       for (const e of bucket) {
         if (e.kind === 'cover' && !e.eventId) continue;
         const k = keyOf(e.eventId, e.roundNum);
-        if (!labels.has(k)) labels.set(k, `${e.eventName} — ${e.roundLabel}`);
+        if (!labels.has(k)) labels.set(k, `${e.eventName} - ${e.roundLabel}`);
       }
     }
     return availableRounds(parsed).map(r => ({
@@ -857,7 +857,7 @@ git commit -m "feat: remove firstTimerSlips from SettingsPage; nametag config sh
 
 ## Verification
 
-- [ ] **Manual — pre-competition comp:**
+- [ ] **Manual - pre-competition comp:**
   1. Start dev server: `cd scorecards-v2 && npm run dev`
   2. Log in, pick a comp that has NO mid-round assignments
   3. Verify: RoundScopePage appears (not skipped), shows only document-type checkboxes, no "Which rounds?" section
@@ -866,7 +866,7 @@ git commit -m "feat: remove firstTimerSlips from SettingsPage; nametag config sh
   6. Click Continue again (Settings) → Generate page, download ZIP → confirm no nametag PDF in ZIP
   7. Repeat with only "Schedule Tracker" checked → ZIP contains only the schedule PDF
 
-- [ ] **Manual — mid-competition comp:**
+- [ ] **Manual - mid-competition comp:**
   1. Pick a comp that already has Round 2+ groups assigned
   2. Verify: RoundScopePage shows "Which rounds?" section AND document checkboxes
   3. Verify defaults: Scorecards ✓, Schedule ✗, Nametags ✗, First-Timer Slips ✗

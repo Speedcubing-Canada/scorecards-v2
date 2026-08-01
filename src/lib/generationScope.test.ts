@@ -14,14 +14,14 @@ function sc(eventId: string, roundNum: number, name = ''): ScorecardEntry {
 function cover(eventId: string, roundNum: number): CoverEntry {
   return {
     kind: 'cover', timeslot: 'a01', eventId, eventName: eventId,
-    roundLabel: `Round ${roundNum}`, roundNum, group: 'Group 1 of 1', numScorecards: 1,
+    roundLabel: `Round ${roundNum}`, roundNum, group: 'Group 1 of 1', numScorecards: 1, numGroups: 1,
   };
 }
 
 function mkParsed(over: Partial<ParsedWCIF> = {}): ParsedWCIF {
   return {
     firstRound: [], intermediate: [], semis: [], finals: [],
-    nametags: [], firstTimers: [], extras: [], scheduleDays: [],
+    nametags: [], firstTimers: [], extras: [], scheduleDays: [], checkingDays: [],
     laterRoundsWithAssignments: [], hasGroups: true,
     ...over,
   };
@@ -48,7 +48,7 @@ describe('availableRounds', () => {
   it('ignores empty padding covers', () => {
     const padding: CoverEntry = {
       kind: 'cover', timeslot: 'ZZZ', eventId: '', eventName: '',
-      roundLabel: '', roundNum: 0, group: '', numScorecards: 0,
+      roundLabel: '', roundNum: 0, group: '', numScorecards: 0, numGroups: 0,
     };
     const parsed = mkParsed({ firstRound: [sc('333', 1, 'A'), padding] });
     expect(availableRounds(parsed)).toEqual([{ eventId: '333', roundNum: 1 }]);
@@ -103,6 +103,7 @@ describe('filterParsedByScope', () => {
     firstTimers: [{ name: 'y' } as never],
     extras: [sc('333', 1)],
     scheduleDays: [{ dayLabel: 'Day 1', stages: [] }],
+    checkingDays: [{ dayLabel: 'Day 1', stages: [] }],
     laterRoundsWithAssignments: [{ eventId: '333', roundNum: 2 }],
   });
 
@@ -126,6 +127,19 @@ describe('filterParsedByScope', () => {
       documents: { ...allDocs, scheduleTracker: false },
     });
     expect(out.scheduleDays).toHaveLength(0);
+  });
+
+  it('scorecards:false → clears checkingDays (the sheet belongs to the scorecards)', () => {
+    const out = filterParsedByScope(base, {
+      mode: 'everything',
+      documents: { ...allDocs, scorecards: false },
+    });
+    expect(out.checkingDays).toHaveLength(0);
+  });
+
+  it('scorecards:true → keeps checkingDays', () => {
+    const out = filterParsedByScope(base, { mode: 'everything', documents: allDocs });
+    expect(out.checkingDays).toHaveLength(1);
   });
 
   it('everything with firstTimerSlips:false → clears firstTimers', () => {

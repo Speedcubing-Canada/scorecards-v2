@@ -5,7 +5,7 @@ import { ROW_HEIGHTS } from './layoutConstants';
 // ── Layout geometry constraints ──────────────────────────────────────────────
 // Dimensions measured from the original Sarah-scorecard LETTER PDF:
 //   Cards: 257×345pt  |  margins ~22-24pt  |  gaps ~52-53pt
-//   V gap ≈ 2× margin (not 3×) — Sarah's key constraint.
+//   V gap ≈ 2× margin (not 3×) - Sarah's key constraint.
 //   E1 row must nearly touch the card bottom (verified by: content fills ~335pt inner height).
 
 const LETTER_W = 612;
@@ -325,11 +325,35 @@ describe('Scorecard column widths sum to the full table width', () => {
     expect(COL_FRAC6.attempt).toBe(COL_FRAC.attempt);
     expect(COL_FRAC6.judge).toBe(COL_FRAC.judge);
     expect(COL_FRAC6.competitor).toBe(COL_FRAC.competitor);
-    // scramblerCheck matches judge width (not scrambler — keeps the column compact)
+    // scramblerCheck matches judge width (not scrambler - keeps the column compact)
     expect(COL_FRAC6.scramblerCheck).toBe(COL_FRAC.judge);
     expect(COL_FRAC6.result).toBeCloseTo(COL_FRAC.result - COL_FRAC6.scramblerCheck, 10);
   });
   it('result stays positive with room for content in the 6-column layout', () => {
     expect(colContentW(COL_FRAC6.result)).toBeGreaterThan(50);
   });
+});
+
+// ── Per-round cover card ─────────────────────────────────────────────────────
+// In 'per-round-card' mode the cover's group line becomes `cover.allGroups(n)`.
+// styles.coverGroup has a FIXED 19pt size - unlike the event+round line it gets no
+// autosizing - and styles.coverCard has no `overflow: 'hidden'`, so a long
+// translation would silently print past the card edge into the cut gutter.
+describe('Cover card allGroups line fits the card', () => {
+  const COVER_PAD_H = 14;       // styles.coverCard paddingHorizontal
+  const COVER_GROUP_FONT = 19;  // styles.coverGroup fontSize
+  const BOLD_FACTOR = 1.08;     // coverGroup renders in Helvetica-Bold
+  // A4 cards (249pt) are narrower than LETTER (257pt), so they are the binding case.
+  const A4_CARD_W = 249;
+  const coverContentW = A4_CARD_W - 2 * CARD_BORDER - 2 * COVER_PAD_H;
+
+  for (const lc of ['en', 'fr', 'es', 'pt'] as const) {
+    // 99 groups is far beyond any real competition - a safe upper bound.
+    for (const n of [1, 2, 9, 99]) {
+      it(`${lc}, n=${n}: "${getStrings(lc).cover.allGroups(n)}" fits`, () => {
+        const w = helveticaWidth(getStrings(lc).cover.allGroups(n), COVER_GROUP_FONT) * BOLD_FACTOR;
+        expect(w).toBeLessThanOrEqual(coverContentW);
+      });
+    }
+  }
 });

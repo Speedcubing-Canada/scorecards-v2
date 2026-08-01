@@ -154,7 +154,7 @@ export function ScheduleTrackerDocument({ days, settings }: Props) {
   const strings = getScheduleStrings(settings.language);
 
   return (
-    <Document title={`${settings.competitionName} — Schedule Tracker`} author="WCA Scorecard Generator">
+    <Document title={`${settings.competitionName} - Schedule Tracker`} author="WCA Scorecard Generator">
       <Page size={settings.paperFormat} style={styles.page}>
         <Text style={styles.title}>{settings.competitionName} {strings.title}</Text>
 

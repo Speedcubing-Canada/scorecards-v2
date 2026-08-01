@@ -33,7 +33,7 @@ async function loadClientSecret() {
 const WCA_CLIENT_SECRET = await loadClientSecret();
 if (!WCA_CLIENT_SECRET) {
   console.warn(
-    'WCA_CLIENT_SECRET is not set — /wca-token will return invalid_client',
+    'WCA_CLIENT_SECRET is not set - /wca-token will return invalid_client',
   );
 }
 
@@ -89,7 +89,7 @@ app.post('/wca-token', express.urlencoded({ extended: false }), async (req, res)
   }
 });
 
-// Hashed assets are content-addressed — safe to cache for 1 year.
+// Hashed assets are content-addressed - safe to cache for 1 year.
 app.use(
   '/assets',
   express.static(path.join(DIST_DIR, 'assets'), {
@@ -111,14 +111,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// SPA fallback — every non-file route serves index.html.
+// SPA fallback - every non-file route serves index.html.
 app.use((req, res) => {
   fs.readFile(INDEX_PATH, 'utf8', (err, html) => {
     if (err) {
       res
         .status(500)
         .type('text/plain; charset=utf-8')
-        .send('Missing dist/index.html — run npm run build first.');
+        .send('Missing dist/index.html - run npm run build first.');
       return;
     }
     res

@@ -10,7 +10,7 @@ const g = globalThis as Record<string, unknown>;
 // react-pdf / pdfkit / fontkit use Buffer (Node.js API, absent in browsers/workers)
 g.Buffer = Buffer;
 
-// react-pdf's browser build references `window` directly — workers have `self` instead
+// react-pdf's browser build references `window` directly - workers have `self` instead
 if (typeof window === 'undefined') g.window = globalThis;
 
 // png-js and other react-pdf deps call document DOM APIs at module init time.

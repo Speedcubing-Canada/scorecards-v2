@@ -99,6 +99,9 @@ export function filterParsedByScope(parsed: ParsedWCIF, scope: GenerationScope):
     extras:       documents.scorecards      ? result.extras       : [],
     nametags:     documents.nametags        ? result.nametags     : [],
     scheduleDays: documents.scheduleTracker ? result.scheduleDays : [],
+    // The checking sheet replaces the scorecards' cover cards, so it belongs to the
+    // scorecards selection rather than getting its own DocumentSelection key.
+    checkingDays: documents.scorecards ? result.checkingDays : [],
     firstTimers:  documents.firstTimerSlips ? result.firstTimers  : [],
   };
 }

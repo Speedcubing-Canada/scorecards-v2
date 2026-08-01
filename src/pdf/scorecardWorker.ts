@@ -1,4 +1,4 @@
-// bufferPolyfill MUST be the first import — ES modules execute in dependency
+// bufferPolyfill MUST be the first import - ES modules execute in dependency
 // order, so this sets globalThis.Buffer before @react-pdf/renderer initializes.
 import './bufferPolyfill';
 
@@ -11,6 +11,7 @@ import { buildCustomEntries } from '../lib/customScorecards';
 import { ScorecardDocument } from './ScorecardDocument';
 import { NametTagDocument } from './NametTagDocument';
 import { ScheduleTrackerDocument } from './ScheduleTrackerDocument';
+import { CheckingSheetDocument } from './CheckingSheetDocument';
 import { FirstTimerSlipDocument } from './FirstTimerSlipDocument';
 
 export type WorkerRequest = {
@@ -94,6 +95,14 @@ async function renderScheduleTracker(parsed: ParsedWCIF, settings: CompetitionSe
   return new Uint8Array(ab);
 }
 
+async function renderCheckingSheet(parsed: ParsedWCIF, settings: CompetitionSettings): Promise<Uint8Array> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const element = React.createElement(CheckingSheetDocument, { days: parsed.checkingDays, settings }) as any;
+  const blob = await pdf(element).toBlob();
+  const ab = await blob.arrayBuffer();
+  return new Uint8Array(ab);
+}
+
 workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
   function post(msg: WorkerResponse, transfer?: Transferable[]) {
     workerSelf.postMessage(msg, transfer ?? []);
@@ -108,6 +117,7 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
     | { kind: 'scorecards'; filename: string; entries: ScorecardData[]; label: string }
     | { kind: 'nametags';   filename: string; label: string }
     | { kind: 'schedule';   filename: string; label: string }
+    | { kind: 'checking';   filename: string; label: string }
     | { kind: 'first-timers'; filename: string; label: string };
 
   const jobs: PdfJob[] = [];
@@ -123,6 +133,8 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
     jobs.push({ kind: 'scorecards', filename: `${id}_extras.pdf`,   entries: parsed.extras,       label: 'Extras' });
   if (parsed.scheduleDays.length > 0)
     jobs.push({ kind: 'schedule',   filename: `${id}_schedule.pdf`, label: 'Schedule Tracker' });
+  if (settings.scorecardCheckMode === 'checking-sheet' && parsed.checkingDays.length > 0)
+    jobs.push({ kind: 'checking',   filename: `${id}_checking.pdf`, label: 'Scorecard Checking' });
   if (parsed.nametags.length > 0)
     jobs.push({ kind: 'nametags',   filename: `${id}_nametags.pdf`, label: 'Name Tags' });
   if (parsed.firstTimers.length > 0)
@@ -164,6 +176,8 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
           ? await renderNametags(parsed, settings)
           : job.kind === 'schedule'
           ? await renderScheduleTracker(parsed, settings)
+          : job.kind === 'checking'
+          ? await renderCheckingSheet(parsed, settings)
           : job.kind === 'first-timers'
           ? await renderFirstTimerSlips(parsed, settings)
           : await renderPdf(job.entries, settings);

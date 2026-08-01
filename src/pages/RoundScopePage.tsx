@@ -42,7 +42,7 @@ export default function RoundScopePage() {
   const [scopeMode, setScopeMode] = useState<'everything' | 'latest' | 'selected'>('latest');
   const [selectedKeys, setSelectedKeys] = useState<Set<string> | null>(null);
 
-  // Document-type state — pre-comp defaults; overridden to mid-comp defaults once data loads
+  // Document-type state - pre-comp defaults; overridden to mid-comp defaults once data loads
   const [docScorecards, setDocScorecards] = useState(true);
   const [docSchedule, setDocSchedule]     = useState(true);
   const [docNametags, setDocNametags]     = useState(true);
@@ -67,6 +67,8 @@ export default function RoundScopePage() {
           wcaLiveId: null, wcaLivePersonIds: null, hideWcaLiveId: false,
           nametagLogoMode: 'with-name', nametagQrMode: 'back-only', nametagLayout: 'vertical',
           customEvents: [],
+          // Detection-only parse; the real mode is chosen later on /settings.
+          scorecardCheckMode: 'per-group-card',
           scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
           generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false } },
           isCustomCompetition: false,
@@ -107,7 +109,7 @@ export default function RoundScopePage() {
       for (const e of bucket) {
         if (e.kind === 'cover' && !e.eventId) continue;
         const k = keyOf(e.eventId, e.roundNum);
-        if (!labels.has(k)) labels.set(k, `${e.eventName} — ${e.roundLabel}`);
+        if (!labels.has(k)) labels.set(k, `${e.eventName} - ${e.roundLabel}`);
       }
     }
     return availableRounds(parsed).map(r => ({

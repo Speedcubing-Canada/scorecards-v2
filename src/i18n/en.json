@@ -30,7 +30,7 @@
     "error": "Error: {{message}}",
     "empty": "No competitions found. Make sure you are a delegate or organizer.",
     "create_custom_title": "Create a custom competition",
-    "create_custom_desc": "Unofficial competition — define events manually and print scorecards"
+    "create_custom_desc": "Unofficial competition - define events manually and print scorecards"
   },
   "settings": {
     "heading": "Configure your print settings",
@@ -43,20 +43,32 @@
     "paper": {
       "title": "Paper format",
       "a4": "A4",
-      "a4_desc": "210 × 297 mm — each scorecard is A6 (105 × 148.5 mm)",
+      "a4_desc": "210 × 297 mm - each scorecard is A6 (105 × 148.5 mm)",
       "letter": "Letter",
-      "letter_desc": "8.5 × 11 in — each scorecard is 107.95 × 139.7 mm"
+      "letter_desc": "8.5 × 11 in - each scorecard is 107.95 × 139.7 mm"
     },
     "subsequent_rounds": {
       "title": "Subsequent rounds",
       "prefilled": "Pre-filled with names",
       "prefilled_desc": "Print scorecards for all qualifiers (requires WCA Live results)",
       "blanks": "Event + round filled, name blank",
-      "blanks_desc": "Print blank name slots — fill in by hand at the competition"
+      "blanks_desc": "Print blank name slots - fill in by hand at the competition"
+    },
+    "check_mode": {
+      "title": "Scorecard checking",
+      "hint": "Where the delegate and scoretaker checklist is printed.",
+      "per_group": "Cover card per group",
+      "per_group_desc": "One checklist card in front of every group's scorecards (default).",
+      "per_round": "Cover card per round",
+      "per_round_desc": "One checklist card per event round instead of per group - fewer cards to print.",
+      "checking_sheet": "Standalone checking sheet",
+      "checking_sheet_desc": "No cover cards. A separate sheet lists every round by day with columns for groups, data entry, double-checking and who took the scorecards.",
+      "none": "None",
+      "none_desc": "No cover cards and no checking sheet."
     },
     "double_check": {
       "title": "Scramble double-checking",
-      "optional_note": "optional — for major championships",
+      "optional_note": "optional - for major championships",
       "hint": "Adds a second scrambler-signature column so scrambles can be independently double-checked.",
       "enable": "Enable scramble double-checking",
       "enable_desc": "Adds a second scrambler signature column to the selected scorecards.",
@@ -66,19 +78,19 @@
       "round_semis": "Semi-finals",
       "round_finals": "Finals",
       "overrides_title": "Always double-check specific competitors (optional)",
-      "overrides_hint": "Upload a CSV file — one line per competitor: WCAID,event1,event2 (e.g. 2015FOOB01,333,444). These competitors are double-checked for those events in every round.",
+      "overrides_hint": "Upload a CSV file - one line per competitor: WCAID,event1,event2 (e.g. 2015FOOB01,333,444). These competitors are double-checked for those events in every round.",
       "overrides_count": "{{count}} competitor(s) loaded"
     },
     "wca_live": {
       "title": "WCA Live ID",
-      "optional_note": "optional — for nametag QR codes",
+      "optional_note": "optional - for nametag QR codes",
       "fetching": "Fetching from WCA Live…",
       "auto_detected": "Auto-detected",
-      "not_found": "Not found on WCA Live yet — enter manually if needed",
+      "not_found": "Not found on WCA Live yet - enter manually if needed",
       "hint": "Numeric competition ID from WCA Live. Used to generate competitor-specific QR codes on name tags.",
       "placeholder": "e.g. 9667",
       "hide_label": "Hide WCA Live ID on scorecards",
-      "hide_desc": "Removes the \"WCA Live: …\" line — useful for blank scorecards."
+      "hide_desc": "Removes the \"WCA Live: …\" line - useful for blank scorecards."
     },
     "logo": {
       "title": "Competition logo",
@@ -97,12 +109,12 @@
       "logo_with_name": "Small logo + comp name",
       "logo_with_name_desc": "Small logo beside the competition name at the top of each panel",
       "logo_only": "Large logo, replaces name",
-      "logo_only_desc": "Logo replaces the competition name text — QR codes are slightly smaller to compensate",
+      "logo_only_desc": "Logo replaces the competition name text - QR codes are slightly smaller to compensate",
       "qr_codes": "QR codes",
       "qr_back_only": "Back side only",
       "qr_back_only_desc": "Front = group assignments (FR), back = QR codes (EN)",
       "qr_both_sides": "Both sides",
-      "qr_both_sides_desc": "QR codes on both front and back — useful when logo takes space",
+      "qr_both_sides_desc": "QR codes on both front and back - useful when logo takes space",
       "layout": "Card orientation",
       "layout_vertical": "Vertical (tall)",
       "layout_horizontal": "Horizontal (landscape)"
@@ -126,7 +138,7 @@
       "round_label": "Round label",
       "round_label_optional": "optional, e.g. Final",
       "round_label_placeholder": "e.g. Round 1 or Final",
-      "icon_hint": "Icon — click a WCA icon or upload your own",
+      "icon_hint": "Icon - click a WCA icon or upload your own",
       "icon_selected": "Selected icon",
       "csv_label": "Competitors (CSV)",
       "csv_optional": "optional",
@@ -156,7 +168,7 @@
   },
   "scope": {
     "heading": "What to generate",
-    "intro": "This competition already has groups for a round after Round 1. Choose what to print — you can adjust everything else on the next screen.",
+    "intro": "This competition already has groups for a round after Round 1. Choose what to print - you can adjust everything else on the next screen.",
     "intro_pre": "Choose which documents to include. You can configure all options on the next screen.",
     "rounds_heading": "Which rounds?",
     "docs_title": "Document types",
