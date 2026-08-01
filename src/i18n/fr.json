@@ -57,14 +57,14 @@
     "check_mode": {
       "title": "Suivi des feuilles",
       "hint": "Où imprimer la liste de vérification du délégué et du saisisseur de résultats.",
-      "per_group": "Carte couverture par groupe",
-      "per_group_desc": "Une carte de vérification devant les feuilles de chaque groupe (par défaut).",
-      "per_round": "Carte couverture par tour",
-      "per_round_desc": "Une carte de vérification par tour d'épreuve plutôt que par groupe - moins de cartes à imprimer.",
+      "per_group": "Feuille de couverture par groupe",
+      "per_group_desc": "Une fiche de vérification devant les feuilles de chaque groupe (par défaut).",
+      "per_round": "Feuille de couverture par tour",
+      "per_round_desc": "Une fiche de vérification par tour d'épreuve plutôt que par groupe - moins de fiches à imprimer.",
       "checking_sheet": "Feuille de suivi séparée",
-      "checking_sheet_desc": "Aucune carte couverture. Une feuille distincte liste chaque tour par jour, avec des colonnes pour les groupes, la saisie, la double vérification et qui a repris les feuilles.",
+      "checking_sheet_desc": "Aucune feuille de couverture. Une feuille distincte liste chaque tour par jour, avec des colonnes pour les groupes, la saisie, la double vérification et qui a repris les feuilles.",
       "none": "Aucun",
-      "none_desc": "Ni carte couverture ni feuille de suivi."
+      "none_desc": "Ni feuille de couverture ni feuille de suivi."
     },
     "double_check": {
       "title": "Double vérification des mélanges",
@@ -174,13 +174,13 @@
     "docs_title": "Types de documents",
     "doc_scorecards": "Feuilles de compétition",
     "doc_schedule": "Suivi de l'horaire",
-    "doc_nametags": "Étiquettes nominatives",
-    "doc_first_timers": "Fiches de première participation",
+    "doc_nametags": "Badges nominatifs",
+    "doc_first_timers": "Fiches pour les nouveaux participants",
     "checking": "Vérification de la compétition…",
     "continue": "Continuer →",
     "latest": {
       "label": "Dernier tour uniquement",
-      "desc": "N'imprime que le tour le plus récent qui a des groupes. Idéal pendant une compétition."
+      "desc": "N'imprime que le tour le plus récent qui a des groupes."
     },
     "everything": {
       "label": "Tout",
