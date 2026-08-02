@@ -55,16 +55,14 @@
       "blanks_desc": "Imprimir espacios de nombre en blanco - rellenar a mano en la competencia"
     },
     "check_mode": {
-      "title": "Seguimiento de hojas",
-      "hint": "Dónde se imprime la lista de verificación del delegado y del anotador.",
+      "title": "Carátulas",
+      "hint": "Dónde se imprime la tarjeta de verificación del delegado y del digitador de resultados.",
       "per_group": "Carátula por grupo",
       "per_group_desc": "Una tarjeta de verificación delante de las hojas de cada grupo (predeterminado).",
       "per_round": "Carátula por ronda",
       "per_round_desc": "Una tarjeta de verificación por ronda de evento en lugar de por grupo - menos tarjetas que imprimir.",
-      "checking_sheet": "Hoja de seguimiento aparte",
-      "checking_sheet_desc": "Sin carátulas. Una hoja separada lista cada ronda por día, con columnas para grupos, ingreso de datos, doble verificación y quién retiró las hojas.",
-      "none": "Ninguno",
-      "none_desc": "Sin carátulas ni hoja de seguimiento."
+      "none": "Ninguna",
+      "none_desc": "Sin carátulas."
     },
     "double_check": {
       "title": "Doble verificación de mezclas",
@@ -175,6 +173,7 @@
     "doc_scorecards": "Hojas de puntuación",
     "doc_schedule": "Seguimiento de horario",
     "doc_nametags": "Etiquetas con nombre",
+    "doc_round_checklist": "Lista de verificación",
     "doc_first_timers": "Fichas de primera vez",
     "checking": "Comprobando la competición…",
     "continue": "Continuar →",

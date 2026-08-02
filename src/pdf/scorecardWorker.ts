@@ -133,8 +133,9 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
     jobs.push({ kind: 'scorecards', filename: `${id}_extras.pdf`,   entries: parsed.extras,       label: 'Extras' });
   if (parsed.scheduleDays.length > 0)
     jobs.push({ kind: 'schedule',   filename: `${id}_schedule.pdf`, label: 'Schedule Tracker' });
-  if (settings.scorecardCheckMode === 'checking-sheet' && parsed.checkingDays.length > 0)
-    jobs.push({ kind: 'checking',   filename: `${id}_checking.pdf`, label: 'Scorecard Checking' });
+  // Already emptied by filterParsedByScope unless the Round Checklist was selected.
+  if (parsed.checkingDays.length > 0)
+    jobs.push({ kind: 'checking',   filename: `${id}_checklist.pdf`, label: 'Round Checklist' });
   if (parsed.nametags.length > 0)
     jobs.push({ kind: 'nametags',   filename: `${id}_nametags.pdf`, label: 'Name Tags' });
   if (parsed.firstTimers.length > 0)

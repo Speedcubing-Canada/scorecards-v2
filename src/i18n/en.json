@@ -55,16 +55,14 @@
       "blanks_desc": "Print blank name slots - fill in by hand at the competition"
     },
     "check_mode": {
-      "title": "Scorecard checking",
-      "hint": "Where the delegate and scoretaker checklist is printed.",
+      "title": "Cover cards",
+      "hint": "Where the delegate and scoretaker checklist card is printed.",
       "per_group": "Cover card per group",
       "per_group_desc": "One checklist card in front of every group's scorecards (default).",
       "per_round": "Cover card per round",
       "per_round_desc": "One checklist card per event round instead of per group - fewer cards to print.",
-      "checking_sheet": "Standalone checking sheet",
-      "checking_sheet_desc": "No cover cards. A separate sheet lists every round by day with columns for groups, data entry, double-checking and who took the scorecards.",
       "none": "None",
-      "none_desc": "No cover cards and no checking sheet."
+      "none_desc": "No cover cards."
     },
     "double_check": {
       "title": "Scramble double-checking",
@@ -175,6 +173,7 @@
     "doc_scorecards": "Scorecards",
     "doc_schedule": "Schedule Tracker",
     "doc_nametags": "Nametags",
+    "doc_round_checklist": "Round Checklist",
     "doc_first_timers": "First-Timer Slips",
     "checking": "Checking the competition…",
     "continue": "Continue →",

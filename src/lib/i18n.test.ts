@@ -195,10 +195,23 @@ describe('getCheckingSheetStrings', () => {
 
   it('returns English strings by default', () => {
     const s = getCheckingSheetStrings('en');
-    expect(s.title).toBe('- Scorecard Checking');
+    expect(s.title).toBe('- Round Checklist');
     expect(s.event).toBe('Event');
-    expect(s.groupsDone).toBe('Groups\ncollected');
+    expect(s.groupsMade).toBe('Groups\ncreated');
     expect(s.takenBy).toBe('Scorecards\ntaken by');
+  });
+
+  // The two tick-only columns record work done ahead of the round, not scorecards
+  // handed in afterwards - the wording must not read as "collected"/"checked".
+  it('labels the tick-only columns as creating groups and producing scorecards', () => {
+    expect(getCheckingSheetStrings('en').groupsMade).toBe('Groups\ncreated');
+    expect(getCheckingSheetStrings('en').scorecards).toBe('Scorecards\nready');
+    expect(getCheckingSheetStrings('fr').groupsMade).toBe('Groupes\ncréés');
+    expect(getCheckingSheetStrings('fr').scorecards).toBe('Feuilles\nprêtes');
+    expect(getCheckingSheetStrings('es').groupsMade).toBe('Grupos\ncreados');
+    expect(getCheckingSheetStrings('es').scorecards).toBe('Hojas\nlistas');
+    expect(getCheckingSheetStrings('pt').groupsMade).toBe('Grupos\ncriados');
+    expect(getCheckingSheetStrings('pt').scorecards).toBe('Folhas\nprontas');
   });
 
   it('is translated in every locale (no English leaking through)', () => {
@@ -218,7 +231,7 @@ describe('getCheckingSheetStrings', () => {
   it('wraps the multi-word headers onto two lines so they fit their columns', () => {
     for (const lc of LOCALES) {
       const s = getCheckingSheetStrings(lc);
-      for (const key of ['start', 'groupsDone', 'scorecards', 'dataEntry', 'doubleCheck', 'takenBy'] as const) {
+      for (const key of ['start', 'groupsMade', 'scorecards', 'dataEntry', 'doubleCheck', 'takenBy'] as const) {
         expect(s[key]).toContain('\n');
       }
     }

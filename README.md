@@ -157,7 +157,7 @@ The Generate-page stats include an **estimated total number of printed pages** s
 | `nametagLogoMode` | `hidden \| with-name \| logo-only` | How the logo appears on name tags (see Name tag section) |
 | `nametagQrMode` | `back-only \| both-sides` | Which panels get QR codes (see Name tag section) |
 | `nametagLayout` | `vertical \| horizontal` | Card orientation: `vertical` (default) uses a landscape page 4×2 grid with portrait cards; `horizontal` uses a portrait page 2×4 grid with landscape cards sized for 90×55 mm badge holders |
-| `scorecardCheckMode` | `per-group-card \| per-round-card \| checking-sheet \| none` | Where the delegate/scoretaker checklist is printed (see Scorecard checking). Defaults to `per-group-card`, the original behaviour |
+| `scorecardCheckMode` | `per-group-card \| per-round-card \| none` | Where the delegate/scoretaker **cover card** is printed (see Cover cards). Defaults to `per-group-card`, the original behaviour |
 | `customEvents` | `CustomEvent[]` | Zero or more custom/bonus events: name, icon, format (`avg5 \| mo3 \| bo3 \| bo2 \| bo1`), cutoff, time limit, optional `roundLabel`, optional `competitors` CSV list (see Custom events section) |
 | `isCustomCompetition` | `boolean` | `true` for custom (non-WCA) competitions: GeneratePage skips the WCIF fetch, only `customEvents` are rendered, and all WCA Live fields are forced off (`wcaLiveId: null`, `hideWcaLiveId: true`). Defaults to `false` |
 | `scrambleDoubleCheck` | `boolean` | Enables the optional second scrambler-signature column (see Scramble double-checking) |
@@ -166,19 +166,23 @@ The Generate-page stats include an **estimated total number of printed pages** s
 
 ---
 
-## Scorecard checking
+## Cover cards
 
 Every group of every non-FM round normally gets a **cover card** - the quarter-page
 checklist a delegate and scoretaker sign off (bundled all N scorecards, checked
 signatures, incident count, results entered, incidents logged, results checked).
-`scorecardCheckMode` decides where that checklist lives:
+`scorecardCheckMode` decides where that card goes:
 
 | Mode | Effect |
 |---|---|
 | `per-group-card` (default) | One cover card in front of every group's scorecards. The original behaviour |
 | `per-round-card` | One cover card per event round instead of per group. Fewer cards to print; the card shows `All N groups` instead of a group label, and `numScorecards` is the round total |
-| `checking-sheet` | No cover cards at all. A separate `{id}_checking.pdf` tracks the whole competition instead |
-| `none` | No cover cards and no checking sheet |
+| `none` | No cover cards |
+
+The **Round Checklist** is *not* a mode here. A cover card travels with one pile of
+scorecards and is signed as that pile is handled; the Round Checklist tracks the whole
+competition's data flow. They are different artefacts, and a delegate may want both or
+neither - so the checklist is a separately selectable document (below).
 
 ### Why covers are gated at emission time
 
@@ -194,7 +198,20 @@ key, so a round spread across two stages gets one cover per stage (each stage is
 physical pile); blank buckets (finals/semis/round 2) have no stage key and get one cover
 per round.
 
-### The checking sheet (`{id}_checking.pdf`)
+---
+
+## The Round Checklist (`{id}_checklist.pdf`)
+
+An **opt-in document**, chosen on the `/scope` screen alongside Scorecards, Schedule
+Tracker, Nametags and First-Timer Slips - `DocumentSelection.roundChecklist`, which
+defaults to **false** everywhere. `filterParsedByScope` empties `checkingDays` unless it
+is selected, so every downstream consumer (the worker, `pageEstimate`, the Generate
+page's PDF count) gates on `checkingDays.length > 0` alone.
+
+> **Vocabulary note.** The UI and this section call it the *Round Checklist*. The
+> internals still use the earlier "checking sheet" names - `checkingDays`, `CheckingRow`,
+> `CheckingSheetDocument`, `CHECKING_FLEX`, `checking-sheet-layout.test.ts` - because
+> renaming them across ten files buys no behaviour change.
 
 Rendered by `src/pdf/CheckingSheetDocument.tsx` from `ParsedWCIF.checkingDays`, which
 mirrors the schedule tracker's day → room partition but holds **one row per round**
@@ -203,26 +220,64 @@ instead of one per activity. Columns:
 | Column | Flex | Contents |
 |---|---|---|
 | Start time | 1 | Round start, venue-local |
-| Event | 2.5 | e.g. `3x3x3 Cube Round 1` |
-| Groups collected | 1.1 | Group count for that round **in that room**, plus a 9×9pt tick box (same geometry as the cover card's checkbox) |
-| Scorecards checked | 1 | Blank |
-| Data entry (initials) | 1.1 | Blank |
-| Double-check (initials) | 1.25 | Blank - wider, it holds the longest header we ship |
-| Scorecards taken by | 1.6 | Blank - widest, it takes a name rather than initials |
+| Event | 2.7 | e.g. `3x3x3 Cube Round 1` |
+| Groups created | 1 | Group count for that round **in that room**, plus a 9×9pt tick box (same geometry as the cover card's checkbox) |
+| Scorecards ready | 1.1 | Tick box only |
+| Data entry (initials) | 1.3 | Blank writing space, plus a tick box on the right edge |
+| Double-check (initials) | 1.35 | Same - wider, it holds the longest header we ship |
+| Scorecards taken by | 1.55 | Blank - widest, it takes a name rather than initials |
+
+**The columns record work, not custody.** *Groups created* means the groups were made on
+competitiongroups - done even for a single-group round, so that the round shows up there
+at all. *Scorecards ready* means they were printed or hand-written. Both are prepared
+**before the competition for a first round**, so both boxes print already ticked on every
+`roundNum === 1` row (`CheckingRow.preChecked`); later rounds print blank. Ticks are drawn
+with `Svg`/`Polyline`, not typeset - Helvetica has no U+2713.
+
+*Data entry* and *double-check* take initials **and** a tick box, because either can span
+several passes: a scoretaker may enter half a round and leave, so a cell can accumulate
+more than one set of initials. The box is only ticked once every competitor has been
+entered or has quit - initials alone cannot express "finished". The box is pinned to the
+right edge; the flex to its left is the writing space, which the layout test holds at
+≥ 40pt.
 
 Data cells use `paddingVertical: 9` (vs the schedule tracker's 6) so there is room to
 write initials by hand. Each (day × room) block is `wrap={false}`, exactly like the
 schedule tracker, so a block never splits across a page.
 
-`checkingDays` is built unconditionally by the parser; `scorecardCheckMode` only gates
-rendering. Group counts come from `groupUnitsOf`, so a later round with no real groups
-still reports the group count implied by its scramble-set count. Rounds with no groups
-generated yet report `0`. `333fm` **is** included (results entry still happens for it),
-even though FM never gets cover cards.
+`checkingDays` is built unconditionally by the parser and is independent of
+`scorecardCheckMode` - cover cards and the checklist do not influence each other. Group
+counts come from `groupUnitsOf`, so a later round with no real groups still reports the
+group count implied by its scramble-set count. Rounds with no groups generated yet report
+`0`. `333fm` **is** included (results entry still happens for it), even though FM never
+gets cover cards.
 
-`src/pdf/checking-sheet-layout.test.ts` pins the column widths: every header, in every
-locale, on both LETTER and A4, must fit inside its column at 8pt Helvetica-Bold. That
-test is what caught the original `Double-checked` header overflowing its column.
+### The lunch rule
+
+Both the Round Checklist **and** the schedule tracker draw a thick rule
+(`CHECKING_BREAK_RULE`, 1.5pt) where lunch splits a day - delegates mark it by hand
+otherwise. `CheckingRow.breakBefore` / `ScheduleRow.breakBefore` is set on the first round
+that starts after a scheduled lunch; the first row of a table never carries one, since the
+header border is already above it.
+
+Lunch is detected **explicitly**, never inferred from a gap in the schedule: an activity
+counts when it is not a round activity and either its `activityCode` is `other-lunch` or
+its name matches `LUNCH_NAME_RE` (lunch / dîner / déjeuner / almuerzo / almoço / comida) -
+delegates routinely file lunch under `other-misc` with a localised name. Only lunch draws
+a rule; awards and tutorials would clutter a busy day.
+
+Lunch activities are collected across **every** room of the day, not just the room being
+rendered, because a competition typically enters lunch once - in the main room or a side
+room - while the rule belongs on every stage's table. The lunch activity itself never
+becomes a row: non-round activities stay filtered out of both documents.
+
+`src/pdf/checking-sheet-layout.test.ts` pins the geometry: every header, in every locale,
+on both LETTER and A4, must fit inside its column at 8pt Helvetica-Bold; the **event**
+column must additionally fit the longest event + round label at 10pt regular (its own
+header, "Event", says nothing about how wide it needs to be, and it is the column with the
+least headroom); and the initials columns must keep ≥ 40pt of writing space beside their
+tick box. Those tests are what caught the original `Double-checked` header overflowing its
+column.
 
 ---
 
@@ -264,7 +319,7 @@ generate this file from a competition's data may be added later.)
 
 ## PDF output structure
 
-Each download is a ZIP containing one PDF per round stage plus a name-tag PDF if the competition has nametag data. Most competitions produce 2–3 PDFs; a competition with 4-round events (e.g., a large 3×3×3) produces 4 scorecard PDFs.
+Each download is a ZIP named **`{competitionId}_pdfs.zip`** containing one PDF per round stage plus a name-tag PDF if the competition has nametag data. Most competitions produce 2–3 PDFs; a competition with 4-round events (e.g., a large 3×3×3) produces 4 scorecard PDFs. (The name is deliberately not `_scorecards.zip`: the bundle routinely carries nametags, slips and the schedule too.)
 
 | File | Contents |
 |---|---|
@@ -273,7 +328,7 @@ Each download is a ZIP containing one PDF per round stage plus a name-tag PDF if
 | `{id}_semis.pdf` | Round 3 of events with 4 rounds (semi-finals); named when groups are assigned, otherwise blank |
 | `{id}_finals.pdf` | Final round of every multi-round event; named when groups are assigned, otherwise blank scorecards |
 | `{id}_extras.pdf` | One blank spare scorecard per round per event (sorted by schedule order) |
-| `{id}_checking.pdf` | Standalone scorecard-checking sheet; only when `scorecardCheckMode` is `checking-sheet` |
+| `{id}_checklist.pdf` | Round Checklist; only when the `roundChecklist` document is selected |
 | `{id}_schedule.pdf` | Schedule tracker table: estimated start/end times with blank columns for actual times and competitor count |
 | `{id}_nametags.pdf` | Sheet of competitor name tags - portrait (2×4 grid) for horizontal layout, landscape (4×2 grid) for vertical layout; omitted if no nametag data is available |
 | `{id}_first_timers.pdf` | Confirmation slips for newcomers (competitors with no WCA ID); only when enabled in Advanced settings, omitted if there are none |
@@ -342,6 +397,21 @@ The scoped modes (`latest` / `selected`) emit scorecard PDFs only - name tags, t
 tracker, and extras are pre-competition artifacts and are skipped, and the Settings page hides
 those sections accordingly. When no later round has assignments (the normal pre-competition
 WCIF) there is no prompt, the page auto-advances to Settings, and output is unchanged.
+
+Independently of the round question, the same page carries a **Document types** checklist
+(`DocumentSelection`), shown in both the pre- and mid-competition flows:
+
+| Key | Label | Default |
+|---|---|---|
+| `scorecards` | Scorecards | on |
+| `scheduleTracker` | Schedule Tracker | on (off mid-competition) |
+| `nametags` | Nametags | on (off mid-competition) |
+| `roundChecklist` | Round Checklist | **off** |
+| `firstTimerSlips` | First-Timer Slips | off |
+
+`filterParsedByScope` applies these flags by **emptying the corresponding arrays**, so every
+consumer downstream just checks `.length > 0` and needs no knowledge of the selection. Continue
+is disabled when nothing is ticked.
 
 The scope filtering lives in `src/lib/generationScope.ts` (`GenerationScope`,
 `filterParsedByScope`, `availableRounds`, `latestAssignedRound`, `hasUnassignedIntermediate`);
@@ -644,11 +714,18 @@ Times are formatted in the venue's local timezone (from `wcif.schedule.venues[0]
 
 `333fm` is **included** in the schedule tracker (staff still need to track it), unlike extras and scorecards where it is excluded.
 
+`ScheduleRow.breakBefore` marks the first round after a scheduled lunch, which the tracker
+renders as a thick rule - see **The lunch rule** above.
+
 ### Checking sheet (`checkingDays`)
 
 Built in the same pass as `scheduleDays` (one shared walk over each room's activities,
 since they share the filtering and the event+round labelling) and using the same day and
-room partition - see **Scorecard checking** above for the columns and the group-count rule.
+room partition - see **The Round Checklist** above for the columns and the group-count rule.
+
+`CheckingRow` adds two fields on top of the schedule row's start/end/event: `preChecked`
+(true for `roundNum === 1`, printing the groups and scorecards boxes already ticked) and
+`breakBefore` (shared with `ScheduleRow`, the lunch rule).
 
 ---
 

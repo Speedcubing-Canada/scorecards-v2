@@ -55,16 +55,14 @@
       "blanks_desc": "Imprimer des cases de nom vides - à remplir à la main lors de la compétition"
     },
     "check_mode": {
-      "title": "Suivi des feuilles",
-      "hint": "Où imprimer la liste de vérification du délégué et du saisisseur de résultats.",
+      "title": "Feuilles de couverture",
+      "hint": "Où imprimer la fiche de vérification du délégué et du saisisseur de résultats.",
       "per_group": "Feuille de couverture par groupe",
       "per_group_desc": "Une fiche de vérification devant les feuilles de chaque groupe (par défaut).",
       "per_round": "Feuille de couverture par tour",
       "per_round_desc": "Une fiche de vérification par tour d'épreuve plutôt que par groupe - moins de fiches à imprimer.",
-      "checking_sheet": "Feuille de suivi séparée",
-      "checking_sheet_desc": "Aucune feuille de couverture. Une feuille distincte liste chaque tour par jour, avec des colonnes pour les groupes, la saisie, la double vérification et qui a repris les feuilles.",
-      "none": "Aucun",
-      "none_desc": "Ni feuille de couverture ni feuille de suivi."
+      "none": "Aucune",
+      "none_desc": "Aucune feuille de couverture."
     },
     "double_check": {
       "title": "Double vérification des mélanges",
@@ -175,6 +173,7 @@
     "doc_scorecards": "Feuilles de compétition",
     "doc_schedule": "Suivi de l'horaire",
     "doc_nametags": "Badges nominatifs",
+    "doc_round_checklist": "Liste de vérification",
     "doc_first_timers": "Fiches pour les nouveaux participants",
     "checking": "Vérification de la compétition…",
     "continue": "Continuer →",

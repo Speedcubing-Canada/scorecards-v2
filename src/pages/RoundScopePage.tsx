@@ -46,6 +46,8 @@ export default function RoundScopePage() {
   const [docScorecards, setDocScorecards] = useState(true);
   const [docSchedule, setDocSchedule]     = useState(true);
   const [docNametags, setDocNametags]     = useState(true);
+  // Opt-in in both pre- and mid-competition defaults - most delegates don't need it.
+  const [docRoundChecklist, setDocRoundChecklist] = useState(false);
   const [docFirstTimers, setDocFirstTimers] = useState(false);
 
   useEffect(() => {
@@ -70,7 +72,7 @@ export default function RoundScopePage() {
           // Detection-only parse; the real mode is chosen later on /settings.
           scorecardCheckMode: 'per-group-card',
           scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
-          generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false } },
+          generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false } },
           isCustomCompetition: false,
         };
         const result = parseWCIF(wcif, detectionSettings);
@@ -144,6 +146,7 @@ export default function RoundScopePage() {
       scorecards: docScorecards,
       scheduleTracker: docSchedule,
       nametags: docNametags,
+      roundChecklist: docRoundChecklist,
       firstTimerSlips: docFirstTimers,
     };
 
@@ -165,7 +168,8 @@ export default function RoundScopePage() {
     navigate('/settings');
   }
 
-  const noDocsSelected = !docScorecards && !docSchedule && !docNametags && !docFirstTimers;
+  const noDocsSelected =
+    !docScorecards && !docSchedule && !docNametags && !docRoundChecklist && !docFirstTimers;
   const continueDisabled =
     (isMidComp && scopeMode === 'selected' && effectiveSelected.size === 0) || noDocsSelected;
 
@@ -173,6 +177,7 @@ export default function RoundScopePage() {
     { key: 'scorecards',      label: t('scope.doc_scorecards'),  checked: docScorecards,  set: setDocScorecards },
     { key: 'scheduleTracker', label: t('scope.doc_schedule'),    checked: docSchedule,    set: setDocSchedule },
     { key: 'nametags',        label: t('scope.doc_nametags'),    checked: docNametags,    set: setDocNametags },
+    { key: 'roundChecklist',  label: t('scope.doc_round_checklist'), checked: docRoundChecklist, set: setDocRoundChecklist },
     { key: 'firstTimerSlips', label: t('scope.doc_first_timers'),checked: docFirstTimers, set: setDocFirstTimers },
   ];
 

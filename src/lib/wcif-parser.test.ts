@@ -21,7 +21,7 @@ const BASE: CompetitionSettings = {
   hideWcaLiveId: false, nametagLogoMode: 'hidden', nametagQrMode: 'back-only', nametagLayout: 'vertical',
   customEvents: [], scorecardCheckMode: 'per-group-card',
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
-  generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false } },
+  generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false } },
   isCustomCompetition: false,
 };
 const cfg = (o: Partial<CompetitionSettings> = {}): CompetitionSettings => ({ ...BASE, ...o });
@@ -1842,12 +1842,6 @@ describe('scorecardCheckMode', () => {
     expect(cov.every(c => c.numGroups === 1)).toBe(true);
   });
 
-  it("'checking-sheet' emits no cover cards at all", () => {
-    for (const bucket of ['firstRound', 'intermediate', 'finals'] as const) {
-      expect(cvs(mkComp('checking-sheet')[bucket]).length).toBe(0);
-    }
-  });
-
   it("'none' emits no cover cards at all", () => {
     for (const bucket of ['firstRound', 'intermediate', 'finals'] as const) {
       expect(cvs(mkComp('none')[bucket]).length).toBe(0);
@@ -1996,10 +1990,12 @@ describe('checking sheet', () => {
     expect(result.checkingDays[0]?.stages[0]?.rows[0]?.groupCount).toBe(0);
   });
 
-  it('is built regardless of the checking mode (the mode only gates rendering)', () => {
+  // Cover cards and the Round Checklist are independent artefacts; the mode must not
+  // influence whether the checklist rows exist.
+  it('is built regardless of the cover-card mode', () => {
     const e = evt('333', [rSpec('a')]);
     const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
-    for (const mode of ['per-group-card', 'per-round-card', 'checking-sheet', 'none'] as const) {
+    for (const mode of ['per-group-card', 'per-round-card', 'none'] as const) {
       const result = parseWCIF(mkWCIF([e], [r]), cfg({ scorecardCheckMode: mode }));
       expect(result.checkingDays.length).toBe(1);
     }
@@ -2015,5 +2011,143 @@ describe('checking sheet', () => {
     expect(result.checkingDays.length).toBe(2);
     expect(result.checkingDays[0]?.stages[0]?.rows[0]?.eventRound).toContain('Round 1');
     expect(result.checkingDays[1]?.stages[0]?.rows[0]?.eventRound).toContain('Final');
+  });
+});
+
+// ── Pre-ticked first rounds ──────────────────────────────────────────────────
+// Round 1's groups are created on competitiongroups and its scorecards produced before
+// the competition starts, so the sheet prints those two boxes already ticked.
+
+describe('checking sheet: pre-checked first rounds', () => {
+  it('marks round 1 pre-checked and later rounds blank', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1, '2024-01-01T09:00:00Z')]),
+      act('333', 2, [ch(101, '333', 2, 1, '2024-01-01T11:00:00Z')]),
+      act('333', 3, [ch(102, '333', 3, 1, '2024-01-01T13:00:00Z')]),
+    ]);
+    const rows = parseWCIF(mkWCIF([e], [r]), cfg()).checkingDays[0]?.stages[0]?.rows ?? [];
+    expect(rows.map(x => x.preChecked)).toEqual([true, false, false]);
+  });
+
+  it('pre-checks a one-round event even though its row reads "Final"', () => {
+    // Only round 1 exists, so it is labelled Final - but its groups are still made in
+    // advance, which is what the box records.
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const row = parseWCIF(mkWCIF([e], [r]), cfg()).checkingDays[0]?.stages[0]?.rows[0];
+    expect(row?.eventRound).toContain('Final');
+    expect(row?.preChecked).toBe(true);
+  });
+
+  it('pre-checks a single-group round (groups are still created for it)', () => {
+    // Delegates create the group even for a 1-group round so it shows up on
+    // competitiongroups at all.
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const row = parseWCIF(mkWCIF([e], [r]), cfg()).checkingDays[0]?.stages[0]?.rows[0];
+    expect(row?.groupCount).toBe(1);
+    expect(row?.preChecked).toBe(true);
+  });
+});
+
+// ── Lunch break rule ─────────────────────────────────────────────────────────
+
+// A non-round activity, e.g. lunch. `code` defaults to the standard WCA activity code.
+function otherAct(name: string, t: string, code = 'other-lunch'): Activity {
+  return {
+    id: uid(), name, activityCode: code,
+    startTime: t, endTime: t,
+    childActivities: [], scrambleSets: [],
+  };
+}
+
+describe('lunch break rule', () => {
+  const twoRounds = (lunch?: Activity, lunchRoom?: string) => {
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    const morning = act('333', 1, [ch(100, '333', 1, 1, '2024-01-01T09:00:00Z')]);
+    const afternoon = act('333', 2, [ch(101, '333', 2, 1, '2024-01-01T14:00:00Z')]);
+    if (lunch && lunchRoom) {
+      return mkWCIF([e], [
+        room('Stage', [morning, afternoon]),
+        room(lunchRoom, [lunch]),
+      ]);
+    }
+    return mkWCIF([e], [
+      room('Stage', lunch ? [morning, lunch, afternoon] : [morning, afternoon]),
+    ]);
+  };
+
+  it('marks the round after an other-lunch activity', () => {
+    const parsed = parseWCIF(twoRounds(otherAct('Lunch', '2024-01-01T12:00:00Z')), cfg());
+    const rows = parsed.checkingDays[0]?.stages[0]?.rows ?? [];
+    expect(rows.map(x => x.breakBefore)).toEqual([false, true]);
+  });
+
+  it('marks nothing when the competition schedules no lunch', () => {
+    const parsed = parseWCIF(twoRounds(), cfg());
+    const rows = parsed.checkingDays[0]?.stages[0]?.rows ?? [];
+    expect(rows.map(x => x.breakBefore)).toEqual([false, false]);
+  });
+
+  it('recognises a localised lunch name under a generic activity code', () => {
+    // Delegates routinely file lunch as other-misc with a local name.
+    for (const name of ['Dîner', 'Déjeuner', 'Almuerzo', 'Almoço', 'Comida']) {
+      const parsed = parseWCIF(
+        twoRounds(otherAct(name, '2024-01-01T12:00:00Z', 'other-misc')), cfg(),
+      );
+      const rows = parsed.checkingDays[0]?.stages[0]?.rows ?? [];
+      expect(rows.map(x => x.breakBefore), name).toEqual([false, true]);
+    }
+  });
+
+  it('ignores other kinds of break', () => {
+    // Only lunch draws a rule - awards and tutorials would clutter a busy day.
+    for (const [name, code] of [['Awards', 'other-awards'], ['Tutorial', 'other-tutorial']]) {
+      const parsed = parseWCIF(twoRounds(otherAct(name, '2024-01-01T12:00:00Z', code)), cfg());
+      const rows = parsed.checkingDays[0]?.stages[0]?.rows ?? [];
+      expect(rows.map(x => x.breakBefore), name).toEqual([false, false]);
+    }
+  });
+
+  it('applies a lunch scheduled in another room to the competing room', () => {
+    // Lunch is often entered once, in a side room or the main room only.
+    const parsed = parseWCIF(
+      twoRounds(otherAct('Lunch', '2024-01-01T12:00:00Z'), 'Lunch Room'), cfg(),
+    );
+    const stage = parsed.checkingDays[0]?.stages.find(s => s.stageName === 'Stage');
+    expect(stage?.rows.map(x => x.breakBefore)).toEqual([false, true]);
+  });
+
+  it('never marks the first row - the header border is already above it', () => {
+    const parsed = parseWCIF(twoRounds(otherAct('Lunch', '2024-01-01T06:00:00Z')), cfg());
+    const rows = parsed.checkingDays[0]?.stages[0]?.rows ?? [];
+    expect(rows.map(x => x.breakBefore)).toEqual([false, false]);
+  });
+
+  it('does not carry a rule across days', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1, '2024-01-01T09:00:00Z')]),
+      otherAct('Lunch', '2024-01-01T12:00:00Z'),
+      act('333', 2, [ch(101, '333', 2, 1, '2024-01-02T09:00:00Z')]),
+    ]);
+    const parsed = parseWCIF(mkWCIF([e], [r]), cfg());
+    // Day 2's only row must not inherit day 1's lunch.
+    expect(parsed.checkingDays[1]?.stages[0]?.rows.map(x => x.breakBefore)).toEqual([false]);
+  });
+
+  it('adds a rule, never a row', () => {
+    // The lunch activity itself must stay out of the table.
+    const parsed = parseWCIF(twoRounds(otherAct('Lunch', '2024-01-01T12:00:00Z')), cfg());
+    const rows = parsed.checkingDays[0]?.stages[0]?.rows ?? [];
+    expect(rows.length).toBe(2);
+    expect(rows.every(x => x.eventRound.includes('3x3x3'))).toBe(true);
+  });
+
+  it('marks the schedule tracker at exactly the same boundary', () => {
+    const parsed = parseWCIF(twoRounds(otherAct('Lunch', '2024-01-01T12:00:00Z')), cfg());
+    expect(parsed.scheduleDays[0]?.stages[0]?.rows.map(x => x.breakBefore))
+      .toEqual(parsed.checkingDays[0]?.stages[0]?.rows.map(x => x.breakBefore));
   });
 });

@@ -24,23 +24,34 @@ export function eventIconsVisible({ isQrSide, compact }: { isQrSide: boolean; co
 }
 
 // Checking-sheet column widths (flex units, not points - the table fills the page
-// width). `doubleCheck` is wider than its neighbours because "Double-check" is the
-// longest header we ship; `takenBy` is widest because it holds a name, not initials.
-// checking-sheet-layout.test.ts asserts every header fits in every locale on both
-// paper sizes - widen the column rather than truncating a translation.
+// width). `event` is widest: it holds the longest text we print anywhere in the table
+// (FR "3x3x3 a Une Main Manche 1", ~127pt) and is the column with the least headroom.
+// `dataEntry`/`doubleCheck` must fit several sets of initials AND a right-edge tick box;
+// `scorecards` holds only a box, so it is sized purely by its header.
+// checking-sheet-layout.test.ts asserts every header and every cell fits in every locale
+// on both paper sizes - widen the column rather than truncating a translation.
 export const CHECKING_FLEX = {
   start: 1,
-  event: 2.5,
-  groups: 1.1,
-  scorecards: 1,
-  dataEntry: 1.1,
-  doubleCheck: 1.25,
-  takenBy: 1.6,
+  event: 2.7,
+  groups: 1,
+  scorecards: 1.1,
+  dataEntry: 1.3,
+  doubleCheck: 1.35,
+  takenBy: 1.55,
 };
 
 // Vertical padding in a checking-sheet data cell. Taller than the schedule tracker's
-// 6pt: every column but "groups" is filled in by hand, and initials need room.
+// 6pt: most columns are filled in by hand, and initials need room.
 export const CHECKING_CELL_PAD_V = 9;
+
+// Tick box edge length, shared by the checking sheet and the cover card
+// (ScorecardDocument styles.coverCheckBox) so a delegate sees the same box in either mode.
+export const CHECKING_BOX = 9;
+
+// The rule drawn where lunch splits a day, on both the checking sheet and the schedule
+// tracker. Must read as a divider against the 0.5pt #bbb line between ordinary rows.
+export const CHECKING_BREAK_RULE = '1.5pt solid #444';
+export const CHECKING_BREAK_RULE_W = 1.5;
 
 // First-timer slip pitch. Each line is LINE_H tall; a slip adds its bottom margin plus
 // the intro block's bottom margin. @react-pdf inflates lineHeight by a constant factor,

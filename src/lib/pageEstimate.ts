@@ -41,8 +41,9 @@ export function estimateTotalPages(parsed: ParsedWCIF, settings: CompetitionSett
   // Schedule tracker - a single flowing page today (estimate).
   if (parsed.scheduleDays.length > 0) pages += 1;
 
-  // Checking sheet - same single-flowing-page approximation as the schedule tracker.
-  if (settings.scorecardCheckMode === 'checking-sheet' && parsed.checkingDays.length > 0) pages += 1;
+  // Round Checklist - same single-flowing-page approximation as the schedule tracker.
+  // `checkingDays` is already emptied by filterParsedByScope when it is not selected.
+  if (parsed.checkingDays.length > 0) pages += 1;
 
   // First-timer slips - greedily pack whole slips (wrap={false}) by height (estimate).
   if (parsed.firstTimers.length > 0) {

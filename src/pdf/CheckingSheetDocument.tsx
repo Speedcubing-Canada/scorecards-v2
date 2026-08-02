@@ -1,8 +1,12 @@
-import { Document, Page, View, Text, StyleSheet, Font } from '@react-pdf/renderer';
+// The UI calls this document the **Round Checklist**; the internals kept the older
+// "checking sheet" vocabulary (CheckingDay/CheckingRow/CHECKING_*).
+import { Document, Page, View, Text, StyleSheet, Font, Svg, Polyline } from '@react-pdf/renderer';
 import type { CompetitionSettings } from '../types/settings';
-import type { CheckingDay } from '../lib/wcif-parser';
+import type { CheckingDay, CheckingRow } from '../lib/wcif-parser';
 import { getCheckingSheetStrings, type CheckingSheetStrings } from '../lib/i18n';
-import { CHECKING_FLEX, CHECKING_CELL_PAD_V } from './layoutConstants';
+import {
+  CHECKING_FLEX, CHECKING_CELL_PAD_V, CHECKING_BOX, CHECKING_BREAK_RULE,
+} from './layoutConstants';
 
 Font.registerHyphenationCallback((word) => [word]);
 
@@ -74,15 +78,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  // Pins a tick box to the right edge of a cell, leaving the flex to its left free for
+  // hand-written initials. Data entry and double-checking can take several passes (a
+  // scoretaker may enter half a round and leave), so the initials and the "this round is
+  // finished" tick are separate marks in the same cell.
+  initialsInner: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
   // Same geometry as the cover card's checkbox (ScorecardDocument styles.coverCheckBox).
   checkBox: {
-    width: 9,
-    height: 9,
+    width: CHECKING_BOX,
+    height: CHECKING_BOX,
     border: '0.75pt solid black',
-    marginLeft: 6,
     flexShrink: 0,
   },
+  // Only the groups cell puts the box beside text; elsewhere it stands alone.
+  checkBoxSpaced: {
+    marginLeft: 6,
+  },
 });
+
+// Helvetica has no U+2713, so a ticked box is drawn rather than typeset.
+function CheckBox({ checked, spaced }: { checked: boolean; spaced?: boolean }) {
+  return (
+    <View style={spaced ? [styles.checkBox, styles.checkBoxSpaced] : styles.checkBox}>
+      {checked && (
+        <Svg viewBox="0 0 9 9" width={CHECKING_BOX} height={CHECKING_BOX}>
+          <Polyline points="1.6,4.7 3.6,7 7.4,2.1" stroke="black" strokeWidth={1.2} fill="none" />
+        </Svg>
+      )}
+    </View>
+  );
+}
 
 // Cells are built from the flex map so a column can never get a width here and a
 // different one in the header.
@@ -100,7 +130,7 @@ function cellStyle(flex: number, last: boolean, header: boolean) {
 const COLUMNS: { key: keyof typeof CHECKING_FLEX; label: (s: CheckingSheetStrings) => string }[] = [
   { key: 'start',       label: (s) => s.start },
   { key: 'event',       label: (s) => s.event },
-  { key: 'groups',      label: (s) => s.groupsDone },
+  { key: 'groups',      label: (s) => s.groupsMade },
   { key: 'scorecards',  label: (s) => s.scorecards },
   { key: 'dataEntry',   label: (s) => s.dataEntry },
   { key: 'doubleCheck', label: (s) => s.doubleCheck },
@@ -119,6 +149,42 @@ function TableHeader({ strings }: { strings: CheckingSheetStrings }) {
   );
 }
 
+function DataRow({ row, alt }: { row: CheckingRow; alt: boolean }) {
+  const base = alt ? styles.dataRowOdd : styles.dataRowEven;
+  return (
+    // A lunch break above this row draws a thick rule. The previous row's 0.5pt #bbb
+    // bottom border sits directly under it and vanishes beneath the heavier line.
+    <View style={row.breakBefore ? [base, { borderTop: CHECKING_BREAK_RULE }] : base}>
+      <View style={cellStyle(CHECKING_FLEX.start, false, false)}>
+        <Text style={styles.cellText}>{row.startTime}</Text>
+      </View>
+      <View style={cellStyle(CHECKING_FLEX.event, false, false)}>
+        <Text style={styles.cellText}>{row.eventRound}</Text>
+      </View>
+      {/* Groups created, and the scorecards produced for them: both are done ahead of
+          time for a first round, so both boxes print ticked there. */}
+      <View style={cellStyle(CHECKING_FLEX.groups, false, false)}>
+        <View style={styles.groupsInner}>
+          <Text style={styles.cellText}>{row.groupCount}</Text>
+          <CheckBox checked={row.preChecked} spaced />
+        </View>
+      </View>
+      <View style={cellStyle(CHECKING_FLEX.scorecards, false, false)}>
+        <CheckBox checked={row.preChecked} />
+      </View>
+      {/* Initials go in the empty space; the box is ticked once the round is fully done. */}
+      <View style={cellStyle(CHECKING_FLEX.dataEntry, false, false)}>
+        <View style={styles.initialsInner}><CheckBox checked={false} /></View>
+      </View>
+      <View style={cellStyle(CHECKING_FLEX.doubleCheck, false, false)}>
+        <View style={styles.initialsInner}><CheckBox checked={false} /></View>
+      </View>
+      {/* Blank for a name. */}
+      <View style={cellStyle(CHECKING_FLEX.takenBy, true, false)} />
+    </View>
+  );
+}
+
 interface Props {
   days: CheckingDay[];
   settings: CompetitionSettings;
@@ -130,7 +196,7 @@ export function CheckingSheetDocument({ days, settings }: Props) {
   const strings = getCheckingSheetStrings(settings.language);
 
   return (
-    <Document title={`${settings.competitionName} - Scorecard Checking`} author="WCA Scorecard Generator">
+    <Document title={`${settings.competitionName} - Round Checklist`} author="WCA Scorecard Generator">
       <Page size={settings.paperFormat} style={styles.page}>
         <Text style={styles.title}>{settings.competitionName} {strings.title}</Text>
 
@@ -148,25 +214,7 @@ export function CheckingSheetDocument({ days, settings }: Props) {
               <View style={styles.table}>
                 <TableHeader strings={strings} />
                 {stage.rows.map((row, ri) => (
-                  <View key={ri} style={ri % 2 === 0 ? styles.dataRowEven : styles.dataRowOdd}>
-                    <View style={cellStyle(CHECKING_FLEX.start, false, false)}>
-                      <Text style={styles.cellText}>{row.startTime}</Text>
-                    </View>
-                    <View style={cellStyle(CHECKING_FLEX.event, false, false)}>
-                      <Text style={styles.cellText}>{row.eventRound}</Text>
-                    </View>
-                    <View style={cellStyle(CHECKING_FLEX.groups, false, false)}>
-                      <View style={styles.groupsInner}>
-                        <Text style={styles.cellText}>{row.groupCount}</Text>
-                        <View style={styles.checkBox} />
-                      </View>
-                    </View>
-                    {/* Blank for hand-writing: scorecards checked, data entry, double-check, taken by. */}
-                    <View style={cellStyle(CHECKING_FLEX.scorecards, false, false)} />
-                    <View style={cellStyle(CHECKING_FLEX.dataEntry, false, false)} />
-                    <View style={cellStyle(CHECKING_FLEX.doubleCheck, false, false)} />
-                    <View style={cellStyle(CHECKING_FLEX.takenBy, true, false)} />
-                  </View>
+                  <DataRow key={ri} row={row} alt={ri % 2 === 1} />
                 ))}
               </View>
             </View>

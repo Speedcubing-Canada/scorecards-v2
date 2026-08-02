@@ -94,7 +94,10 @@ describe('hasUnassignedIntermediate', () => {
 });
 
 describe('filterParsedByScope', () => {
-  const allDocs = { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: true };
+  const allDocs = {
+    scorecards: true, scheduleTracker: true, nametags: true,
+    roundChecklist: true, firstTimerSlips: true,
+  };
   const base = mkParsed({
     firstRound: [sc('333', 1, 'A'), sc('333', 1, 'B')],
     intermediate: [sc('333', 2, 'A'), cover('333', 2)],
@@ -129,17 +132,43 @@ describe('filterParsedByScope', () => {
     expect(out.scheduleDays).toHaveLength(0);
   });
 
-  it('scorecards:false → clears checkingDays (the sheet belongs to the scorecards)', () => {
+  it('roundChecklist:false → clears checkingDays', () => {
     const out = filterParsedByScope(base, {
       mode: 'everything',
-      documents: { ...allDocs, scorecards: false },
+      documents: { ...allDocs, roundChecklist: false },
     });
     expect(out.checkingDays).toHaveLength(0);
   });
 
-  it('scorecards:true → keeps checkingDays', () => {
+  it('roundChecklist:true → keeps checkingDays', () => {
     const out = filterParsedByScope(base, { mode: 'everything', documents: allDocs });
     expect(out.checkingDays).toHaveLength(1);
+  });
+
+  // The Round Checklist used to ride along with the scorecards selection. It is its own
+  // document now, so deselecting the scorecards must leave it alone.
+  it('scorecards:false → keeps checkingDays (the checklist is independent)', () => {
+    const out = filterParsedByScope(base, {
+      mode: 'everything',
+      documents: { ...allDocs, scorecards: false },
+    });
+    expect(out.firstRound).toHaveLength(0);
+    expect(out.checkingDays).toHaveLength(1);
+  });
+
+  it('roundChecklist:true with scorecards:false → the checklist is the only output', () => {
+    const out = filterParsedByScope(base, {
+      mode: 'everything',
+      documents: {
+        scorecards: false, scheduleTracker: false, nametags: false,
+        roundChecklist: true, firstTimerSlips: false,
+      },
+    });
+    expect(out.checkingDays).toHaveLength(1);
+    expect(out.scheduleDays).toHaveLength(0);
+    expect(out.nametags).toHaveLength(0);
+    expect(out.firstTimers).toHaveLength(0);
+    expect(out.firstRound).toHaveLength(0);
   });
 
   it('everything with firstTimerSlips:false → clears firstTimers', () => {
@@ -186,7 +215,7 @@ describe('filterParsedByScope', () => {
   it('latest + only schedule → clears scorecards but keeps schedule', () => {
     const out = filterParsedByScope(base, {
       mode: 'latest',
-      documents: { scorecards: false, scheduleTracker: true, nametags: false, firstTimerSlips: false },
+      documents: { scorecards: false, scheduleTracker: true, nametags: false, roundChecklist: false, firstTimerSlips: false },
     });
     expect(out.firstRound).toHaveLength(0);
     expect(out.intermediate).toHaveLength(0);

@@ -18,12 +18,17 @@ export interface CoverCardStrings {
 
 // ── Checking sheet strings ────────────────────────────────────────────────────
 // Standalone delegate/scoretaker tracking sheet: one row per round, grouped by day
-// and room. Every column but "groups" is blank for hand-writing.
+// and room. `groupsMade` and `scorecards` are tick-only (and come pre-ticked for round 1,
+// which is prepared before the competition); `dataEntry`/`doubleCheck` take initials plus
+// a tick box; `takenBy` takes a name.
 export interface CheckingSheetStrings {
   title: string;
   start: string;
   event: string;
-  groupsDone: string;
+  // Groups *created* (on competitiongroups), not collected - done even for a single-group
+  // round so the round exists there at all.
+  groupsMade: string;
+  // Scorecards produced - printed or hand-written - not collected.
   scorecards: string;
   dataEntry: string;
   doubleCheck: string;
@@ -233,8 +238,8 @@ const ES: ScorecardStrings = {
     incidentsCount: '3. Número de hojas con incidentes: _____',
     delegateInitials: 'Iniciales del Delegado ______',
     forDataEntry: 'PARA INGRESO DE DATOS',
-    resultsEntered: '4. Resultados ingresados por el Anotador',
-    scoretakerInitials: 'Iniciales del Anotador ______',
+    resultsEntered: '4. Resultados ingresados por el Digitador de Resultados',
+    scoretakerInitials: 'Iniciales del Digitador ______',
     incidentsLogged: '5. Incidentes registrados por el Delegado',
     resultsChecked: '6. Resultados verificados por el Delegado',
     allGroups: (n) => (n === 1 ? 'Solo un grupo' : `Los ${n} grupos`),
@@ -276,8 +281,8 @@ const PT: ScorecardStrings = {
     incidentsCount: '3. Número de folhas com incidentes: _____',
     delegateInitials: 'Iniciais do Delegado ______',
     forDataEntry: 'PARA ENTRADA DE DADOS',
-    resultsEntered: '4. Resultados inseridos pelo Anotador',
-    scoretakerInitials: 'Iniciais do Anotador ______',
+    resultsEntered: '4. Resultados inseridos pelo Digitador de Resultados',
+    scoretakerInitials: 'Iniciais do Digitador ______',
     incidentsLogged: '5. Incidentes registrados pelo Delegado',
     resultsChecked: '6. Resultados verificados pelo Delegado',
     allGroups: (n) => (n === 1 ? 'O único grupo' : `Os ${n} grupos`),
@@ -406,44 +411,44 @@ export function getScheduleStrings(language: LocaleCode): ScheduleStrings {
 
 // ── Checking sheet strings ─────────────────────────────────────────────────────
 const CHECKING_EN: CheckingSheetStrings = {
-  title: '- Scorecard Checking',
+  title: '- Round Checklist',
   start: 'Start\nTime',
   event: 'Event',
-  groupsDone: 'Groups\ncollected',
-  scorecards: 'Scorecards\nchecked',
+  groupsMade: 'Groups\ncreated',
+  scorecards: 'Scorecards\nready',
   dataEntry: 'Data entry\n(initials)',
   doubleCheck: 'Double-check\n(initials)',
   takenBy: 'Scorecards\ntaken by',
 };
 
 const CHECKING_FR: CheckingSheetStrings = {
-  title: '- Suivi des feuilles',
+  title: '- Liste de vérification',
   start: 'Heure de\ndébut',
   event: 'Épreuve',
-  groupsDone: 'Groupes\nregroupés',
-  scorecards: 'Feuilles\nvérifiées',
+  groupsMade: 'Groupes\ncréés',
+  scorecards: 'Feuilles\nprêtes',
   dataEntry: 'Saisie\n(initiales)',
   doubleCheck: 'Double vérif.\n(initiales)',
   takenBy: 'Feuilles\nreprises par',
 };
 
 const CHECKING_ES: CheckingSheetStrings = {
-  title: '- Seguimiento de Hojas',
+  title: '- Lista de Verificación',
   start: 'Hora de\ninicio',
   event: 'Evento',
-  groupsDone: 'Grupos\nagrupados',
-  scorecards: 'Hojas\nverificadas',
+  groupsMade: 'Grupos\ncreados',
+  scorecards: 'Hojas\nlistas',
   dataEntry: 'Ingreso\n(iniciales)',
   doubleCheck: 'Doble verif.\n(iniciales)',
   takenBy: 'Hojas\nretiradas por',
 };
 
 const CHECKING_PT: CheckingSheetStrings = {
-  title: '- Acompanhamento de Folhas',
+  title: '- Lista de Verificação',
   start: 'Horário de\nInício',
   event: 'Evento',
-  groupsDone: 'Grupos\nagrupados',
-  scorecards: 'Folhas\nverificadas',
+  groupsMade: 'Grupos\ncriados',
+  scorecards: 'Folhas\nprontas',
   dataEntry: 'Entrada\n(iniciais)',
   doubleCheck: 'Dupla verif.\n(iniciais)',
   takenBy: 'Folhas\nlevadas por',

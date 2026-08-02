@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { CHECKING_FLEX, CHECKING_CELL_PAD_V } from './layoutConstants';
-import { getCheckingSheetStrings, type CheckingSheetStrings } from '../lib/i18n';
+import {
+  CHECKING_FLEX, CHECKING_CELL_PAD_V, CHECKING_BOX,
+  CHECKING_BREAK_RULE, CHECKING_BREAK_RULE_W,
+} from './layoutConstants';
+import {
+  getCheckingSheetStrings, getScheduleStrings, getEventName,
+  type CheckingSheetStrings,
+} from '../lib/i18n';
 import type { LocaleCode, PaperFormat } from '../types/settings';
 
 // ── Header text fit ──────────────────────────────────────────────────────────
@@ -18,6 +24,8 @@ const HW: Record<string, number> = {
   à:556,â:556,ä:556,è:556,é:556,ê:556,ë:556,î:222,ï:222,ô:556,ö:556,ù:556,
   û:556,ü:556,ç:500,ñ:556,
   ' ':278,'-':333,'_':556,':':278,'.':278,'(':333,')':333,
+  // Digits (all 556 in Helvetica) - event names are full of them: "3x3x3", "4x4x4".
+  '0':556,'1':556,'2':556,'3':556,'4':556,'5':556,'6':556,'7':556,'8':556,'9':556,
 };
 
 // Headers render in Helvetica-BOLD, whose glyphs run a few percent wider than the
@@ -27,6 +35,13 @@ const BOLD_FACTOR = 1.08;
 function helveticaBoldWidth(text: string, fontSize: number): number {
   let w = 0;
   for (const ch of text) w += ((HW[ch] ?? 556) / 1000) * fontSize * BOLD_FACTOR;
+  return w;
+}
+
+// Row text renders in regular Helvetica, not bold.
+function helveticaWidth(text: string, fontSize: number): number {
+  let w = 0;
+  for (const ch of text) w += ((HW[ch] ?? 556) / 1000) * fontSize;
   return w;
 }
 
@@ -45,8 +60,8 @@ const CELL_PAD_H   = 4;    // cellStyle paddingHorizontal, both sides
 const CELL_BORDER  = 0.5;  // cellStyle borderRight (BORDER_INNER)
 const HEADER_FONT  = 8;    // styles.headerText fontSize
 const CELL_FONT    = 10;   // styles.cellText fontSize
-const CHECKBOX_W   = 9;    // styles.checkBox width
-const CHECKBOX_ML  = 6;    // styles.checkBox marginLeft
+const CHECKBOX_W   = CHECKING_BOX;  // styles.checkBox width
+const CHECKBOX_ML  = 6;    // styles.checkBoxSpaced marginLeft (groups cell only)
 const TITLE_BLOCK  = 18 + 22;  // styles.title fontSize + marginBottom
 const DAY_LABEL_H  = 13 + 6;   // styles.dayLabel fontSize + marginBottom
 const STAGE_NAME_H = 11 + 4;   // styles.stageName fontSize + marginBottom
@@ -69,7 +84,7 @@ const FORMATS: PaperFormat[] = ['LETTER', 'A4'];
 const COLUMNS: { key: keyof typeof CHECKING_FLEX; pick: (s: CheckingSheetStrings) => string }[] = [
   { key: 'start',       pick: (s) => s.start },
   { key: 'event',       pick: (s) => s.event },
-  { key: 'groups',      pick: (s) => s.groupsDone },
+  { key: 'groups',      pick: (s) => s.groupsMade },
   { key: 'scorecards',  pick: (s) => s.scorecards },
   { key: 'dataEntry',   pick: (s) => s.dataEntry },
   { key: 'doubleCheck', pick: (s) => s.doubleCheck },
@@ -96,6 +111,40 @@ describe('Checking sheet column widths', () => {
   it('gives the double-check column more room than data entry (longer header)', () => {
     expect(CHECKING_FLEX.doubleCheck).toBeGreaterThan(CHECKING_FLEX.dataEntry);
   });
+});
+
+describe('Checking sheet event column fits its row text', () => {
+  // The event column carries the longest text in the table by far, and its header
+  // ("Event") says nothing about how wide it needs to be - so the header-fit sweep
+  // below cannot protect it. This is the column with the least headroom; anything
+  // that steals flex from it must fail here first.
+  // Fixed by the WCA regulations, not by our code, so listing them is stable.
+  const EVENT_IDS = [
+    '333', '222', '444', '555', '666', '777', '333bf', '333fm', '333oh',
+    'clock', 'minx', 'pyram', 'skewb', 'sq1', '444bf', '555bf', '333mbf',
+  ];
+
+  function widest(lc: LocaleCode): { text: string; w: number } {
+    const s = getScheduleStrings(lc);
+    let best = { text: '', w: 0 };
+    for (const id of EVENT_IDS) {
+      for (const label of [s.finalLabel, s.roundLabel(1), s.roundLabel(2), s.roundLabel(3)]) {
+        const text = `${getEventName(id, lc)} ${label}`;
+        const w = helveticaWidth(text, CELL_FONT);
+        if (w > best.w) best = { text, w };
+      }
+    }
+    return best;
+  }
+
+  for (const format of FORMATS) {
+    for (const lc of LOCALES) {
+      it(`${format} / ${lc}: longest event + round label fits`, () => {
+        const { text, w } = widest(lc);
+        expect(w, `"${text}"`).toBeLessThanOrEqual(colContentW(CHECKING_FLEX.event, format));
+      });
+    }
+  }
 });
 
 describe('Checking sheet header labels fit within their columns', () => {
@@ -129,6 +178,60 @@ describe('Checking sheet groups cell', () => {
     // ScorecardDocument styles.coverCheckBox is 9×9 at 0.75pt - the two documents
     // must agree so a delegate sees the same tick box in either mode.
     expect(CHECKBOX_W).toBe(9);
+  });
+});
+
+describe('Checking sheet tick-only column', () => {
+  // "Scorecards ready" holds no text, only a box - so the column is sized by its
+  // header alone, and the box must still sit comfortably under it.
+  for (const format of FORMATS) {
+    it(`the box fits under the widest scorecards header (${format})`, () => {
+      const avail = colContentW(CHECKING_FLEX.scorecards, format);
+      const widestHeader = Math.max(
+        ...LOCALES.map(lc => maxLineWidth(getCheckingSheetStrings(lc).scorecards, HEADER_FONT)),
+      );
+      expect(widestHeader).toBeLessThanOrEqual(avail);
+      expect(CHECKBOX_W).toBeLessThanOrEqual(avail);
+    });
+  }
+});
+
+describe('Checking sheet initials columns', () => {
+  // Data entry and double-checking can take several passes - a scoretaker may enter half
+  // a round and leave - so the cell holds multiple sets of initials AND a right-edge tick
+  // box marking "every competitor entered or quit". The box eats into the writing space,
+  // so what remains has to stay usable: 40pt at the 10pt cell font is roughly four
+  // hand-written characters, i.e. two sets of initials side by side.
+  const MIN_WRITING_W = 40;
+  const BOX_GUTTER = 2;  // breathing room between ink and the box
+
+  for (const format of FORMATS) {
+    for (const key of ['dataEntry', 'doubleCheck'] as const) {
+      it(`${key} leaves room to write beside its tick box (${format})`, () => {
+        const writing = colContentW(CHECKING_FLEX[key], format) - CHECKBOX_W - BOX_GUTTER;
+        expect(writing).toBeGreaterThanOrEqual(MIN_WRITING_W);
+      });
+    }
+
+    it(`"taken by" still fits a written name (${format})`, () => {
+      // No tick box here, so the whole column is writing space.
+      expect(colContentW(CHECKING_FLEX.takenBy, format)).toBeGreaterThanOrEqual(60);
+    });
+  }
+});
+
+describe('Checking sheet lunch rule', () => {
+  it('is thicker than the line between ordinary rows', () => {
+    // The whole point is that it reads as a divider at a glance; if it ever matched
+    // CELL_BORDER the day would look unbroken.
+    expect(CHECKING_BREAK_RULE_W).toBeGreaterThan(CELL_BORDER);
+    expect(CHECKING_BREAK_RULE_W).toBeGreaterThan(TABLE_BORDER);
+  });
+
+  it('declares a width matching the rule it renders', () => {
+    // The style string and the numeric width are used by different consumers
+    // (renderer vs. this budget) and must not drift apart.
+    expect(CHECKING_BREAK_RULE).toBe(`${CHECKING_BREAK_RULE_W}pt solid #444`);
   });
 });
 

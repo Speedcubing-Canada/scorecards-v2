@@ -15,13 +15,13 @@ export type NametTagLogoMode = 'hidden' | 'with-name' | 'logo-only';
 
 export type NametTagLayout = 'vertical' | 'horizontal';
 
-// How the delegate/scoretaker checklist is printed.
+// Where the delegate/scoretaker cover card goes. Purely about cover cards - the Round
+// Checklist is a separate document, chosen in DocumentSelection, not a mode here.
 //   per-group-card - one cover card per group, on the scorecard sheets (default, legacy)
 //   per-round-card - one cover card per event+round (per stage when a round spans stages)
-//   checking-sheet - no cover cards; a standalone checking-sheet PDF instead
-//   none           - no cover cards, no sheet
+//   none           - no cover cards
 export type ScorecardCheckMode =
-  | 'per-group-card' | 'per-round-card' | 'checking-sheet' | 'none';
+  | 'per-group-card' | 'per-round-card' | 'none';
 
 // Scramble double-checking: an optional second scrambler-signature column.
 // Rounds map 1:1 onto the parser's buckets (Round 1 / Round 2 / Semis / Finals).
@@ -74,8 +74,7 @@ export interface CompetitionSettings {
   nametagQrMode: NametTagQrMode;
   nametagLayout: NametTagLayout;
   customEvents: CustomEvent[];
-  // Where the delegate/scoretaker checklist lives. Defaults to 'per-group-card' (the
-  // original behaviour); 'checking-sheet' emits a standalone tracking PDF instead.
+  // Cover-card placement. Defaults to 'per-group-card' (the original behaviour).
   scorecardCheckMode: ScorecardCheckMode;
   // Scramble double-checking (optional). When enabled, a second scrambler-signature
   // column is added to scorecards whose round is in `scrambleDoubleCheckRounds`, or

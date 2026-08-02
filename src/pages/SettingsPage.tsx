@@ -32,7 +32,7 @@ export default function SettingsPage() {
   const scopeRaw = sessionStorage.getItem('generation_scope');
   const generationScope: GenerationScope = scopeRaw
     ? JSON.parse(scopeRaw)
-    : { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false } };
+    : { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false } };
   const detectionRaw = sessionStorage.getItem('generation_detection');
   const detection = detectionRaw ? JSON.parse(detectionRaw) as { showSecondRoundMode?: boolean } : null;
   const everything = generationScope.mode === 'everything';
@@ -230,7 +230,6 @@ export default function SettingsPage() {
   const checkModeOptions: { value: ScorecardCheckMode; label: string; description: string }[] = [
     { value: 'per-group-card', label: t('settings.check_mode.per_group'),      description: t('settings.check_mode.per_group_desc') },
     { value: 'per-round-card', label: t('settings.check_mode.per_round'),      description: t('settings.check_mode.per_round_desc') },
-    { value: 'checking-sheet', label: t('settings.check_mode.checking_sheet'), description: t('settings.check_mode.checking_sheet_desc') },
     { value: 'none',           label: t('settings.check_mode.none'),           description: t('settings.check_mode.none_desc') },
   ];
 

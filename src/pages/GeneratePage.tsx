@@ -35,12 +35,20 @@ function loadSettings(raw: string | null): CompetitionSettings | null {
   if (s.generationScope === undefined) s.generationScope = { mode: 'everything' };
   const gs = s.generationScope as Record<string, unknown>;
   if (gs.documents === undefined) gs.documents = {
-    scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false,
+    scorecards: true, scheduleTracker: true, nametags: true,
+    roundChecklist: false, firstTimerSlips: false,
   };
+  // Payloads saved with the earlier four-key `documents` object are missing this one.
+  const gsDocs = gs.documents as Record<string, unknown>;
+  if (gsDocs.roundChecklist === undefined) gsDocs.roundChecklist = false;
   if (s.hideWcaLiveId === undefined) s.hideWcaLiveId = false;
   if (s.isCustomCompetition === undefined) s.isCustomCompetition = false;
   // Settings saved before the checking-mode option existed keep the original behaviour.
   if (s.scorecardCheckMode === undefined) s.scorecardCheckMode = 'per-group-card';
+  // 'checking-sheet' used to mean "no cover cards, print the standalone sheet instead".
+  // The sheet is now the opt-in Round Checklist document, so only the cover-card half of
+  // that choice survives.
+  if (s.scorecardCheckMode === 'checking-sheet') s.scorecardCheckMode = 'none';
   return s as unknown as CompetitionSettings;
 }
 
@@ -130,13 +138,14 @@ export default function GeneratePage() {
         effectiveParsed.extras,
       ].filter(r => r.length > 0).length
       + (effectiveParsed.scheduleDays.length > 0 ? 1 : 0)
-      + (settings.scorecardCheckMode === 'checking-sheet' && effectiveParsed.checkingDays.length > 0 ? 1 : 0)
+      + (effectiveParsed.checkingDays.length > 0 ? 1 : 0)
       + (effectiveParsed.nametags.length > 0 ? 1 : 0)
       + (effectiveParsed.firstTimers.length > 0 ? 1 : 0)
       + (settings.customEvents?.filter(c => c.name.trim()).length ?? 0)
     : 0;
   const totalPages     = effectiveParsed ? estimateTotalPages(effectiveParsed, settings) : 0;
-  const filename       = `${settings.competitionId}_scorecards.zip`;
+  // Not "_scorecards": the bundle routinely carries nametags, slips and the schedule too.
+  const filename       = `${settings.competitionId}_pdfs.zip`;
 
   function handleDownload() {
     if (status === 'building' || !effectiveParsed || pdfCount === 0) return;

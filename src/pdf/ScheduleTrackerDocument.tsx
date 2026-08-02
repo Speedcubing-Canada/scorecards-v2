@@ -2,6 +2,7 @@ import { Document, Page, View, Text, StyleSheet, Font } from '@react-pdf/rendere
 import type { CompetitionSettings } from '../types/settings';
 import type { ScheduleDay } from '../lib/wcif-parser';
 import { getScheduleStrings, type ScheduleStrings } from '../lib/i18n';
+import { CHECKING_BREAK_RULE } from './layoutConstants';
 
 Font.registerHyphenationCallback((word) => [word]);
 
@@ -172,22 +173,27 @@ export function ScheduleTrackerDocument({ days, settings }: Props) {
               )}
               <View style={styles.table}>
                 <TableHeader strings={strings} />
-                {stage.rows.map((row, ri) => (
-                  <View key={ri} style={ri % 2 === 0 ? styles.dataRowEven : styles.dataRowOdd}>
-                    <View style={styles.cell}>
-                      <Text style={styles.cellText}>{row.startTime}</Text>
+                {stage.rows.map((row, ri) => {
+                  const base = ri % 2 === 0 ? styles.dataRowEven : styles.dataRowOdd;
+                  return (
+                    // A lunch break scheduled between this row and the one above draws a
+                    // thick rule, the same marker the checking sheet uses.
+                    <View key={ri} style={row.breakBefore ? [base, { borderTop: CHECKING_BREAK_RULE }] : base}>
+                      <View style={styles.cell}>
+                        <Text style={styles.cellText}>{row.startTime}</Text>
+                      </View>
+                      <View style={styles.cell}>
+                        <Text style={styles.cellText}>{row.endTime}</Text>
+                      </View>
+                      <View style={styles.cellEvent}>
+                        <Text style={styles.cellText}>{row.eventRound}</Text>
+                      </View>
+                      <View style={styles.cell} />
+                      <View style={styles.cell} />
+                      <View style={styles.cellLast} />
                     </View>
-                    <View style={styles.cell}>
-                      <Text style={styles.cellText}>{row.endTime}</Text>
-                    </View>
-                    <View style={styles.cellEvent}>
-                      <Text style={styles.cellText}>{row.eventRound}</Text>
-                    </View>
-                    <View style={styles.cell} />
-                    <View style={styles.cell} />
-                    <View style={styles.cellLast} />
-                  </View>
-                ))}
+                  );
+                })}
               </View>
             </View>
           ))

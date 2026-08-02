@@ -48,7 +48,7 @@ export default function CustomCompetitionPage() {
     sessionStorage.setItem('competition_has_groups', 'true');
     sessionStorage.setItem('generation_scope', JSON.stringify({
       mode: 'everything',
-      documents: { scorecards: true, scheduleTracker: false, nametags: false, firstTimerSlips: false },
+      documents: { scorecards: true, scheduleTracker: false, nametags: false, roundChecklist: false, firstTimerSlips: false },
     }));
     sessionStorage.setItem('generation_detection', JSON.stringify({ showSecondRoundMode: false }));
     sessionStorage.setItem('custom_competition', 'true');

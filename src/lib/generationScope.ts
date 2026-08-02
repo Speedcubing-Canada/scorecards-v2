@@ -5,6 +5,9 @@ export interface DocumentSelection {
   scorecards: boolean;
   scheduleTracker: boolean;
   nametags: boolean;
+  // The Round Checklist (parser field `checkingDays`). Opt-in: it tracks the whole
+  // competition's data flow rather than a pile of scorecards, so most users don't want it.
+  roundChecklist: boolean;
   firstTimerSlips: boolean;
 }
 
@@ -99,9 +102,9 @@ export function filterParsedByScope(parsed: ParsedWCIF, scope: GenerationScope):
     extras:       documents.scorecards      ? result.extras       : [],
     nametags:     documents.nametags        ? result.nametags     : [],
     scheduleDays: documents.scheduleTracker ? result.scheduleDays : [],
-    // The checking sheet replaces the scorecards' cover cards, so it belongs to the
-    // scorecards selection rather than getting its own DocumentSelection key.
-    checkingDays: documents.scorecards ? result.checkingDays : [],
+    // The Round Checklist is its own artefact, not a variant of the cover card, so it is
+    // selected independently of the scorecards.
+    checkingDays: documents.roundChecklist ? result.checkingDays : [],
     firstTimers:  documents.firstTimerSlips ? result.firstTimers  : [],
   };
 }

@@ -124,6 +124,10 @@ export interface ScheduleRow {
   startTime: string;
   endTime: string;
   eventRound: string;
+  // A lunch break is scheduled between the previous row and this one. Both the schedule
+  // tracker and the checking sheet draw a thick rule above such a row - delegates mark
+  // the day's halves by hand today.
+  breakBefore: boolean;
 }
 
 // One round of the standalone checking sheet. Same chronological (day → room) shape as
@@ -135,6 +139,24 @@ export interface CheckingRow {
   eventRound: string;
   // Groups scheduled for this round in this room. 0 when the WCIF has no groups yet.
   groupCount: number;
+  // Round 1's groups are created on competitiongroups and its scorecards produced before
+  // the competition starts, so the sheet prints those two boxes already ticked. Later
+  // rounds are done on the day and ship blank.
+  preChecked: boolean;
+  // See ScheduleRow.breakBefore.
+  breakBefore: boolean;
+}
+
+// Midday-meal names across the four locales we print in. Delegates frequently file lunch
+// under a generic code (`other-misc`) with a localised name, so the name is checked too.
+// Deliberately narrow: only lunch draws a rule, not dinner/awards/tutorials.
+const LUNCH_NAME_RE = /\b(lunch|d[îi]ner|d[ée]jeuner|almuerzo|almo[çc]o|comida)\b/i;
+
+// A scheduled lunch break: never a round activity (those are `<eventId>-r<N>`), matched by
+// the standard WCA activity code or by a localised name.
+function isLunchActivity(activity: { activityCode: string; name: string }): boolean {
+  if (/^[a-z0-9]+-r\d+/.test(activity.activityCode)) return false;
+  return activity.activityCode === 'other-lunch' || LUNCH_NAME_RE.test(activity.name ?? '');
 }
 
 // One room's rounds within a single day.
@@ -178,9 +200,10 @@ export interface ParsedWCIF {
   extras: ScorecardData[];
   // Schedule tracker data in chronological (day-primary) order.
   scheduleDays: ScheduleDay[];
-  // Standalone checking-sheet data, same day/room partition as `scheduleDays` but one
-  // row per round. Always built; only rendered when settings.scorecardCheckMode is
-  // 'checking-sheet'.
+  // Rows for the **Round Checklist** document (the UI's name for it; the internals kept
+  // the older "checking sheet" vocabulary). Same day/room partition as `scheduleDays` but
+  // one row per round. Always built; emptied by filterParsedByScope unless the user
+  // selected the Round Checklist, which is what gates rendering.
   checkingDays: CheckingDay[];
   // True once groups have been generated for this competition (the schedule has group
   // child-activities). False for a fresh pre-competition WCIF, which is why scorecard
@@ -554,7 +577,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   const roundCovers = new Map<ScorecardData[], Map<string, CoverEntry>>();
 
   function pushCover(target: ScorecardData[], cover: Omit<CoverEntry, 'numGroups'>): void {
-    if (checkMode === 'checking-sheet' || checkMode === 'none') return;
+    if (checkMode === 'none') return;
     if (checkMode === 'per-group-card') {
       target.push({ ...cover, numGroups: 1 });
       return;
@@ -1104,6 +1127,10 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   type RoomActivity = (typeof wcif.schedule.venues)[0]['rooms'][0]['activities'][0];
   const dayRoomMap = new Map<string, Map<number, RoomActivity[]>>();
   const roomIndexToName = new Map<number, string>();
+  // date → start timestamps of that day's lunch breaks. Collected across EVERY room, not
+  // just the one being rendered: a competition often schedules lunch once, in the main
+  // room or a side room, but the rule belongs on every stage's table for that day.
+  const lunchStartsByDate = new Map<string, number[]>();
   let roomIdx = 0;
   for (const venue of wcif.schedule.venues) {
     for (const room of venue.rooms) {
@@ -1114,6 +1141,10 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         const roomMap = dayRoomMap.get(date)!;
         if (!roomMap.has(roomIdx)) roomMap.set(roomIdx, []);
         roomMap.get(roomIdx)!.push(activity);
+        if (isLunchActivity(activity)) {
+          if (!lunchStartsByDate.has(date)) lunchStartsByDate.set(date, []);
+          lunchStartsByDate.get(date)!.push(Date.parse(activity.startTime));
+        }
       }
       roomIdx++;
     }
@@ -1123,10 +1154,16 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   // One pass over a room's activities producing both the schedule-tracker rows and the
   // checking-sheet rows - they share the same filtering and event+round labelling, and
   // differ only in the trailing column (competitor count vs. group count).
-  const buildRows = (activities: RoomActivity[]): { schedule: ScheduleRow[]; checking: CheckingRow[] } => {
+  const buildRows = (
+    activities: RoomActivity[],
+    lunchStarts: number[],
+  ): { schedule: ScheduleRow[]; checking: CheckingRow[] } => {
     const schedule: ScheduleRow[] = [];
     const checking: CheckingRow[] = [];
     const sorted = [...activities].sort((a, b) => a.startTime.localeCompare(b.startTime));
+    // Start of the round the previous row came from, so a lunch can be placed between two
+    // consecutive rows. Timestamps, not ISO strings: WCIF times carry UTC offsets.
+    let prevStart: number | null = null;
     for (const activity of sorted) {
       const parts = activity.activityCode.split('-');
       if (parts.length !== 2) continue;
@@ -1144,10 +1181,21 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       const startTime = formatLocalTime(activity.startTime);
       const endTime = formatLocalTime(activity.endTime);
       const eventRound = `${eventName} ${roundLabel}`;
-      schedule.push({ startTime, endTime, eventRound });
+      // The first row of a table never carries a rule - there is nothing above it but the
+      // header border.
+      const thisStart = Date.parse(activity.startTime);
+      const breakBefore = prevStart !== null
+        && lunchStarts.some((l) => l >= prevStart! && l < thisStart);
+      prevStart = thisStart;
+
+      schedule.push({ startTime, endTime, eventRound, breakBefore });
       // groupUnitsOf also synthesizes groups for later rounds that have none yet
       // (from the scramble-set count), matching the scorecards actually printed.
-      checking.push({ startTime, endTime, eventRound, groupCount: groupUnitsOf(activity).length });
+      checking.push({
+        startTime, endTime, eventRound, breakBefore,
+        groupCount: groupUnitsOf(activity).length,
+        preChecked: roundNum === 1,
+      });
     }
     return { schedule, checking };
   };
@@ -1158,8 +1206,9 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   for (const [date, roomMap] of [...dayRoomMap].sort(([a], [b]) => a.localeCompare(b))) {
     const stages: ScheduleStage[] = [];
     const checkStages: CheckingStage[] = [];
+    const lunchStarts = lunchStartsByDate.get(date) ?? [];
     for (const [ri, activities] of [...roomMap].sort(([a], [b]) => a - b)) {
-      const { schedule, checking } = buildRows(activities);
+      const { schedule, checking } = buildRows(activities, lunchStarts);
       const stageName = roomIndexToName.get(ri) ?? `Room ${ri + 1}`;
       if (schedule.length > 0) stages.push({ stageName, rows: schedule });
       if (checking.length > 0) checkStages.push({ stageName, rows: checking });

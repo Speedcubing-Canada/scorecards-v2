@@ -39,7 +39,7 @@ function mkSettings(over: Partial<CompetitionSettings> = {}): CompetitionSetting
     nametagLogoMode: 'with-name', nametagQrMode: 'back-only', nametagLayout: 'vertical',
     customEvents: [], scorecardCheckMode: 'per-group-card',
     scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
-    generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, firstTimerSlips: false } },
+    generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false } },
     ...over,
   } as CompetitionSettings;
 }
@@ -71,15 +71,24 @@ describe('estimateTotalPages', () => {
     expect(estimateTotalPages(mkParsed({ scheduleDays: days(2) }), mkSettings())).toBe(1);
   });
 
-  it('counts the checking sheet as one page when that mode is selected', () => {
+  it('counts the Round Checklist as one page', () => {
     const parsed = mkParsed({ checkingDays: [{ dayLabel: 'Day 1', stages: [] }] });
-    expect(estimateTotalPages(parsed, mkSettings({ scorecardCheckMode: 'checking-sheet' }))).toBe(1);
+    expect(estimateTotalPages(parsed, mkSettings())).toBe(1);
   });
 
-  it('ignores checkingDays in every other checking mode', () => {
-    const parsed = mkParsed({ checkingDays: [{ dayLabel: 'Day 1', stages: [] }] });
+  // Selection happens upstream: filterParsedByScope empties checkingDays when the
+  // Round Checklist is not selected, so the estimator has nothing left to gate on.
+  it('counts no page when checkingDays is empty, whatever the cover-card mode', () => {
+    const parsed = mkParsed({ checkingDays: [] });
     for (const mode of ['per-group-card', 'per-round-card', 'none'] as const) {
       expect(estimateTotalPages(parsed, mkSettings({ scorecardCheckMode: mode }))).toBe(0);
+    }
+  });
+
+  it('counts the page independently of the cover-card mode', () => {
+    const parsed = mkParsed({ checkingDays: [{ dayLabel: 'Day 1', stages: [] }] });
+    for (const mode of ['per-group-card', 'per-round-card', 'none'] as const) {
+      expect(estimateTotalPages(parsed, mkSettings({ scorecardCheckMode: mode }))).toBe(1);
     }
   });
 

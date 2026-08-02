@@ -55,16 +55,14 @@
       "blanks_desc": "Imprimir espaços de nome em branco - preencher à mão na competição"
     },
     "check_mode": {
-      "title": "Acompanhamento de folhas",
-      "hint": "Onde a lista de verificação do delegado e do anotador é impressa.",
+      "title": "Capas",
+      "hint": "Onde o cartão de verificação do delegado e do anotador é impresso.",
       "per_group": "Capa por grupo",
       "per_group_desc": "Um cartão de verificação na frente das folhas de cada grupo (padrão).",
       "per_round": "Capa por rodada",
       "per_round_desc": "Um cartão de verificação por rodada de evento em vez de por grupo - menos cartões para imprimir.",
-      "checking_sheet": "Folha de acompanhamento separada",
-      "checking_sheet_desc": "Sem capas. Uma folha separada lista cada rodada por dia, com colunas para grupos, entrada de dados, dupla verificação e quem levou as folhas.",
-      "none": "Nenhum",
-      "none_desc": "Sem capas e sem folha de acompanhamento."
+      "none": "Nenhuma",
+      "none_desc": "Sem capas."
     },
     "double_check": {
       "title": "Dupla verificação de misturas",
@@ -175,6 +173,7 @@
     "doc_scorecards": "Fichas de pontuação",
     "doc_schedule": "Rastreamento de horário",
     "doc_nametags": "Etiquetas de nome",
+    "doc_round_checklist": "Lista de verificação",
     "doc_first_timers": "Fichas de estreante",
     "checking": "Verificando a competição…",
     "continue": "Continuar →",
