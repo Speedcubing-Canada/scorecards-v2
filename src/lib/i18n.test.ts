@@ -2,15 +2,15 @@ import { describe, it, expect } from 'vitest';
 import { getStrings, getScheduleStrings, getCheckingSheetStrings, getNametTagStrings, getNametTagTitleStrings, getShortNametTagNames, getEventName, splitLabelTotal } from './i18n';
 
 describe('ofConnector', () => {
-  it('is "of" in English and "de" in FR/ES/PT', () => {
+  it('is "of" in English, "sur" in French and "de" in ES/PT', () => {
     expect(getStrings('en').ofConnector).toBe('of');
-    expect(getStrings('fr').ofConnector).toBe('de');
+    expect(getStrings('fr').ofConnector).toBe('sur');
     expect(getStrings('es').ofConnector).toBe('de');
     expect(getStrings('pt').ofConnector).toBe('de');
   });
 
   it('uses the primary language connector when merged (labels are primary-only)', () => {
-    expect(getStrings('fr', 'en').ofConnector).toBe('de');
+    expect(getStrings('fr', 'en').ofConnector).toBe('sur');
     expect(getStrings('en', 'fr').ofConnector).toBe('of');
   });
 });
@@ -21,19 +21,19 @@ describe('splitLabelTotal', () => {
     expect(splitLabelTotal('Round 1 of 3', 'of')).toEqual({ head: 'Round 1', tail: ' of 3' });
   });
 
-  it('splits "de Y" for French/Spanish/Portuguese labels', () => {
-    expect(splitLabelTotal('Groupe 1 de 2', 'de')).toEqual({ head: 'Groupe 1', tail: ' de 2' });
+  it('splits the connector off French ("sur") and Spanish/Portuguese ("de") labels', () => {
+    expect(splitLabelTotal('Groupe 1 sur 2', 'sur')).toEqual({ head: 'Groupe 1', tail: ' sur 2' });
     expect(splitLabelTotal('Grupo 1 de 3', 'de')).toEqual({ head: 'Grupo 1', tail: ' de 3' });
   });
 
   it('splits on the LAST connector so colour/stage names are untouched', () => {
-    // "Bleu 1 de 2" - the colour stays in head, only " de 2" is the tail.
-    expect(splitLabelTotal('Bleu 1 de 2', 'de')).toEqual({ head: 'Bleu 1', tail: ' de 2' });
+    // "Bleu 1 sur 2" - the colour stays in head, only " sur 2" is the tail.
+    expect(splitLabelTotal('Bleu 1 sur 2', 'sur')).toEqual({ head: 'Bleu 1', tail: ' sur 2' });
   });
 
   it('returns tail null when there is no connector (e.g. final rounds)', () => {
     expect(splitLabelTotal('Final Round', 'of')).toEqual({ head: 'Final Round', tail: null });
-    expect(splitLabelTotal('Tour Final', 'de')).toEqual({ head: 'Tour Final', tail: null });
+    expect(splitLabelTotal('Tour Final', 'sur')).toEqual({ head: 'Tour Final', tail: null });
   });
 });
 
@@ -77,7 +77,7 @@ describe('getStrings', () => {
     expect(s.scrambler).not.toContain('Mezclador');
     // primary-only fields come from FR
     expect(s.cover.forDelegate).toBe('POUR LE DÉLÉGUÉ');
-    expect(s.roundName(1, 3)).toBe('Tour 1 de 3');
+    expect(s.roundName(1, 3)).toBe('Tour 1 sur 3');
   });
 
   it('merges primary EN + secondary FR (EN first, cover from primary)', () => {
@@ -428,9 +428,9 @@ describe('getStrings seat/station labels', () => {
     expect(s.stationLabel('03')).toBe('Station 03');
     expect(s.seatLabel('03')).toBe('Seat 03');
   });
-  it('French: both are Siège', () => {
+  it('French: Station and Siège', () => {
     const s = getStrings('fr');
-    expect(s.stationLabel('03')).toBe('Siège 03');
+    expect(s.stationLabel('03')).toBe('Station 03');
     expect(s.seatLabel('03')).toBe('Siège 03');
   });
   it('Spanish: Estación and Asiento', () => {
@@ -445,7 +445,7 @@ describe('getStrings seat/station labels', () => {
   });
   it('seat/station labels are primary-only when a secondary is set', () => {
     const s = getStrings('fr', 'en');
-    expect(s.stationLabel('01')).toBe('Siège 01');
+    expect(s.stationLabel('01')).toBe('Station 01');
     expect(s.seatLabel('01')).toBe('Siège 01');
   });
 });

@@ -159,13 +159,61 @@ function isLunchActivity(activity: { activityCode: string; name: string }): bool
   return activity.activityCode === 'other-lunch' || LUNCH_NAME_RE.test(activity.name ?? '');
 }
 
-// One room's rounds within a single day.
+// Rooms whose name marks them as a stage of the main hall rather than a separate room. The
+// WCIF draws no such distinction - "Red Stage" and "Side Room" are both just rooms - but a
+// round run across several stages still produces a single pile of scorecards, so the Round
+// Checklist collapses those rooms into one table with one row per round. The schedule
+// tracker, which records when each stage actually runs, keeps one table per room.
+// Name-based and deliberately narrow: stages named "Red"/"Blue" with no keyword simply keep
+// the one-table-per-room output.
+const STAGE_ROOM_RE = /\b(stages?|sc[èe]nes?|escenarios?|palcos?)\b/i;
+
+// The word that made a room a stage, as the merged table's heading:
+// "Red Stage" + "Blue Stage" -> "Stage"; "Scène Rouge" + "Scène Bleue" -> "Scène".
+function stageKeyword(roomName: string): string | null {
+  const m = STAGE_ROOM_RE.exec(roomName);
+  if (!m) return null;
+  const word = m[0].toLowerCase();
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+// A round as one table row: one room's activity on the schedule tracker, or - on the Round
+// Checklist - the same round collapsed across every stage that runs it.
+interface RoundSlot {
+  activityCode: string;   // "333-r1"
+  startTime: string;
+  endTime: string;
+  // Distinct group activity codes ("333-r1-g2"), not a count: two stages running the same
+  // logical group share its code, and a later round synthesizes the same g1..gN in every
+  // room it occupies, so collapsing stages has to union these rather than add them up.
+  groupCodes: Set<string>;
+}
+
+// One row per round: earliest start, latest end, every stage's groups. Round Checklist only.
+function mergeSlots(slots: RoundSlot[]): RoundSlot[] {
+  const byRound = new Map<string, RoundSlot>();
+  for (const slot of slots) {
+    const merged = byRound.get(slot.activityCode);
+    if (!merged) {
+      byRound.set(slot.activityCode, { ...slot, groupCodes: new Set(slot.groupCodes) });
+      continue;
+    }
+    // Parsed, not compared as strings: WCIF times carry UTC offsets.
+    if (Date.parse(slot.startTime) < Date.parse(merged.startTime)) merged.startTime = slot.startTime;
+    if (Date.parse(slot.endTime) > Date.parse(merged.endTime)) merged.endTime = slot.endTime;
+    for (const code of slot.groupCodes) merged.groupCodes.add(code);
+  }
+  return [...byRound.values()].sort((a, b) => Date.parse(a.startTime) - Date.parse(b.startTime));
+}
+
+// One checklist table: a single room's rounds, or every stage room's rounds merged.
 export interface CheckingStage {
   stageName: string;
   rows: CheckingRow[];
 }
 
-// One calendar day; contains one entry per room that has rounds that day.
+// One calendar day; contains one entry per room that has rounds that day, with all stage
+// rooms counting as one (see STAGE_ROOM_RE).
 export interface CheckingDay {
   dayLabel: string;
   stages: CheckingStage[];
@@ -1151,49 +1199,65 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   }
 
   const schedStrings = getScheduleStrings(settings.language);
-  // One pass over a room's activities producing both the schedule-tracker rows and the
-  // checking-sheet rows - they share the same filtering and event+round labelling, and
-  // differ only in the trailing column (competitor count vs. group count).
-  const buildRows = (
-    activities: RoomActivity[],
-    lunchStarts: number[],
-  ): { schedule: ScheduleRow[]; checking: CheckingRow[] } => {
-    const schedule: ScheduleRow[] = [];
-    const checking: CheckingRow[] = [];
+  // A room's round activities in chronological order. Everything else - lunch, awards,
+  // events absent from the WCIF - is dropped here, so the row builder sees only rounds.
+  const slotsOf = (activities: RoomActivity[]): RoundSlot[] => {
+    const slots: RoundSlot[] = [];
     const sorted = [...activities].sort((a, b) => a.startTime.localeCompare(b.startTime));
-    // Start of the round the previous row came from, so a lunch can be placed between two
-    // consecutive rows. Timestamps, not ISO strings: WCIF times carry UTC offsets.
-    let prevStart: number | null = null;
     for (const activity of sorted) {
       const parts = activity.activityCode.split('-');
       if (parts.length !== 2) continue;
       const [eid, roundPart] = parts;
       if (!roundPart.startsWith('r')) continue;
+      if (!isFinite(parseInt(roundPart.slice(1), 10))) continue;
+      if (allEventRoundCount[eid] === undefined) continue;
+      slots.push({
+        activityCode: activity.activityCode,
+        startTime: activity.startTime,
+        endTime: activity.endTime,
+        // groupUnitsOf also synthesizes groups for later rounds that have none yet
+        // (from the scramble-set count), matching the scorecards actually printed.
+        groupCodes: new Set(groupUnitsOf(activity).map(u => u.activityCode)),
+      });
+    }
+    return slots;
+  };
+
+  // One pass over a table's slots producing both the schedule-tracker rows and the
+  // checking-sheet rows - they share the same event+round labelling and lunch rules, and
+  // differ only in the trailing column (competitor count vs. group count).
+  const buildRows = (
+    slots: RoundSlot[],
+    lunchStarts: number[],
+  ): { schedule: ScheduleRow[]; checking: CheckingRow[] } => {
+    const schedule: ScheduleRow[] = [];
+    const checking: CheckingRow[] = [];
+    // Start of the round the previous row came from, so a lunch can be placed between two
+    // consecutive rows. Timestamps, not ISO strings: WCIF times carry UTC offsets.
+    let prevStart: number | null = null;
+    for (const slot of slots) {
+      const [eid, roundPart] = slot.activityCode.split('-');
       const roundNum = parseInt(roundPart.slice(1), 10);
-      if (!isFinite(roundNum)) continue;
       const totalRounds = allEventRoundCount[eid];
-      if (totalRounds === undefined) continue;
       const eventName = getEventName(eid, settings.language);
       const isLast = roundNum === totalRounds;
       const roundLabel = totalRounds === 1 || isLast
         ? schedStrings.finalLabel
         : schedStrings.roundLabel(roundNum);
-      const startTime = formatLocalTime(activity.startTime);
-      const endTime = formatLocalTime(activity.endTime);
+      const startTime = formatLocalTime(slot.startTime);
+      const endTime = formatLocalTime(slot.endTime);
       const eventRound = `${eventName} ${roundLabel}`;
       // The first row of a table never carries a rule - there is nothing above it but the
       // header border.
-      const thisStart = Date.parse(activity.startTime);
+      const thisStart = Date.parse(slot.startTime);
       const breakBefore = prevStart !== null
         && lunchStarts.some((l) => l >= prevStart! && l < thisStart);
       prevStart = thisStart;
 
       schedule.push({ startTime, endTime, eventRound, breakBefore });
-      // groupUnitsOf also synthesizes groups for later rounds that have none yet
-      // (from the scramble-set count), matching the scorecards actually printed.
       checking.push({
         startTime, endTime, eventRound, breakBefore,
-        groupCount: groupUnitsOf(activity).length,
+        groupCount: slot.groupCodes.size,
         preChecked: roundNum === 1,
       });
     }
@@ -1203,19 +1267,64 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   // Iterate days chronologically; within each day keep WCIF room order.
   const scheduleDays: ScheduleDay[] = [];
   const checkingDays: CheckingDay[] = [];
+  // Stage rooms that actually run rounds, by room index. A competition with two of them
+  // heads its merged tables with the shared word; one stage room means nothing was ever
+  // merged, so it keeps its own name.
+  const stageRoomNames = new Map<number, string>();
+  const mergedTables: CheckingStage[] = [];
   for (const [date, roomMap] of [...dayRoomMap].sort(([a], [b]) => a.localeCompare(b))) {
     const stages: ScheduleStage[] = [];
-    const checkStages: CheckingStage[] = [];
+    // Checklist tables in WCIF room order, except that every stage room funnels into one
+    // block anchored where the first of them appears.
+    const blocks: { stageName: string; slots: RoundSlot[] }[] = [];
+    let stageBlock: { stageName: string; slots: RoundSlot[] } | null = null;
+    let stageRoomsToday = 0;
     const lunchStarts = lunchStartsByDate.get(date) ?? [];
     for (const [ri, activities] of [...roomMap].sort(([a], [b]) => a - b)) {
-      const { schedule, checking } = buildRows(activities, lunchStarts);
       const stageName = roomIndexToName.get(ri) ?? `Room ${ri + 1}`;
+      const slots = slotsOf(activities);
+      const { schedule } = buildRows(slots, lunchStarts);
       if (schedule.length > 0) stages.push({ stageName, rows: schedule });
-      if (checking.length > 0) checkStages.push({ stageName, rows: checking });
+
+      if (stageKeyword(stageName) === null) {
+        blocks.push({ stageName, slots });
+        continue;
+      }
+      if (slots.length > 0) {
+        stageRoomNames.set(ri, stageName);
+        stageRoomsToday++;
+      }
+      if (stageBlock === null) {
+        stageBlock = { stageName, slots: [...slots] };
+        blocks.push(stageBlock);
+      } else {
+        stageBlock.slots.push(...slots);
+      }
+    }
+    const checkStages: CheckingStage[] = [];
+    for (const block of blocks) {
+      // Merging is what collapsing stages means; a single room's rounds are left exactly as
+      // scheduled, even in the rare case where one round occupies two blocks of its day.
+      const slots = block === stageBlock && stageRoomsToday > 1
+        ? mergeSlots(block.slots)
+        : block.slots;
+      const { checking } = buildRows(slots, lunchStarts);
+      if (checking.length === 0) continue;
+      const table = { stageName: block.stageName, rows: checking };
+      if (block === stageBlock) mergedTables.push(table);
+      checkStages.push(table);
     }
     const dayLabel = formatDayLabel(date);
     if (stages.length > 0) scheduleDays.push({ dayLabel, stages });
     if (checkStages.length > 0) checkingDays.push({ dayLabel, stages: checkStages });
+  }
+  // Named once the whole competition is known, so a day that happens to use only one of the
+  // stages is still headed "Stage" rather than "Red Stage" - the table means the same thing
+  // on every page. Spelling comes from the first stage room in WCIF order.
+  if (stageRoomNames.size > 1) {
+    const first = [...stageRoomNames].sort(([a], [b]) => a - b)[0][1];
+    const label = stageKeyword(first)!;
+    for (const table of mergedTables) table.stageName = label;
   }
 
   // Named round-2 cards carry real groups + covers, so they need the group-sorted

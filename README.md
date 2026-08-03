@@ -214,14 +214,15 @@ page's PDF count) gates on `checkingDays.length > 0` alone.
 > renaming them across ten files buys no behaviour change.
 
 Rendered by `src/pdf/CheckingSheetDocument.tsx` from `ParsedWCIF.checkingDays`, which
-mirrors the schedule tracker's day → room partition but holds **one row per round**
+follows the schedule tracker's day → room partition - except that stage rooms collapse
+into one table, see [Stages vs. rooms](#stages-vs-rooms) - and holds **one row per round**
 instead of one per activity. Columns:
 
 | Column | Flex | Contents |
 |---|---|---|
 | Start time | 1 | Round start, venue-local |
 | Event | 2.7 | e.g. `3x3x3 Cube Round 1` |
-| Groups created | 1 | Group count for that round **in that room**, plus a 9×9pt tick box (same geometry as the cover card's checkbox) |
+| Groups created | 1 | Group count for that round in that table, plus a 9×9pt tick box (same geometry as the cover card's checkbox) |
 | Scorecards ready | 1.1 | Tick box only |
 | Data entry (initials) | 1.3 | Blank writing space, plus a tick box on the right edge |
 | Double-check (initials) | 1.35 | Same - wider, it holds the longest header we ship |
@@ -251,6 +252,37 @@ counts come from `groupUnitsOf`, so a later round with no real groups still repo
 group count implied by its scramble-set count. Rounds with no groups generated yet report
 `0`. `333fm` **is** included (results entry still happens for it), even though FM never
 gets cover cards.
+
+### Stages vs. rooms
+
+A round run across several stages still produces **one pile of scorecards**, so the
+checklist gives it **one row**. A genuinely separate room - FMC in a side room - is a
+different pile and keeps its own table.
+
+The WCIF cannot tell the two apart: `Red Stage` and `Side Room` are both entries in
+`schedule.venues[].rooms[]`. So the **room name** is the signal. A room whose name matches
+`STAGE_ROOM_RE` (`stage` / `scène` / `escenario` / `palco`, singular or plural, any case)
+is a stage; every stage room in a day is merged into a single table, in the position of the
+first of them. Merging unions the rounds' **group activity codes** rather than adding the
+per-room counts, because two stages running one logical group share that group's code, and a
+later round synthesizes the same `g1..gN` in every room it occupies - summing would double
+both. The merged row spans the earliest start to the latest end.
+
+The merged table is headed with the shared word - `Red Stage` + `Blue Stage` → **`Stage`**,
+`Scène Rouge` + `Scène Bleue` → **`Scène`** - and only when the competition actually runs
+rounds on two or more stage rooms, so a lone `Stage A` keeps its own name and a day that
+uses just one of the stages is still headed `Stage` rather than `Red Stage`. As with every
+stage heading, it is printed only when some day has more than one table (`multiStage` in
+`CheckingSheetDocument.tsx`).
+
+Two deliberate limits:
+
+- **Checklist only.** The schedule tracker keeps one table per room: it records when each
+  stage actually runs, which merging would erase. A `pdf_diff.sh` of the tracker before and
+  after this change reports MAE 0.
+- **Name-based.** Stages named `Red` / `Blue`, with no keyword, are indistinguishable from
+  separate rooms and keep one table each - the previous behaviour. Regions that *want*
+  scorecards kept separate per stage get that by not calling their rooms stages.
 
 ### The lunch rule
 
@@ -719,9 +751,13 @@ renders as a thick rule - see **The lunch rule** above.
 
 ### Checking sheet (`checkingDays`)
 
-Built in the same pass as `scheduleDays` (one shared walk over each room's activities,
-since they share the filtering and the event+round labelling) and using the same day and
-room partition - see **The Round Checklist** above for the columns and the group-count rule.
+Built in the same pass as `scheduleDays`: each room's activities are reduced to
+`RoundSlot`s (round code, start, end, the set of group activity codes) by `slotsOf`, and
+`buildRows` turns a slot list into both row shapes, since they share the filtering and the
+event+round labelling. The checklist differs in one step - stage rooms are concatenated and
+run through `mergeSlots` first, so the day's tables are one per *pile* rather than one per
+room. See **The Round Checklist** above for the columns, the group-count rule and
+**Stages vs. rooms**.
 
 `CheckingRow` adds two fields on top of the schedule row's start/end/event: `preChecked`
 (true for `roundNum === 1`, printing the groups and scorecards boxes already ticked) and

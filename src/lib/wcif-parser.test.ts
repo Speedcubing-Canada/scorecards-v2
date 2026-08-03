@@ -288,14 +288,14 @@ describe('group labels - single stage', () => {
     expect(groups).toContain('Group 2 of 2');
   });
 
-  it('French: "Groupe 1 de 2" / "Groupe 2 de 2"', () => {
+  it('French: "Groupe 1 sur 2" / "Groupe 2 sur 2"', () => {
     const c1 = ch(100, '333', 1, 1); const c2 = ch(101, '333', 1, 2);
     const e = evt('333', [rSpec('a')]);
     const r = room('Stage', [act('333', 1, [c1, c2])]);
     const result = parseWCIF(mkWCIF([e], [r], [per(1, [{ aid: 100 }]), per(2, [{ aid: 101 }])]), cfg({ language: 'fr' }));
     const groups = new Set(scs(result.firstRound).map(s => s.group));
-    expect(groups).toContain('Groupe 1 de 2');
-    expect(groups).toContain('Groupe 2 de 2');
+    expect(groups).toContain('Groupe 1 sur 2');
+    expect(groups).toContain('Groupe 2 sur 2');
   });
 
   it('single-stage event stays "Group N of M" even in a multi-room venue', () => {
@@ -327,15 +327,15 @@ describe('group labels - multi-stage (event across multiple rooms)', () => {
     expect(groups).not.toContain('Group 1 of 4');
   });
 
-  it('French multi-stage → "Rouge N de 4"', () => {
+  it('French multi-stage → "Rouge N sur 4"', () => {
     const rRouge = room('Scène Rouge', [act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)])]);
     const rBleu  = room('Scène Bleu',  [act('333', 1, [ch(102, '333', 1, 3), ch(103, '333', 1, 4)])]);
     const e = evt('333', [rSpec('a')]);
     const persons = [per(1, [{ aid: 100 }]), per(2, [{ aid: 101 }]), per(3, [{ aid: 102 }]), per(4, [{ aid: 103 }])];
     const result = parseWCIF(mkWCIF([e], [rRouge, rBleu], persons), cfg({ language: 'fr' }));
     const groups = new Set(scs(result.firstRound).map(s => s.group));
-    expect(groups).toContain('Rouge 1 de 4');
-    expect(groups).toContain('Bleu 3 de 4');
+    expect(groups).toContain('Rouge 1 sur 4');
+    expect(groups).toContain('Bleu 3 sur 4');
   });
 
   it('unique group count: g1 in rouge + g1 in bleu = 1 group (not 2)', () => {
@@ -734,7 +734,7 @@ describe('intermediate round modes (3-round event, round 2)', () => {
     expect(groups).toContain('Rouge 1');
   });
 
-  it('prefilled French language: blank group is "Groupe _ de 2"', () => {
+  it('prefilled French language: blank group is "Groupe _ sur 2"', () => {
     const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a')]);
     const r = room('Stage', [
       act('333', 1, [ch(100, '333', 1, 1)]),
@@ -743,7 +743,7 @@ describe('intermediate round modes (3-round event, round 2)', () => {
     ]);
     const result = parseWCIF(mkWCIF([e], [r], [per(1, [{ aid: 100 }])]), cfg({ language: 'fr', secondRoundMode: 'prefilled' }));
     const named = scs(result.intermediate).filter(s => s.name !== '');
-    expect(named.every(s => s.group === 'Groupe _ de 2')).toBe(true);
+    expect(named.every(s => s.group === 'Groupe _ sur 2')).toBe(true);
   });
 });
 
@@ -981,7 +981,7 @@ describe('extra scorecards', () => {
     expect(scs(result.extras)[0]?.group).toBe('Group _ of 2');
   });
 
-  it('French: single group → "Groupe 1 de 1", multi-group → "Groupe _ de N"', () => {
+  it('French: single group → "Groupe 1 sur 1", multi-group → "Groupe _ sur N"', () => {
     const e = evt('333', [rSpec('a'), rSpec('a')]);
     const r = room('Stage', [
       act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)]),
@@ -989,8 +989,8 @@ describe('extra scorecards', () => {
     ]);
     const result = parseWCIF(mkWCIF([e], [r]), cfg({ language: 'fr' }));
     const extras = scs(result.extras);
-    expect(extras.find(e => e.roundLabel === 'Tour 1 de 2')?.group).toBe('Groupe _ de 2');
-    expect(extras.find(e => e.roundLabel === 'Tour Final')?.group).toBe('Groupe 1 de 1');
+    expect(extras.find(e => e.roundLabel === 'Tour 1 sur 2')?.group).toBe('Groupe _ sur 2');
+    expect(extras.find(e => e.roundLabel === 'Tour Final')?.group).toBe('Groupe 1 sur 1');
   });
 
   it('extras sorted by schedule order (round 2 before round 1 when scheduled earlier)', () => {
@@ -1939,10 +1939,12 @@ function bareAct2(eventId: string, r: number, t: string): Activity {
 // ── Checking sheet data ──────────────────────────────────────────────────────
 
 describe('checking sheet', () => {
+  // Room names deliberately free of "stage": those merge on the checklist only, which is
+  // the one place the two documents are allowed to disagree (see 'stage rooms').
   it('mirrors the schedule tracker day/stage partition', () => {
     const e = evt('333', [rSpec('a'), rSpec('a')]);
-    const rA = room('Stage A', [act('333', 1, [ch(100, '333', 1, 1)])]);
-    const rB = room('Stage B', [act('333', 2, [ch(101, '333', 2, 1)])]);
+    const rA = room('Hall A', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const rB = room('Hall B', [act('333', 2, [ch(101, '333', 2, 1)])]);
     const result = parseWCIF(mkWCIF([e], [rA, rB]), cfg());
     expect(result.checkingDays.length).toBe(result.scheduleDays.length);
     expect(result.checkingDays[0]?.dayLabel).toBe(result.scheduleDays[0]?.dayLabel);
@@ -1973,14 +1975,14 @@ describe('checking sheet', () => {
     expect(result.checkingDays[0]?.stages[0]?.rows[0]?.groupCount).toBe(3);
   });
 
-  it('counts groups per room for a round split across two stages', () => {
+  it('counts every stage\'s groups on the round\'s single row', () => {
     const e = evt('333', [rSpec('a')]);
     const rA = room('Stage A', [act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)])]);
     const rB = room('Stage B', [act('333', 1, [ch(102, '333', 1, 3)])]);
-    const result = parseWCIF(mkWCIF([e], [rA, rB]), cfg());
-    const day = result.checkingDays[0];
-    expect(day?.stages[0]?.rows[0]?.groupCount).toBe(2);
-    expect(day?.stages[1]?.rows[0]?.groupCount).toBe(1);
+    const day = parseWCIF(mkWCIF([e], [rA, rB]), cfg()).checkingDays[0];
+    expect(day?.stages.length).toBe(1);
+    expect(day?.stages[0]?.rows.length).toBe(1);
+    expect(day?.stages[0]?.rows[0]?.groupCount).toBe(3);
   });
 
   it('groupCount is 0 for a round with no groups generated yet', () => {
@@ -2011,6 +2013,141 @@ describe('checking sheet', () => {
     expect(result.checkingDays.length).toBe(2);
     expect(result.checkingDays[0]?.stages[0]?.rows[0]?.eventRound).toContain('Round 1');
     expect(result.checkingDays[1]?.stages[0]?.rows[0]?.eventRound).toContain('Final');
+  });
+});
+
+// ── Stage rooms ──────────────────────────────────────────────────────────────
+// A round run across several stages still produces one pile of scorecards, so the Round
+// Checklist gives it one row. The WCIF calls stages and separate rooms both "rooms", so the
+// room *name* is the only signal available.
+
+describe('checking sheet: stage rooms merge into one table', () => {
+  const twoStages = (nameA: string, nameB: string) => {
+    const e = evt('333', [rSpec('a')]);
+    return mkWCIF([e], [
+      room(nameA, [act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)])]),
+      room(nameB, [act('333', 1, [ch(102, '333', 1, 3)])]),
+    ]);
+  };
+
+  it('gives a round split across two stages a single row', () => {
+    const day = parseWCIF(twoStages('Red Stage', 'Blue Stage'), cfg()).checkingDays[0];
+    expect(day?.stages.length).toBe(1);
+    expect(day?.stages[0]?.rows.length).toBe(1);
+  });
+
+  it('heads the merged table with the shared word', () => {
+    const en = parseWCIF(twoStages('Red Stage', 'Blue Stage'), cfg()).checkingDays[0];
+    expect(en?.stages[0]?.stageName).toBe('Stage');
+    // The locale that motivated the regex: "Scène Rouge" / "Scène Bleue".
+    const fr = parseWCIF(twoStages('Scène Rouge', 'Scène Bleue'), cfg()).checkingDays[0];
+    expect(fr?.stages[0]?.stageName).toBe('Scène');
+  });
+
+  it('spans the merged row from the earliest start to the latest end', () => {
+    const e = evt('333', [rSpec('a')]);
+    const early = act('333', 1, [ch(100, '333', 1, 1, '2024-01-01T09:00:00Z')]);
+    const late = {
+      ...act('333', 1, [ch(101, '333', 1, 2, '2024-01-01T09:30:00Z')]),
+      endTime: '2024-01-01T11:00:00Z',
+    };
+    const wcif = mkWCIF([e], [room('Red Stage', [early]), room('Blue Stage', [late])]);
+    const row = parseWCIF(wcif, cfg()).checkingDays[0]?.stages[0]?.rows[0];
+    expect(row?.startTime).toBe('10:00'); // 09:00Z in Europe/Paris
+    expect(row?.endTime).toBe('12:00');   // 11:00Z, from the later stage
+  });
+
+  it('counts one logical group running on two stages once', () => {
+    // Simultaneous stages share the group's code, so summing per room would double it.
+    const e = evt('333', [rSpec('a')]);
+    const wcif = mkWCIF([e], [
+      room('Red Stage', [act('333', 1, [ch(100, '333', 1, 1)])]),
+      room('Blue Stage', [act('333', 1, [ch(101, '333', 1, 1)])]),
+    ]);
+    const row = parseWCIF(wcif, cfg()).checkingDays[0]?.stages[0]?.rows[0];
+    expect(row?.groupCount).toBe(1);
+  });
+
+  it('does not double a later round\'s synthesized groups', () => {
+    // groupUnitsOf synthesizes g1..gN per room from the round-wide scramble-set count.
+    const e = evt('333', [rSpec('a'), rSpec('a', { sets: 3 })]);
+    const wcif = mkWCIF([e], [
+      room('Red Stage', [bareAct2('333', 2, '2024-01-01T09:00:00Z')]),
+      room('Blue Stage', [bareAct2('333', 2, '2024-01-01T09:00:00Z')]),
+    ]);
+    const row = parseWCIF(wcif, cfg()).checkingDays[0]?.stages[0]?.rows[0];
+    expect(row?.groupCount).toBe(3);
+  });
+
+  it('keeps a genuinely separate room in its own table', () => {
+    const e = evt('333', [rSpec('a')]);
+    const f = evt('333fm', [rSpec('m')]);
+    const wcif = mkWCIF([e, f], [
+      room('Red Stage', [act('333', 1, [ch(100, '333', 1, 1)])]),
+      room('Blue Stage', [act('333', 1, [ch(101, '333', 1, 2)])]),
+      room('Side Room', [act('333fm', 1, [ch(102, '333fm', 1, 1)])]),
+    ]);
+    const day = parseWCIF(wcif, cfg()).checkingDays[0];
+    expect(day?.stages.map(s => s.stageName)).toEqual(['Stage', 'Side Room']);
+    expect(day?.stages[0]?.rows[0]?.groupCount).toBe(2);
+    expect(day?.stages[1]?.rows.length).toBe(1);
+  });
+
+  it('never merges rooms that are not named as stages', () => {
+    const e = evt('333', [rSpec('a')]);
+    const wcif = mkWCIF([e], [
+      room('Side Room', [act('333', 1, [ch(100, '333', 1, 1)])]),
+      room('Salle FMC', [act('333', 1, [ch(101, '333', 1, 2)])]),
+    ]);
+    const day = parseWCIF(wcif, cfg()).checkingDays[0];
+    expect(day?.stages.map(s => s.stageName)).toEqual(['Side Room', 'Salle FMC']);
+  });
+
+  it('keeps the merged heading on a day that uses only one of the stages', () => {
+    // The table means the same thing on every page, so it must not read "Stage" on day 1
+    // and "Red Stage" on day 2 just because the other stage is idle.
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    const wcif = mkWCIF([e], [
+      room('Red Stage', [
+        act('333', 1, [ch(100, '333', 1, 1, '2024-01-01T09:00:00Z')]),
+        act('333', 2, [ch(102, '333', 2, 1, '2024-01-02T09:00:00Z')]),
+      ]),
+      room('Blue Stage', [act('333', 1, [ch(101, '333', 1, 2, '2024-01-01T09:00:00Z')])]),
+    ]);
+    const days = parseWCIF(wcif, cfg()).checkingDays;
+    expect(days.map(d => d.stages.map(s => s.stageName))).toEqual([['Stage'], ['Stage']]);
+  });
+
+  it('leaves a lone stage room under its own name', () => {
+    const e = evt('333', [rSpec('a')]);
+    const wcif = mkWCIF([e], [room('Stage A', [act('333', 1, [ch(100, '333', 1, 1)])])]);
+    const day = parseWCIF(wcif, cfg()).checkingDays[0];
+    expect(day?.stages.map(s => s.stageName)).toEqual(['Stage A']);
+  });
+
+  it('recomputes the lunch rule on the merged rows', () => {
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    const wcif = mkWCIF([e], [
+      room('Red Stage', [
+        act('333', 1, [ch(100, '333', 1, 1, '2024-01-01T09:00:00Z')]),
+        otherAct('Lunch', '2024-01-01T12:00:00Z'),
+        act('333', 2, [ch(102, '333', 2, 1, '2024-01-01T14:00:00Z')]),
+      ]),
+      room('Blue Stage', [
+        act('333', 1, [ch(101, '333', 1, 2, '2024-01-01T09:00:00Z')]),
+        act('333', 2, [ch(103, '333', 2, 2, '2024-01-01T14:00:00Z')]),
+      ]),
+    ]);
+    const rows = parseWCIF(wcif, cfg()).checkingDays[0]?.stages[0]?.rows ?? [];
+    expect(rows.map(x => x.breakBefore)).toEqual([false, true]);
+  });
+
+  it('leaves the schedule tracker one table per room', () => {
+    // The tracker records when each stage actually runs, which merging would erase.
+    const parsed = parseWCIF(twoStages('Red Stage', 'Blue Stage'), cfg());
+    expect(parsed.scheduleDays[0]?.stages.map(s => s.stageName))
+      .toEqual(['Red Stage', 'Blue Stage']);
+    expect(parsed.checkingDays[0]?.stages.map(s => s.stageName)).toEqual(['Stage']);
   });
 });
 
