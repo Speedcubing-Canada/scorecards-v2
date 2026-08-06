@@ -1,0 +1,10 @@
+{
+  "id": "quebec",
+  "name": "Québec",
+  "region": "Canada",
+  "documents": {},
+  "settings": {
+    "language": "fr",
+    "secondaryLanguage": "en"
+  }
+}

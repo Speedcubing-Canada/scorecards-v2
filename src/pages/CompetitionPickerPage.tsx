@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
 import { fetchManagedCompetitions } from '../auth/wca';
@@ -9,6 +9,7 @@ import Header from '../components/Header';
 import AboutDialog from '../components/AboutDialog';
 import Skeleton from '../components/Skeleton';
 import { useIsMobile } from '../lib/useIsMobile';
+import { clearPresetSettings } from '../presets';
 
 export default function CompetitionPickerPage() {
   const { t } = useTranslation();
@@ -18,6 +19,11 @@ export default function CompetitionPickerPage() {
   const [competitions, setCompetitions] = useState<WCACompetition[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Starting over: drop any preset picked for a previous competition in this tab.
+  // Covers both exits from this page - the custom-competition flow skips /scope, so
+  // it would otherwise inherit a stale seed.
+  useEffect(() => clearPresetSettings(), []);
 
   useEffect(() => {
     if (!token) return;

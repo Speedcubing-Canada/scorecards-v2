@@ -1,0 +1,13 @@
+{
+  "id": "ontario",
+  "name": "Ontario",
+  "region": "Canada",
+  "documents": {
+    "firstTimerSlips": true
+  },
+  "settings": {
+    "hideWcaLiveId": true,
+    "nametagLogoMode": "hidden",
+    "nametagLayout": "horizontal"
+  }
+}

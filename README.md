@@ -70,7 +70,7 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
 - **AuthCallbackPage** - exchanges the code for a token; stores the token in `sessionStorage`.
 - **CompetitionPickerPage** - lists competitions managed by the logged-in user (WCA API `?managed_by_me=true`). An **"About this tool"** info button (ℹ) sits next to the heading; the same explainer is reachable from the login page (see below). A dashed **"Create a custom competition"** tile below the competition grid (a deliberately secondary placement for a niche flow) leads to the custom-competition builder; selecting a WCA competition clears any stale `custom_competition*` sessionStorage keys so custom state never leaks into a WCA flow.
 - **CustomCompetitionPage** (`/custom`) - builder for **custom (non-WCA) competitions** (see [Custom competitions](#custom-competitions-non-wca)). Collects a competition name and a manually defined event list (same `CustomEventEditor` component as the Advanced settings section), then writes the same sessionStorage contract the WCA flow uses - plus `custom_competition: 'true'` and `custom_competition_events` - and continues straight to Settings (no WCIF ⇒ `/scope` is skipped).
-- **RoundScopePage** - fetches the WCIF up front and detects whether any round ≥ 2 already has real group assignments (groups generated mid-competition). If not (the normal pre-competition case), it auto-advances straight to Settings. If so, it asks **what to generate** - latest round only (default) / everything / select specific event+rounds - and stores the choice. The WCIF is cached in memory (`lib/wcifCache.ts`) so GeneratePage reuses it without a second fetch. It also records whether groups have been generated yet (`parsed.hasGroups`) in `sessionStorage` under `competition_has_groups`, so the Settings page can warn without re-fetching.
+- **RoundScopePage** (`/scope`, "What to generate") - fetches the WCIF up front and detects whether any round ≥ 2 already has real group assignments (groups generated mid-competition). Two columns: an optional [**regional preset**](#regional-presets) picker on the left, and on the right the **document types** to generate (scorecards / schedule tracker / name tags / Round Checklist / first-timer slips) plus, mid-competition only, **which rounds** - latest round only (default) / everything / select specific event+rounds. The WCIF is cached in memory (`lib/wcifCache.ts`) so GeneratePage reuses it without a second fetch. It also records whether groups have been generated yet (`parsed.hasGroups`) in `sessionStorage` under `competition_has_groups`, so the Settings page can warn without re-fetching.
 - **SettingsPage** - collects paper format, language, logo, etc.; auto-detects the WCA Live competition ID and per-competitor person IDs from the WCA Live API; stores settings in `sessionStorage`. It adapts to the scope: when generating scorecards only (scope ≠ everything) it shows just scorecard-relevant options and hides the name-tag and custom-event sections; it also hides the Round 2 prefilled/blanks control once Round 2 has real groups (so the choice no longer matters). When no groups have been generated for the competition yet, it shows a **"no groups assigned"** warning banner.
 - **GeneratePage** - gets the WCIF (cache or fetch), parses it, applies the chosen scope, and renders the download button. PDF rendering runs inside a Web Worker to keep the UI responsive. Before downloading, it shows preview stats - scorecards, cover cards, PDFs, **estimated total pages**, and paper size - and repeats the "no groups assigned" warning when `parsed.hasGroups` is false.
 
@@ -97,6 +97,30 @@ The app's typeface is **Montserrat**, set on `body` and inherited everywhere (`f
 
 - `src/components/Tooltip.tsx` - a lightweight, dependency-free tooltip (hover + keyboard focus, `role="tooltip"`, themed via the tokens). Wrap any icon-only or jargon control to explain it. Used on the theme toggle, the About trigger, and the custom-event icon upload button.
 - `src/components/Skeleton.tsx` - a pulsing placeholder (configurable width/height/radius) driven by the global `.skeleton` rule and `skeleton-pulse` keyframes in `index.css`. Loading states render skeletons that mirror the eventual layout (competition cards on the picker, scope option cards, the five-stat grid on Generate) instead of bare text/emoji. The pulse and icon spinners respect `prefers-reduced-motion`.
+
+### Regional presets
+
+Organizers in a given region tend to print the same setup every time (Ontario always wants first-timer slips, hidden WCA Live IDs, hidden name-tag logos and horizontal name tags; Québec always wants French + English). Rather than a country/province step - which would make the tool read as Canada-only when it's meant for all of the Americas - the **"What to generate"** step offers an optional **preset** column. **Default** is selected out of the box, so anyone who ignores presets sees exactly the behaviour described everywhere else in this README.
+
+A preset only **seeds defaults**. Every option it touches stays editable on the following screen, and switching presets re-seeds from the base defaults rather than accumulating the previous choice.
+
+Presets are plain JSON files in **`src/presets/`**, globbed at build time by `src/presets/index.ts` (`import.meta.glob`). **Adding a region is a file drop + PR - no `.ts`/`.tsx` file changes.** Shipped: `ontario.json`, `quebec.json`, `british-columbia.json`.
+
+```jsonc
+{
+  "id": "ontario",            // required, unique
+  "name": "Ontario",          // required, shown on the card
+  "region": "Canada",         // optional, shown beneath the name
+  "documents": { "firstTimerSlips": true },
+  "settings": { "hideWcaLiveId": true, "nametagLogoMode": "hidden", "nametagLayout": "horizontal" }
+}
+```
+
+`name`/`region` are plain display strings, deliberately **not** i18n keys: place names don't translate, and a contributor dropping in a JSON file can't add keys to all four locale files (`locale-parity.test.ts` would fail).
+
+`documents` keys are `DocumentSelection` fields (applied on `/scope`); `settings` keys are the region-scoped subset of [`CompetitionSettings`](#settings-reference) (applied on `/settings`). Competition-specific fields - logo upload, custom events, WCA Live ID, round scope - are deliberately **not** seedable. Because a preset spans both steps, `/scope` stashes the `settings` half under the `preset_settings` sessionStorage key and `SettingsPage` reads it as its `useState` seed; `CompetitionPickerPage` clears it on mount so a preset never leaks into the next competition.
+
+`parsePreset()` **whitelists** keys and values - unknown keys and out-of-range values are dropped, and a preset with no `id`/`name` is skipped - so a contributor's typo can never write garbage into `CompetitionSettings`. `src/presets/presets.test.ts` asserts every shipped preset survives validation with all of its fields intact, so a misspelled key fails the test instead of silently doing nothing. Full field reference: `src/presets/README.md`.
 
 ### Interface language
 
@@ -131,6 +155,28 @@ Components call `useIsMobile()` and spread a small mobile-only style override in
 ### "About this tool" dialog
 
 `src/components/AboutDialog.tsx` is a self-contained explainer (trigger + modal) that tells newcomers what the tool is, what the **WCIF** is, and where this tool sits in the workflow - it is the *final* step, turning a competition's already-assigned groups into print-ready, cuttable PDFs. It renders either a circular ℹ icon button (default) or a text link (`as="text"`). It is placed on the **login page** (text link under the sign-in button) and the **competition picker page** (icon next to the heading). All copy lives under the `about.*` i18n keys.
+
+### "What's new" changelog
+
+Organizers typically return once per competition, months apart, so `src/components/WhatsNewDialog.tsx` shows them a short summary of what shipped since their last visit. No account or analytics data is involved: `localStorage` holds one key, `changelog_seen`, containing the id of the newest entry the visitor has read.
+
+The trigger is a sparkles icon in `Header.tsx` (desktop toolbar, or the hamburger panel on mobile), so it never appears before sign-in - the login page has no header. The dialog **opens by itself** on the first page load where unseen entries exist, and closing it marks everything read; the header remounts on every page of the wizard, but since closing writes the marker, it can only open once. Afterwards the icon still reopens it, showing the three most recent entries. A visitor with no marker at all sees the changelog - that is deliberate, otherwise the entire existing user base would silently miss the first entry.
+
+**The whole feature switches itself off once the newest entry is over a year old** (`isStale`). When the tool matures and stops receiving regular feature work, the changelog stops being news, so the icon and dialog disappear rather than greeting organizers with last year's highlights. Shipping a new entry brings it back automatically - there is no flag to flip.
+
+Entries live in **`src/changelog.ts`**, newest first. Adding one is a single-file edit:
+
+```ts
+{
+  id: '2026-09-12',                     // YYYY-MM-DD, unique; same-day second entry -> '2026-09-12b'
+  items: {
+    en: ['Short organizer-facing bullet.'],   // required
+    fr: ['Puce courte destinée aux organisateurs.'],  // optional, falls back to en
+  },
+}
+```
+
+`id` ordering is what drives the "newer than seen" comparison, so ids must stay sortable and strictly descending - `src/changelog.test.ts` enforces that, along with unique ids and non-empty text in every locale provided. Entry text is deliberately **not** in the `src/i18n/*.json` bundles: keeping it inline avoids forcing four full translations (and a `locale-parity.test.ts` failure) on every release. Only the dialog chrome - `whats_new.trigger`, `.title`, `.subtitle`, `.close` - lives in the locale files.
 
 ### "No groups assigned" warning
 
@@ -910,11 +956,21 @@ src/
   lib/
     wcif-parser.ts         - WCIF → ParsedWCIF (scorecards + nametags)
     pdfJobs.ts             - Which PDFs to render and what the download is called (bare PDF vs ZIP)
+    generationScope.ts     - GenerationScope / DocumentSelection: what to generate, and filtering by it
     i18n.ts                - All UI strings and event names for EN / FR / bilingual modes
+    logo.ts                - Resolves which logo to render: custom upload, SCC default, or none
+  components/              - Shared UI: Header, Tooltip, Skeleton, WarningBanner, AboutDialog, …
+  i18n/                    - Interface translations (en/fr/es/pt.json) + the LANGUAGES registry
+  theme/                   - Light/dark ThemeContext (localStorage-persisted)
+  presets/                 - Regional presets: one JSON per region + index.ts (build-time glob)
+    ontario.json           - Add a region by dropping a JSON file here - no code changes
+    index.ts               - Loads, validates (whitelist) and exposes PRESETS
   pages/
     LoginPage.tsx
     AuthCallbackPage.tsx
     CompetitionPickerPage.tsx
+    CustomCompetitionPage.tsx - Builder for custom (non-WCA) competitions
+    RoundScopePage.tsx     - "What to generate": presets, document types, round scope
     SettingsPage.tsx
     GeneratePage.tsx       - Fetches WCIF, drives the worker, renders download button
   pdf/
@@ -930,7 +986,5 @@ src/
     events.ts              - Maps event IDs to their icon data URLs (Vite ?inline imports)
     SC_Logo.png            - Bundled Speedcubing Canada logo (black & white)
     scc-logo.ts            - Re-exports SC_Logo.png as a data URL for the PDF worker
-  lib/
-    logo.ts                - Resolves which logo to render: custom upload, SCC default, or none
 generate-nametags.mjs      - Dev-only Node.js script to render a local name-tag PDF without a browser
 ```

@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { Check, ChevronDown, ChevronRight, RectangleHorizontal, RectangleVertical } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import type { CompetitionSettings, CustomEvent, DoubleCheckRound, LocaleCode, NametTagLayout, NametTagLogoMode, NametTagQrMode, PaperFormat, ScorecardCheckMode, ScrambleDoubleCheckOverrides, SecondRoundMode } from '../types/settings';
 import type { GenerationScope, DocumentSelection } from '../lib/generationScope';
 import { LANGUAGES } from '../i18n/index';
 import { resolveDefaultPrimaryLanguage, secondaryLanguageRow, isCanadianLanguage } from '../lib/languageSelector';
 import { parseDoubleCheckOverrides } from '../lib/parseDoubleCheckOverrides';
+import { readPresetSettings } from '../presets';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
@@ -51,23 +52,27 @@ export default function SettingsPage() {
     LANGUAGES,
   );
 
-  const [language, setLanguage] = useState<LocaleCode>(defaultPrimary);
-  const [secondaryLanguage, setSecondaryLanguage] = useState<LocaleCode | null>(null);
-  const [paperFormat, setPaperFormat] = useState<PaperFormat>('LETTER');
-  const [secondRoundMode, setSecondRoundMode] = useState<SecondRoundMode>('prefilled');
+  // Regional preset chosen on the scope step, if any. It only seeds the initial value
+  // of each option below - nothing here is locked, and `{}` means plain defaults.
+  const preset = readPresetSettings();
+
+  const [language, setLanguage] = useState<LocaleCode>(preset.language ?? defaultPrimary);
+  const [secondaryLanguage, setSecondaryLanguage] = useState<LocaleCode | null>(preset.secondaryLanguage ?? null);
+  const [paperFormat, setPaperFormat] = useState<PaperFormat>(preset.paperFormat ?? 'LETTER');
+  const [secondRoundMode, setSecondRoundMode] = useState<SecondRoundMode>(preset.secondRoundMode ?? 'prefilled');
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [logoName, setLogoName] = useState<string | null>(null);
   const [useDefaultLogo, setUseDefaultLogo] = useState<boolean>(
-    isCanadianLanguage(i18n.resolvedLanguage ?? i18n.language),
+    preset.useDefaultLogo ?? isCanadianLanguage(i18n.resolvedLanguage ?? i18n.language),
   );
   const [wcaLiveId, setWcaLiveId] = useState<string>('');
   const [wcaLivePersonIds, setWcaLivePersonIds] = useState<Record<number, string> | null>(null);
   const [wcaLiveFetchStatus, setWcaLiveFetchStatus] = useState<'loading' | 'found' | 'not-found'>('loading');
-  const [hideWcaLiveId, setHideWcaLiveId] = useState<boolean>(false);
-  const [nametagLogoMode, setNametagLogoMode] = useState<NametTagLogoMode>('with-name');
-  const [nametagQrMode, setNametagQrMode] = useState<NametTagQrMode>('back-only');
-  const [nametagLayout, setNametagLayout] = useState<NametTagLayout>('vertical');
-  const [scorecardCheckMode, setScorecardCheckMode] = useState<ScorecardCheckMode>('per-group-card');
+  const [hideWcaLiveId, setHideWcaLiveId] = useState<boolean>(preset.hideWcaLiveId ?? false);
+  const [nametagLogoMode, setNametagLogoMode] = useState<NametTagLogoMode>(preset.nametagLogoMode ?? 'with-name');
+  const [nametagQrMode, setNametagQrMode] = useState<NametTagQrMode>(preset.nametagQrMode ?? 'back-only');
+  const [nametagLayout, setNametagLayout] = useState<NametTagLayout>(preset.nametagLayout ?? 'vertical');
+  const [scorecardCheckMode, setScorecardCheckMode] = useState<ScorecardCheckMode>(preset.scorecardCheckMode ?? 'per-group-card');
   // For a custom competition the events were defined on /custom and ride along here.
   const [customEvents, setCustomEvents] = useState<CustomEvent[]>(() => {
     if (!isCustom) return [];
@@ -78,7 +83,7 @@ export default function SettingsPage() {
     }
   });
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [scrambleDoubleCheck, setScrambleDoubleCheck] = useState<boolean>(false);
+  const [scrambleDoubleCheck, setScrambleDoubleCheck] = useState<boolean>(preset.scrambleDoubleCheck ?? false);
   const [scrambleDoubleCheckRounds, setScrambleDoubleCheckRounds] = useState<DoubleCheckRound[]>(['finals']);
   const [scrambleDoubleCheckOverrides, setScrambleDoubleCheckOverrides] = useState<ScrambleDoubleCheckOverrides>({});
   const [dcOverridesName, setDcOverridesName] = useState<string | null>(null);

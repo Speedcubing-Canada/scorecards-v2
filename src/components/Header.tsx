@@ -6,6 +6,7 @@ import { WCA_API_URL } from '../auth/wca';
 import { useIsMobile } from '../lib/useIsMobile';
 import LanguageSelect from './LanguageSelect';
 import ThemeToggle from './ThemeToggle';
+import WhatsNewDialog from './WhatsNewDialog';
 import Logo from './Logo';
 
 interface HeaderProps {
@@ -74,6 +75,7 @@ export default function Header({ showBack, onBack, showUser, showSignOut = true 
               <div style={s.menuRow}>
                 <LanguageSelect />
                 <ThemeToggle />
+                <WhatsNewDialog />
               </div>
               {userInfo && <div style={s.menuUser}>{userInfo}</div>}
               {showSignOut && (
@@ -91,6 +93,7 @@ export default function Header({ showBack, onBack, showUser, showSignOut = true 
         <div style={s.right}>
           <LanguageSelect />
           <ThemeToggle />
+          <WhatsNewDialog />
           {userInfo}
           {showSignOut && (
             <button style={s.logoutBtn} onClick={logout}>

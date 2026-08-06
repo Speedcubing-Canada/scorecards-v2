@@ -168,6 +168,10 @@
     "heading": "What to generate",
     "intro": "This competition already has groups for a round after Round 1. Choose what to print - you can adjust everything else on the next screen.",
     "intro_pre": "Choose which documents to include. You can configure all options on the next screen.",
+    "presets_title": "Start from a preset",
+    "presets_hint": "Optional. Presets pre-select the options a region usually prints - you can still change anything.",
+    "preset_default": "Default",
+    "preset_default_desc": "The standard options.",
     "rounds_heading": "Which rounds?",
     "docs_title": "Document types",
     "doc_scorecards": "Scorecards",
@@ -201,6 +205,12 @@
     "wcif_body": "Every WCA competition's data (events, schedule, and registered competitors) lives on the WCA website in a format called the WCIF. Group assignments are added upstream, usually with a tool like Groupifier.",
     "workflow_title": "Where this fits",
     "workflow_body": "This is the last step before printing. Once groups have been assigned, it reads the competition's WCIF and turns it into the documents you print and cut for the day of the competition.",
+    "close": "Got it"
+  },
+  "whats_new": {
+    "trigger": "What's new",
+    "title": "What's new",
+    "subtitle": "A quick summary of what changed since your last visit.",
     "close": "Got it"
   },
   "custom": {

@@ -168,6 +168,10 @@
     "heading": "O que gerar",
     "intro": "Esta competição já tem grupos para uma rodada após a Rodada 1. Escolha o que imprimir - você pode ajustar o resto na próxima tela.",
     "intro_pre": "Escolha quais documentos incluir. Você pode configurar as opções na próxima tela.",
+    "presets_title": "Começar de uma predefinição",
+    "presets_hint": "Opcional. As predefinições pré-selecionam as opções que uma região costuma imprimir - você ainda pode mudar tudo.",
+    "preset_default": "Padrão",
+    "preset_default_desc": "As opções padrão.",
     "rounds_heading": "Quais rodadas?",
     "docs_title": "Tipos de documentos",
     "doc_scorecards": "Fichas de pontuação",
@@ -201,6 +205,12 @@
     "wcif_body": "Os dados de cada competição WCA (provas, horário e competidores inscritos) estão no site da WCA num formato chamado WCIF. As atribuições de grupos são adicionadas antes, normalmente com uma ferramenta como o Groupifier.",
     "workflow_title": "Onde se encaixa",
     "workflow_body": "Este é o último passo antes de imprimir. Depois de atribuídos os grupos, lê o WCIF da competição e transforma-o nos documentos que imprime e recorta para o dia da competição.",
+    "close": "Entendido"
+  },
+  "whats_new": {
+    "trigger": "Novidades",
+    "title": "Novidades",
+    "subtitle": "Um breve resumo das alterações desde a sua última visita.",
     "close": "Entendido"
   },
   "custom": {

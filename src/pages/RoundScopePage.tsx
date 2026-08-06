@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { XCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
 import { fetchWcif } from '../auth/wca';
@@ -11,6 +11,7 @@ import {
   type GenerationScope, type DocumentSelection,
 } from '../lib/generationScope';
 import type { CompetitionSettings, LocaleCode } from '../types/settings';
+import { PRESETS, writePresetSettings, type Preset } from '../presets';
 import Header from '../components/Header';
 import Skeleton from '../components/Skeleton';
 import { useIsMobile } from '../lib/useIsMobile';
@@ -18,6 +19,17 @@ import { useIsMobile } from '../lib/useIsMobile';
 type Status = 'loading' | 'ready' | 'error';
 
 const keyOf = (eventId: string, roundNum: number) => `${eventId}|${roundNum}`;
+
+// Document defaults a preset starts from. Mid-competition, only scorecards are
+// usually wanted - the schedule and name tags were printed before day 1.
+const baseDocuments = (isMidComp: boolean): DocumentSelection => ({
+  scorecards: true,
+  scheduleTracker: !isMidComp,
+  nametags: !isMidComp,
+  // Opt-in in both pre- and mid-competition defaults - most delegates don't need them.
+  roundChecklist: false,
+  firstTimerSlips: false,
+});
 
 function persistScope(scope: GenerationScope, showSecondRoundMode: boolean) {
   sessionStorage.setItem('generation_scope', JSON.stringify(scope));
@@ -49,6 +61,10 @@ export default function RoundScopePage() {
   // Opt-in in both pre- and mid-competition defaults - most delegates don't need it.
   const [docRoundChecklist, setDocRoundChecklist] = useState(false);
   const [docFirstTimers, setDocFirstTimers] = useState(false);
+
+  // Regional preset - null means "Default". A preset only seeds the options below
+  // (and, via sessionStorage, the /settings step); everything stays editable after.
+  const [presetId, setPresetId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!competitionId || !token) return;
@@ -131,6 +147,18 @@ export default function RoundScopePage() {
   }, [parsed]);
   const effectiveSelected = selectedKeys ?? defaultSelected;
 
+  // Selecting a preset re-seeds every document flag from the base defaults, so
+  // switching between presets never accumulates the previous one's choices.
+  function applyPreset(preset: Preset | null) {
+    setPresetId(preset?.id ?? null);
+    const docs = { ...baseDocuments(isMidComp), ...(preset?.documents ?? {}) };
+    setDocScorecards(docs.scorecards);
+    setDocSchedule(docs.scheduleTracker);
+    setDocNametags(docs.nametags);
+    setDocRoundChecklist(docs.roundChecklist);
+    setDocFirstTimers(docs.firstTimerSlips);
+  }
+
   function toggleRound(key: string) {
     setSelectedKeys(prev => {
       const next = new Set(prev ?? defaultSelected);
@@ -165,6 +193,9 @@ export default function RoundScopePage() {
 
     const showSecondRoundMode = hasUnassignedIntermediate(filterParsedByScope(parsed, scope));
     persistScope(scope, showSecondRoundMode);
+    // The other half of the preset lives on /settings. Always write (or clear) it so
+    // going back and switching presets can't leave the previous one's settings behind.
+    writePresetSettings(PRESETS.find(p => p.id === presetId)?.settings ?? null);
     navigate('/settings');
   }
 
@@ -192,10 +223,16 @@ export default function RoundScopePage() {
         {status === 'loading' && (
           <div role="status" aria-label={t('scope.checking')}>
             <Skeleton width="55%" height={14} style={{ marginBottom: 20 }} />
-            <Skeleton width={140} height={15} style={{ marginBottom: 12 }} />
-            <div style={s.optionGroup}>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} height={62} radius="var(--radius-md)" />
+            <div style={s.columns}>
+              {Array.from({ length: 2 }).map((_, col) => (
+                <div key={col}>
+                  <Skeleton width={140} height={15} style={{ marginBottom: 12 }} />
+                  <div style={s.optionGroup}>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} height={62} radius="var(--radius-md)" />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
@@ -211,58 +248,91 @@ export default function RoundScopePage() {
           <>
             <p style={s.intro}>{isMidComp ? t('scope.intro') : t('scope.intro_pre')}</p>
 
-            {isMidComp && (
-              <>
-                <h3 style={s.sectionHeading}>{t('scope.rounds_heading')}</h3>
-                <div style={s.optionGroup}>
-                  {(['latest', 'everything', 'selected'] as const).map(mode => (
-                    <label key={mode} style={{ ...s.optionCard, ...(scopeMode === mode ? s.optionCardActive : {}) }}>
-                      <input
-                        type="radio"
-                        name="scope"
-                        checked={scopeMode === mode}
-                        onChange={() => setScopeMode(mode)}
-                        style={s.radio}
-                      />
-                      <div>
-                        <div style={s.optionLabel}>{t(`scope.${mode}.label`)}</div>
-                        <div style={s.optionDesc}>{t(`scope.${mode}.desc`)}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-
-                {scopeMode === 'selected' && (
-                  <div style={{ ...s.optionGroup, marginTop: 10 }}>
-                    {roundOptions.map(o => (
-                      <label key={o.key} style={{ ...s.optionCard, ...(effectiveSelected.has(o.key) ? s.optionCardActive : {}) }}>
+            <div style={s.columns}>
+              {PRESETS.length > 0 && (
+                <section>
+                  <h3 style={s.sectionHeading}>{t('scope.presets_title')}</h3>
+                  <p style={s.sectionHint}>{t('scope.presets_hint')}</p>
+                  <div style={s.optionGroup}>
+                    {[null, ...PRESETS].map(preset => (
+                      <label
+                        key={preset?.id ?? 'default'}
+                        style={{ ...s.optionCard, ...(presetId === (preset?.id ?? null) ? s.optionCardActive : {}) }}
+                      >
                         <input
-                          type="checkbox"
-                          checked={effectiveSelected.has(o.key)}
-                          onChange={() => toggleRound(o.key)}
+                          type="radio"
+                          name="preset"
+                          checked={presetId === (preset?.id ?? null)}
+                          onChange={() => applyPreset(preset)}
                           style={s.radio}
                         />
-                        <div style={s.optionLabel}>{o.label}</div>
+                        <div>
+                          <div style={s.optionLabel}>{preset?.name ?? t('scope.preset_default')}</div>
+                          {(preset ? preset.region : t('scope.preset_default_desc')) && (
+                            <div style={s.optionDesc}>{preset ? preset.region : t('scope.preset_default_desc')}</div>
+                          )}
+                        </div>
                       </label>
                     ))}
                   </div>
-                )}
-              </>
-            )}
+                </section>
+              )}
 
-            <h3 style={{ ...s.sectionHeading, marginTop: isMidComp ? 24 : 0 }}>{t('scope.docs_title')}</h3>
-            <div style={s.optionGroup}>
-              {docOptions.map(o => (
-                <label key={o.key} style={{ ...s.optionCard, ...(o.checked ? s.optionCardActive : {}) }}>
-                  <input
-                    type="checkbox"
-                    checked={o.checked}
-                    onChange={e => o.set(e.target.checked)}
-                    style={s.radio}
-                  />
-                  <div style={s.optionLabel}>{o.label}</div>
-                </label>
-              ))}
+              <section>
+                {isMidComp && (
+                  <>
+                    <h3 style={s.sectionHeading}>{t('scope.rounds_heading')}</h3>
+                    <div style={s.optionGroup}>
+                      {(['latest', 'everything', 'selected'] as const).map(mode => (
+                        <label key={mode} style={{ ...s.optionCard, ...(scopeMode === mode ? s.optionCardActive : {}) }}>
+                          <input
+                            type="radio"
+                            name="scope"
+                            checked={scopeMode === mode}
+                            onChange={() => setScopeMode(mode)}
+                            style={s.radio}
+                          />
+                          <div>
+                            <div style={s.optionLabel}>{t(`scope.${mode}.label`)}</div>
+                            <div style={s.optionDesc}>{t(`scope.${mode}.desc`)}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+
+                    {scopeMode === 'selected' && (
+                      <div style={{ ...s.optionGroup, marginTop: 10 }}>
+                        {roundOptions.map(o => (
+                          <label key={o.key} style={{ ...s.optionCard, ...(effectiveSelected.has(o.key) ? s.optionCardActive : {}) }}>
+                            <input
+                              type="checkbox"
+                              checked={effectiveSelected.has(o.key)}
+                              onChange={() => toggleRound(o.key)}
+                              style={s.radio}
+                            />
+                            <div style={s.optionLabel}>{o.label}</div>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <h3 style={{ ...s.sectionHeading, marginTop: isMidComp ? 24 : 0 }}>{t('scope.docs_title')}</h3>
+                <div style={s.optionGroup}>
+                  {docOptions.map(o => (
+                    <label key={o.key} style={{ ...s.optionCard, ...(o.checked ? s.optionCardActive : {}) }}>
+                      <input
+                        type="checkbox"
+                        checked={o.checked}
+                        onChange={e => o.set(e.target.checked)}
+                        style={s.radio}
+                      />
+                      <div style={s.optionLabel}>{o.label}</div>
+                    </label>
+                  ))}
+                </div>
+              </section>
             </div>
 
             <button
@@ -281,15 +351,26 @@ export default function RoundScopePage() {
 
 const s: Record<string, React.CSSProperties> = {
   page: { minHeight: '100vh', backgroundColor: 'var(--bg)' },
-  main: { maxWidth: 680, margin: '0 auto', padding: '32px 24px' },
+  main: { maxWidth: 1040, margin: '0 auto', padding: '32px 24px' },
   mainMobile: { padding: '24px 16px' },
+  // auto-fit collapses to a single column on its own once a column would fall under
+  // 300px, so narrow desktop windows need no extra breakpoint beyond useIsMobile().
+  columns: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+    gap: 24,
+    alignItems: 'start',
+  },
   compBadge: {
     display: 'inline-block', backgroundColor: 'var(--primary-soft-bg)', color: 'var(--primary-soft-text)',
     borderRadius: 'var(--radius-sm)', padding: '4px 12px', fontSize: 'var(--fs-label)', fontWeight: 700, marginBottom: 8,
   },
   pageTitle: { margin: '0 0 8px', fontSize: 'var(--fs-display)', fontWeight: 700, color: 'var(--text)' },
   sectionHeading: { margin: '0 0 12px', fontSize: 'var(--fs-heading)', fontWeight: 700, color: 'var(--text)' },
-  intro: { margin: '0 0 20px', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' },
+  sectionHint: { margin: '-6px 0 12px', fontSize: 'var(--fs-label)', color: 'var(--text-muted)' },
+  // Capped: the page is now wide enough that a full-width paragraph would be a
+  // hard-to-track line length.
+  intro: { margin: '0 0 24px', maxWidth: '68ch', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' },
   statusBox: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
     backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
