@@ -162,7 +162,28 @@
       "total_pages": "Pages"
     },
     "download_button": "⬇ Télécharger {{filename}}",
-    "building_button": "Création du ZIP…"
+    "building_button": "Création du ZIP…",
+    "guide": {
+      "title": "Comment imprimer et découper",
+      "scorecards": {
+        "callout": "Les feuilles de score sortent déjà triées. Découpez-les, gardez les piles telles quelles, et vous n'avez jamais rien à trier à la main.",
+        "diagram": {
+          "sheet": "4 par feuille",
+          "piles": "Découper → 4 piles",
+          "deck": "Empiler 1-2-3-4"
+        },
+        "steps": {
+          "print": "Imprimez le PDF des feuilles de score en recto seul, dans l'ordre des pages. Ne mélangez pas les pages.",
+          "cut": "Découpez chaque feuille en 4 le long des lignes de coupe, et gardez les morceaux séparés par position : haut-gauche, haut-droite, bas-gauche, bas-droite. Chacune de ces quatre piles est déjà dans le bon ordre.",
+          "stack": "Posez la pile haut-gauche sur la pile haut-droite, puis la bas-gauche, puis la bas-droite. Ce paquet unique contient tous les groupes de toutes les rondes, dans l'ordre de l'horaire.",
+          "covers": "Une feuille de couverture marque le début de chaque groupe : vous prenez chaque groupe sur le dessus du paquet au fur et à mesure de la ronde."
+        }
+      },
+      "schedule": "Suivi de l'horaire : s'imprime tel quel, une page par journée. Affichez-le à la scène ou remettez-le à l'équipe de plancher.",
+      "checking": "Liste de vérification des rondes : s'imprime telle quelle, un tableau par journée. Cochez chaque ronde à mesure que ses feuilles reviennent.",
+      "nametags": "Porte-noms : quatre personnes par page, recto et verso côte à côte. Découpez chaque paire et pliez-la au milieu avant de l'insérer dans un porte-badge.",
+      "first_timers": "Fiches de première participation : les fiches se suivent sur la page. Découpez entre elles et remettez chacune au délégué, qui la signe après la première résolution du nouveau participant."
+    }
   },
   "scope": {
     "heading": "Que générer",

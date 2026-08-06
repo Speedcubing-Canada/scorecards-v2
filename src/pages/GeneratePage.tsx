@@ -15,6 +15,7 @@ import type { WorkerRequest, WorkerResponse } from '../pdf/scorecardWorker';
 import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
 import Skeleton from '../components/Skeleton';
+import PrintGuide from '../components/PrintGuide';
 import { useIsMobile } from '../lib/useIsMobile';
 import { downloadButtonFontSize } from '../lib/downloadButtonFontSize';
 import i18n from '../i18n/index';
@@ -249,6 +250,8 @@ export default function GeneratePage() {
                 </button>
               );
             })()}
+
+            <PrintGuide jobs={jobs} />
           </>
         )}
       </main>

@@ -162,7 +162,28 @@
       "total_pages": "Páginas"
     },
     "download_button": "⬇ Baixar {{filename}}",
-    "building_button": "Criando ZIP…"
+    "building_button": "Criando ZIP…",
+    "guide": {
+      "title": "Como imprimir e recortar",
+      "scorecards": {
+        "callout": "As folhas de pontuação saem já ordenadas. Recorte-as, mantenha as pilhas como ficaram e você nunca precisa ordenar nada à mão.",
+        "diagram": {
+          "sheet": "4 por folha",
+          "piles": "Recortar → 4 pilhas",
+          "deck": "Empilhar 1-2-3-4"
+        },
+        "steps": {
+          "print": "Imprima o PDF das folhas de pontuação só na frente, na ordem das páginas. Não embaralhe as páginas.",
+          "cut": "Recorte cada folha em 4 pelas linhas de corte e mantenha os pedaços separados por posição: superior-esquerda, superior-direita, inferior-esquerda, inferior-direita. Cada uma dessas quatro pilhas já está na ordem certa.",
+          "stack": "Coloque a pilha superior-esquerda sobre a superior-direita, depois a inferior-esquerda e depois a inferior-direita. Esse maço único contém todos os grupos de todas as rodadas, na ordem do cronograma.",
+          "covers": "Uma folha de capa marca o início de cada grupo, então basta ir tirando cada grupo do topo do maço conforme a rodada acontece."
+        }
+      },
+      "schedule": "Acompanhamento do cronograma: imprime como está, uma página por dia. Fixe no palco ou entregue à equipe de sala.",
+      "checking": "Checklist de rodadas: imprime como está, uma tabela por dia. Marque cada rodada conforme as folhas de pontuação voltam.",
+      "nametags": "Crachás: quatro pessoas por página, frente e verso lado a lado. Recorte cada par e dobre ao meio antes de colocar no porta-crachá.",
+      "first_timers": "Comprovantes de estreantes: os comprovantes seguem um após o outro na página. Recorte entre eles e entregue cada um ao delegado para assinar após a primeira tentativa do estreante."
+    }
   },
   "scope": {
     "heading": "O que gerar",

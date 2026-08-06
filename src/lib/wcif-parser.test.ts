@@ -2270,3 +2270,49 @@ describe('lunch break rule', () => {
       .toEqual(parsed.checkingDays[0]?.rows.map(x => x.breakBefore));
   });
 });
+
+// ── Cut-and-stack contract ───────────────────────────────────────────────────
+// The download page (`components/PrintGuide.tsx`) tells organisers to cut each sheet
+// into 4, keep one pile per quadrant, and stack them 1-2-3-4 to get the whole
+// competition in order - because that's the whole point of the imposition. Nothing
+// else asserts that property on its own, so if the page layout ever changes this test
+// fails instead of the printed instructions silently becoming wrong.
+
+describe('cut-and-stack imposition (what PrintGuide promises)', () => {
+  // 333 round 1 with 2 groups and enough competitors to fill several sheets.
+  function deck() {
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)])]);
+    const persons = Array.from({ length: 13 }, (_, i) =>
+      per(i + 1, [{ aid: i % 2 === 0 ? 100 : 101 }]));
+    return parseWCIF(mkWCIF([e], [r], persons), cfg()).firstRound;
+  }
+
+  it('pads the printed deck to whole sheets of 4', () => {
+    expect(deck().length % 4).toBe(0);
+  });
+
+  it('reading quadrant 1 down the sheets, then 2, 3, 4, gives the sorted order', () => {
+    const printed = deck();
+    const stacked = unimpose(printed);
+    // Each pile is one quadrant read top sheet to bottom sheet.
+    const piles = [0, 1, 2, 3].map(q => printed.filter((_, i) => i % 4 === q));
+    expect(stacked).toEqual([...piles[0], ...piles[1], ...piles[2], ...piles[3]]);
+
+    // ...and that stack is the sort order the guide claims: group, then name.
+    const keys = stacked.map(x => `${x.group}|${x.kind === 'scorecard' ? x.name : ''}`);
+    expect(keys.filter(k => !k.startsWith('|'))).toEqual(
+      [...keys.filter(k => !k.startsWith('|'))].sort(),
+    );
+  });
+
+  it("each group's cover card sits directly on top of that group's scorecards", () => {
+    const stacked = unimpose(deck()).filter(x => x.kind !== 'cover' || !!x.eventId);
+    for (let i = 0; i < stacked.length; i++) {
+      if (stacked[i].kind !== 'cover') continue;
+      const next = stacked[i + 1];
+      expect(next?.kind).toBe('scorecard');
+      expect(next?.group).toBe(stacked[i].group);
+    }
+  });
+});

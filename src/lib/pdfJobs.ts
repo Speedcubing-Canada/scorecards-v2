@@ -67,6 +67,27 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
 }
 
 /**
+ * The print-and-cut guide sections that apply to a download (rendered by
+ * `components/PrintGuide.tsx`). Driven by the jobs rather than by the settings, so
+ * someone generating only the schedule tracker is never told how to cut scorecards.
+ *
+ * Custom-event cards print 4-up on the same sheet as ordinary scorecards, so they fold
+ * into the same section.
+ */
+export type GuideSection = 'scorecards' | 'schedule' | 'checking' | 'nametags' | 'first-timers';
+
+export function guideSections(jobs: PdfJob[]): GuideSection[] {
+  const kinds = new Set(jobs.map(j => j.kind));
+  const out: GuideSection[] = [];
+  if (kinds.has('scorecards') || kinds.has('custom')) out.push('scorecards');
+  if (kinds.has('schedule')) out.push('schedule');
+  if (kinds.has('checking')) out.push('checking');
+  if (kinds.has('nametags')) out.push('nametags');
+  if (kinds.has('first-timers')) out.push('first-timers');
+  return out;
+}
+
+/**
  * What the browser actually downloads. A lone PDF ships as itself so it can be
  * printed straight from the download - zipping a single file only adds a step.
  * Two or more still bundle: not "_scorecards", since the bundle routinely

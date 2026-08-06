@@ -20,15 +20,19 @@ export const CHANGELOG: ChangelogEntry[] = [
     items: {
       en: [
         'Presets: start from the options a region usually prints, then change anything you want.',
+        'The download page now explains how to print and cut each PDF — including why the scorecards never need sorting.',
       ],
       fr: [
         "Préréglages : partez des options habituelles d’une région, puis modifiez ce que vous voulez.",
+        "La page de téléchargement explique maintenant comment imprimer et découper chaque PDF — dont pourquoi les feuilles de pointage n'ont jamais besoin d'être triées.",
       ],
       es: [
         'Preajustes: empiece con las opciones que suele usar una región y cambie lo que quiera.',
+        'La página de descarga ahora explica cómo imprimir y recortar cada PDF, incluido por qué las hojas de puntuación nunca hay que ordenarlas.',
       ],
       pt: [
         'Predefinições: comece com as opções que uma região costuma imprimir e mude o que quiser.',
+        'A página de transferência agora explica como imprimir e recortar cada PDF — incluindo porque as folhas de pontuação nunca precisam de ser ordenadas.',
       ],
     },
   },

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildPdfJobs, downloadTarget } from './pdfJobs';
+import { buildPdfJobs, downloadTarget, guideSections } from './pdfJobs';
+import type { PdfJob } from './pdfJobs';
 import { filterParsedByScope } from './generationScope';
 import type { ParsedWCIF, ScorecardEntry, CoverEntry } from './wcif-parser';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
@@ -221,5 +222,54 @@ describe('single-document scopes download as a bare PDF', () => {
       filename: 'Test2026_pdfs.zip',
       mimeType: 'application/zip',
     });
+  });
+});
+
+// ── Print-and-cut guide sections ─────────────────────────────────────────────
+// The download page's guide must only explain the PDFs actually in the download:
+// someone generating just the schedule tracker was being told how to cut and stack
+// scorecards they never asked for.
+
+describe('guideSections', () => {
+  const cards = (label: string): PdfJob =>
+    ({ kind: 'scorecards', filename: `c_${label}.pdf`, label, entries: [] });
+  const other = (kind: PdfJob['kind']): PdfJob =>
+    ({ kind, filename: `c_${kind}.pdf`, label: kind } as PdfJob);
+
+  it('shows nothing when there is nothing to download', () => {
+    expect(guideSections([])).toEqual([]);
+  });
+
+  it('shows only the schedule note for a schedule-only download', () => {
+    expect(guideSections([other('schedule')])).toEqual(['schedule']);
+  });
+
+  it('shows only the scorecard section for a scorecard-only download', () => {
+    expect(guideSections([cards('Round 1'), cards('Finals')])).toEqual(['scorecards']);
+  });
+
+  it('treats custom-event cards as scorecards - they print 4-up on the same sheet', () => {
+    expect(guideSections([other('custom')])).toEqual(['scorecards']);
+  });
+
+  it('collapses scorecards and custom events into a single section', () => {
+    expect(guideSections([cards('Round 1'), other('custom')])).toEqual(['scorecards']);
+  });
+
+  it('lists every section for a full download, scorecards first', () => {
+    expect(guideSections([
+      cards('Round 1'), other('schedule'), other('checking'),
+      other('nametags'), other('first-timers'),
+    ])).toEqual(['scorecards', 'schedule', 'checking', 'nametags', 'first-timers']);
+  });
+
+  it('keeps a fixed section order regardless of job order', () => {
+    expect(guideSections([other('first-timers'), other('nametags'), cards('Finals')]))
+      .toEqual(['scorecards', 'nametags', 'first-timers']);
+  });
+
+  it('never names a document the jobs do not contain', () => {
+    const parsed = mkParsed({ firstRound: [cover(), sc(1, 'A')] });
+    expect(guideSections(buildPdfJobs(parsed, mkSettings()))).toEqual(['scorecards']);
   });
 });

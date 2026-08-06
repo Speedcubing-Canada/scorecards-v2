@@ -72,7 +72,7 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
 - **CustomCompetitionPage** (`/custom`) - builder for **custom (non-WCA) competitions** (see [Custom competitions](#custom-competitions-non-wca)). Collects a competition name and a manually defined event list (same `CustomEventEditor` component as the Advanced settings section), then writes the same sessionStorage contract the WCA flow uses - plus `custom_competition: 'true'` and `custom_competition_events` - and continues straight to Settings (no WCIF ⇒ `/scope` is skipped).
 - **RoundScopePage** (`/scope`, "What to generate") - fetches the WCIF up front and detects whether any round ≥ 2 already has real group assignments (groups generated mid-competition). Two columns: an optional [**regional preset**](#regional-presets) picker on the left, and on the right the **document types** to generate (scorecards / schedule tracker / name tags / Round Checklist / first-timer slips) plus, mid-competition only, **which rounds** - latest round only (default) / everything / select specific event+rounds. The WCIF is cached in memory (`lib/wcifCache.ts`) so GeneratePage reuses it without a second fetch. It also records whether groups have been generated yet (`parsed.hasGroups`) in `sessionStorage` under `competition_has_groups`, so the Settings page can warn without re-fetching.
 - **SettingsPage** - collects paper format, language, logo, etc.; auto-detects the WCA Live competition ID and per-competitor person IDs from the WCA Live API; stores settings in `sessionStorage`. It adapts to the scope: when generating scorecards only (scope ≠ everything) it shows just scorecard-relevant options and hides the name-tag and custom-event sections; it also hides the Round 2 prefilled/blanks control once Round 2 has real groups (so the choice no longer matters). When no groups have been generated for the competition yet, it shows a **"no groups assigned"** warning banner.
-- **GeneratePage** - gets the WCIF (cache or fetch), parses it, applies the chosen scope, and renders the download button. PDF rendering runs inside a Web Worker to keep the UI responsive. Before downloading, it shows preview stats - scorecards, cover cards, PDFs, **estimated total pages**, and paper size - and repeats the "no groups assigned" warning when `parsed.hasGroups` is false.
+- **GeneratePage** - gets the WCIF (cache or fetch), parses it, applies the chosen scope, and renders the download button. PDF rendering runs inside a Web Worker to keep the UI responsive. Before downloading, it shows preview stats - scorecards, cover cards, PDFs, **estimated total pages**, and paper size - and repeats the "no groups assigned" warning when `parsed.hasGroups` is false. Under the button sits the [**print-and-cut guide**](#print-and-cut-guide), which explains what to do with each PDF in the download.
 
 Settings and auth state live in `sessionStorage` only - they are cleared when the tab is closed and are never sent to any server.
 
@@ -96,6 +96,7 @@ The app's typeface is **Montserrat**, set on `body` and inherited everywhere (`f
 **Shared UI primitives:**
 
 - `src/components/Tooltip.tsx` - a lightweight, dependency-free tooltip (hover + keyboard focus, `role="tooltip"`, themed via the tokens). Wrap any icon-only or jargon control to explain it. Used on the theme toggle, the About trigger, and the custom-event icon upload button.
+- `src/components/PrintGuide.tsx` - the download page's [print-and-cut guide](#print-and-cut-guide): a per-document "what to do with this PDF" card, with a CSS-only sheet → piles → deck diagram for scorecards.
 - `src/components/Skeleton.tsx` - a pulsing placeholder (configurable width/height/radius) driven by the global `.skeleton` rule and `skeleton-pulse` keyframes in `index.css`. Loading states render skeletons that mirror the eventual layout (competition cards on the picker, scope option cards, the five-stat grid on Generate) instead of bare text/emoji. The pulse and icon spinners respect `prefers-reduced-motion`.
 
 ### Regional presets
@@ -411,6 +412,18 @@ When a run produces **two or more PDFs**, the download is a ZIP named **`{compet
 When a run produces **exactly one PDF**, that PDF is downloaded directly - `{competitionId}_schedule.pdf`, not a one-file ZIP - so it can be printed straight from the download. This is the normal case for the mid-competition scope step, where an organizer picks a single document such as the schedule tracker or the Round Checklist. The download button label always shows the file you will actually get.
 
 Both the file list and the zip-vs-bare-PDF decision come from `src/lib/pdfJobs.ts` (`buildPdfJobs` / `downloadTarget`), which the worker and the generate page share - so the "PDFs" stat, the button label, and the rendered output can't disagree.
+
+### Print-and-cut guide
+
+Organisers have lost hours re-sorting a whole competition by hand after cutting the sheets, not realising the scorecards come out of the generator **already in order**. `src/components/PrintGuide.tsx` puts that workflow on the download page, under the button:
+
+1. Print the scorecard PDF single-sided, in page order.
+2. Cut every sheet into 4, keeping the pieces separated by position - top-left, top-right, bottom-left, bottom-right. Each of those four piles is already correctly ordered.
+3. Stack the top-left pile on the top-right, then the bottom-left, then the bottom-right. That single deck holds every group of every round in schedule order, each group led by its cover card.
+
+That is exactly what `reorderQuadrants` (`src/lib/wcif-parser.ts`) imposes: `finalizeEntries` sorts, pads to a multiple of 4, then deals the sorted list column-wise across the pages, and `ScorecardDocument` places the four cards per page in reading order. The `cut-and-stack imposition` tests in `wcif-parser.test.ts` pin that contract so the printed instructions can't silently go stale.
+
+The guide is **per document**: it lists only the PDFs actually in the download, so an organiser generating just the schedule tracker is never shown scorecard cutting instructions. The sections come from `guideSections(jobs)` in `src/lib/pdfJobs.ts` - the same job list that drives the "PDFs" stat and the button label - and cover scorecards (incl. custom events, which print 4-up on the same sheet), the schedule tracker, the Round Checklist, name tags (four people per page, front and back side by side: cut each pair out and fold it down the middle), and first-timer slips. Copy lives under the `generate.guide.*` i18n keys in all four locales.
 
 | File | Contents |
 |---|---|
@@ -959,7 +972,7 @@ src/
     generationScope.ts     - GenerationScope / DocumentSelection: what to generate, and filtering by it
     i18n.ts                - All UI strings and event names for EN / FR / bilingual modes
     logo.ts                - Resolves which logo to render: custom upload, SCC default, or none
-  components/              - Shared UI: Header, Tooltip, Skeleton, WarningBanner, AboutDialog, …
+  components/              - Shared UI: Header, Tooltip, Skeleton, WarningBanner, AboutDialog, PrintGuide, …
   i18n/                    - Interface translations (en/fr/es/pt.json) + the LANGUAGES registry
   theme/                   - Light/dark ThemeContext (localStorage-persisted)
   presets/                 - Regional presets: one JSON per region + index.ts (build-time glob)

@@ -162,7 +162,28 @@
       "total_pages": "Pages"
     },
     "download_button": "⬇ Download {{filename}}",
-    "building_button": "Building ZIP…"
+    "building_button": "Building ZIP…",
+    "guide": {
+      "title": "How to print and cut",
+      "scorecards": {
+        "callout": "The scorecards come out already sorted. Cut them, keep the piles as they are, and you never have to sort anything by hand.",
+        "diagram": {
+          "sheet": "4 per sheet",
+          "piles": "Cut → 4 piles",
+          "deck": "Stack 1-2-3-4"
+        },
+        "steps": {
+          "print": "Print the scorecard PDF single-sided, in page order. Don't shuffle the pages.",
+          "cut": "Cut every sheet into 4 along the cut lines, and keep the pieces separated by position: top-left, top-right, bottom-left, bottom-right. Each of those four piles is already in the right order.",
+          "stack": "Put the top-left pile on the top-right one, then the bottom-left, then the bottom-right. That single deck holds every group of every round, in schedule order.",
+          "covers": "A cover card marks the start of each group, so you can take each group off the top of the deck as the round runs."
+        }
+      },
+      "schedule": "Schedule tracker: prints as-is, one page per day. Post it at the stage or hand it to the run team.",
+      "checking": "Round checklist: prints as-is, one table per day. Tick each round off as its scorecards come back in.",
+      "nametags": "Name tags: four people per page, front and back side by side. Cut out each pair and fold it down the middle before sliding it into a badge holder.",
+      "first_timers": "First-timer slips: the slips flow down the page. Cut between them and give each one to the delegate to sign after that newcomer's first solve."
+    }
   },
   "scope": {
     "heading": "What to generate",

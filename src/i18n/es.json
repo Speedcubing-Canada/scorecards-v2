@@ -162,7 +162,28 @@
       "total_pages": "Páginas"
     },
     "download_button": "⬇ Descargar {{filename}}",
-    "building_button": "Creando ZIP…"
+    "building_button": "Creando ZIP…",
+    "guide": {
+      "title": "Cómo imprimir y recortar",
+      "scorecards": {
+        "callout": "Las hojas de puntuación salen ya ordenadas. Recórtalas, mantén los montones tal como quedan y nunca tendrás que ordenar nada a mano.",
+        "diagram": {
+          "sheet": "4 por hoja",
+          "piles": "Recortar → 4 montones",
+          "deck": "Apilar 1-2-3-4"
+        },
+        "steps": {
+          "print": "Imprime el PDF de hojas de puntuación a una sola cara, en orden de páginas. No mezcles las páginas.",
+          "cut": "Recorta cada hoja en 4 por las líneas de corte y mantén los trozos separados por posición: arriba-izquierda, arriba-derecha, abajo-izquierda, abajo-derecha. Cada uno de esos cuatro montones ya está en el orden correcto.",
+          "stack": "Pon el montón de arriba-izquierda sobre el de arriba-derecha, luego el de abajo-izquierda y luego el de abajo-derecha. Ese único mazo contiene todos los grupos de todas las rondas, en orden de horario.",
+          "covers": "Una hoja de portada marca el inicio de cada grupo, así que puedes ir tomando cada grupo de encima del mazo según avanza la ronda."
+        }
+      },
+      "schedule": "Seguimiento del horario: se imprime tal cual, una página por día. Colócalo en el escenario o entrégalo al equipo de sala.",
+      "checking": "Lista de rondas: se imprime tal cual, una tabla por día. Marca cada ronda a medida que vuelven sus hojas de puntuación.",
+      "nametags": "Credenciales: cuatro personas por página, anverso y reverso lado a lado. Recorta cada par y dóblalo por la mitad antes de meterlo en el portacredenciales.",
+      "first_timers": "Comprobantes de debutantes: los comprobantes van uno tras otro en la página. Recorta entre ellos y entrega cada uno al delegado para que lo firme tras el primer intento del debutante."
+    }
   },
   "scope": {
     "heading": "Qué generar",
