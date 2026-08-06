@@ -157,7 +157,7 @@
     "stats": {
       "scorecards": "Folhas de pontuação",
       "cover_cards": "Folhas de capa",
-      "pdfs_in_zip": "PDFs no ZIP",
+      "pdfs": "PDFs",
       "paper": "Papel",
       "total_pages": "Páginas"
     },

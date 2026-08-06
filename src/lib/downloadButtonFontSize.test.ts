@@ -29,6 +29,26 @@ describe('downloadButtonFontSize', () => {
     expect(downloadButtonFontSize('⬇ Download Gj2026_pdfs.zip')).toBe(DOWNLOAD_BUTTON_FONT_SIZE);
   });
 
+  // A single-document scope downloads the PDF itself, so the button now shows a
+  // per-document filename instead of the zip. Those suffixes run longer than
+  // "_pdfs.zip" (up to "_first_timers.pdf"), which moves the labels right across
+  // the thresholds - the opposite direction from the rename above.
+  it('keeps the default size for a single-PDF label on a typical competition ID', () => {
+    expect(downloadButtonFontSize('⬇ Download Gj2026_schedule.pdf')).toBe(DOWNLOAD_BUTTON_FONT_SIZE);
+  });
+
+  it('shrinks the longest single-PDF suffix even on a typical competition ID', () => {
+    const size = downloadButtonFontSize('⬇ Download Gj2026_first_timers.pdf');
+    expect(size).toBeLessThan(DOWNLOAD_BUTTON_FONT_SIZE);
+    expect(size).toBeGreaterThan(12);
+  });
+
+  // Long ID + long suffix bottoms out at the floor, same as the zip label does;
+  // the button's overflowWrap is the safety net past this point.
+  it('falls to the floor for a long ID with a single-PDF filename', () => {
+    expect(downloadButtonFontSize('⬇ Download BigCubingCompetitionInParis2025_first_timers.pdf')).toBe(12);
+  });
+
   it('never returns smaller than the floor', () => {
     expect(downloadButtonFontSize('x'.repeat(500))).toBe(12);
   });

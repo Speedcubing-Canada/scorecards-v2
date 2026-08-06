@@ -1,12 +1,12 @@
 # WCA Scorecard Generator v2
 
-A browser-only React app that generates competition scorecards and competitor name tags as print-ready PDFs for WCA (World Cube Association) events. Delegates and organizers log in with their WCA account, pick a competition they manage, configure options, and download a ZIP of PDFs - one per round stage plus one name-tag sheet.
+A browser-only React app that generates competition scorecards and competitor name tags as print-ready PDFs for WCA (World Cube Association) events. Delegates and organizers log in with their WCA account, pick a competition they manage, configure options, and download the PDFs - one per round stage plus one name-tag sheet, bundled into a ZIP when there is more than one.
 
 ## Stack
 
 - **React 19 + TypeScript + Vite** - SPA, no backend required for normal use
 - **`@react-pdf/renderer` v4 (browser build)** - renders scorecards and name tags to PDF entirely in the browser
-- **`fflate`** - bundles all PDFs into a single ZIP for download
+- **`fflate`** - bundles the PDFs into a single ZIP for download (skipped when there is only one PDF)
 - **`lucide-react`** - the single icon pack used across the UI (no hand-rolled SVGs or emoji icons)
 - **WCA OAuth 2.0 (PKCE)** - authenticates the user against the WCA API
 
@@ -72,7 +72,7 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
 - **CustomCompetitionPage** (`/custom`) - builder for **custom (non-WCA) competitions** (see [Custom competitions](#custom-competitions-non-wca)). Collects a competition name and a manually defined event list (same `CustomEventEditor` component as the Advanced settings section), then writes the same sessionStorage contract the WCA flow uses - plus `custom_competition: 'true'` and `custom_competition_events` - and continues straight to Settings (no WCIF ⇒ `/scope` is skipped).
 - **RoundScopePage** - fetches the WCIF up front and detects whether any round ≥ 2 already has real group assignments (groups generated mid-competition). If not (the normal pre-competition case), it auto-advances straight to Settings. If so, it asks **what to generate** - latest round only (default) / everything / select specific event+rounds - and stores the choice. The WCIF is cached in memory (`lib/wcifCache.ts`) so GeneratePage reuses it without a second fetch. It also records whether groups have been generated yet (`parsed.hasGroups`) in `sessionStorage` under `competition_has_groups`, so the Settings page can warn without re-fetching.
 - **SettingsPage** - collects paper format, language, logo, etc.; auto-detects the WCA Live competition ID and per-competitor person IDs from the WCA Live API; stores settings in `sessionStorage`. It adapts to the scope: when generating scorecards only (scope ≠ everything) it shows just scorecard-relevant options and hides the name-tag and custom-event sections; it also hides the Round 2 prefilled/blanks control once Round 2 has real groups (so the choice no longer matters). When no groups have been generated for the competition yet, it shows a **"no groups assigned"** warning banner.
-- **GeneratePage** - gets the WCIF (cache or fetch), parses it, applies the chosen scope, and renders the download button. PDF rendering runs inside a Web Worker to keep the UI responsive. Before downloading, it shows preview stats - scorecards, cover cards, PDFs in the ZIP, **estimated total pages**, and paper size - and repeats the "no groups assigned" warning when `parsed.hasGroups` is false.
+- **GeneratePage** - gets the WCIF (cache or fetch), parses it, applies the chosen scope, and renders the download button. PDF rendering runs inside a Web Worker to keep the UI responsive. Before downloading, it shows preview stats - scorecards, cover cards, PDFs, **estimated total pages**, and paper size - and repeats the "no groups assigned" warning when `parsed.hasGroups` is false.
 
 Settings and auth state live in `sessionStorage` only - they are cleared when the tab is closed and are never sent to any server.
 
@@ -213,16 +213,15 @@ page's PDF count) gates on `checkingDays.length > 0` alone.
 > `CheckingSheetDocument`, `CHECKING_FLEX`, `checking-sheet-layout.test.ts` - because
 > renaming them across ten files buys no behaviour change.
 
-Rendered by `src/pdf/CheckingSheetDocument.tsx` from `ParsedWCIF.checkingDays`, which
-follows the schedule tracker's day → room partition - except that stage rooms collapse
-into one table, see [Stages vs. rooms](#stages-vs-rooms) - and holds **one row per round**
-instead of one per activity. Columns:
+Rendered by `src/pdf/CheckingSheetDocument.tsx` from `ParsedWCIF.checkingDays`: **one table
+per day, one row per round**, whatever room or stage the round ran in - see
+[One table per day](#one-table-per-day). Columns:
 
 | Column | Flex | Contents |
 |---|---|---|
 | Start time | 1 | Round start, venue-local |
 | Event | 2.7 | e.g. `3x3x3 Cube Round 1` |
-| Groups created | 1 | Group count for that round in that table, plus a 9×9pt tick box (same geometry as the cover card's checkbox) |
+| Groups created | 1 | Group count for that round across the whole competition, plus a 9×9pt tick box (same geometry as the cover card's checkbox) |
 | Scorecards ready | 1.1 | Tick box only |
 | Data entry (initials) | 1.3 | Blank writing space, plus a tick box on the right edge |
 | Double-check (initials) | 1.35 | Same - wider, it holds the longest header we ship |
@@ -242,9 +241,8 @@ entered or has quit - initials alone cannot express "finished". The box is pinne
 right edge; the flex to its left is the writing space, which the layout test holds at
 ≥ 40pt.
 
-Data cells use `paddingVertical: 9` (vs the schedule tracker's 6) so there is room to
-write initials by hand. Each (day × room) block is `wrap={false}`, exactly like the
-schedule tracker, so a block never splits across a page.
+Data cells use `paddingVertical: 9` (vs the schedule tracker's 6) so there is room to write
+initials by hand. Page breaks are covered in [One table per day](#one-table-per-day).
 
 `checkingDays` is built unconditionally by the parser and is independent of
 `scorecardCheckMode` - cover cards and the checklist do not influence each other. Group
@@ -253,36 +251,46 @@ group count implied by its scramble-set count. Rounds with no groups generated y
 `0`. `333fm` **is** included (results entry still happens for it), even though FM never
 gets cover cards.
 
-### Stages vs. rooms
+### One table per day
 
-A round run across several stages still produces **one pile of scorecards**, so the
-checklist gives it **one row**. A genuinely separate room - FMC in a side room - is a
-different pile and keeps its own table.
+**The checklist has no room dimension.** A round produces one pile of scorecards however
+many rooms or stages it runs across, and the pile is what this document tracks, so every
+room's rounds for a date go into a single table, in start-time order. FMC in a side room is
+just another row. `CheckingDay` is `{ dayLabel, rows }` - there is no stage level.
 
-The WCIF cannot tell the two apart: `Red Stage` and `Side Room` are both entries in
-`schedule.venues[].rooms[]`. So the **room name** is the signal. A room whose name matches
-`STAGE_ROOM_RE` (`stage` / `scène` / `escenario` / `palco`, singular or plural, any case)
-is a stage; every stage room in a day is merged into a single table, in the position of the
-first of them. Merging unions the rounds' **group activity codes** rather than adding the
-per-room counts, because two stages running one logical group share that group's code, and a
-later round synthesizes the same `g1..gN` in every room it occupies - summing would double
-both. The merged row spans the earliest start to the latest end.
+This is deliberate and was arrived at the hard way. An earlier version split tables by room
+and then tried to detect stages from the room *name* (`Red Stage` → merge, `Side Room` →
+separate). It was rejected: a competition that names its stages `Red` / `Blue` would print
+the split layout with nothing to say why, so the mistake is only discovered after printing.
 
-The merged table is headed with the shared word - `Red Stage` + `Blue Stage` → **`Stage`**,
-`Scène Rouge` + `Scène Bleue` → **`Scène`** - and only when the competition actually runs
-rounds on two or more stage rooms, so a lone `Stage A` keeps its own name and a day that
-uses just one of the stages is still headed `Stage` rather than `Red Stage`. As with every
-stage heading, it is printed only when some day has more than one table (`multiStage` in
-`CheckingSheetDocument.tsx`).
+Merging unions the rounds' **group activity codes** rather than adding per-room counts,
+because two stages running one logical group share that group's code, and a later round
+synthesizes the same `g1..gN` in every room it occupies - summing would double both
+(`mergeSlots` in `wcif-parser.ts`). The merged row spans the earliest start to the latest
+end, and one round holding two blocks of a day collapses to one row too.
 
-Two deliberate limits:
+**The schedule tracker is unaffected** and keeps one table per room: it records when each
+stage actually runs, which is exactly what merging throws away. A `pdf_diff.sh` of the
+tracker before and after this change reports MAE 0.
 
-- **Checklist only.** The schedule tracker keeps one table per room: it records when each
-  stage actually runs, which merging would erase. A `pdf_diff.sh` of the tracker before and
-  after this change reports MAE 0.
-- **Name-based.** Stages named `Red` / `Blue`, with no keyword, are indistinguishable from
-  separate rooms and keep one table each - the previous behaviour. Regions that *want*
-  scorecards kept separate per stage get that by not calling their rooms stages.
+#### Page breaks
+
+A day's table is as long as the day, so it can outgrow a page - around 20 rounds on LETTER
+(`checking-sheet-layout.test.ts` pins the arithmetic). The day block therefore **wraps**:
+
+- **Never `wrap={false}` on the day block.** @react-pdf does not move an oversized
+  non-breaking block to its own page, it *squashes* it - at 30 rounds every tick box
+  collapses into an unusable sliver. This was measured, not assumed.
+- Each `DataRow` is `wrap={false}`, so a break never falls through a row (a split row loses
+  its cell borders and its start time).
+- The day heading, the column header and the **first** data row are one atomic group, which
+  is why the table is drawn as two bordered pieces (`tableHead` + `tableRest`, joined by
+  dropping the shared border). Without it a day gets announced at the foot of a page with
+  its table overleaf; `minPresenceAhead` alone does not prevent that, because the heading's
+  sibling table can itself break and @react-pdf counts it as content that follows.
+- Known limit: a day spanning two pages does not repeat the column header on the second.
+  A `fixed` header repeats correctly but also draws on the page where the table starts,
+  which is the common single-page case, so it loses on balance.
 
 ### The lunch rule
 
@@ -300,8 +308,9 @@ a rule; awards and tutorials would clutter a busy day.
 
 Lunch activities are collected across **every** room of the day, not just the room being
 rendered, because a competition typically enters lunch once - in the main room or a side
-room - while the rule belongs on every stage's table. The lunch activity itself never
-becomes a row: non-round activities stay filtered out of both documents.
+room - while the rule belongs on the checklist's whole-day table and on every room's table
+in the tracker. The lunch activity itself never becomes a row: non-round activities stay
+filtered out of both documents.
 
 `src/pdf/checking-sheet-layout.test.ts` pins the geometry: every header, in every locale,
 on both LETTER and A4, must fit inside its column at 8pt Helvetica-Bold; the **event**
@@ -351,7 +360,11 @@ generate this file from a competition's data may be added later.)
 
 ## PDF output structure
 
-Each download is a ZIP named **`{competitionId}_pdfs.zip`** containing one PDF per round stage plus a name-tag PDF if the competition has nametag data. Most competitions produce 2–3 PDFs; a competition with 4-round events (e.g., a large 3×3×3) produces 4 scorecard PDFs. (The name is deliberately not `_scorecards.zip`: the bundle routinely carries nametags, slips and the schedule too.)
+When a run produces **two or more PDFs**, the download is a ZIP named **`{competitionId}_pdfs.zip`** containing one PDF per round stage plus a name-tag PDF if the competition has nametag data. Most competitions produce 2–3 PDFs; a competition with 4-round events (e.g., a large 3×3×3) produces 4 scorecard PDFs. (The name is deliberately not `_scorecards.zip`: the bundle routinely carries nametags, slips and the schedule too.)
+
+When a run produces **exactly one PDF**, that PDF is downloaded directly - `{competitionId}_schedule.pdf`, not a one-file ZIP - so it can be printed straight from the download. This is the normal case for the mid-competition scope step, where an organizer picks a single document such as the schedule tracker or the Round Checklist. The download button label always shows the file you will actually get.
+
+Both the file list and the zip-vs-bare-PDF decision come from `src/lib/pdfJobs.ts` (`buildPdfJobs` / `downloadTarget`), which the worker and the generate page share - so the "PDFs" stat, the button label, and the rendered output can't disagree.
 
 | File | Contents |
 |---|---|
@@ -366,7 +379,7 @@ Each download is a ZIP named **`{competitionId}_pdfs.zip`** containing one PDF p
 | `{id}_first_timers.pdf` | Confirmation slips for newcomers (competitors with no WCA ID); only when enabled in Advanced settings, omitted if there are none |
 | `{id}_custom_{name}.pdf` | One file per custom event: 4 blank scorecards by default, or - when a competitor CSV was uploaded - one named scorecard per competitor padded with blanks to fill the last 4-card page |
 
-A PDF is omitted from the ZIP if it would be empty (e.g., all events have only one round → no finals PDF). 2-round events skip straight from round 1 to finals; they never produce a round2 or semis PDF.
+A PDF is omitted from the output if it would be empty (e.g., all events have only one round → no finals PDF). 2-round events skip straight from round 1 to finals; they never produce a round2 or semis PDF. If the omissions leave exactly one PDF, it downloads on its own rather than in a ZIP.
 
 ---
 
@@ -754,10 +767,10 @@ renders as a thick rule - see **The lunch rule** above.
 Built in the same pass as `scheduleDays`: each room's activities are reduced to
 `RoundSlot`s (round code, start, end, the set of group activity codes) by `slotsOf`, and
 `buildRows` turns a slot list into both row shapes, since they share the filtering and the
-event+round labelling. The checklist differs in one step - stage rooms are concatenated and
-run through `mergeSlots` first, so the day's tables are one per *pile* rather than one per
-room. See **The Round Checklist** above for the columns, the group-count rule and
-**Stages vs. rooms**.
+event+round labelling. The tracker builds one table per room from that room's slots; the
+checklist concatenates **every** room's slots for the date and runs them through
+`mergeSlots`, giving one table per day. See **The Round Checklist** above for the columns,
+the group-count rule and **One table per day**.
 
 `CheckingRow` adds two fields on top of the schedule row's start/end/event: `preChecked`
 (true for `roundNum === 1`, printing the groups and scorecards boxes already ticked) and
@@ -851,7 +864,7 @@ All PDF rendering happens inside `src/pdf/scorecardWorker.ts` (a Vite module wor
 
 ### ZIP compression level
 
-`fflate.zipSync` is called with `{ level: 0 }` (store, no compression). PDF files are already compressed internally; re-compressing them adds CPU time and produces no meaningful size reduction.
+`fflate.zipSync` is called with `{ level: 0 }` (store, no compression). PDF files are already compressed internally; re-compressing them adds CPU time and produces no meaningful size reduction. When only one PDF was rendered, `zipSync` is not called at all - the worker transfers that PDF's buffer straight to the main thread.
 
 ### Hyphenation disabled
 
@@ -896,6 +909,7 @@ src/
     AuthContext.tsx        - React context: token + user, persisted in sessionStorage
   lib/
     wcif-parser.ts         - WCIF → ParsedWCIF (scorecards + nametags)
+    pdfJobs.ts             - Which PDFs to render and what the download is called (bare PDF vs ZIP)
     i18n.ts                - All UI strings and event names for EN / FR / bilingual modes
   pages/
     LoginPage.tsx
@@ -907,7 +921,7 @@ src/
     bufferPolyfill.ts      - MUST be first import in worker; patches Buffer, window, document, PNG
     ScorecardDocument.tsx  - react-pdf component: scorecard cards + cover cards + document shell
     NametTagDocument.tsx   - react-pdf component: name tag panels with QR codes and duty assignments
-    scorecardWorker.ts     - Web Worker: renders all PDFs sequentially, zips them, posts result
+    scorecardWorker.ts     - Web Worker: renders all PDFs sequentially, zips them (unless there's only one), posts result
   types/
     settings.ts            - CompetitionSettings interface (language, paper, logo, nametag modes)
     wcif.ts                - WCIF type definitions

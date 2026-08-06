@@ -106,7 +106,7 @@ describe('filterParsedByScope', () => {
     firstTimers: [{ name: 'y' } as never],
     extras: [sc('333', 1)],
     scheduleDays: [{ dayLabel: 'Day 1', stages: [] }],
-    checkingDays: [{ dayLabel: 'Day 1', stages: [] }],
+    checkingDays: [{ dayLabel: 'Day 1', rows: [] }],
     laterRoundsWithAssignments: [{ eventId: '333', roundNum: 2 }],
   });
 

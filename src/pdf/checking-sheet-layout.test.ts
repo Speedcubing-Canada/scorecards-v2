@@ -64,8 +64,7 @@ const CHECKBOX_W   = CHECKING_BOX;  // styles.checkBox width
 const CHECKBOX_ML  = 6;    // styles.checkBoxSpaced marginLeft (groups cell only)
 const TITLE_BLOCK  = 18 + 22;  // styles.title fontSize + marginBottom
 const DAY_LABEL_H  = 13 + 6;   // styles.dayLabel fontSize + marginBottom
-const STAGE_NAME_H = 11 + 4;   // styles.stageName fontSize + marginBottom
-const STAGE_GAP    = 14;       // styles.stageBlock marginBottom
+const DAY_GAP      = 14;       // styles.dayBlock marginBottom
 
 const TOTAL_FLEX = Object.values(CHECKING_FLEX).reduce((a, b) => a + b, 0);
 
@@ -243,21 +242,25 @@ describe('Checking sheet vertical budget', () => {
     expect(CHECKING_CELL_PAD_V).toBeGreaterThan(6);
   });
 
+  const headerH = CELL_FONT + 2 * 6 + 8;  // header row: 6pt padding + two 8pt lines
+
   for (const format of FORMATS) {
-    it(`fits a typical single-stage day of 12 rounds on the first page (${format})`, () => {
+    it(`fits a typical day of 12 rounds on the first page (${format})`, () => {
       const contentH = PAGE_H[format] - 2 * PAGE_PAD_V;
-      const headerH = CELL_FONT + 2 * 6 + 8;  // header row: 6pt padding + two 8pt lines
-      const used = TITLE_BLOCK + DAY_LABEL_H + headerH + rowH(12) + STAGE_GAP;
+      const used = TITLE_BLOCK + DAY_LABEL_H + headerH + rowH(12) + DAY_GAP;
       expect(used).toBeLessThanOrEqual(contentH);
     });
 
-    it(`a two-stage day block still fits on one page (${format})`, () => {
-      // Each (day × stage) block is wrap={false}, so a single block must never
-      // exceed the page height or @react-pdf drops it.
+    it(`a busy day outgrows a page, which is why the block must wrap (${format})`, () => {
+      // The checklist merges every room into one table per day, so a day's block is no
+      // longer bounded by a room's slice of the schedule: a large competition can schedule
+      // enough rounds in a day to overflow. CheckingSheetDocument therefore lets the day
+      // block break, and keeps only [heading + column header + first row] atomic. Do not
+      // "fix" that by restoring wrap={false} on the block - @react-pdf then squashes the
+      // rows to fit one page and the tick boxes collapse into unusable slivers.
       const contentH = PAGE_H[format] - 2 * PAGE_PAD_V;
-      const headerH = CELL_FONT + 2 * 6 + 8;
-      const block = DAY_LABEL_H + STAGE_NAME_H + headerH + rowH(10) + STAGE_GAP;
-      expect(block).toBeLessThanOrEqual(contentH);
+      const used = TITLE_BLOCK + DAY_LABEL_H + headerH + rowH(26) + DAY_GAP;
+      expect(used).toBeGreaterThan(contentH);
     });
   }
 });

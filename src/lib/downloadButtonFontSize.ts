@@ -1,7 +1,8 @@
 /**
- * The download button label embeds the zip filename
- * (`<competitionId>_pdfs.zip`), which is a single unbreakable token. For
- * competitions with a long ID the label would otherwise overflow the
+ * The download button label embeds the download filename - the bundle
+ * (`<competitionId>_pdfs.zip`) or, when a single document was selected, that
+ * PDF (`<competitionId>_first_timers.pdf`) - which is a single unbreakable
+ * token. For competitions with a long ID the label would otherwise overflow the
  * fixed-width button - especially on phones - so the font shrinks in steps as
  * the label gets longer. (`overflowWrap` on the button is the final safety net
  * for pathologically long IDs.)

@@ -8,6 +8,7 @@ import { zipSync } from 'fflate';
 import type { ScorecardData, ParsedWCIF } from '../lib/wcif-parser';
 import type { CompetitionSettings } from '../types/settings';
 import { buildCustomEntries } from '../lib/customScorecards';
+import { buildPdfJobs, downloadTarget } from '../lib/pdfJobs';
 import { ScorecardDocument } from './ScorecardDocument';
 import { NametTagDocument } from './NametTagDocument';
 import { ScheduleTrackerDocument } from './ScheduleTrackerDocument';
@@ -57,7 +58,9 @@ const WORKER_MSGS = {
 
 export type WorkerResponse =
   | { type: 'progress'; percent: number; message: string }
-  | { type: 'done'; buffer: ArrayBuffer }
+  // `buffer` is a ZIP or a bare PDF depending on how many documents were built;
+  // `filename` and `mimeType` say which, so the main thread never re-derives it.
+  | { type: 'done'; buffer: ArrayBuffer; filename: string; mimeType: string }
   | { type: 'error'; message: string };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -110,41 +113,11 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
 
   const { parsed, settings, uiLanguage } = e.data;
   const msgs = WORKER_MSGS[uiLanguage] ?? WORKER_MSGS.en;
-  const id = settings.competitionId;
 
-  // Build list of PDFs to render: round1, intermediate (round2), semis, finals, nametags, extras, schedule
-  type PdfJob =
-    | { kind: 'scorecards'; filename: string; entries: ScorecardData[]; label: string }
-    | { kind: 'nametags';   filename: string; label: string }
-    | { kind: 'schedule';   filename: string; label: string }
-    | { kind: 'checking';   filename: string; label: string }
-    | { kind: 'first-timers'; filename: string; label: string };
-
-  const jobs: PdfJob[] = [];
-  if (parsed.firstRound.length > 0)
-    jobs.push({ kind: 'scorecards', filename: `${id}_round1.pdf`,   entries: parsed.firstRound,   label: 'Round 1' });
-  if (parsed.intermediate.length > 0)
-    jobs.push({ kind: 'scorecards', filename: `${id}_round2.pdf`,   entries: parsed.intermediate, label: 'Round 2' });
-  if (parsed.semis.length > 0)
-    jobs.push({ kind: 'scorecards', filename: `${id}_semis.pdf`,    entries: parsed.semis,        label: 'Semis' });
-  if (parsed.finals.length > 0)
-    jobs.push({ kind: 'scorecards', filename: `${id}_finals.pdf`,   entries: parsed.finals,       label: 'Finals' });
-  if (parsed.extras.length > 0)
-    jobs.push({ kind: 'scorecards', filename: `${id}_extras.pdf`,   entries: parsed.extras,       label: 'Extras' });
-  if (parsed.scheduleDays.length > 0)
-    jobs.push({ kind: 'schedule',   filename: `${id}_schedule.pdf`, label: 'Schedule Tracker' });
-  // Already emptied by filterParsedByScope unless the Round Checklist was selected.
-  if (parsed.checkingDays.length > 0)
-    jobs.push({ kind: 'checking',   filename: `${id}_checklist.pdf`, label: 'Round Checklist' });
-  if (parsed.nametags.length > 0)
-    jobs.push({ kind: 'nametags',   filename: `${id}_nametags.pdf`, label: 'Name Tags' });
-  if (parsed.firstTimers.length > 0)
-    jobs.push({ kind: 'first-timers', filename: `${id}_first_timers.pdf`, label: 'First-Timer Slips' });
-  for (const custom of settings.customEvents ?? []) {
-    if (!custom.name.trim()) continue;
-    const safeName = custom.name.trim().replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').slice(0, 40);
-    jobs.push({ kind: 'scorecards', filename: `${id}_custom_${safeName}.pdf`, entries: buildCustomEntries(custom), label: custom.name });
-  }
+  // Which PDFs to render, and what the browser will receive. Shared with the
+  // generate page so its "PDFs" stat and button label can't drift from this.
+  const jobs = buildPdfJobs(parsed, settings);
+  const target = downloadTarget(jobs, settings.competitionId);
 
   if (jobs.length === 0) {
     post({ type: 'error', message: msgs.noEntries });
@@ -181,6 +154,8 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
           ? await renderCheckingSheet(parsed, settings)
           : job.kind === 'first-timers'
           ? await renderFirstTimerSlips(parsed, settings)
+          : job.kind === 'custom'
+          ? await renderPdf(buildCustomEntries(job.custom), settings)
           : await renderPdf(job.entries, settings);
         clearInterval(timer);
         files[job.filename] = [data, { level: 0 }];
@@ -191,11 +166,26 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
       }
     }
 
+    // A single document ships as the PDF itself - zipping one file would only
+    // make the user unzip it before printing.
+    if (jobs.length === 1) {
+      const only = files[jobs[0].filename][0];
+      // The renderers wrap a fresh ArrayBuffer, but slicing by the view's own
+      // bounds stays correct if one ever arrives offset into a larger buffer.
+      const buffer = only.buffer.slice(only.byteOffset, only.byteOffset + only.byteLength) as ArrayBuffer;
+      post({ type: 'progress', percent: 99, message: msgs.finalizing });
+      post({ type: 'done', buffer, filename: target.filename, mimeType: target.mimeType }, [buffer]);
+      return;
+    }
+
     post({ type: 'progress', percent: 95, message: msgs.creatingZip });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const zipped = zipSync(files as any);
     post({ type: 'progress', percent: 99, message: msgs.finalizing });
-    post({ type: 'done', buffer: zipped.buffer }, [zipped.buffer]);
+    post(
+      { type: 'done', buffer: zipped.buffer, filename: target.filename, mimeType: target.mimeType },
+      [zipped.buffer],
+    );
   } catch (err) {
     post({ type: 'error', message: String(err) });
   }

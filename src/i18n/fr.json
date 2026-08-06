@@ -157,7 +157,7 @@
     "stats": {
       "scorecards": "Feuilles de score",
       "cover_cards": "Feuilles de couverture",
-      "pdfs_in_zip": "PDFs dans le ZIP",
+      "pdfs": "PDFs",
       "paper": "Papier",
       "total_pages": "Pages"
     },

@@ -30,9 +30,8 @@ const styles = StyleSheet.create({
     fontFamily: FONT_BOLD,
     marginBottom: 22,
   },
-  // Wraps [optional day label] + [optional stage name] + table.
-  // wrap={false} prevents this block from splitting across pages.
-  stageBlock: {
+  // Wraps a day label + that day's table. Breakable: see DAY_LABEL_KEEP_WITH.
+  dayBlock: {
     marginBottom: 14,
   },
   dayLabel: {
@@ -40,14 +39,15 @@ const styles = StyleSheet.create({
     fontFamily: FONT_BOLD,
     marginBottom: 6,
   },
-  stageName: {
-    fontSize: 11,
-    fontFamily: FONT_BOLD,
-    marginBottom: 4,
-    marginLeft: 2,
-  },
-  table: {
+  // The table is drawn in two pieces so its first row can be pinned to the day heading;
+  // together they read as one bordered table.
+  tableHead: {
     border: BORDER,
+    borderBottomWidth: 0,
+  },
+  tableRest: {
+    border: BORDER,
+    borderTopWidth: 0,
   },
   headerRow: {
     flexDirection: 'row',
@@ -137,9 +137,9 @@ const COLUMNS: { key: keyof typeof CHECKING_FLEX; label: (s: CheckingSheetString
   { key: 'takenBy',     label: (s) => s.takenBy },
 ];
 
-function TableHeader({ strings }: { strings: CheckingSheetStrings }) {
+function TableHeader({ strings, fixed }: { strings: CheckingSheetStrings; fixed?: boolean }) {
   return (
-    <View style={styles.headerRow}>
+    <View style={styles.headerRow} fixed={fixed}>
       {COLUMNS.map((col, i) => (
         <View key={col.key} style={cellStyle(CHECKING_FLEX[col.key], i === COLUMNS.length - 1, true)}>
           <Text style={styles.headerText}>{col.label(strings)}</Text>
@@ -154,7 +154,9 @@ function DataRow({ row, alt }: { row: CheckingRow; alt: boolean }) {
   return (
     // A lunch break above this row draws a thick rule. The previous row's 0.5pt #bbb
     // bottom border sits directly under it and vanishes beneath the heavier line.
-    <View style={row.breakBefore ? [base, { borderTop: CHECKING_BREAK_RULE }] : base}>
+    // wrap={false}: a day's table may break across pages, but never through a row - split
+    // rows lose their cell borders and their start time.
+    <View style={row.breakBefore ? [base, { borderTop: CHECKING_BREAK_RULE }] : base} wrap={false}>
       <View style={cellStyle(CHECKING_FLEX.start, false, false)}>
         <Text style={styles.cellText}>{row.startTime}</Text>
       </View>
@@ -191,8 +193,6 @@ interface Props {
 }
 
 export function CheckingSheetDocument({ days, settings }: Props) {
-  // Show room names only when there are multiple rooms in any day.
-  const multiStage = days.some(d => d.stages.length > 1);
   const strings = getCheckingSheetStrings(settings.language);
 
   return (
@@ -200,26 +200,33 @@ export function CheckingSheetDocument({ days, settings }: Props) {
       <Page size={settings.paperFormat} style={styles.page}>
         <Text style={styles.title}>{settings.competitionName} {strings.title}</Text>
 
-        {days.map((day, di) =>
-          day.stages.map((stage, si) => (
-            // Each (day × room) block is non-breaking. The day label is included only in
-            // the first room's block so it stays anchored to its content.
-            <View key={`${di}-${si}`} style={styles.stageBlock} wrap={false}>
-              {si === 0 && (
-                <Text style={styles.dayLabel}>{day.dayLabel}</Text>
-              )}
-              {multiStage && (
-                <Text style={styles.stageName}>{stage.stageName}</Text>
-              )}
-              <View style={styles.table}>
+        {days.map((day, di) => (
+          // A day's table holds every round of that day, so it can outgrow a page and must
+          // be allowed to break - under wrap={false} @react-pdf squashes the rows until the
+          // tick boxes are unusable. The schedule tracker's per-room blocks stay atomic.
+          <View key={di} style={styles.dayBlock}>
+            {/* Heading + column header + first row are one atomic group, so a day is never
+                announced at the foot of a page with its table overleaf. minPresenceAhead
+                does not achieve this on its own - the label's sibling table can itself
+                break, so @react-pdf considers the heading "followed by content". */}
+            <View wrap={false}>
+              <Text style={styles.dayLabel}>{day.dayLabel}</Text>
+              <View style={styles.tableHead}>
                 <TableHeader strings={strings} />
-                {stage.rows.map((row, ri) => (
-                  <DataRow key={ri} row={row} alt={ri % 2 === 1} />
-                ))}
+                {day.rows[0] && <DataRow row={day.rows[0]} alt={false} />}
               </View>
             </View>
-          ))
-        )}
+            {day.rows.length > 1 && (
+              // Continues the same table: the head block owns the top border, this owns the
+              // bottom, and the rows' own 0.5pt rules hide the join.
+              <View style={styles.tableRest}>
+                {day.rows.slice(1).map((row, ri) => (
+                  <DataRow key={ri} row={row} alt={ri % 2 === 0} />
+                ))}
+              </View>
+            )}
+          </View>
+        ))}
       </Page>
     </Document>
   );

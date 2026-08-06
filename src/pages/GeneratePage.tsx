@@ -10,6 +10,7 @@ import { parseWCIF, emptyParsedWcif, type ParsedWCIF } from '../lib/wcif-parser'
 import { filterParsedByScope, type GenerationScope } from '../lib/generationScope';
 import { estimateTotalPages } from '../lib/pageEstimate';
 import { customEventPageCount } from '../lib/customScorecards';
+import { buildPdfJobs, downloadTarget } from '../lib/pdfJobs';
 import type { WorkerRequest, WorkerResponse } from '../pdf/scorecardWorker';
 import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
@@ -123,29 +124,19 @@ export default function GeneratePage() {
   const allEntries = effectiveParsed
     ? [...effectiveParsed.firstRound, ...effectiveParsed.intermediate, ...effectiveParsed.semis, ...effectiveParsed.finals]
     : [];
-  // Custom-event cards (4 per page: blanks, or named + pads) ship in the ZIP too.
+  // Custom-event cards (4 per page: blanks, or named + pads) ship in the bundle too.
   const customCardCount = (settings.customEvents ?? [])
     .filter(c => c.name.trim())
     .reduce((n, c) => n + customEventPageCount(c) * 4, 0);
   const scorecardCount = allEntries.filter(e => e.kind === 'scorecard').length + customCardCount;
   const coverCount     = allEntries.filter(e => e.kind === 'cover' && e.eventId).length;
-  const pdfCount       = effectiveParsed
-    ? [
-        effectiveParsed.firstRound,
-        effectiveParsed.intermediate,
-        effectiveParsed.semis,
-        effectiveParsed.finals,
-        effectiveParsed.extras,
-      ].filter(r => r.length > 0).length
-      + (effectiveParsed.scheduleDays.length > 0 ? 1 : 0)
-      + (effectiveParsed.checkingDays.length > 0 ? 1 : 0)
-      + (effectiveParsed.nametags.length > 0 ? 1 : 0)
-      + (effectiveParsed.firstTimers.length > 0 ? 1 : 0)
-      + (settings.customEvents?.filter(c => c.name.trim()).length ?? 0)
-    : 0;
+  // Same list the worker renders from, so the stat and the button label can
+  // never disagree with what actually comes out.
+  const jobs           = effectiveParsed ? buildPdfJobs(effectiveParsed, settings) : [];
+  const pdfCount       = jobs.length;
   const totalPages     = effectiveParsed ? estimateTotalPages(effectiveParsed, settings) : 0;
-  // Not "_scorecards": the bundle routinely carries nametags, slips and the schedule too.
-  const filename       = `${settings.competitionId}_pdfs.zip`;
+  // One document downloads as itself; two or more are zipped.
+  const filename       = downloadTarget(jobs, settings.competitionId).filename;
 
   function handleDownload() {
     if (status === 'building' || !effectiveParsed || pdfCount === 0) return;
@@ -173,11 +164,12 @@ export default function GeneratePage() {
         setBuildPercent(msg.percent);
         setStatusMsg(msg.message);
       } else if (msg.type === 'done') {
-        const blob = new Blob([msg.buffer], { type: 'application/zip' });
+        // The worker decided zip-vs-bare-PDF, so take its word for both.
+        const blob = new Blob([msg.buffer], { type: msg.mimeType });
         const url  = URL.createObjectURL(blob);
         const a    = document.createElement('a');
         a.href     = url;
-        a.download = filename;
+        a.download = msg.filename;
         a.click();
         URL.revokeObjectURL(url);
         worker.terminate();
@@ -232,7 +224,7 @@ export default function GeneratePage() {
               <div style={{ ...s.stats, ...(isMobile ? s.statsMobile : {}) }}>
                 <Stat label={t('generate.stats.scorecards')} value={scorecardCount} />
                 <Stat label={t('generate.stats.cover_cards')} value={coverCount} />
-                <Stat label={t('generate.stats.pdfs_in_zip')} value={pdfCount} />
+                <Stat label={t('generate.stats.pdfs')} value={pdfCount} />
                 <Stat label={t('generate.stats.total_pages')} value={totalPages} />
                 <Stat label={t('generate.stats.paper')} value={settings.paperFormat} />
               </div>

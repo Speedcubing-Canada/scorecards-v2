@@ -72,7 +72,7 @@ describe('estimateTotalPages', () => {
   });
 
   it('counts the Round Checklist as one page', () => {
-    const parsed = mkParsed({ checkingDays: [{ dayLabel: 'Day 1', stages: [] }] });
+    const parsed = mkParsed({ checkingDays: [{ dayLabel: 'Day 1', rows: [] }] });
     expect(estimateTotalPages(parsed, mkSettings())).toBe(1);
   });
 
@@ -86,7 +86,7 @@ describe('estimateTotalPages', () => {
   });
 
   it('counts the page independently of the cover-card mode', () => {
-    const parsed = mkParsed({ checkingDays: [{ dayLabel: 'Day 1', stages: [] }] });
+    const parsed = mkParsed({ checkingDays: [{ dayLabel: 'Day 1', rows: [] }] });
     for (const mode of ['per-group-card', 'per-round-card', 'none'] as const) {
       expect(estimateTotalPages(parsed, mkSettings({ scorecardCheckMode: mode }))).toBe(1);
     }
