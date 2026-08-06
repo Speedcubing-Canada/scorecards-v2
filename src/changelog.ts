@@ -16,6 +16,23 @@ export interface ChangelogEntry {
 /** Newest first. See the "What's new" section of the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-08-06',
+    items: {
+      en: [
+        'Presets: start from the options a region usually prints, then change anything you want.',
+      ],
+      fr: [
+        "Préréglages : partez des options habituelles d’une région, puis modifiez ce que vous voulez.",
+      ],
+      es: [
+        'Preajustes: empiece con las opciones que suele usar una región y cambie lo que quiera.',
+      ],
+      pt: [
+        'Predefinições: comece com as opções que uma região costuma imprimir e mude o que quiser.',
+      ],
+    },
+  },
+  {
     id: '2026-08-05',
     items: {
       en: [
