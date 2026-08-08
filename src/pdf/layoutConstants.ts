@@ -66,3 +66,9 @@ export const SLIP_PAGE_PAD_BOTTOM = 36;
 // base 18pt makes the cut point between slips more obvious (Sarah's feedback).
 export const SLIP_MARGIN_BOTTOM = 18 + SLIP_LINE_H;
 export const SLIP_INTRO_MARGIN_BOTTOM = 20;
+
+// The scorecard's "WCA Live: …" line. `hideWcaLiveId` only suppresses it where there is
+// no ID to print - blank/extra cards and custom-event cards, which all carry liveId ''.
+// A card with a competitor always keeps its ID, whatever the setting says.
+export const showLiveIdLine = (hideWcaLiveId: boolean, liveId: string) =>
+  !hideWcaLiveId || liveId !== '';

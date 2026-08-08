@@ -87,8 +87,8 @@
       "not_found": "Ainda não encontrado no WCA Live - insira manualmente se necessário",
       "hint": "ID numérico da competição no WCA Live. Usado para gerar QR codes do WCA Live nos crachás.",
       "placeholder": "ex. 9667",
-      "hide_label": "Ocultar ID do WCA Live nas folhas de pontuação",
-      "hide_desc": "Remove a linha «WCA Live: …» - útil para folhas em branco."
+      "hide_label": "Ocultar a linha do WCA Live nas folhas em branco",
+      "hide_desc": "As folhas em branco e as extras perdem o rótulo «WCA Live:» vazio. As folhas com um competidor mantêm o seu ID."
     },
     "logo": {
       "title": "Logo da competição",

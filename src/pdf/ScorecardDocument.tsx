@@ -5,7 +5,7 @@ import { getStrings, splitLabelTotal } from '../lib/i18n';
 import type { Style } from '@react-pdf/types';
 import { EVENT_ICONS } from '../assets/events';
 import { logoState, resolveLogo } from '../lib/logo';
-import { SCORECARDS_PER_PAGE, ROW_HEIGHTS } from './layoutConstants';
+import { SCORECARDS_PER_PAGE, ROW_HEIGHTS, showLiveIdLine } from './layoutConstants';
 
 // Prevent react-pdf from hyphenating words - lets computed font size control line breaks instead.
 Font.registerHyphenationCallback((word) => [word]);
@@ -248,7 +248,7 @@ function ScorecardCard({
             {card.name || ' '}
           </Text>
           <Text style={styles.idText}>
-            {card.wcaId}{!settings.hideWcaLiveId && <>{'    '}WCA Live: <Text style={{ fontFamily: FONT_BOLD }}>{card.liveId}</Text></>}
+            {card.wcaId}{showLiveIdLine(settings.hideWcaLiveId, card.liveId) && <>{'    '}WCA Live: <Text style={{ fontFamily: FONT_BOLD }}>{card.liveId}</Text></>}
           </Text>
         </View>
       </View>

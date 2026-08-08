@@ -47,7 +47,7 @@ Note: mid-competition, `scheduleTracker` and `nametags` default to `false` inste
 | `paperFormat` | `"A4"` `"LETTER"` | `"LETTER"` |
 | `secondRoundMode` | `"prefilled"` `"blanks"` | `"prefilled"` |
 | `useDefaultLogo` | boolean | on for `fr`/`en` interface |
-| `hideWcaLiveId` | boolean | `false` |
+| `hideWcaLiveId` | boolean | `false` - when on, only blank/extra cards lose the line; named cards keep their ID |
 | `nametagLogoMode` | `"hidden"` `"with-name"` `"logo-only"` | `"with-name"` |
 | `nametagQrMode` | `"back-only"` `"both-sides"` | `"back-only"` |
 | `nametagLayout` | `"vertical"` `"horizontal"` | `"vertical"` |

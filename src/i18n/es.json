@@ -87,8 +87,8 @@
       "not_found": "No encontrado en WCA Live aún - ingrese manualmente si es necesario",
       "hint": "ID numérico de la competencia en WCA Live. Usado para generar códigos QR de WCA Live en las etiquetas de nombre.",
       "placeholder": "ej. 9667",
-      "hide_label": "Ocultar ID de WCA Live en las hojas de puntuación",
-      "hide_desc": "Elimina la línea «WCA Live: …» - útil para hojas en blanco."
+      "hide_label": "Ocultar la línea de WCA Live en las hojas en blanco",
+      "hide_desc": "Las hojas en blanco y las adicionales pierden la etiqueta «WCA Live:» vacía. Las hojas con un competidor conservan su ID."
     },
     "logo": {
       "title": "Logo de la competencia",

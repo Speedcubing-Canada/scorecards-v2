@@ -87,8 +87,8 @@
       "not_found": "Not found on WCA Live yet - enter manually if needed",
       "hint": "Numeric competition ID from WCA Live. Used to generate competitor-specific QR codes on name tags.",
       "placeholder": "e.g. 9667",
-      "hide_label": "Hide WCA Live ID on scorecards",
-      "hide_desc": "Removes the \"WCA Live: …\" line - useful for blank scorecards."
+      "hide_label": "Hide the WCA Live line on blank scorecards",
+      "hide_desc": "Blank and extra scorecards drop the empty \"WCA Live:\" label. Cards with a competitor keep their ID."
     },
     "logo": {
       "title": "Competition logo",

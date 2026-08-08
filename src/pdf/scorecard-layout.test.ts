@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getStrings } from '../lib/i18n';
-import { ROW_HEIGHTS } from './layoutConstants';
+import { ROW_HEIGHTS, showLiveIdLine } from './layoutConstants';
 
 // ── Layout geometry constraints ──────────────────────────────────────────────
 // Dimensions measured from the original Sarah-scorecard LETTER PDF:
@@ -356,4 +356,22 @@ describe('Cover card allGroups line fits the card', () => {
       });
     }
   }
+});
+
+// The "Hide WCA Live ID" setting is meant for the blank/extra cards, where the line
+// prints a dangling "WCA Live:" with nothing after it. It must never strip the ID from
+// a card that has a competitor on it (organizer bug report).
+describe('WCA Live line visibility', () => {
+  it('prints on a named card whether or not the setting is on', () => {
+    expect(showLiveIdLine(false, '42')).toBe(true);
+    expect(showLiveIdLine(true, '42')).toBe(true);
+  });
+
+  it('prints the empty label on a blank card by default (matches the original PDFs)', () => {
+    expect(showLiveIdLine(false, '')).toBe(true);
+  });
+
+  it('is suppressed only on blank cards when the setting is on', () => {
+    expect(showLiveIdLine(true, '')).toBe(false);
+  });
 });
