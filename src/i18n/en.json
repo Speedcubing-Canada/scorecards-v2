@@ -226,7 +226,13 @@
     "wcif_body": "Every WCA competition's data (events, schedule, and registered competitors) lives on the WCA website in a format called the WCIF. Group assignments are added upstream, usually with a tool like Groupifier.",
     "workflow_title": "Where this fits",
     "workflow_body": "This is the last step before printing. Once groups have been assigned, it reads the competition's WCIF and turns it into the documents you print and cut for the day of the competition.",
+    "feedback_title": "Found a bug or have feedback?",
+    "feedback_body": "Report an issue on GitHub, or email the software team.",
     "close": "Got it"
+  },
+  "contact": {
+    "github": "Source code on GitHub",
+    "email": "Email the software team"
   },
   "whats_new": {
     "trigger": "What's new",

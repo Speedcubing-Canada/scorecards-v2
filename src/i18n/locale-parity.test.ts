@@ -49,4 +49,17 @@ describe('locale key parity', () => {
       expect(empty, code).toEqual([]);
     }
   });
+
+  // Em dashes read as machine-written and are awkward to type in three of the four
+  // languages. Use a comma, a colon, or two sentences instead. Applies to on-screen
+  // copy only - source comments and the README are free to use them.
+  it('uses no em dash in any on-screen string', () => {
+    for (const [code, bundle] of [['en', en as Json], ...TRANSLATIONS] as [string, Json][]) {
+      const offenders = paths(bundle).filter((p) => {
+        const v = p.split('.').reduce<string | Json>((o, k) => (o as Json)[k], bundle);
+        return typeof v === 'string' && v.includes('—');
+      });
+      expect(offenders, code).toEqual([]);
+    }
+  });
 });

@@ -69,4 +69,16 @@ describe('CHANGELOG data', () => {
       }
     }
   });
+
+  // Same rule as the i18n bundles: no em dashes in on-screen copy. Entry text is shown
+  // in the "What's new" dialog, so it counts even though it lives in a .ts file.
+  it('uses no em dash in any bullet', () => {
+    for (const entry of CHANGELOG) {
+      for (const [locale, items] of Object.entries(entry.items)) {
+        for (const item of items) {
+          expect(item, `${entry.id}/${locale}`).not.toContain('—');
+        }
+      }
+    }
+  });
 });

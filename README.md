@@ -157,6 +157,14 @@ Components call `useIsMobile()` and spread a small mobile-only style override in
 
 `src/components/AboutDialog.tsx` is a self-contained explainer (trigger + modal) that tells newcomers what the tool is, what the **WCIF** is, and where this tool sits in the workflow - it is the *final* step, turning a competition's already-assigned groups into print-ready, cuttable PDFs. It renders either a circular ℹ icon button (default) or a text link (`as="text"`). It is placed on the **login page** (text link under the sign-in button) and the **competition picker page** (icon next to the heading). All copy lives under the `about.*` i18n keys.
 
+### Feedback and bug reports
+
+Bug reports and feedback go to the [issue tracker](https://github.com/Speedcubing-Canada/scorecards-v2/issues) or to **software@speedcubingcanada.org**.
+
+Both are reachable from inside the app: `src/components/ContactLinks.tsx` renders the GitHub mark and a mail icon in the `Header`, so they sit beside the "what's new" sparkles on every signed-in page, and the same two links appear as text at the bottom of the About dialog - which is what covers the signed-out login page, since that page has no header. The URL and address are exported constants in that one file (`REPO_URL` / `SUPPORT_EMAIL`); import them rather than retyping them, and `contact-links.test.ts` enforces the single copy.
+
+The GitHub mark is `public/github-mark.svg` rendered through an `<img>`, not a lucide icon: lucide 1.x dropped brand icons, and the design-system guard forbids inline SVG in `src/components`. This is the same asset escape hatch `Logo.tsx` uses. One neutral-grey mark serves both themes; if it ever reads washed out, split it into light/dark files and switch on `useTheme()` the way `Logo.tsx` does.
+
 ### "What's new" changelog
 
 Organizers typically return once per competition, months apart, so `src/components/WhatsNewDialog.tsx` shows them a short summary of what shipped since their last visit. No account or analytics data is involved: `localStorage` holds one key, `changelog_seen`, containing the id of the newest entry the visitor has read.

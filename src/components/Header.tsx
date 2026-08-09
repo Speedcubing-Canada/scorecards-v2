@@ -7,6 +7,7 @@ import { useIsMobile } from '../lib/useIsMobile';
 import LanguageSelect from './LanguageSelect';
 import ThemeToggle from './ThemeToggle';
 import WhatsNewDialog from './WhatsNewDialog';
+import ContactLinks from './ContactLinks';
 import Logo from './Logo';
 
 interface HeaderProps {
@@ -76,6 +77,7 @@ export default function Header({ showBack, onBack, showUser, showSignOut = true 
                 <LanguageSelect />
                 <ThemeToggle />
                 <WhatsNewDialog />
+                <ContactLinks />
               </div>
               {userInfo && <div style={s.menuUser}>{userInfo}</div>}
               {showSignOut && (
@@ -94,6 +96,7 @@ export default function Header({ showBack, onBack, showUser, showSignOut = true 
           <LanguageSelect />
           <ThemeToggle />
           <WhatsNewDialog />
+          <ContactLinks />
           {userInfo}
           {showSignOut && (
             <button style={s.logoutBtn} onClick={logout}>

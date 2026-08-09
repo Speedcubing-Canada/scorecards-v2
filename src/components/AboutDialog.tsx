@@ -3,6 +3,7 @@ import { Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '../lib/useIsMobile';
 import Tooltip from './Tooltip';
+import { REPO_URL, SUPPORT_EMAIL } from './ContactLinks';
 
 /**
  * "About this tool" explainer. Renders a trigger (a small circular "i" button, or a
@@ -56,6 +57,17 @@ export default function AboutDialog({ as = 'icon' }: { as?: 'icon' | 'text' }) {
             <h3 style={s.section}>{t('about.workflow_title')}</h3>
             <p style={s.body}>{t('about.workflow_body')}</p>
 
+            {/* The login page has no Header, so this is the only place a signed-out
+                organizer can find where to send a bug report. */}
+            <h3 style={s.section}>{t('about.feedback_title')}</h3>
+            <p style={s.body}>{t('about.feedback_body')}</p>
+            <p style={s.links}>
+              <a style={s.link} href={REPO_URL} target="_blank" rel="noopener noreferrer">
+                {REPO_URL.replace('https://', '')}
+              </a>
+              <a style={s.link} href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
+            </p>
+
             <button style={s.close} onClick={() => setOpen(false)}>{t('about.close')}</button>
           </div>
         </div>
@@ -93,6 +105,11 @@ const s: Record<string, React.CSSProperties> = {
   title: { margin: '0 0 12px', fontSize: 'var(--fs-title)', fontWeight: 700, color: 'var(--text)' },
   section: { margin: '20px 0 6px', fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--text)' },
   body: { margin: 0, fontSize: 'var(--fs-body)', fontWeight: 400, lineHeight: 1.6, color: 'var(--text-muted)' },
+  links: { margin: '8px 0 0', display: 'flex', flexDirection: 'column', gap: 4 },
+  link: {
+    fontSize: 'var(--fs-body)', fontWeight: 500, lineHeight: 1.6,
+    color: 'var(--primary)', wordBreak: 'break-word',
+  },
   close: {
     marginTop: 'var(--space-6)',
     backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)',

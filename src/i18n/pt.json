@@ -226,7 +226,13 @@
     "wcif_body": "Os dados de cada competição WCA (provas, horário e competidores inscritos) estão no site da WCA num formato chamado WCIF. As atribuições de grupos são adicionadas antes, normalmente com uma ferramenta como o Groupifier.",
     "workflow_title": "Onde se encaixa",
     "workflow_body": "Este é o último passo antes de imprimir. Depois de atribuídos os grupos, lê o WCIF da competição e transforma-o nos documentos que imprime e recorta para o dia da competição.",
+    "feedback_title": "Encontrou um erro ou tem comentários?",
+    "feedback_body": "Comunique um problema no GitHub ou escreva à equipa de software.",
     "close": "Entendido"
+  },
+  "contact": {
+    "github": "Código-fonte no GitHub",
+    "email": "Escrever à equipa de software"
   },
   "whats_new": {
     "trigger": "Novidades",
