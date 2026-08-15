@@ -2,7 +2,7 @@
   "common": {
     "back": "← Voltar",
     "sign_out": "Sair",
-    "app_title": "Gerador de Folhas de Pontuação WCA",
+    "app_title": "Gerador de Súmulas da WCA",
     "remove": "Remover",
     "clear": "Limpar",
     "upload": "Enviar",
@@ -12,7 +12,7 @@
     "menu": "Menu"
   },
   "login": {
-    "subtitle": "Gere folhas de pontuação e crachás prontos para impressão para sua competição da WCA.",
+    "subtitle": "Gere súmulas e crachás prontos para impressão para sua competição da WCA.",
     "setup_required": "Configuração necessária:",
     "setup_env_instruction": "Defina {{key}} no seu arquivo .env.",
     "setup_oauth_instruction": "Crie um aplicativo OAuth da WCA em",
@@ -30,7 +30,7 @@
     "error": "Erro: {{message}}",
     "empty": "Nenhuma competição encontrada. Verifique se você é delegado ou organizador.",
     "create_custom_title": "Criar uma competição personalizada",
-    "create_custom_desc": "Competição não oficial - defina os eventos manualmente e imprima as folhas"
+    "create_custom_desc": "Competição não oficial - defina os eventos manualmente e imprima as súmulas"
   },
   "settings": {
     "heading": "Configurar opções de impressão",
@@ -43,33 +43,33 @@
     "paper": {
       "title": "Formato do papel",
       "a4": "A4",
-      "a4_desc": "210 × 297 mm - cada folha é A6 (105 × 148,5 mm)",
+      "a4_desc": "210 × 297 mm - cada súmula é A6 (105 × 148,5 mm)",
       "letter": "Carta",
-      "letter_desc": "8,5 × 11 pol - cada folha é 107,95 × 139,7 mm"
+      "letter_desc": "8,5 × 11 pol - cada súmula é 107,95 × 139,7 mm"
     },
     "subsequent_rounds": {
       "title": "Rodadas seguintes",
       "prefilled": "Preenchidas com nomes",
-      "prefilled_desc": "Imprimir folhas para todos os classificados (requer resultados do WCA Live)",
+      "prefilled_desc": "Imprimir súmulas para todos os classificados (requer resultados do WCA Live)",
       "blanks": "Evento + rodada preenchidos, nome em branco",
       "blanks_desc": "Imprimir espaços de nome em branco - preencher à mão na competição"
     },
     "check_mode": {
       "title": "Capas",
-      "hint": "Onde o cartão de verificação do delegado e do anotador é impresso.",
+      "hint": "Onde a capa de verificação do delegado e do anotador é impressa.",
       "per_group": "Capa por grupo",
-      "per_group_desc": "Um cartão de verificação na frente das folhas de cada grupo (padrão).",
+      "per_group_desc": "Uma capa de verificação na frente das súmulas de cada grupo (padrão).",
       "per_round": "Capa por rodada",
-      "per_round_desc": "Um cartão de verificação por rodada de evento em vez de por grupo - menos cartões para imprimir.",
+      "per_round_desc": "Uma capa de verificação por rodada de evento em vez de por grupo - menos capas para imprimir.",
       "none": "Nenhuma",
       "none_desc": "Sem capas."
     },
     "double_check": {
-      "title": "Dupla verificação de misturas",
+      "title": "Verificação dupla de embaralhamentos",
       "optional_note": "opcional - para grandes campeonatos",
-      "hint": "Adiciona uma segunda coluna de assinatura do misturador para verificar as misturas de forma independente.",
-      "enable": "Ativar a dupla verificação de misturas",
-      "enable_desc": "Adiciona uma segunda coluna de assinatura do misturador às folhas selecionadas.",
+      "hint": "Adiciona uma segunda coluna de assinatura do embaralhador para verificar os embaralhamentos de forma independente.",
+      "enable": "Ativar a verificação dupla de embaralhamento",
+      "enable_desc": "Adiciona uma segunda coluna de assinatura do embaralhador às súmulas selecionadas.",
       "rounds_title": "Aplicar às rodadas",
       "round_first": "Rodada 1",
       "round_second": "Rodada 2",
@@ -87,15 +87,15 @@
       "not_found": "Ainda não encontrado no WCA Live - insira manualmente se necessário",
       "hint": "ID numérico da competição no WCA Live. Usado para gerar QR codes do WCA Live nos crachás.",
       "placeholder": "ex. 9667",
-      "hide_label": "Ocultar a linha do WCA Live nas folhas em branco",
-      "hide_desc": "As folhas em branco e as extras perdem o rótulo «WCA Live:» vazio. As folhas com um competidor mantêm o seu ID."
+      "hide_label": "Ocultar a linha do WCA Live nas súmula em branco",
+      "hide_desc": "As súmulas em branco e as extras perdem o rótulo «WCA Live:» vazio. As súmulas com um competidor mantêm o seu ID."
     },
     "logo": {
       "title": "Logo da competição",
       "optional_note": "opcional",
-      "hint": "Aparece no canto superior esquerdo de cada folha. Recomenda-se PNG ou SVG.",
+      "hint": "Aparece no canto superior esquerdo de cada súmula. Recomenda-se PNG ou SVG.",
       "default_title": "Logo padrão da Speedcubing Canada",
-      "default_desc": "Exibido no canto superior esquerdo de cada folha, ao lado do nome da competição, quando nenhum logo personalizado é enviado.",
+      "default_desc": "Exibido no canto superior esquerdo de cada súmula, ao lado do nome da competição, quando nenhum logo personalizado é enviado.",
       "use_default_label": "Usar o logo da Speedcubing Canada",
       "use_default_hint": "Recomendado para competições canadenses. Desative para competições fora do Canadá."
     },
@@ -121,7 +121,7 @@
       "toggle": "Avançado",
       "custom_events_title": "Eventos personalizados",
       "custom_events_optional": "opcional",
-      "custom_events_hint": "Imprima 4 folhas em branco para eventos secundários ou quebra-cabeças bônus não listados no WCIF. Os campos de grupo e rodada ficarão em branco.",
+      "custom_events_hint": "Imprima 4 súmulas em branco para eventos secundários ou quebra-cabeças bônus não listados no WCIF. Os campos de grupo e rodada ficarão em branco.",
       "event_name_placeholder": "Nome do evento (ex. Revezamento de Clock)",
       "format_label": "Formato",
       "avg5": "Média de 5",
@@ -140,7 +140,7 @@
       "icon_selected": "Ícone selecionado",
       "csv_label": "Competidores (CSV)",
       "csv_optional": "opcional",
-      "csv_hint": "Um competidor por linha: Nome ou Nome,WCAID. Imprime uma folha nomeada por linha (mais folhas em branco para completar a última página) em vez de 4 folhas em branco. Linhas começando com # são ignoradas.",
+      "csv_hint": "Um competidor por linha: Nome ou Nome,WCAID. Imprime uma súmula nomeada por linha (mais súmulas em branco para completar a última página) em vez de 4 súmulas em branco. Linhas começando com # são ignoradas.",
       "csv_count": "{{count}} competidor(es) carregado(s)",
       "add_custom_event": "+ Adicionar evento personalizado",
       "first_timer_slips_title": "Fichas para iniciantes",
@@ -150,13 +150,13 @@
     "generate_button": "Gerar →"
   },
   "generate": {
-    "title": "Gerar folhas de pontuação",
+    "title": "Gerar súmulas",
     "fetching": "Buscando WCIF da WCA…",
-    "parsing": "Montando lista de folhas…",
+    "parsing": "Montando lista de súmulas…",
     "rendering": "Renderizando PDF…",
     "stats": {
-      "scorecards": "Folhas de pontuação",
-      "cover_cards": "Folhas de capa",
+      "scorecards": "Súmulas",
+      "cover_cards": "Súmulas de capa",
       "pdfs": "PDFs",
       "paper": "Papel",
       "total_pages": "Páginas"
@@ -166,21 +166,21 @@
     "guide": {
       "title": "Como imprimir e recortar",
       "scorecards": {
-        "callout": "As folhas de pontuação saem já ordenadas. Recorte-as, mantenha as pilhas como ficaram e você nunca precisa ordenar nada à mão.",
+        "callout": "As súmulas já saem ordenadas. Recorte-as, mantenha as pilhas como ficaram e você nunca precisa ordenar nada à mão.",
         "diagram": {
-          "sheet": "4 por folha",
+          "sheet": "4 por súmulas",
           "piles": "Recortar → 4 pilhas",
           "deck": "Empilhar 1-2-3-4"
         },
         "steps": {
-          "print": "Imprima o PDF das folhas de pontuação só na frente, na ordem das páginas. Não embaralhe as páginas.",
-          "cut": "Recorte cada folha em 4 pelas linhas de corte e mantenha os pedaços separados por posição: superior-esquerda, superior-direita, inferior-esquerda, inferior-direita. Cada uma dessas quatro pilhas já está na ordem certa.",
+          "print": "Imprima o PDF das súmulas só na frente da folha, na ordem das páginas. Não embaralhe as folhas.",
+          "cut": "Recorte cada súmula em 4 pelas linhas de corte e mantenha os pedaços separados por posição: superior-esquerda, superior-direita, inferior-esquerda, inferior-direita. Cada uma dessas quatro pilhas já está na ordem certa.",
           "stack": "Coloque a pilha superior-esquerda sobre a superior-direita, depois a inferior-esquerda e depois a inferior-direita. Esse maço único contém todos os grupos de todas as rodadas, na ordem do cronograma.",
-          "covers": "Uma folha de capa marca o início de cada grupo, então basta ir tirando cada grupo do topo do maço conforme a rodada acontece."
+          "covers": "Uma súmula de capa marca o início de cada grupo, então basta ir tirando cada grupo do topo do maço conforme a rodada acontece."
         }
       },
-      "schedule": "Acompanhamento do cronograma: imprime como está, uma página por dia. Fixe no palco ou entregue à equipe de sala.",
-      "checking": "Checklist de rodadas: imprime como está, uma tabela por dia. Marque cada rodada conforme as folhas de pontuação voltam.",
+      "schedule": "Acompanhamento do cronograma: imprima como está, uma folha por dia. Fixe no palco ou entregue à equipe do palco.",
+      "checking": "Checklist de rodadas: imprima como está, uma tabela por dia. Marque cada rodada conforme as súmulas voltam.",
       "nametags": "Crachás: quatro pessoas por página, frente e verso lado a lado. Recorte cada par e dobre ao meio antes de colocar no porta-crachá.",
       "first_timers": "Comprovantes de estreantes: os comprovantes seguem um após o outro na página. Recorte entre eles e entregue cada um ao delegado para assinar após a primeira tentativa do estreante."
     }
@@ -195,11 +195,11 @@
     "preset_default_desc": "As opções padrão.",
     "rounds_heading": "Quais rodadas?",
     "docs_title": "Tipos de documentos",
-    "doc_scorecards": "Fichas de pontuação",
-    "doc_schedule": "Rastreamento de horário",
-    "doc_nametags": "Etiquetas de nome",
-    "doc_round_checklist": "Lista de verificação",
-    "doc_first_timers": "Fichas de estreante",
+    "doc_scorecards": "Súmulas",
+    "doc_schedule": "Acompanhamento de horário",
+    "doc_nametags": "Crachás",
+    "doc_round_checklist": "Checklist de rodada",
+    "doc_first_timers": "Fichas de iniciante",
     "checking": "Verificando a competição…",
     "continue": "Continuar →",
     "latest": {
@@ -216,23 +216,23 @@
     }
   },
   "warnings": {
-    "no_groups": "Ainda não foram atribuídos grupos para esta competição, por isso as contagens de folhas mostram 0. Atribua primeiro os grupos (no Groupifier ou no site da WCA) e depois volte aqui. Entretanto, pode gerar o acompanhamento do horário e os crachás."
+    "no_groups": "Ainda não foram atribuídos grupos para esta competição, por isso as contagens de súmulas mostram 0. Atribua primeiro os grupos (no Groupifier ou no site da WCA) e depois volte aqui. Entretanto, pode gerar o acompanhamento do horário e os crachás."
   },
   "about": {
     "trigger": "O que é isto?",
     "title": "Sobre esta ferramenta",
-    "intro": "Esta ferramenta gera PDFs prontos para impressão de uma competição WCA: folhas de pontuação, crachás, acompanhamento do horário e fichas para estreantes (opcionais). Tudo é formatado para imprimir e recortar.",
+    "intro": "Esta ferramenta gera PDFs prontos para impressão de uma competição WCA: súmulas, crachás, acompanhamento do horário e fichas para estreantes (opcionais). Tudo é formatado para imprimir e recortar.",
     "wcif_title": "O que é o WCIF?",
     "wcif_body": "Os dados de cada competição WCA (provas, horário e competidores inscritos) estão no site da WCA num formato chamado WCIF. As atribuições de grupos são adicionadas antes, normalmente com uma ferramenta como o Groupifier.",
     "workflow_title": "Onde se encaixa",
     "workflow_body": "Este é o último passo antes de imprimir. Depois de atribuídos os grupos, lê o WCIF da competição e transforma-o nos documentos que imprime e recorta para o dia da competição.",
     "feedback_title": "Encontrou um erro ou tem comentários?",
-    "feedback_body": "Comunique um problema no GitHub ou escreva à equipa de software.",
+    "feedback_body": "Comunique um problema no GitHub ou escreva à equipe de software.",
     "close": "Entendido"
   },
   "contact": {
     "github": "Código-fonte no GitHub",
-    "email": "Escrever à equipa de software"
+    "email": "Escrever à equipe de software"
   },
   "whats_new": {
     "trigger": "Novidades",
@@ -242,7 +242,7 @@
   },
   "custom": {
     "heading": "Competição personalizada",
-    "hint": "Defina seus eventos manualmente. Cada evento imprime uma página de 4 folhas em branco, ou uma folha por competidor se você enviar um CSV.",
+    "hint": "Defina seus eventos manualmente. Cada evento imprime uma página de 4 súmulas em branco, ou uma súmula por competidor se você enviar um CSV.",
     "name_label": "Nome da competição",
     "name_placeholder": "ex. Open do Clube de Cubos 2026",
     "events_title": "Eventos",
