@@ -143,9 +143,9 @@
       "csv_hint": "Um competidor por linha: Nome ou Nome,WCAID. Imprime uma súmula nomeada por linha (mais súmulas em branco para completar a última página) em vez de 4 súmulas em branco. Linhas começando com # são ignoradas.",
       "csv_count": "{{count}} competidor(es) carregado(s)",
       "add_custom_event": "+ Adicionar evento personalizado",
-      "first_timer_slips_title": "Fichas para iniciantes",
-      "first_timer_slips_enable": "Imprimir fichas para iniciantes",
-      "first_timer_slips_desc": "Adiciona uma ficha de confirmação para cada iniciante (competidor sem WCA ID) para verificar nome, gênero, cidadania e eventos. Desativado por padrão."
+      "first_timer_slips_title": "Fichas para novatos",
+      "first_timer_slips_enable": "Imprimir fichas para novatos",
+      "first_timer_slips_desc": "Adiciona uma ficha de confirmação para cada novato (competidor sem WCA ID) para verificar nome, gênero, cidadania e eventos. Desativado por padrão."
     },
     "generate_button": "Gerar →"
   },
@@ -199,7 +199,7 @@
     "doc_schedule": "Acompanhamento de horário",
     "doc_nametags": "Crachás",
     "doc_round_checklist": "Checklist de rodada",
-    "doc_first_timers": "Fichas de iniciante",
+    "doc_first_timers": "Fichas de novato",
     "checking": "Verificando a competição…",
     "continue": "Continuar →",
     "latest": {
