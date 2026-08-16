@@ -110,7 +110,7 @@
       "logo_only_desc": "Le logo remplace le texte du nom de la compétition - les QR codes sont légèrement plus petits",
       "qr_codes": "Codes QR",
       "qr_back_only": "Dos seulement",
-      "qr_back_only_desc": "Avant = attributions de groupes (FR), dos = codes QR (EN)",
+      "qr_back_only_desc": "Avant = attributions de groupes, dos = codes QR",
       "qr_both_sides": "Les deux côtés",
       "qr_both_sides_desc": "Codes QR sur les deux côtés - utile quand le logo prend de la place",
       "layout": "Orientation des badges",

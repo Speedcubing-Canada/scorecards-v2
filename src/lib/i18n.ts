@@ -113,7 +113,6 @@ export interface ScorecardStrings {
   // the trailing "of Y" portion of round/group labels on the scorecard.
   ofConnector: string;
   stationLabel: (n: string) => string;
-  seatLabel: (n: string) => string;
   cover: CoverCardStrings;
 }
 
@@ -144,7 +143,6 @@ const EN: ScorecardStrings = {
   blankGroupLabel: (total) => `Group _ of ${total}`,
   ofConnector: 'of',
   stationLabel: (n) => `Station ${n}`,
-  seatLabel: (n) => `Seat ${n}`,
   cover: {
     forDelegate: 'FOR DELEGATE',
     bundledScorecards: (n) => `1. Bundled all ${n} scorecards`,
@@ -187,7 +185,6 @@ const FR: ScorecardStrings = {
   blankGroupLabel: (total) => `Groupe _ sur ${total}`,
   ofConnector: 'sur',
   stationLabel: (n) => `Station ${n}`,
-  seatLabel: (n) => `Siège ${n}`,
   cover: {
     forDelegate: 'POUR LE DÉLÉGUÉ',
     bundledScorecards: (n) => `1. Regroupé toutes les ${n} feuilles`,
@@ -230,7 +227,6 @@ const ES: ScorecardStrings = {
   blankGroupLabel: (total) => `Grupo _ de ${total}`,
   ofConnector: 'de',
   stationLabel: (n) => `Estación ${n}`,
-  seatLabel: (n) => `Asiento ${n}`,
   cover: {
     forDelegate: 'PARA EL DELEGADO',
     bundledScorecards: (n) => `1. Agrupadas todas las ${n} hojas`,
@@ -248,7 +244,9 @@ const ES: ScorecardStrings = {
 
 // ── Portuguese (Brazil) ─────────────────────────────────────────────────────────
 const PT: ScorecardStrings = {
-  scrambler: 'Embaralhador',
+  // Abbreviated: the full "Embaralhador" is 34.5pt at 5.5pt Helvetica and the
+  // scrambler column only holds 31.1pt (scorecard-layout.test.ts).
+  scrambler: 'Embaralh.',
   scramblerCheck: 'Verif.',
   attempt: 'Tentativa',
   judge: 'Juiz',
@@ -273,7 +271,6 @@ const PT: ScorecardStrings = {
   blankGroupLabel: (total) => `Grupo _ de ${total}`,
   ofConnector: 'de',
   stationLabel: (n) => `Estação ${n}`,
-  seatLabel: (n) => `Cadeira ${n}`,
   cover: {
     forDelegate: 'PARA O DELEGADO',
     bundledScorecards: (n) => `1. Todas as ${n} súmulas agrupadas`,
@@ -292,7 +289,7 @@ const PT: ScorecardStrings = {
 /**
  * Merge two languages' scorecard strings for a dual-language scorecard.
  * Column headers and the cut-off/provisional lines stack both languages
- * (`primary\nsecondary`); everything else (round/group/seat labels, cover) uses
+ * (`primary\nsecondary`); everything else (round/group/station labels, cover) uses
  * the primary language only. This is the single place that defines which fields
  * are bilingual - adding a language never touches it.
  */
@@ -320,7 +317,6 @@ function mergeScorecardStrings(primary: ScorecardStrings, secondary: ScorecardSt
     blankGroupLabel: (total) => primary.blankGroupLabel(total),
     ofConnector: primary.ofConnector,
     stationLabel: (n) => primary.stationLabel(n),
-    seatLabel: (n) => primary.seatLabel(n),
     cover: primary.cover,
   };
 }

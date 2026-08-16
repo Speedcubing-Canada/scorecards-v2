@@ -110,7 +110,7 @@
       "logo_only_desc": "Logo replaces the competition name text - QR codes are slightly smaller to compensate",
       "qr_codes": "QR codes",
       "qr_back_only": "Back side only",
-      "qr_back_only_desc": "Front = group assignments (FR), back = QR codes (EN)",
+      "qr_back_only_desc": "Front = group assignments, back = QR codes",
       "qr_both_sides": "Both sides",
       "qr_both_sides_desc": "QR codes on both front and back - useful when logo takes space",
       "layout": "Card orientation",

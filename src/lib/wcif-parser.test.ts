@@ -422,7 +422,7 @@ describe('simultaneous multi-stage finals', () => {
     expect(coverGroups).not.toContain('Group 1 of 1');
   });
 
-  it('blank finals cards carry the stage label (not seat numbers)', () => {
+  it('blank finals cards carry the stage label (not station numbers)', () => {
     const result = mkSimultaneousFinals();
     const cards = scs(result.finals).filter(s => s.eventId === '333');
     const groups = new Set(cards.map(s => s.group));
@@ -456,6 +456,32 @@ describe('simultaneous multi-stage finals', () => {
     // stageCount = 2 → blankCount = ceil(8/2) + 2 = 6 per stage
     const blanks = scs(result.finals).filter(s => s.eventId === '333');
     expect(blanks.length).toBe(12); // 2 stages × 6
+  });
+});
+
+// ── Single-stage finals: numbered blank cards ───────────────────────────────
+
+describe('single-group single-stage finals', () => {
+  // One group in one stage: the event+round already identifies the stack, so a
+  // "Group 1 of 1" label would be redundant noise. The blank cards are numbered
+  // by station instead. Guards the `useStationNumbers` branch in wcif-parser.
+  function mkSingleStageFinals() {
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    const r = room('Scène Rouge', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      act('333', 2, [ch(110, '333', 2, 1, '2024-01-01T14:00:00Z')]),
+    ]);
+    return parseWCIF(mkWCIF([e], [r], [per(1, [{ aid: 100 }])]), cfg());
+  }
+
+  it('blank finals cards are numbered by station, not labeled "Group 1 of 1"', () => {
+    const cards = scs(unimpose(mkSingleStageFinals().finals)).filter(s => s.eventId === '333');
+    const groups = cards.map(s => s.group);
+    expect(groups).toContain('Station 01');
+    expect(groups).toContain('Station 02');
+    expect(groups).not.toContain('Group 1 of 1');
+    // Sequential and zero-padded across the whole blank run.
+    expect(groups).toEqual(cards.map((_, i) => `Station ${String(i + 1).padStart(2, '0')}`));
   });
 });
 

@@ -110,7 +110,7 @@
       "logo_only_desc": "El logo reemplaza el texto del nombre de la competencia - los códigos QR son ligeramente más pequeños",
       "qr_codes": "Códigos QR",
       "qr_back_only": "Solo reverso",
-      "qr_back_only_desc": "Frente = asignaciones de grupos (FR), reverso = códigos QR (EN)",
+      "qr_back_only_desc": "Frente = asignaciones de grupos, reverso = códigos QR",
       "qr_both_sides": "Ambos lados",
       "qr_both_sides_desc": "Códigos QR en ambos lados - útil cuando el logo ocupa espacio",
       "layout": "Orientación de credenciales",

@@ -342,7 +342,7 @@ function finalizeEntriesIntermediate(entries: ScorecardData[]): ScorecardData[] 
 
 export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF {
   const { language, secondaryLanguage, secondRoundMode } = settings;
-  // Station/seat labels are primary-only, so the secondary language is irrelevant here.
+  // Station labels are primary-only, so the secondary language is irrelevant here.
   const strings = getStrings(language);
 
   // ── Scramble double-checking ────────────────────────────────────────────────
@@ -822,16 +822,16 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     });
   }
 
-  // ── Finals: blank entries (seat numbers only when single group in single stage) ─
+  // ── Finals: blank entries (station numbers only when single group in single stage) ─
   for (const { eventId, roundNum, rid, groups } of Object.values(finalsRounds)) {
     const totalGroups = groups[0]?.totalGroups ?? groups.length;
     const numStages = roundStages[rid]?.size ?? 1;
     // One logical group split across multiple stages simultaneously: each stage
     // gets its own labeled stack ("Rouge 1", "Bleu 1", …).
     const isMultiStageSingleGroup = totalGroups === 1 && numStages > 1;
-    // Seat numbers only when truly one group in one stage (event+round already uniquely
+    // Station numbers only when truly one group in one stage (event+round already uniquely
     // identifies the stack; adding a group label would be redundant noise).
-    const useSeatNumbers = totalGroups === 1 && numStages <= 1;
+    const useStationNumbers = totalGroups === 1 && numStages <= 1;
     const stageCount = isMultiStageSingleGroup ? groups.length : totalGroups;
     const field = roundFieldSize[rid];
 
@@ -843,8 +843,8 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       const blankCount = field != null ? Math.ceil(field / stageCount) + 2 : 16;
 
       for (let i = 0; i < blankCount; i++) {
-        const cardGroup = useSeatNumbers
-          ? strings.seatLabel(String(i + 1).padStart(2, '0'))
+        const cardGroup = useStationNumbers
+          ? strings.stationLabel(String(i + 1).padStart(2, '0'))
           : coverLabel;
         finalsEntries.push({
           kind: 'scorecard', timeslot, eventId,

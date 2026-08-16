@@ -88,7 +88,7 @@ describe('getStrings', () => {
 
   it('merges an arbitrary pair (ES primary + PT secondary)', () => {
     const s = getStrings('es', 'pt');
-    expect(s.scrambler).toBe('Mezclador\nMisturador');
+    expect(s.scrambler).toBe('Mezclador\nEmbaralh.');
     expect(s.attempt).toBe('Intento\nTentativa');
     // primary-only fields come from ES
     expect(s.cover.forDelegate).toBe('PARA EL DELEGADO');
@@ -124,7 +124,7 @@ describe('getStrings', () => {
 
   it('returns Portuguese strings for "pt"', () => {
     const s = getStrings('pt');
-    expect(s.scrambler).toBe('Misturador');
+    expect(s.scrambler).toBe('Embaralh.');
     expect(s.attempt).toBe('Tentativa');
     expect(s.judge).toBe('Juiz');
     expect(s.competitor).toBe('Competidor');
@@ -134,8 +134,8 @@ describe('getStrings', () => {
   it('Portuguese cover card strings', () => {
     const { cover } = getStrings('pt');
     expect(cover.forDelegate).toBe('PARA O DELEGADO');
-    expect(cover.forDataEntry).toBe('PARA ENTRADA DE DADOS');
-    expect(cover.bundledScorecards(12)).toBe('1. Agrupadas todas as 12 folhas');
+    expect(cover.forDataEntry).toBe('PARA A EQUIPE DE RESULTADOS');
+    expect(cover.bundledScorecards(12)).toBe('1. Todas as 12 súmulas agrupadas');
     expect(cover.checkedSignatures).toBe('2. Verificadas as assinaturas faltantes');
     expect(cover.delegateInitials).toBe('Iniciais do Delegado ______');
   });
@@ -422,30 +422,22 @@ describe('getShortNametTagNames', () => {
   });
 });
 
-describe('getStrings seat/station labels', () => {
-  it('English: Station and Seat', () => {
-    const s = getStrings('en');
-    expect(s.stationLabel('03')).toBe('Station 03');
-    expect(s.seatLabel('03')).toBe('Seat 03');
+// There is exactly one label for the numbered spot a competitor solves at. An earlier
+// build had a separate `seatLabel` for blank finals cards; both named the same thing.
+describe('getStrings station labels', () => {
+  it('English: Station', () => {
+    expect(getStrings('en').stationLabel('03')).toBe('Station 03');
   });
-  it('French: Station and Siège', () => {
-    const s = getStrings('fr');
-    expect(s.stationLabel('03')).toBe('Station 03');
-    expect(s.seatLabel('03')).toBe('Siège 03');
+  it('French: Station', () => {
+    expect(getStrings('fr').stationLabel('03')).toBe('Station 03');
   });
-  it('Spanish: Estación and Asiento', () => {
-    const s = getStrings('es');
-    expect(s.stationLabel('03')).toBe('Estación 03');
-    expect(s.seatLabel('03')).toBe('Asiento 03');
+  it('Spanish: Estación', () => {
+    expect(getStrings('es').stationLabel('03')).toBe('Estación 03');
   });
-  it('Portuguese: Estação and Assento', () => {
-    const s = getStrings('pt');
-    expect(s.stationLabel('03')).toBe('Estação 03');
-    expect(s.seatLabel('03')).toBe('Assento 03');
+  it('Portuguese: Estação', () => {
+    expect(getStrings('pt').stationLabel('03')).toBe('Estação 03');
   });
-  it('seat/station labels are primary-only when a secondary is set', () => {
-    const s = getStrings('fr', 'en');
-    expect(s.stationLabel('01')).toBe('Station 01');
-    expect(s.seatLabel('01')).toBe('Siège 01');
+  it('station labels are primary-only when a secondary is set', () => {
+    expect(getStrings('es', 'en').stationLabel('01')).toBe('Estación 01');
   });
 });
