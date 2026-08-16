@@ -9,6 +9,7 @@ import Header from '../components/Header';
 import AboutDialog from '../components/AboutDialog';
 import Skeleton from '../components/Skeleton';
 import { useIsMobile } from '../lib/useIsMobile';
+import { clearCustom, writeCompetition } from '../lib/flowState';
 import { clearPresetSettings } from '../presets';
 
 export default function CompetitionPickerPage() {
@@ -42,10 +43,8 @@ export default function CompetitionPickerPage() {
 
   function selectCompetition(comp: WCACompetition) {
     // Drop any stale custom-competition state so it never leaks into a WCA flow.
-    sessionStorage.removeItem('custom_competition');
-    sessionStorage.removeItem('custom_competition_events');
-    sessionStorage.setItem('selected_competition_id', comp.id);
-    sessionStorage.setItem('selected_competition_name', comp.name);
+    clearCustom();
+    writeCompetition(comp.id, comp.name);
     navigate('/scope');
   }
 

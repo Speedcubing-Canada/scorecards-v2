@@ -11,6 +11,7 @@ import {
   type GenerationScope, type DocumentSelection,
 } from '../lib/generationScope';
 import type { CompetitionSettings, LocaleCode } from '../types/settings';
+import { readCompetition, writeHasGroups, writeScope } from '../lib/flowState';
 import { PRESETS, writePresetSettings, type Preset } from '../presets';
 import Header from '../components/Header';
 import Skeleton from '../components/Skeleton';
@@ -32,8 +33,7 @@ const baseDocuments = (isMidComp: boolean): DocumentSelection => ({
 });
 
 function persistScope(scope: GenerationScope, showSecondRoundMode: boolean) {
-  sessionStorage.setItem('generation_scope', JSON.stringify(scope));
-  sessionStorage.setItem('generation_detection', JSON.stringify({ showSecondRoundMode }));
+  writeScope(scope, { showSecondRoundMode });
 }
 
 export default function RoundScopePage() {
@@ -42,8 +42,7 @@ export default function RoundScopePage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  const competitionId = sessionStorage.getItem('selected_competition_id') ?? '';
-  const competitionName = sessionStorage.getItem('selected_competition_name') ?? '';
+  const { id: competitionId, name: competitionName } = readCompetition();
 
   const [status, setStatus] = useState<Status>('loading');
   const [statusMsg, setStatusMsg] = useState('');
@@ -96,7 +95,7 @@ export default function RoundScopePage() {
 
         // Surface whether groups have been generated so the Settings page can warn
         // without re-fetching the WCIF (scope always runs before settings).
-        sessionStorage.setItem('competition_has_groups', String(result.hasGroups));
+        writeHasGroups(result.hasGroups);
 
         const midComp = result.laterRoundsWithAssignments.length > 0;
         setIsMidComp(midComp);

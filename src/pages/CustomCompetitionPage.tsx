@@ -5,6 +5,10 @@ import type { CustomEvent } from '../types/settings';
 import Header from '../components/Header';
 import CustomEventEditor from '../components/CustomEventEditor';
 import { useIsMobile } from '../lib/useIsMobile';
+import {
+  readCompetition, readCustomEvents, readIsCustom,
+  writeCompetition, writeCustom, writeHasGroups, writeScope,
+} from '../lib/flowState';
 
 // Turn the competition name into a filename-safe id ("custom_" prefix marks the
 // flow downstream). Non-ASCII-only names fall back to a fixed id.
@@ -25,34 +29,26 @@ export default function CustomCompetitionPage() {
   const isMobile = useIsMobile();
 
   // Survive back-navigation from /settings: reload whatever was entered before.
-  const [name, setName] = useState(() =>
-    sessionStorage.getItem('custom_competition') === 'true'
-      ? sessionStorage.getItem('selected_competition_name') ?? ''
-      : '',
-  );
-  const [events, setEvents] = useState<CustomEvent[]>(() => {
-    try {
-      return JSON.parse(sessionStorage.getItem('custom_competition_events') ?? '[]') as CustomEvent[];
-    } catch {
-      return [];
-    }
-  });
+  const [name, setName] = useState(() => (readIsCustom() ? readCompetition().name : ''));
+  const [events, setEvents] = useState<CustomEvent[]>(readCustomEvents);
 
   const canContinue = name.trim() !== '' && events.some(e => e.name.trim() !== '');
 
   function handleContinue() {
     const trimmed = name.trim();
-    sessionStorage.setItem('selected_competition_id', customCompetitionId(trimmed));
-    sessionStorage.setItem('selected_competition_name', trimmed);
-    // No WCIF ⇒ no group detection; 'true' suppresses the no-groups warning.
-    sessionStorage.setItem('competition_has_groups', 'true');
-    sessionStorage.setItem('generation_scope', JSON.stringify({
-      mode: 'everything',
-      documents: { scorecards: true, scheduleTracker: false, nametags: false, roundChecklist: false, firstTimerSlips: false },
-    }));
-    sessionStorage.setItem('generation_detection', JSON.stringify({ showSecondRoundMode: false }));
-    sessionStorage.setItem('custom_competition', 'true');
-    sessionStorage.setItem('custom_competition_events', JSON.stringify(events.filter(e => e.name.trim() !== '')));
+    writeCompetition(customCompetitionId(trimmed), trimmed);
+    // No WCIF ⇒ no group detection; `true` suppresses the no-groups warning.
+    writeHasGroups(true);
+    // Custom competitions have only their own events: no schedule, name tags or slips,
+    // and no Round 2 to choose a mode for.
+    writeScope(
+      {
+        mode: 'everything',
+        documents: { scorecards: true, scheduleTracker: false, nametags: false, roundChecklist: false, firstTimerSlips: false },
+      },
+      { showSecondRoundMode: false },
+    );
+    writeCustom(events.filter(e => e.name.trim() !== ''));
     navigate('/settings');
   }
 
