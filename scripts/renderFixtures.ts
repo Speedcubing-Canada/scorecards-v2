@@ -20,7 +20,11 @@ import { renderToBuffer } from '@react-pdf/renderer';
 import { NametTagDocument } from '../src/pdf/NametTagDocument';
 import { FirstTimerSlipDocument } from '../src/pdf/FirstTimerSlipDocument';
 import { ScorecardDocument } from '../src/pdf/ScorecardDocument';
-import type { NametTagEntry, FirstTimerEntry, ScorecardData } from '../src/lib/wcif-parser';
+import { ScheduleTrackerDocument } from '../src/pdf/ScheduleTrackerDocument';
+import { CheckingSheetDocument } from '../src/pdf/CheckingSheetDocument';
+import type {
+  NametTagEntry, FirstTimerEntry, ScorecardData, ScheduleDay, CheckingDay,
+} from '../src/lib/wcif-parser';
 import { finalizeEntries } from '../src/lib/wcif-parser';
 import type { CompetitionSettings } from '../src/types/settings';
 
@@ -187,6 +191,65 @@ function scorecardFixture(): ScorecardData[] {
   ]);
 }
 
+// ── Schedule tracker / Round Checklist ────────────────────────────────────────
+// A two-day competition with a second room on day 1 (so the tracker renders its room
+// dimension, which the checklist deliberately does not have) and a lunch break on each
+// day (so the thick break rule is exercised). Both documents are ruled tables, so their
+// borders and row tints only show up in a pixel diff, never in the layout unit tests.
+const SCHEDULE_DAYS: ScheduleDay[] = [
+  {
+    dayLabel: 'Day 1 - Saturday',
+    stages: [
+      {
+        stageName: 'Red Stage',
+        rows: [
+          { startTime: '09:00', endTime: '10:00', eventRound: '3x3x3 Cube Round 1',  breakBefore: false },
+          { startTime: '10:00', endTime: '11:00', eventRound: '2x2x2 Cube Round 1',  breakBefore: false },
+          { startTime: '13:00', endTime: '14:30', eventRound: '4x4x4 Cube Round 1',  breakBefore: true  },
+        ],
+      },
+      {
+        stageName: 'Blue Stage',
+        rows: [
+          { startTime: '09:00', endTime: '10:30', eventRound: 'Megaminx Round 1',    breakBefore: false },
+          { startTime: '13:00', endTime: '14:00', eventRound: 'Pyraminx Round 1',    breakBefore: true  },
+        ],
+      },
+    ],
+  },
+  {
+    dayLabel: 'Day 2 - Sunday',
+    stages: [
+      {
+        stageName: 'Red Stage',
+        rows: [
+          { startTime: '09:00', endTime: '10:00', eventRound: '3x3x3 Cube Round 2',  breakBefore: false },
+          { startTime: '12:30', endTime: '13:30', eventRound: '3x3x3 Cube Final',    breakBefore: true  },
+        ],
+      },
+    ],
+  },
+];
+
+const CHECKING_DAYS: CheckingDay[] = [
+  {
+    dayLabel: 'Day 1 - Saturday',
+    rows: [
+      // Round 1 ships with its first two boxes already ticked; later rounds ship blank.
+      { startTime: '09:00', endTime: '10:00', eventRound: '3x3x3 Cube Round 1', groupCount: 3, preChecked: true,  breakBefore: false },
+      { startTime: '09:00', endTime: '10:30', eventRound: 'Megaminx Round 1',   groupCount: 2, preChecked: true,  breakBefore: false },
+      { startTime: '13:00', endTime: '14:30', eventRound: '4x4x4 Cube Round 1', groupCount: 2, preChecked: true,  breakBefore: true  },
+    ],
+  },
+  {
+    dayLabel: 'Day 2 - Sunday',
+    rows: [
+      { startTime: '09:00', endTime: '10:00', eventRound: '3x3x3 Cube Round 2', groupCount: 2, preChecked: false, breakBefore: false },
+      { startTime: '12:30', endTime: '13:30', eventRound: '3x3x3 Cube Final',   groupCount: 1, preChecked: false, breakBefore: true  },
+    ],
+  },
+];
+
 async function write(name: string, element: React.ReactElement): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const buffer = await renderToBuffer(element as any);
@@ -232,6 +295,18 @@ async function main() {
   await write(
     'scorecard-layout-test.pdf',
     e(ScorecardDocument, { entries: cards, settings: settings() }),
+  );
+
+  console.log(`Rendering schedule tracker (${SCHEDULE_DAYS.length} days)…`);
+  await write(
+    'schedule-layout-test.pdf',
+    e(ScheduleTrackerDocument, { days: SCHEDULE_DAYS, settings: settings() }),
+  );
+
+  console.log(`Rendering Round Checklist (${CHECKING_DAYS.length} days)…`);
+  await write(
+    'checklist-layout-test.pdf',
+    e(CheckingSheetDocument, { days: CHECKING_DAYS, settings: settings() }),
   );
 
   console.log('Done.');

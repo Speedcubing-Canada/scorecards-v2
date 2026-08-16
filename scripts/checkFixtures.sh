@@ -49,6 +49,8 @@ npm run --silent render:fixtures >/dev/null
 check nametags_vertical "$OUT/GrosJouetsaMontreal2026_nametags.pdf" "$BASELINE/nametags_vertical.pdf"
 check first_timers     "$OUT/GrosJouetsaMontreal2026_first_timers.pdf" "$BASELINE/first_timers.pdf"
 check scorecards       "$OUT/scorecard-layout-test.pdf"              "$BASELINE/scorecards.pdf"
+check schedule         "$OUT/schedule-layout-test.pdf"               "$BASELINE/schedule.pdf"
+check checklist        "$OUT/checklist-layout-test.pdf"              "$BASELINE/checklist.pdf"
 
 npm run --silent render:fixtures -- --horizontal >/dev/null
 check nametags_horizontal "$OUT/GrosJouetsaMontreal2026_nametags.pdf" "$BASELINE/nametags_horizontal.pdf"

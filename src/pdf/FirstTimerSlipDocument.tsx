@@ -1,4 +1,4 @@
-import { Document, Page, View, Text, StyleSheet, Font } from '@react-pdf/renderer';
+import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import type { CompetitionSettings, LocaleCode } from '../types/settings';
 import type { FirstTimerEntry } from '../lib/wcif-parser';
 import { getFirstTimerSlipStrings, type FirstTimerSlipStrings } from '../lib/i18n';
@@ -6,12 +6,11 @@ import { buildSlipLines, type SlipLine } from './firstTimerSlipLines';
 import {
   SLIP_LINE_H, SLIP_FONT_SIZE, SLIP_PAGE_PAD_TOP, SLIP_PAGE_PAD_BOTTOM,
   SLIP_MARGIN_BOTTOM, SLIP_INTRO_MARGIN_BOTTOM,
+  PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
+import './fontSetup';
 
-Font.registerHyphenationCallback((word) => [word]);
 
-const FONT      = 'Helvetica';
-const FONT_BOLD = 'Helvetica-Bold';
 
 // Layout follows the original "Gros Jouets à Montréal – First-Timer Slips" PDF
 // (left margin 36pt, top 38pt, 11pt Helvetica, flowing checklist, no borders/cut

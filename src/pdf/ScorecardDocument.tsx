@@ -1,14 +1,16 @@
-import { Document, Page, View, Text, Image, StyleSheet, Font } from '@react-pdf/renderer';
+import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
 import type { CompetitionSettings } from '../types/settings';
 import type { ScorecardData } from '../lib/wcif-parser';
 import { getStrings, splitLabelTotal } from '../lib/i18n';
 import type { Style } from '@react-pdf/types';
 import { EVENT_ICONS } from '../assets/events';
 import { logoState, resolveLogo } from '../lib/logo';
-import { SCORECARDS_PER_PAGE, ROW_HEIGHTS, showLiveIdLine } from './layoutConstants';
+import {
+  SCORECARDS_PER_PAGE, ROW_HEIGHTS, showLiveIdLine,
+  PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
+} from './layoutConstants';
+import './fontSetup';
 
-// Prevent react-pdf from hyphenating words - lets computed font size control line breaks instead.
-Font.registerHyphenationCallback((word) => [word]);
 
 // ── Page/card geometry (points) ───────────────────────────────────────────
 // Dimensions measured from the original Sarah-scorecard LETTER PDF output:
@@ -41,8 +43,6 @@ const CONFIGS = {
 
 const BORDER      = '1.5pt solid black';
 const BORDER_THIN = '1pt solid black';
-const FONT        = 'Helvetica';
-const FONT_BOLD   = 'Helvetica-Bold';
 
 // Column widths: match HTML original proportions 75/55/290/70/70 out of 560px
 const COL = { scrambler: '13%', attempt: '10%', result: '52%', judge: '12%', competitor: '13%' };

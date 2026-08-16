@@ -3,6 +3,21 @@
 // Kept free of any @react-pdf import so the estimator never pulls the PDF engine - and
 // its Buffer polyfill ordering - into the main bundle.
 
+// The PDF typeface. Helvetica is one of the 14 PDF base fonts, so it needs no embedding
+// and renders identically in every viewer - which is what makes the printed output
+// predictable. Every document uses these two rather than its own copy.
+export const PDF_FONT = 'Helvetica';
+export const PDF_FONT_BOLD = 'Helvetica-Bold';
+
+// Shared table chrome for the two ruled documents (schedule tracker and Round
+// Checklist). They print side by side on the same clipboard, so they have to look like
+// one family: outer rule darker than the inner row rules, alternating row tint light
+// enough to photocopy.
+export const TABLE_BORDER = '0.75pt solid #888';
+export const TABLE_BORDER_INNER = '0.5pt solid #bbb';
+export const TABLE_ROW_ALT = '#f2f2f2';
+export const TABLE_HEADER_BG = '#d8d8d8';
+
 // Four scorecards per printed page (2×2 grid).
 export const SCORECARDS_PER_PAGE = 4;
 
