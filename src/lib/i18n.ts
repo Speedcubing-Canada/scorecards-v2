@@ -245,8 +245,9 @@ const ES: ScorecardStrings = {
 // ── Portuguese (Brazil) ─────────────────────────────────────────────────────────
 const PT: ScorecardStrings = {
   // Abbreviated: the full "Embaralhador" is 34.5pt at 5.5pt Helvetica and the
-  // scrambler column only holds 31.1pt (scorecard-layout.test.ts).
-  scrambler: 'Embaralh.',
+  // scrambler column only holds 31.1pt (scorecard-layout.test.ts). "Embaralha."
+  // is 27.8pt - the longest form Pedro accepts that still fits.
+  scrambler: 'Embaralha.',
   scramblerCheck: 'Verif.',
   attempt: 'Tentativa',
   judge: 'Juiz',
