@@ -47,9 +47,8 @@ function loadSettings(s: Record<string, unknown> | null): CompetitionSettings | 
   if (s.isCustomCompetition === undefined) s.isCustomCompetition = false;
   // Settings saved before the checking-mode option existed keep the original behaviour.
   if (s.scorecardCheckMode === undefined) s.scorecardCheckMode = 'per-group-card';
-  // 'checking-sheet' used to mean "no cover cards, print the standalone sheet instead".
-  // The sheet is now the opt-in Round Checklist document, so only the cover-card half of
-  // that choice survives.
+  // The retired 'checking-sheet' value meant "no cover cards, print the standalone sheet".
+  // The sheet is now an independently-selected document, so only its cover-card half survives.
   if (s.scorecardCheckMode === 'checking-sheet') s.scorecardCheckMode = 'none';
   return s as unknown as CompetitionSettings;
 }
@@ -108,7 +107,6 @@ export default function GeneratePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Terminate any running worker on unmount
   useEffect(() => () => { workerRef.current?.terminate(); }, []);
 
   const effectiveParsed = useMemo(

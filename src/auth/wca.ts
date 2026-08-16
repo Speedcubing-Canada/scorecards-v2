@@ -75,12 +75,10 @@ const WCA_LIVE_API = 'https://live.worldcubeassociation.org/api';
 /**
  * Returns the numeric WCA Live competition ID, or null if not found / API error.
  *
- * Fetches the whole list and matches client-side because WCA Live's schema has no
- * by-wcaId lookup: `competitions(filter:)` matches on competition *name*, and a name can
- * differ between the WCA and WCA Live, so filtering by it risks resolving to the wrong
- * competition. The list is the currently-listed competitions (~550 rows, ~25 KB), not the
- * full history, so the payload is acceptable. Revisit if WCA Live ever exposes wcaId as a
- * query argument.
+ * Fetches the whole list and matches client-side: WCA Live has no by-wcaId lookup, and its
+ * `competitions(filter:)` matches on *name*, which can differ from the WCA's and resolve to
+ * the wrong competition. The list is only currently-listed competitions (~550 rows, ~25 KB).
+ * Revisit if WCA Live ever exposes wcaId as a query argument.
  */
 export async function fetchWcaLiveId(wcaId: string): Promise<string | null> {
   try {

@@ -145,8 +145,8 @@ describe('filterParsedByScope', () => {
     expect(out.checkingDays).toHaveLength(1);
   });
 
-  // The Round Checklist used to ride along with the scorecards selection. It is its own
-  // document now, so deselecting the scorecards must leave it alone.
+  // The Round Checklist is its own document, not part of the scorecards selection, so
+  // deselecting the scorecards must leave it alone.
   it('scorecards:false → keeps checkingDays (the checklist is independent)', () => {
     const out = filterParsedByScope(base, {
       mode: 'everything',

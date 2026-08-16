@@ -22,7 +22,6 @@ export default function WhatsNewDialog() {
   const [unseen, setUnseen] = useState(() => unseenEntries(readSeen()));
   const [open, setOpen] = useState(() => unseen.length > 0);
 
-  // Close on Escape while open.
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {

@@ -17,7 +17,7 @@ export type NametTagLayout = 'vertical' | 'horizontal';
 
 // Where the delegate/scoretaker cover card goes. Purely about cover cards - the Round
 // Checklist is a separate document, chosen in DocumentSelection, not a mode here.
-//   per-group-card - one cover card per group, on the scorecard sheets (default, legacy)
+//   per-group-card - one cover card per group, on the scorecard sheets (default)
 //   per-round-card - one cover card per event+round (per stage when a round spans stages)
 //   none           - no cover cards
 export type ScorecardCheckMode =
@@ -45,7 +45,7 @@ export interface CustomEvent {
   format: CustomEventFormat;
   cutoff: string;  // "" = none, otherwise "M:SS" - triggers bo2-avg5 / bo1-mo3
   limit: string;   // "" = none, otherwise "M:SS"
-  // Free text printed in the card's round field ("" / undefined = blank, as before).
+  // Free text printed in the card's round field ("" / undefined = blank).
   roundLabel?: string;
   // When set, one named card per competitor (padded with blanks to a full page)
   // instead of the default page of 4 blank cards.

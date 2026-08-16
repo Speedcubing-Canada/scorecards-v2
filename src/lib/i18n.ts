@@ -593,8 +593,7 @@ const NAMETAG_TITLE_PT: NametTagTitleStrings = {
 /**
  * Role-badge titles for the two name-tag panels. The front panel uses the
  * primary language; the back panel uses the secondary language when set,
- * otherwise the primary (single-language ⇒ both panels match). This generalizes
- * the old bilingual front=FR/back=EN behavior to any language pair.
+ * otherwise the primary (single-language ⇒ both panels match).
  */
 export function getNametTagTitleStrings(
   language: LocaleCode,
@@ -673,10 +672,9 @@ export function getEventName(eventId: string, language: LocaleCode): string {
 }
 
 // ── PDF worker progress strings ────────────────────────────────────────────────
-// Shown on the generate page's progress bar while the worker renders. These used to be a
-// fourth translation table hand-maintained inside scorecardWorker.ts, where nothing
-// checked them - a locale missing an entry silently fell back to English at runtime.
-// Living in the registry below puts them under i18n.test.ts's parity loop.
+// Shown on the generate page's progress bar while the worker renders. They live in the
+// registry below so i18n.test.ts's parity loop covers them - a locale missing an entry
+// would otherwise fall back to English at runtime with nothing to catch it.
 export interface WorkerStrings {
   starting: string;
   rendering: (label: string) => string;

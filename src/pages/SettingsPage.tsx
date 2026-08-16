@@ -63,12 +63,10 @@ export default function SettingsPage() {
   // of each option below - nothing here is locked, and `{}` means plain defaults.
   const preset = readPresetSettings();
 
-  // Every field the user can change on this page, in one object: it is exactly the
-  // mutable half of CompetitionSettings, so `handleSubmit` is a spread plus the four
-  // values derived from the flow (id, name, scope, custom flag) rather than an
-  // 17-line hand-assembly that a new setting can be forgotten from.
-  //
-  // A preset seeds the initial values and nothing more - every field stays editable.
+  // Every field the user can change on this page, in one object: exactly the mutable half of
+  // CompetitionSettings, so `handleSubmit` is a spread plus the four values derived from the
+  // flow (id, name, scope, custom flag) - a new setting can't be forgotten there.
+  // A preset seeds the initial values and nothing more; every field stays editable.
   const [draft, setDraft] = useState<SettingsDraft>(() => ({
     language: preset.language ?? defaultPrimary,
     secondaryLanguage: preset.secondaryLanguage ?? null,
@@ -90,10 +88,8 @@ export default function SettingsPage() {
     scrambleDoubleCheckOverrides: {},
   }));
 
-  /** Update one or more draft fields. */
   const patch = (fields: Partial<SettingsDraft>) => setDraft(d => ({ ...d, ...fields }));
 
-  // Read as plain locals so the JSX below is unchanged by the draft refactor.
   const {
     language, secondaryLanguage, paperFormat, secondRoundMode, logoDataUrl, useDefaultLogo,
     wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,

@@ -6,13 +6,10 @@ import type { GenerationScope } from './generationScope';
  *
  * /competitions (or /custom) → /scope → /settings → /generate each run as a separate route
  * with no shared React state, so what one step learns reaches the next through
- * sessionStorage. That contract used to be eleven bare string keys spelled by hand across
- * five page components: a typo read back as an empty string rather than failing, and every
- * JSON blob was cast on the way out without being checked.
+ * sessionStorage. Everything that crosses a page boundary goes through this module.
  *
- * Everything that crosses a page boundary goes through this module. Reads never throw -
- * a missing or malformed value yields the documented fallback, because a half-written blob
- * from an interrupted session must not be able to white-screen the wizard.
+ * Reads never throw - a missing or malformed value yields the documented fallback, because a
+ * half-written blob from an interrupted session must not be able to white-screen the wizard.
  *
  * Deliberately NOT here:
  *  - `oauth_state` / `pkce_verifier` (src/auth/AuthContext.tsx) - a different lifecycle,

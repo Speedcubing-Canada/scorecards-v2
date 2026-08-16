@@ -68,7 +68,6 @@ export function hasUnassignedIntermediate(parsed: ParsedWCIF): boolean {
 // Round filtering (latest/selected) applies to scorecard buckets only.
 // Document flags control which artifact types survive, regardless of mode.
 export function filterParsedByScope(parsed: ParsedWCIF, scope: GenerationScope): ParsedWCIF {
-  // Step 1: apply round-level filtering for scorecard buckets
   let result = parsed;
   if (scope.mode !== 'everything') {
     let keep: (e: ScorecardData) => boolean;
@@ -91,7 +90,6 @@ export function filterParsedByScope(parsed: ParsedWCIF, scope: GenerationScope):
     };
   }
 
-  // Step 2: apply document-type flags
   const { documents } = scope;
   return {
     ...result,

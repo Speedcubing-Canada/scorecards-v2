@@ -24,7 +24,6 @@ export default function Header({ showBack, onBack, showUser, showSignOut = true 
   const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
 
-  // Close the menu on a click/tap outside the header.
   useEffect(() => {
     if (!menuOpen) return;
     function onPointerDown(e: MouseEvent) {

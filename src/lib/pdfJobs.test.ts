@@ -69,8 +69,8 @@ const fullParsed = mkParsed({
 });
 
 describe('buildPdfJobs', () => {
-  // Locks the filenames and the emission order that used to live inline in
-  // scorecardWorker.ts - these names are what people look for after printing.
+  // Locks the filenames and the emission order - these names are what people look for
+  // in the ZIP after printing.
   it('emits every document in render order with the established filenames', () => {
     const jobs = buildPdfJobs(fullParsed, mkSettings({ customEvents: [customEvent('Mini Guildford')] }));
     expect(jobs.map(j => j.filename)).toEqual([
