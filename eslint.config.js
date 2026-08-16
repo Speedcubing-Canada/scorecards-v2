@@ -7,6 +7,17 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
   globalIgnores(['dist']),
+  // The production server and the build/render tooling are Node, not browser, and were
+  // previously unlinted entirely - server.js serves every request in production.
+  {
+    files: ['server.js'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      globals: globals.node,
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+    },
+  },
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
