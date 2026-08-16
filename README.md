@@ -660,14 +660,14 @@ QR codes are rendered as native react-pdf SVG elements (`<Svg>` / `<Rect>`) rath
 
 ### Development helper
 
-`generate-nametags.mjs` is a standalone Node.js ESM script that generates a name-tag PDF from a local legacy data file without needing a browser or a running dev server. Run it with:
+`npm run render:fixtures` renders the name tags (among all six documents) from the real Gros Jouets export in `example-comp/`, without a browser or a running dev server:
 
 ```
-node generate-nametags.mjs              # vertical layout (default)
-node generate-nametags.mjs --horizontal # horizontal layout
+npm run render:fixtures                  # vertical layout (default)
+npm run render:fixtures -- --horizontal  # horizontal layout
 ```
 
-Output is written to `../current-output/`.
+Output is written to `../current-output/`. See [Rendering PDFs outside the browser](#rendering-pdfs-outside-the-browser).
 
 ---
 
@@ -692,10 +692,10 @@ Each slip lists, in order:
 
 ### Development helper
 
-`generate-first-timer-slips.mjs` renders the slip PDF from a fixture (the real newcomers reconstructed from the original Gros Jouets PDF, including birthdates) for layout verification against `original-output/`:
+`npm run render:fixtures` also renders the slip PDF, from a fixture of the real newcomers reconstructed from the original Gros Jouets PDF (birthdates included), for layout verification against `original-output/`:
 
 ```
-node generate-first-timer-slips.mjs   # → ../current-output/GrosJouetsaMontreal2026_first_timers.pdf
+npm run render:fixtures   # → ../current-output/GrosJouetsaMontreal2026_first_timers.pdf
 ```
 
 ---
@@ -911,7 +911,22 @@ All PDF rendering happens inside `src/pdf/scorecardWorker.ts` (a Vite module wor
 
 ### Hyphenation disabled
 
-`Font.registerHyphenationCallback((word) => [word])` tells react-pdf never to hyphenate any word. Without this, react-pdf hyphenates long names mid-word, which looks wrong on scorecards and name tags.
+`Font.registerHyphenationCallback((word) => [word])` tells react-pdf never to hyphenate any word. Without this, react-pdf hyphenates long names mid-word, which looks wrong on scorecards and name tags. It is a global registration on the shared `Font` object, so it lives in `src/pdf/fontSetup.ts` and each document imports that module for its side effect.
+
+### Rendering PDFs outside the browser
+
+`npm run render:fixtures` renders every document from the **real** components, headlessly, to `../current-output/`:
+
+```
+npm run render:fixtures                  # all six documents
+npm run render:fixtures -- --horizontal  # name tags in the horizontal layout
+```
+
+`scripts/renderFixtures.ts` imports the actual `.tsx` documents and calls `renderToBuffer`. It runs under `vite-node` because the components are JSX, which Node's native type stripping does not handle. Name tags and first-timer slips use the real Gros Jouets data from `example-comp/` with the same settings as the originals, so their output is directly comparable to `original-output/`; the scorecard, schedule and checklist fixtures are synthetic and chosen to exercise the hand-tuned constants.
+
+`scripts/checkFixtures.sh <baseline-dir>` re-renders all six and pixel-diffs them against a saved baseline, exiting non-zero on any difference. Use it whenever a change touches `layoutConstants.ts`, `fontSetup.ts`, or `lib/i18n.ts` - the layout unit tests assert measurements and cannot see a changed border colour or row tint.
+
+Add new cases to `renderFixtures.ts` rather than writing a separate script. A generator that re-declares a component's styles reports "no change" for edits it never saw, which is how the previous `generate-*.mjs` scripts drifted from the components they were meant to verify.
 
 ---
 
@@ -990,11 +1005,11 @@ src/
     settings.ts            - CompetitionSettings interface (language, paper, logo, nametag modes)
     wcif.ts                - WCIF type definitions
   assets/
-    events/                - PNG event icons (one colour + one grey per WCA event ID)
+    events/                - PNG event icons (one per WCA event ID)
     events.ts              - Maps event IDs to their icon data URLs (Vite ?inline imports)
     SC_Logo.png            - Bundled Speedcubing Canada logo (black & white)
     scc-logo.ts            - Re-exports SC_Logo.png as a data URL for the PDF worker
-generate-nametags.mjs      - Dev-only Node.js scripts to render a PDF locally without a browser
-generate-first-timer-slips.mjs
-generate-scorecards-test.mjs
+scripts/
+  renderFixtures.ts        - Renders every PDF from the real components, headlessly (vite-node)
+  checkFixtures.sh         - Re-renders and pixel-diffs all six against a saved baseline
 ```
