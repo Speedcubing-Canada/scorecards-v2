@@ -4,8 +4,9 @@ import {
   SLIP_LINE_H, SLIP_INTRO_MARGIN_BOTTOM, SLIP_MARGIN_BOTTOM,
   SLIP_PAGE_PAD_TOP, SLIP_PAGE_PAD_BOTTOM,
 } from './layoutConstants';
-import { getFirstTimerSlipStrings, type FirstTimerSlipStrings } from '../lib/i18n';
+import { getFirstTimerSlipStrings, getEventName } from '../lib/i18n';
 import type { FirstTimerEntry } from '../lib/wcif-parser';
+import type { EventId } from '../types/wcif';
 import type { LocaleCode } from '../types/settings';
 
 const LOCALES: LocaleCode[] = ['en', 'fr', 'es', 'pt'];
@@ -66,47 +67,39 @@ describe('buildSlipLines content rules', () => {
 
   it('uses the single-event wording for exactly one event (no bullets, no header)', () => {
     const lines = buildSlipLines(entry({ eventIds: ['444'] }), EN, 'en');
-    expect(texts(lines)).toContain(EN.solveSingle('4x4x4 Cube'));
+    expect(texts(lines)).toContain(EN.solveSingle(getEventName('444', 'en')));
     expect(texts(lines)).not.toContain(EN.solveMultipleIntro);
     expect(lines.some((l) => l.text.startsWith('•'))).toBe(false);
   });
 
   it('uses the multi-event header + one bulleted checkbox line per event', () => {
-    const lines = buildSlipLines(entry({ eventIds: ['444', '555', 'minx'] }), EN, 'en');
+    const ids: EventId[] = ['444', '555', 'minx'];
+    const lines = buildSlipLines(entry({ eventIds: ids }), EN, 'en');
     expect(texts(lines)).toContain(EN.solveMultipleIntro);
     const bullets = lines.filter((l) => l.text.startsWith('•'));
     expect(bullets).toHaveLength(3);
     expect(bullets.every((b) => b.checkbox)).toBe(true);
-    expect(bullets.map((b) => b.text)).toEqual(['• 4x4x4 Cube', '• 5x5x5 Cube', '• Megaminx']);
+    // Event order is preserved and each name is the localized one, whatever it reads.
+    expect(bullets.map((b) => b.text)).toEqual(ids.map((id) => `• ${getEventName(id, 'en')}`));
   });
 
+  // Blindfolded is named differently in all four locales, so it proves the slip picks
+  // the event name up from its own language rather than defaulting to English.
   it('localizes event names to the slip language', () => {
-    const FR = getFirstTimerSlipStrings('fr');
-    const lines = buildSlipLines(entry({ eventIds: ['minx'] }), FR, 'fr');
-    // French event name for Megaminx differs from English; just assert it solved one event.
-    expect(lines.some((l) => l.text.startsWith(FR.solveSingle('').trim()))).toBe(true);
+    for (const loc of LOCALES) {
+      const s = getFirstTimerSlipStrings(loc);
+      const lines = buildSlipLines(entry({ eventIds: ['333bf'] }), s, loc);
+      expect(texts(lines), loc).toContain(s.solveSingle(getEventName('333bf', loc)));
+      if (loc !== 'en') {
+        expect(texts(lines).join('\n'), loc).not.toContain(getEventName('333bf', 'en'));
+      }
+    }
   });
 });
 
-describe('first-timer slip i18n completeness', () => {
-  const stringFields: (keyof FirstTimerSlipStrings)[] = [
-    'confirmIntro1', 'confirmIntro2', 'firstCompetition', 'preferredNamePrefix',
-    'genderPrefix', 'birthdatePrefix', 'citizenshipPrefix', 'parentalConsent',
-    'solveMultipleIntro', 'genderMale', 'genderFemale', 'genderOther',
-  ];
-
-  for (const loc of LOCALES) {
-    it(`every string is present and non-empty for "${loc}"`, () => {
-      const s = getFirstTimerSlipStrings(loc);
-      for (const f of stringFields) {
-        expect(typeof s[f]).toBe('string');
-        expect((s[f] as string).trim().length).toBeGreaterThan(0);
-      }
-      expect(s.solveSingle('X').trim().length).toBeGreaterThan(0);
-      expect(s.solveSingle('X')).toContain('X');
-    });
-  }
-});
+// Per-field presence and non-emptiness across locales is covered for every PDF string
+// set at once by the parity walker in src/lib/i18n.test.ts - no hand-listed field array
+// to keep in step here.
 
 // Layout constants mirrored from FirstTimerSlipDocument.tsx. A slip is rendered
 // wrap={false}, so a single slip that exceeded the page's content height would be

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/useAuth';
 import { fetchManagedCompetitions } from '../auth/wca';
 import type { WCACompetition } from '../types/wcif';
 import Header from '../components/Header';
@@ -27,7 +27,7 @@ export default function CompetitionPickerPage() {
 
   useEffect(() => {
     if (!token) return;
-    setIsLoading(true);
+    // isLoading starts true, so no setState here - the skeleton is already showing.
     fetchManagedCompetitions(token.access_token)
       .then((data) => {
         const sorted = [...data].sort(

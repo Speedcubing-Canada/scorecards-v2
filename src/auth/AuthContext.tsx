@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { generatePKCE, generateState } from './pkce';
+import { AuthContext } from './useAuth';
 import {
   WCA_OAUTH_URL,
   CLIENT_ID,
@@ -12,17 +13,6 @@ import {
 
 const STORAGE_TOKEN = 'wca_token';
 const STORAGE_USER = 'wca_user';
-
-interface AuthState {
-  token: WCAToken | null;
-  user: WCAUser | null;
-  isLoading: boolean;
-  login: () => Promise<void>;
-  logout: () => void;
-  handleCallback: (code: string, state: string) => Promise<void>;
-}
-
-const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<WCAToken | null>(() => {
@@ -93,10 +83,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
 }

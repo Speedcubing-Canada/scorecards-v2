@@ -244,12 +244,21 @@ const HW: Record<string, number> = {
   Û:722,Ü:722,Ç:667,Ñ:722,
   à:556,â:556,ä:556,è:556,é:556,ê:556,ë:556,î:222,ï:222,ô:556,ö:556,ù:556,
   û:556,ü:556,ç:500,ñ:556,
+  á:556,ã:556,í:222,ó:556,ú:556,
   ' ':278,'-':333,'_':556,':':278,'!':278,'?':556,' ':278,
+  "'":191,'(':333,')':333,',':278,'.':278,'/':278,'<':584,
+  // Digits (all 556 in Helvetica) - group and station labels are full of them.
+  '0':556,'1':556,'2':556,'3':556,'4':556,'5':556,'6':556,'7':556,'8':556,'9':556,
 };
+
+// An untabulated glyph is measured at the widest Helvetica glyph (W, 944) rather than an
+// average. A translation that introduces a character nobody listed above must then err
+// towards failing the fit checks below, never towards silently passing.
+const UNKNOWN_GLYPH_W = 944;
 
 function helveticaWidth(text: string, fontSize: number): number {
   let w = 0;
-  for (const ch of text) w += ((HW[ch] ?? 556) / 1000) * fontSize;
+  for (const ch of text) w += ((HW[ch] ?? UNKNOWN_GLYPH_W) / 1000) * fontSize;
   return w;
 }
 

@@ -24,7 +24,7 @@ export function parseCompetitorCsv(text: string): CustomCompetitor[] {
   const out: CustomCompetitor[] = [];
   if (!text) return out;
 
-  const lines = text.replace(/^﻿/, '').split(/\r?\n/);
+  const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
   let first = true;
 
   for (const rawLine of lines) {

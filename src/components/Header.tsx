@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/useAuth';
 import { WCA_API_URL } from '../auth/wca';
 import { useIsMobile } from '../lib/useIsMobile';
 import LanguageSelect from './LanguageSelect';

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/useAuth';
 import { fetchWcif } from '../auth/wca';
 import { getCachedWcif, setCachedWcif } from '../lib/wcifCache';
 import { parseWCIF, type ParsedWCIF } from '../lib/wcif-parser';
