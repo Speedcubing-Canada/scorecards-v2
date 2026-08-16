@@ -1,11 +1,9 @@
 import type { WCIF } from '../types/wcif';
 
 export const WCA_OAUTH_URL = 'https://www.worldcubeassociation.org/oauth/authorize';
-// In dev, route through the Vite proxy (WCA's token endpoint has no CORS headers).
-// In production, a backend proxy at /wca-token is required - see README.
-export const WCA_TOKEN_URL = import.meta.env.DEV
-  ? '/wca-token'
-  : '/wca-token';
+// Always same-origin: in dev the Vite middleware serves it, in production server.js does.
+// Either way it must be proxied - WCA's token endpoint sends no CORS headers.
+const WCA_TOKEN_URL = '/wca-token';
 export const WCA_API_URL = 'https://www.worldcubeassociation.org/api/v0';
 
 export const CLIENT_ID = import.meta.env.VITE_WCA_CLIENT_ID as string;
@@ -72,7 +70,7 @@ export async function fetchWcif(competitionId: string, token: string): Promise<W
   return res.json();
 }
 
-export const WCA_LIVE_API = 'https://live.worldcubeassociation.org/api';
+const WCA_LIVE_API = 'https://live.worldcubeassociation.org/api';
 
 /** Returns the numeric WCA Live competition ID, or null if not found / API error. */
 export async function fetchWcaLiveId(wcaId: string): Promise<string | null> {

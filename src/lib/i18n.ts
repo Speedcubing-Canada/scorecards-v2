@@ -652,7 +652,7 @@ export const EVENT_NAMES_EN: Record<string, string> = {
   '555bf': '5x5x5 Blindfolded', '333mbf': '3x3x3 Multi-Blind',
 };
 
-export const EVENT_NAMES_FR: Record<string, string> = {
+const EVENT_NAMES_FR: Record<string, string> = {
   '333': 'Cube 3x3x3', '222': 'Cube 2x2x2', '444': 'Cube 4x4x4',
   '555': 'Cube 5x5x5', '666': 'Cube 6x6x6', '777': 'Cube 7x7x7',
   '333bf': "3x3x3 à L'aveugle", '333fm': 'FMC', '333oh': '3x3x3 à Une Main',
@@ -661,7 +661,7 @@ export const EVENT_NAMES_FR: Record<string, string> = {
   '555bf': "5x5x5 à L'aveugle", '333mbf': 'Multi-BLD',
 };
 
-export const EVENT_NAMES_ES: Record<string, string> = {
+const EVENT_NAMES_ES: Record<string, string> = {
   '333': 'Cubo 3x3x3', '222': 'Cubo 2x2x2', '444': 'Cubo 4x4x4',
   '555': 'Cubo 5x5x5', '666': 'Cubo 6x6x6', '777': 'Cubo 7x7x7',
   '333bf': '3x3x3 A Ciegas', '333fm': 'FMC', '333oh': '3x3x3 Una Mano',
@@ -670,7 +670,7 @@ export const EVENT_NAMES_ES: Record<string, string> = {
   '555bf': '5x5x5 A Ciegas', '333mbf': '3x3x3 Multi-BLD',
 };
 
-export const EVENT_NAMES_PT: Record<string, string> = {
+const EVENT_NAMES_PT: Record<string, string> = {
   '333': 'Cubo 3x3x3', '222': 'Cubo 2x2x2', '444': 'Cubo 4x4x4',
   '555': 'Cubo 5x5x5', '666': 'Cubo 6x6x6', '777': 'Cubo 7x7x7',
   '333bf': '3x3x3 Às Cegas', '333fm': 'FMC', '333oh': '3x3x3 Uma Mão',

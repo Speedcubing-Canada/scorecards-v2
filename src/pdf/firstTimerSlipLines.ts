@@ -11,7 +11,7 @@ export interface SlipLine {
   checkbox: boolean;
 }
 
-export function formatBirthdate(iso: string, language: LocaleCode): string | null {
+function formatBirthdate(iso: string, language: LocaleCode): string | null {
   const d = new Date(`${iso}T00:00:00`);
   if (isNaN(d.getTime())) return null;
   try {
@@ -23,7 +23,7 @@ export function formatBirthdate(iso: string, language: LocaleCode): string | nul
   }
 }
 
-export function countryName(iso2: string, language: LocaleCode): string {
+function countryName(iso2: string, language: LocaleCode): string {
   try {
     return new Intl.DisplayNames([language], { type: 'region' }).of(iso2.toUpperCase()) ?? iso2;
   } catch {
@@ -31,7 +31,7 @@ export function countryName(iso2: string, language: LocaleCode): string {
   }
 }
 
-export function isMinor(iso: string): boolean {
+function isMinor(iso: string): boolean {
   const d = new Date(`${iso}T00:00:00`);
   if (isNaN(d.getTime())) return false;
   const now = new Date();

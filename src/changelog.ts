@@ -105,7 +105,7 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
 ];
 
-export const CHANGELOG_SEEN_KEY = 'changelog_seen';
+const CHANGELOG_SEEN_KEY = 'changelog_seen';
 
 const MAX_AGE_MS = 365 * 24 * 60 * 60 * 1000;
 

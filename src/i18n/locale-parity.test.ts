@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import en from './en.json';
 import fr from './fr.json';
@@ -48,6 +50,42 @@ describe('locale key parity', () => {
       });
       expect(empty, code).toEqual([]);
     }
+  });
+
+  // Parity keeps the four bundles equal to each other, but says nothing about whether the
+  // code still uses a key. Keys outlive the feature that introduced them: three
+  // `first_timer_slips_*` entries survived that setting moving to the scope step, and
+  // `logo.use_default_label` survived its checkbox becoming a toggle - 16 dead strings
+  // across four locales that translators kept dutifully translating. This catches the next
+  // four.
+  //
+  // Deliberately a whole-source substring scan rather than an import graph: `t()` is called
+  // with string literals, so a literal search is both sufficient and immune to how the key
+  // is spelled at the call site.
+  it('has no key that no source file references', () => {
+    const srcDir = join(import.meta.dirname, '..');
+    const sources: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const p = join(dir, entry.name);
+        if (entry.isDirectory()) walk(p);
+        else if (/\.tsx?$/.test(entry.name)) sources.push(readFileSync(p, 'utf8'));
+      }
+    };
+    walk(srcDir);
+    const haystack = sources.join('\n');
+
+    // Keys built by interpolation - `t(\`settings.advanced.${fmt}\`)` and
+    // `t(\`scope.${mode}.label\`)` - never appear literally. Match their prefixes instead.
+    const DYNAMIC_PREFIXES = ['settings.advanced.', 'scope.'];
+
+    const orphans = paths(en as Json).filter((key) => {
+      if (haystack.includes(key)) return false;
+      const leaf = key.split('.').pop()!;
+      if (DYNAMIC_PREFIXES.some(p => key.startsWith(p)) && haystack.includes(leaf)) return false;
+      return true;
+    });
+    expect(orphans).toEqual([]);
   });
 
   // Em dashes read as machine-written and are awkward to type in three of the four

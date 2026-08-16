@@ -7,8 +7,6 @@
     "clear": "Effacer",
     "upload": "Télécharger",
     "choose_file": "Choisir un fichier",
-    "optional": "optionnel",
-    "loading": "Chargement…",
     "menu": "Menu"
   },
   "login": {
@@ -96,7 +94,6 @@
       "hint": "Apparaît dans le coin supérieur gauche de chaque feuille. PNG ou SVG recommandé.",
       "default_title": "Logo Speedcubing Canada par défaut",
       "default_desc": "Affiché dans le coin supérieur gauche de chaque feuille, à côté du nom de la compétition, lorsqu'aucun logo personnalisé n'est téléchargé.",
-      "use_default_label": "Utiliser le logo Speedcubing Canada",
       "use_default_hint": "Recommandé pour les compétitions canadiennes. À désactiver pour les compétitions hors du Canada."
     },
     "nametag": {
@@ -142,10 +139,7 @@
       "csv_optional": "optionnel",
       "csv_hint": "Un compétiteur par ligne : Nom ou Nom,WCAID. Imprime une feuille nominative par ligne (plus des feuilles vides pour compléter la dernière page) au lieu de 4 feuilles vides. Les lignes commençant par # sont ignorées.",
       "csv_count": "{{count}} compétiteur(s) chargé(s)",
-      "add_custom_event": "+ Ajouter une épreuve personnalisée",
-      "first_timer_slips_title": "Fiches pour nouveaux venus",
-      "first_timer_slips_enable": "Imprimer les fiches pour nouveaux venus",
-      "first_timer_slips_desc": "Ajoute une fiche de confirmation pour chaque nouveau venu (compétiteur sans WCA ID) afin de vérifier son nom, son genre, sa citoyenneté et ses épreuves. Désactivé par défaut."
+      "add_custom_event": "+ Ajouter une épreuve personnalisée"
     },
     "generate_button": "Générer →"
   },

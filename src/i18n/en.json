@@ -7,8 +7,6 @@
     "clear": "Clear",
     "upload": "Upload",
     "choose_file": "Choose file",
-    "optional": "optional",
-    "loading": "Loading…",
     "menu": "Menu"
   },
   "login": {
@@ -96,7 +94,6 @@
       "hint": "Appears in the top-left corner of each scorecard. PNG or SVG recommended.",
       "default_title": "Default Speedcubing Canada logo",
       "default_desc": "Used in the top-left corner of each scorecard alongside the competition name when no custom logo is uploaded.",
-      "use_default_label": "Use the Speedcubing Canada logo",
       "use_default_hint": "Recommended for Canadian competitions. Disable for competitions outside Canada."
     },
     "nametag": {
@@ -142,10 +139,7 @@
       "csv_optional": "optional",
       "csv_hint": "One competitor per line: Name or Name,WCAID. Prints one named scorecard per row (plus blanks to fill the last page) instead of 4 blank cards. Lines starting with # are ignored.",
       "csv_count": "{{count}} competitor(s) loaded",
-      "add_custom_event": "+ Add custom event",
-      "first_timer_slips_title": "First-timer slips",
-      "first_timer_slips_enable": "Print first-timer slips",
-      "first_timer_slips_desc": "Add a confirmation slip for each newcomer (competitor with no WCA ID) to verify their name, gender, citizenship, and events. Off by default."
+      "add_custom_event": "+ Add custom event"
     },
     "generate_button": "Generate →"
   },
