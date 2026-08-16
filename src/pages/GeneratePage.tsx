@@ -17,6 +17,7 @@ import WarningBanner from '../components/WarningBanner';
 import Skeleton from '../components/Skeleton';
 import PrintGuide from '../components/PrintGuide';
 import { useIsMobile } from '../lib/useIsMobile';
+import { readStoredSettings } from '../lib/flowState';
 import { downloadButtonFontSize } from '../lib/downloadButtonFontSize';
 import i18n from '../i18n/index';
 
@@ -28,9 +29,8 @@ type Status = 'idle' | 'fetching' | 'parsing' | 'ready' | 'building' | 'error';
  * settings saved before that field existed don't render as `undefined`, and
  * `generationScope` for settings saved before scoped generation existed.
  */
-function loadSettings(raw: string | null): CompetitionSettings | null {
-  if (!raw) return null;
-  const s = JSON.parse(raw) as Record<string, unknown>;
+function loadSettings(s: Record<string, unknown> | null): CompetitionSettings | null {
+  if (!s) return null;
   if (s.language === 'bilingual-fr') { s.language = 'fr'; s.secondaryLanguage = 'en'; }
   else if (s.language === 'bilingual-en') { s.language = 'en'; s.secondaryLanguage = 'fr'; }
   else if (s.secondaryLanguage === undefined) { s.secondaryLanguage = null; }
@@ -47,9 +47,8 @@ function loadSettings(raw: string | null): CompetitionSettings | null {
   if (s.isCustomCompetition === undefined) s.isCustomCompetition = false;
   // Settings saved before the checking-mode option existed keep the original behaviour.
   if (s.scorecardCheckMode === undefined) s.scorecardCheckMode = 'per-group-card';
-  // 'checking-sheet' used to mean "no cover cards, print the standalone sheet instead".
-  // The sheet is now the opt-in Round Checklist document, so only the cover-card half of
-  // that choice survives.
+  // The retired 'checking-sheet' value meant "no cover cards, print the standalone sheet".
+  // The sheet is now an independently-selected document, so only its cover-card half survives.
   if (s.scorecardCheckMode === 'checking-sheet') s.scorecardCheckMode = 'none';
   return s as unknown as CompetitionSettings;
 }
@@ -60,8 +59,7 @@ export default function GeneratePage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  const raw = sessionStorage.getItem('competition_settings');
-  const settings: CompetitionSettings | null = loadSettings(raw);
+  const settings: CompetitionSettings | null = loadSettings(readStoredSettings());
 
   const [status, setStatus] = useState<Status>('idle');
   const [statusMsg, setStatusMsg] = useState('');
@@ -109,7 +107,6 @@ export default function GeneratePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Terminate any running worker on unmount
   useEffect(() => () => { workerRef.current?.terminate(); }, []);
 
   const effectiveParsed = useMemo(

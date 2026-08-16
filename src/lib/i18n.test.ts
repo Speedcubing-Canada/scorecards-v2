@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   getStrings, getScheduleStrings, getCheckingSheetStrings, getNametTagStrings,
   getFirstTimerSlipStrings, getNametTagTitleStrings, getShortNametTagNames,
-  getEventName, splitLabelTotal, EVENT_NAMES_EN,
+  getEventName, getWorkerStrings, splitLabelTotal, EVENT_NAMES_EN,
   type ScorecardStrings,
 } from './i18n';
 import type { LocaleCode } from '../types/settings';
@@ -32,6 +32,8 @@ function bundle(lc: LocaleCode) {
     firstTimer: getFirstTimerSlipStrings(lc),
     title: getNametTagTitleStrings(lc).front,
     shortNames: getShortNametTagNames(lc),
+    // Progress-bar strings for the render worker.
+    worker: getWorkerStrings(lc),
   };
 }
 
@@ -277,9 +279,9 @@ describe('nametag title panels', () => {
 
 describe('Round Checklist column contract', () => {
   // The two tick-only columns record work done *ahead* of the round (groups created on
-  // competitiongroups, scorecards produced), not scorecards handed in afterwards. Sarah's
-  // feedback was explicit about this, so the wording must never drift into
-  // collected/checked. Rewording is fine; changing the meaning is not.
+  // competitiongroups, scorecards produced), not scorecards handed in afterwards. The
+  // wording must never drift into collected/checked: rewording is fine, changing the
+  // meaning is not.
   const COLLECTED = /collect|gather|receiv|check|recueill|ramass|v[ée]rifi|contr[ôo]l|recolect|recogid|revisad|recolhid|coletad|conferid/i;
 
   it('the pre-round tick columns never read as collected or checked', () => {

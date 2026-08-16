@@ -5,7 +5,7 @@ import { ROW_HEIGHTS, showLiveIdLine } from './layoutConstants';
 // ── Layout geometry constraints ──────────────────────────────────────────────
 // Dimensions measured from the original Sarah-scorecard LETTER PDF:
 //   Cards: 257×345pt  |  margins ~22-24pt  |  gaps ~52-53pt
-//   V gap ≈ 2× margin (not 3×) - Sarah's key constraint.
+//   V gap ≈ 2× margin (not 3×) - the constraint the printed output hinges on.
 //   E1 row must nearly touch the card bottom (verified by: content fills ~335pt inner height).
 
 const LETTER_W = 612;
@@ -290,9 +290,9 @@ function colContentW(frac: number): number {
   return TABLE_CONTENT_W * frac - CELL_BORDER;
 }
 
-// Every single language plus representative two-language combinations. The
-// combos are the real guard now that any primary+secondary pair is selectable:
-// a merged header must still fit inside its column for any pairing we ship.
+// Every single language plus representative two-language combinations. The combos are the
+// real guard: any primary+secondary pair is selectable, and a merged header must still fit
+// inside its column for every pairing we ship.
 const HEADER_CASES = [
   ...(['en', 'fr', 'es', 'pt'] as const).map((l) => ({ label: l, s: getStrings(l) })),
   ...([['fr', 'en'], ['en', 'fr'], ['es', 'pt'], ['en', 'pt']] as const).map(

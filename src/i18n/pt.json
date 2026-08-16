@@ -7,8 +7,6 @@
     "clear": "Limpar",
     "upload": "Enviar",
     "choose_file": "Escolher arquivo",
-    "optional": "opcional",
-    "loading": "Carregando…",
     "menu": "Menu"
   },
   "login": {
@@ -96,7 +94,6 @@
       "hint": "Aparece no canto superior esquerdo de cada súmula. Recomenda-se PNG ou SVG.",
       "default_title": "Logo padrão da Speedcubing Canada",
       "default_desc": "Exibido no canto superior esquerdo de cada súmula, ao lado do nome da competição, quando nenhum logo personalizado é enviado.",
-      "use_default_label": "Usar o logo da Speedcubing Canada",
       "use_default_hint": "Recomendado para competições canadenses. Desative para competições fora do Canadá."
     },
     "nametag": {
@@ -142,10 +139,7 @@
       "csv_optional": "opcional",
       "csv_hint": "Um competidor por linha: Nome ou Nome,WCAID. Imprime uma súmula nomeada por linha (mais súmulas em branco para completar a última página) em vez de 4 súmulas em branco. Linhas começando com # são ignoradas.",
       "csv_count": "{{count}} competidor(es) carregado(s)",
-      "add_custom_event": "+ Adicionar evento personalizado",
-      "first_timer_slips_title": "Fichas para novatos",
-      "first_timer_slips_enable": "Imprimir fichas para novatos",
-      "first_timer_slips_desc": "Adiciona uma ficha de confirmação para cada novato (competidor sem WCA ID) para verificar nome, gênero, cidadania e eventos. Desativado por padrão."
+      "add_custom_event": "+ Adicionar evento personalizado"
     },
     "generate_button": "Gerar →"
   },

@@ -1,13 +1,9 @@
 import { useId, useState } from 'react';
 
 /**
- * Lightweight tooltip. Wraps any element and shows a small bubble on hover or
- * keyboard focus - no dependency, themed via CSS variables to match the app's
- * inline-style architecture. Use it to explain jargon or icon-only controls.
- *
- * The wrapper is inline-flex so it doesn't disturb layout. The bubble is
- * absolutely positioned above (default) or below the trigger and is linked to
- * it via aria-describedby for screen readers.
+ * Lightweight tooltip for jargon and icon-only controls. Shows on hover or keyboard focus.
+ * The wrapper is inline-flex so it doesn't disturb layout; the bubble sits above (default)
+ * or below the trigger and is linked to it via aria-describedby.
  */
 export default function Tooltip({
   label,

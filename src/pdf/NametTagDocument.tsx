@@ -1,14 +1,17 @@
 import type { ReactNode } from 'react';
-import { Document, Page, View, Text, Image, StyleSheet, Font, Svg, Rect } from '@react-pdf/renderer';
+import { Document, Page, View, Text, Image, StyleSheet, Svg, Rect } from '@react-pdf/renderer';
 import QRCode from 'qrcode';
 import type { CompetitionSettings, NametTagLayout, NametTagLogoMode } from '../types/settings';
 import type { NametTagEntry, NametTagRole } from '../lib/wcif-parser';
 import { EVENT_ICONS } from '../assets/events';
 import { getNametTagStrings, type NametTagStrings } from '../lib/i18n';
 import { resolveLogo } from '../lib/logo';
-import { NAMETAGS_PER_PAGE, eventIconsVisible } from './layoutConstants';
+import {
+  NAMETAGS_PER_PAGE, eventIconsVisible,
+  PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
+} from './layoutConstants';
+import './fontSetup';
 
-Font.registerHyphenationCallback((word) => [word]);
 
 // ── Page geometry ─────────────────────────────────────────────────────────────
 // Vertical layout: landscape page, 4 slots wide × 2 tall = 8 slots = 4 pairs.
@@ -73,8 +76,6 @@ function QrSvg({ url, size }: { url: string; size: number }) {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const FONT      = 'Helvetica';
-const FONT_BOLD = 'Helvetica-Bold';
 const NBSP = ' ';
 
 function nameFontSize(name: string, panelW: number) {

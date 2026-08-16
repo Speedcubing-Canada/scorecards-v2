@@ -1,21 +1,18 @@
 // The UI calls this document the **Round Checklist**; the internals kept the older
 // "checking sheet" vocabulary (CheckingDay/CheckingRow/CHECKING_*).
-import { Document, Page, View, Text, StyleSheet, Font, Svg, Polyline } from '@react-pdf/renderer';
+import { Document, Page, View, Text, StyleSheet, Svg, Polyline } from '@react-pdf/renderer';
 import type { CompetitionSettings } from '../types/settings';
 import type { CheckingDay, CheckingRow } from '../lib/wcif-parser';
 import { getCheckingSheetStrings, type CheckingSheetStrings } from '../lib/i18n';
 import {
   CHECKING_FLEX, CHECKING_CELL_PAD_V, CHECKING_BOX, CHECKING_BREAK_RULE,
+  PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
+  TABLE_BORDER as BORDER, TABLE_BORDER_INNER as BORDER_INNER,
+  TABLE_ROW_ALT as ROW_ALT, TABLE_HEADER_BG as HEADER_BG,
 } from './layoutConstants';
+import './fontSetup';
 
-Font.registerHyphenationCallback((word) => [word]);
 
-const FONT      = 'Helvetica';
-const FONT_BOLD = 'Helvetica-Bold';
-const BORDER       = '0.75pt solid #888';
-const BORDER_INNER = '0.5pt solid #bbb';
-const ROW_ALT   = '#f2f2f2';
-const HEADER_BG = '#d8d8d8';
 
 const styles = StyleSheet.create({
   page: {

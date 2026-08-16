@@ -105,104 +105,147 @@ Settings and auth state live in `sessionStorage` only - they are cleared when th
 
 ### Design system
 
-The UI styles itself with per-component inline `React.CSSProperties` objects (no CSS framework), so a shared set of **CSS custom properties** in `src/index.css` is the single source of truth that keeps those inline styles consistent. Beyond the theme colors (see [Dark mode](#dark-mode)), `:root` defines:
+The UI styles itself with per-component inline `React.CSSProperties` objects (no CSS
+framework), so a set of **CSS custom properties** in `src/index.css` is what keeps those
+inline styles consistent: a type scale (`--fs-*`), spacing (`--space-1`..`--space-8`), radii,
+the theme colours, and a global `:focus-visible` ring. Reference the tokens, not magic
+numbers.
 
-- **Type scale** - `--fs-stat`, `--fs-display`, `--fs-title`, `--fs-heading`, `--fs-body`, `--fs-label`, `--fs-caption`. Components reference these for `fontSize` instead of magic numbers.
-- **Weight hierarchy** - only **three** weights are used anywhere: `400` (body, descriptions, hints), `500` (controls, nav, secondary buttons), and `700` (headings, primary buttons, stat values, option titles). The Montserrat `<link>` in `index.html` loads exactly `@400;500;700`. Keep new UI on these three weights - don't reintroduce 600/800.
-- **Spacing** (`--space-1`…`--space-8`) and **radii** (`--radius-sm/md/lg`) for consistent gaps, padding, and corners.
-- A global `:focus-visible` ring (`--focus-ring`) so every interactive element has a visible keyboard focus state.
+Typeface is **Montserrat**, in exactly **three weights**: 400 body, 500 controls, 700
+headings and primary buttons. `index.html` loads only `@400;500;700` - do not reintroduce
+600/800. **Icons** come exclusively from `lucide-react`; the WCA event PNGs in
+`src/assets/events.ts` are artwork for the PDFs, not UI chrome.
 
-The app's typeface is **Montserrat**, set on `body` and inherited everywhere (`fontFamily: 'inherit'` on form controls/buttons).
+The hard rules here are enforced by `src/components/design-system.test.ts`, and the full
+guidance is in [`DESIGN_GUIDELINES.md`](DESIGN_GUIDELINES.md).
 
-**Icons** come exclusively from `lucide-react` at a consistent size/stroke (e.g. theme toggle `Sun`/`Moon`, header `Menu`/`X`, status `XCircle`, `Check`, `Upload`, `ChevronDown/Right`, `RectangleVertical/Horizontal`). The WCA event icons in `src/assets/events.ts` stay PNGs - they're artwork rendered into the PDFs, not UI chrome.
-
-**Shared UI primitives:**
-
-- `src/components/Tooltip.tsx` - a lightweight, dependency-free tooltip (hover + keyboard focus, `role="tooltip"`, themed via the tokens). Wrap any icon-only or jargon control to explain it. Used on the theme toggle, the About trigger, and the custom-event icon upload button.
-- `src/components/PrintGuide.tsx` - the download page's [print-and-cut guide](#print-and-cut-guide): a per-document "what to do with this PDF" card, with a CSS-only sheet → piles → deck diagram for scorecards.
-- `src/components/Skeleton.tsx` - a pulsing placeholder (configurable width/height/radius) driven by the global `.skeleton` rule and `skeleton-pulse` keyframes in `index.css`. Loading states render skeletons that mirror the eventual layout (competition cards on the picker, scope option cards, the five-stat grid on Generate) instead of bare text/emoji. The pulse and icon spinners respect `prefers-reduced-motion`.
+Shared primitives: `Tooltip.tsx` (dependency-free, hover + keyboard, for any icon-only or
+jargon control), `PrintGuide.tsx` (the download page's per-document
+[print-and-cut guide](#print-and-cut-guide)), and `Skeleton.tsx` (loading placeholders that
+mirror the eventual layout rather than bare text; respects `prefers-reduced-motion`).
 
 ### Regional presets
 
-The **"What to generate"** step offers an optional **preset** column that seeds the options a region usually prints. **Default** is selected out of the box, so anyone who ignores presets sees the behaviour described everywhere else in this README.
+The "What to generate" step offers an optional **preset** column seeding the options a region
+usually prints. **Default** is selected out of the box, so ignoring presets gives the
+behaviour described everywhere else in this README.
 
-A preset only **seeds defaults** - every option it touches stays editable on the following screen, and switching presets re-seeds from the base defaults rather than accumulating the previous choice. Because a preset spans two steps, `/scope` stashes the `settings` half under the `preset_settings` sessionStorage key and `SettingsPage` reads it as its `useState` seed; `CompetitionPickerPage` clears it on mount so a preset never leaks into the next competition.
+A preset only **seeds defaults** - everything stays editable afterwards, and switching presets
+re-seeds from base rather than accumulating the previous choice. Because it spans two steps,
+`/scope` stashes the settings half under `preset_settings` and `SettingsPage` reads it as its
+initial state; `CompetitionPickerPage` clears it on mount so a preset never leaks into the
+next competition.
 
-Presets are plain JSON files in **`src/presets/`**, globbed at build time by `src/presets/index.ts`. **Adding a region is a file drop + PR - no `.ts`/`.tsx` changes.** Shipped: `ontario.json`, `quebec.json`, `british-columbia.json`. `parsePreset()` whitelists keys and values, so a contributor's typo is dropped rather than written into `CompetitionSettings`.
-
-**Full field reference and contributor guide: [`src/presets/README.md`](src/presets/README.md).**
+Presets are plain JSON in **`src/presets/`**, globbed at build time, so **adding a region is a
+file drop plus a PR - no `.ts`/`.tsx` changes**. `parsePreset()` whitelists keys and values,
+so a contributor's typo is dropped rather than written into `CompetitionSettings`. Shipped:
+Ontario, Quebec, British Columbia. Field reference and contributor guide:
+[`src/presets/README.md`](src/presets/README.md).
 
 ### Interface language
 
-The header (and the login page) carries a **language dropdown** (`src/components/LanguageSelect.tsx`) that switches the *interface* language via `i18next`. The available languages are defined once in `src/i18n/index.ts` as the exported `LANGUAGES` registry (code + native label) - this same registry also drives the scorecard language pickers on the SettingsPage, so adding a locale there (plus its translation JSON) makes it appear in both places automatically, no per-language wiring needed. The chosen interface language is persisted by `i18next-browser-languagedetector` under the `i18nextLng` localStorage key.
+A dropdown in the header (and on the login page) switches the *interface* language via
+`i18next`, persisted under `i18nextLng`. The available languages come from the `LANGUAGES`
+registry in `src/i18n/index.ts`, which also drives the scorecard language pickers - so adding
+a locale there plus its JSON makes it appear in both places with no further wiring.
 
-This is independent of the printed-output `language` / `secondaryLanguage` *settings* on the SettingsPage, which control the language(s) printed on the scorecards themselves.
+This is independent of the printed-output `language` / `secondaryLanguage` settings.
 
 ### Dark mode
 
-A theme toggle (Lucide `Moon`/`Sun`) sits next to the language dropdown in the header and on the login page. Theming is implemented with **CSS custom properties**:
+Implemented with the CSS custom properties above: `:root` for light, `[data-theme='dark']`
+for dark. `src/theme/ThemeContext.tsx` sets the attribute on `<html>`, defaulting to the OS
+`prefers-color-scheme` and following live OS changes until the user toggles, after which the
+choice persists under the `theme` key and wins. `resolveInitialTheme` in `src/theme/theme.ts`
+is the pure helper, covered by `theme.test.ts`.
 
-- `src/index.css` defines the full token set under `:root` (light) and `[data-theme='dark']` (dark) - surfaces, text shades, borders, brand, status colors, shadows, plus the shared type scale, weight hierarchy, spacing, and radii (see [Design system](#design-system)). All UI components reference these via `var(--token)` rather than hardcoded hex.
-- `src/theme/ThemeContext.tsx` (`ThemeProvider` + `useTheme`) sets the `data-theme` attribute on `<html>`. It defaults to the OS `prefers-color-scheme` and, while no explicit choice is stored, follows live OS changes. Once the user toggles, the choice is persisted under the `theme` localStorage key and wins over the OS preference.
-- `src/theme/theme.ts` holds the pure `resolveInitialTheme(stored, prefersDark)` helper (covered by `theme.test.ts`).
+The SCC wordmark is black and would vanish on dark, so `Logo.tsx` swaps to
+`public/scc-logo-dark.svg` - the same file with `#000000` replaced by `#ffffff`.
+`logo-asset.test.ts` guards that the two stay in sync; regenerate the dark file if the source
+logo changes.
 
-The SCC logo's wordmark and lines are black and would vanish on the dark background, so `src/components/Logo.tsx` swaps to a white-recolored variant (`public/scc-logo-dark.svg`) in dark mode. That variant is `public/scc-logo.svg` with every `#000000` replaced by `#ffffff`; `logo-asset.test.ts` guards that the two stay in sync (regenerate the dark file if the source logo ever changes).
-
-Dark mode affects the on-screen UI only. The generated PDFs (`src/pdf/*`) use `@react-pdf/renderer`'s own isolated `StyleSheet` with white backgrounds and are intentionally unaffected, so printed output is identical in either theme.
+Dark mode is on-screen only. The PDFs use `@react-pdf`'s isolated `StyleSheet` with white
+backgrounds, so printed output is identical in either theme.
 
 ### Responsive / mobile layout
 
-The UI adapts to phone-sized screens at a single breakpoint of **600px** (viewports `≤ 600px` get the mobile layout; wider viewports keep the unchanged desktop layout). Because every component styles itself with inline `React.CSSProperties` objects rather than CSS classes, CSS `@media` queries can't override those inline styles - so the breakpoint is read in JavaScript via `src/lib/useIsMobile.ts`. That module exposes the `useIsMobile()` hook (backed by `window.matchMedia`, updates live on resize), the `MOBILE_BREAKPOINT` constant, and a pure `isMobileWidth(width)` helper that is unit-tested in `useIsMobile.test.ts`.
+One breakpoint, **600px**. Because components style themselves inline, CSS `@media` cannot
+override those styles, so the breakpoint is read in JS via `src/lib/useIsMobile.ts` (hook,
+`MOBILE_BREAKPOINT`, and a pure `isMobileWidth` that is unit-tested). Components spread a
+mobile-only override into their existing style object.
 
-Components call `useIsMobile()` and spread a small mobile-only style override into their existing style object. The notable adaptations:
-
-- **Header** (`src/components/Header.tsx`) - on mobile the language dropdown, theme toggle, user info, and sign-out collapse behind a **hamburger button** that opens a dropdown panel (closes on outside click / sign-out). The desktop header markup is unchanged.
-- **Login** - card padding is reduced so it fits a narrow screen.
-- **Competition picker** - the card grid drops to a single column.
-- **Generate** - the stats grid goes from five columns to two, with a smaller value font.
-- **Settings** - the custom-event "format" and "cutoff / time-limit" rows stack vertically.
+The notable adaptations: the header collapses behind a hamburger; the competition grid drops
+to one column; the Generate stat grid goes five columns to two; and the Settings custom-event
+rows stack.
 
 ### "About this tool" dialog
 
-`src/components/AboutDialog.tsx` is a self-contained explainer (trigger + modal) that tells newcomers what the tool is, what the **WCIF** is, and where this tool sits in the workflow - it is the *final* step, turning a competition's already-assigned groups into print-ready, cuttable PDFs. It renders either a circular ℹ icon button (default) or a text link (`as="text"`). It is placed on the **login page** (text link under the sign-in button) and the **competition picker page** (icon next to the heading). All copy lives under the `about.*` i18n keys.
+`AboutDialog.tsx` explains what the tool is, what the **WCIF** is, and where this sits in the
+workflow - it is the *final* step, turning already-assigned groups into print-ready PDFs. It
+renders as an icon button or a text link (`as="text"`), and appears on the login page and the
+competition picker. Copy lives under the `about.*` keys.
 
 ### Feedback and bug reports
 
-Bug reports and feedback go to the [issue tracker](https://github.com/Speedcubing-Canada/scorecards-v2/issues) or to **software@speedcubingcanada.org**.
+Bug reports go to the
+[issue tracker](https://github.com/Speedcubing-Canada/scorecards-v2/issues) or
+**software@speedcubingcanada.org**. `ContactLinks.tsx` puts both in the header on every
+signed-in page and at the bottom of the About dialog, which is what covers the signed-out
+login page (it has no header). The URL and address are exported constants in that one file;
+import them rather than retyping, and `contact-links.test.ts` enforces the single copy.
 
-Both are reachable from inside the app: `src/components/ContactLinks.tsx` renders the GitHub mark and a mail icon in the `Header`, so they sit beside the "what's new" sparkles on every signed-in page, and the same two links appear as text at the bottom of the About dialog - which is what covers the signed-out login page, since that page has no header. The URL and address are exported constants in that one file (`REPO_URL` / `SUPPORT_EMAIL`); import them rather than retyping them, and `contact-links.test.ts` enforces the single copy.
-
-The GitHub mark is `public/github-mark.svg` rendered through an `<img>`, not a lucide icon: lucide 1.x dropped brand icons, and the design-system guard forbids inline SVG in `src/components`. This is the same asset escape hatch `Logo.tsx` uses. One neutral-grey mark serves both themes; if it ever reads washed out, split it into light/dark files and switch on `useTheme()` the way `Logo.tsx` does.
+The GitHub mark is `public/github-mark.svg` in an `<img>`, not a lucide icon: lucide 1.x
+dropped brand icons and the design-system guard forbids inline SVG in `src/components`. Same
+asset escape hatch `Logo.tsx` uses.
 
 ### "What's new" changelog
 
-Organizers typically return once per competition, months apart, so `src/components/WhatsNewDialog.tsx` shows them a short summary of what shipped since their last visit. No account or analytics data is involved: `localStorage` holds one key, `changelog_seen`, containing the id of the newest entry the visitor has read.
+Organizers typically return once per competition, months apart, so `WhatsNewDialog.tsx` shows
+what shipped since their last visit. No account or analytics data: `localStorage` holds one
+key, `changelog_seen`, with the id of the newest entry read.
 
-The trigger is a sparkles icon in `Header.tsx` (desktop toolbar, or the hamburger panel on mobile), so it never appears before sign-in. The dialog **opens by itself** on the first page load where unseen entries exist, and closing it marks everything read, so it can only open once even though the header remounts on every wizard page. Afterwards the icon reopens it, showing the three most recent entries. A visitor with no marker at all sees the changelog, so the existing user base does not silently miss the first entry.
+It **opens by itself** on the first load where unseen entries exist, and closing marks
+everything read, so it opens once even though the header remounts on every wizard page.
+Afterwards a sparkles icon reopens it with the three most recent entries. A visitor with no
+marker sees it, so the existing user base does not silently miss the first entry.
 
-**The whole feature switches itself off once the newest entry is over a year old** (`isStale`), rather than greeting organizers with last year's highlights. Shipping a new entry brings it back automatically.
+**The feature switches itself off once the newest entry is over a year old** (`isStale`),
+rather than greeting organizers with last year's highlights. Shipping a new entry brings it
+back.
 
-Entries live in **`src/changelog.ts`**, newest first. Adding one is a single-file edit:
+Entries live in **`src/changelog.ts`**, newest first:
 
 ```ts
 {
-  id: '2026-09-12',                     // YYYY-MM-DD, unique; same-day second entry -> '2026-09-12b'
+  id: '2026-09-12',                     // YYYY-MM-DD, unique; second same-day entry -> '2026-09-12b'
   items: {
-    en: ['Short organizer-facing bullet.'],   // required
+    en: ['Short organizer-facing bullet.'],           // required
     fr: ['Puce courte destinée aux organisateurs.'],  // optional, falls back to en
   },
 }
 ```
 
-`id` ordering drives the "newer than seen" comparison, so ids must stay sortable and strictly descending - `src/changelog.test.ts` enforces that, along with unique ids and non-empty text in every locale provided. Entry text is deliberately **not** in the `src/i18n/*.json` bundles, so a release never needs four full translations; only the dialog chrome (`whats_new.*`) lives in the locale files.
+Ids drive the newer-than-seen comparison, so they must stay sortable and strictly descending;
+`changelog.test.ts` enforces that plus uniqueness and non-empty text in every locale provided.
+Entry text is deliberately **not** in the i18n bundles, so a release never needs four full
+translations - only the dialog chrome (`whats_new.*`) is localised.
 
 ### "No groups assigned" warning
 
-When a competition's groups have not been generated yet, scorecard counts read 0, which confused early users. The parser now exposes `parsed.hasGroups` (true once the schedule contains group child-activities). `src/components/WarningBanner.tsx` (amber notice, matching the login setup warning) surfaces the `warnings.no_groups` message on both the Settings and Generate pages, explaining that groups must be assigned upstream (Groupifier / the WCA website) first, while the schedule tracker and name tags can still be generated.
+When groups have not been generated yet, scorecard counts read 0, which confused early users.
+`parsed.hasGroups` drives a `WarningBanner` on the Settings and Generate pages explaining that
+groups must be assigned upstream (Groupifier or the WCA website) first, while the schedule
+tracker and name tags can still be generated.
 
 ### Page-count estimate
 
-The Generate-page stats include an **estimated total number of printed pages** so organizers can gauge the real print volume before downloading. `src/lib/pageEstimate.ts` (`estimateTotalPages`) computes it from the scope-filtered parse: exact for scorecards and name tags (both four-per-page - the per-page constants live in `src/pdf/layoutConstants.ts` and are shared with the PDF documents so they cannot drift), one page for the schedule tracker, and a greedy height-based estimate for first-timer slips (which auto-flow). The estimator is pure and deliberately free of any `@react-pdf` import so it stays out of the main bundle.
+`estimateTotalPages` in `src/lib/pageEstimate.ts` gives organizers the real print volume
+before they download. Exact for scorecards and name tags (four per page, using the same
+`layoutConstants.ts` values the documents use, so the two cannot drift), one page for the
+schedule tracker and checklist, and a greedy height-based estimate for the auto-flowing
+first-timer slips. It is pure and deliberately free of any `@react-pdf` import so the PDF
+engine stays out of the main bundle.
+
 
 ---
 
@@ -268,57 +311,45 @@ per round.
 
 ## The Round Checklist (`{id}_checklist.pdf`)
 
-An **opt-in document**, chosen on the `/scope` screen alongside Scorecards, Schedule
-Tracker, Nametags and First-Timer Slips - `DocumentSelection.roundChecklist`, which
-defaults to **false** everywhere. `filterParsedByScope` empties `checkingDays` unless it
-is selected, so every downstream consumer (the worker, `pageEstimate`, the Generate
-page's PDF count) gates on `checkingDays.length > 0` alone.
+An **opt-in document** chosen on `/scope` (`DocumentSelection.roundChecklist`, default
+**false**). `filterParsedByScope` empties `checkingDays` unless it is selected, so every
+downstream consumer gates on `checkingDays.length > 0` alone.
 
 Rendered by `src/pdf/CheckingSheetDocument.tsx` from `ParsedWCIF.checkingDays`: **one table
-per day, one row per round**, whatever room or stage the round ran in - see
-[One table per day](#one-table-per-day). (Internals still use the earlier "checking sheet"
-names.) Columns:
-
-| Column | Flex | Contents |
-|---|---|---|
-| Start time | 1 | Round start, venue-local |
-| Event | 2.7 | e.g. `3x3x3 Cube Round 1` |
-| Groups created | 1 | Group count for that round across the whole competition, plus a 9×9pt tick box (same geometry as the cover card's checkbox) |
-| Scorecards ready | 1.1 | Tick box only |
-| Data entry (initials) | 1.3 | Blank writing space, plus a tick box on the right edge |
-| Double-check (initials) | 1.35 | Same - wider, it holds the longest header we ship |
-| Scorecards taken by | 1.55 | Blank - widest, it takes a name rather than initials |
+per day, one row per round**, whatever room or stage the round ran in. (Internals still use
+the earlier "checking sheet" names.) Columns are Start time, Event, Groups created,
+Scorecards ready, Data entry, Double-check, and Scorecards taken by; their widths and the
+reasoning behind each are in `CHECKING_FLEX` in `src/pdf/layoutConstants.ts`.
 
 **The columns record work, not custody.** *Groups created* means the groups were made on
-competitiongroups; *scorecards ready* means they were printed or hand-written. Both are
-prepared before the competition for a first round, so both boxes print already ticked on
-every `roundNum === 1` row (`CheckingRow.preChecked`); later rounds print blank. Ticks are
-drawn with `Svg`/`Polyline`, not typeset - Helvetica has no U+2713.
+competitiongroups; *scorecards ready* means they were printed or hand-written. Both happen
+before the competition for a first round, so both boxes print already ticked on every
+`roundNum === 1` row (`CheckingRow.preChecked`); later rounds print blank. Ticks are drawn
+with `Svg`/`Polyline`, not typeset - Helvetica has no U+2713.
 
 *Data entry* and *double-check* take initials **and** a tick box: either can span several
-passes, so a cell accumulates initials, and the box is ticked only when the round is
-finished. The box is pinned to the right edge; the writing space beside it is held at
-≥ 40pt by the layout test. Data cells use `paddingVertical: 9` (vs the schedule tracker's
-6) so there is room to write by hand.
+passes, so the cell accumulates initials and the box is ticked only when the round is
+finished. The box is pinned right; the writing space beside it is held at >= 40 pt by the
+layout test.
 
-`checkingDays` is built unconditionally by the parser and is independent of
-`scorecardCheckMode` - cover cards and the checklist do not influence each other. Group
-counts come from `groupUnitsOf`, so a later round with no real groups still reports the
-count implied by its scramble-set count; rounds with no groups yet report `0`. `333fm`
-**is** included (results entry still happens for it), even though FM never gets cover cards.
+`checkingDays` is built unconditionally and is independent of `scorecardCheckMode` - cover
+cards and the checklist do not influence each other. Group counts come from `groupUnitsOf`,
+so a later round with no real groups still reports the count implied by its scramble-set
+count, and rounds with no groups yet report `0`. `333fm` **is** included: results entry
+happens for it even though it never gets cover cards.
 
 ### One table per day
 
-**The checklist has no room dimension.** A round produces one pile of scorecards however
-many rooms or stages it runs across, and the pile is what this document tracks, so every
-room's rounds for a date go into a single table, in start-time order. FMC in a side room is
-just another row. `CheckingDay` is `{ dayLabel, rows }` - there is no stage level.
+**The checklist has no room dimension.** A round produces one pile of scorecards however many
+rooms or stages it runs across, and the pile is what this document tracks, so every room's
+rounds for a date go into one table in start-time order. `CheckingDay` is
+`{ dayLabel, rows }` - there is no stage level.
 
-Merging unions the rounds' **group activity codes** rather than adding per-room counts,
-because two stages running one logical group share that group's code, and a later round
-synthesizes the same `g1..gN` in every room it occupies - summing would double both
-(`mergeSlots` in `wcif-parser.ts`). The merged row spans the earliest start to the latest
-end, and one round holding two blocks of a day collapses to one row too.
+Merging unions the rounds' **group activity codes** rather than adding per-room counts: two
+stages running one logical group share that group's code, and a later round synthesizes the
+same `g1..gN` in every room it occupies, so summing would double both. The merged row spans
+earliest start to latest end, and a round holding two blocks of a day collapses to one row.
+See `mergeSlots` in `wcif-parser.ts`.
 
 **The schedule tracker is unaffected** and keeps one table per room: it records when each
 stage actually runs, which is exactly what merging throws away.
@@ -326,41 +357,40 @@ stage actually runs, which is exactly what merging throws away.
 #### Page breaks
 
 A day's table is as long as the day, so it can outgrow a page - around 20 rounds on LETTER
-(`checking-sheet-layout.test.ts` pins the arithmetic). The day block therefore **wraps**:
+(`checking-sheet-layout.test.ts` pins the arithmetic). The day block therefore **wraps**, and
+the non-obvious constraints are:
 
-- **Never `wrap={false}` on the day block.** @react-pdf *squashes* an oversized
-  non-breaking block rather than moving it to its own page - at 30 rounds every tick box
-  collapses into an unusable sliver.
-- Each `DataRow` is `wrap={false}`, so a break never falls through a row (a split row loses
-  its cell borders and its start time).
-- The day heading, the column header and the **first** data row are one atomic group, which
-  is why the table is drawn as two bordered pieces (`tableHead` + `tableRest`, joined by
-  dropping the shared border). `minPresenceAhead` alone does not achieve this.
-- Known limit: a day spanning two pages does not repeat the column header on the second.
-  A `fixed` header would also draw on the common single-page case, so it loses on balance.
+- **Never `wrap={false}` on the day block.** @react-pdf *squashes* an oversized non-breaking
+  block rather than moving it to its own page - at 30 rounds every tick box collapses into an
+  unusable sliver.
+- Each `DataRow` is `wrap={false}`, so a break never lands inside a row (a split row loses its
+  cell borders and its start time).
+- The day heading, column header and **first** data row form one atomic group, which is why
+  the table is drawn as two bordered pieces (`tableHead` + `tableRest`, joined by dropping the
+  shared border). `minPresenceAhead` alone does not achieve this.
+- Known limit: a day spanning two pages does not repeat the column header on the second. A
+  `fixed` header would also draw on the common single-page case, so it loses on balance.
 
 ### The lunch rule
 
-Both the Round Checklist **and** the schedule tracker draw a thick rule
-(`CHECKING_BREAK_RULE`, 1.5pt) where lunch splits a day - delegates mark it by hand
-otherwise. `CheckingRow.breakBefore` / `ScheduleRow.breakBefore` is set on the first round
-that starts after a scheduled lunch; the first row of a table never carries one, since the
-header border is already above it.
+Both this document **and** the schedule tracker draw a thick rule (`CHECKING_BREAK_RULE`,
+1.5 pt) where lunch splits a day. `breakBefore` is set on the first round starting after a
+scheduled lunch; the first row of a table never carries one, since the header border is
+already above it.
 
-Lunch is detected **explicitly**, never inferred from a gap in the schedule: an activity
-counts when it is not a round activity and either its `activityCode` is `other-lunch` or
-its name matches `LUNCH_NAME_RE` (lunch / dîner / déjeuner / almuerzo / almoço / comida) -
-delegates routinely file lunch under `other-misc` with a localised name. Only lunch draws
-a rule; awards and tutorials would clutter a busy day.
+Lunch is detected **explicitly, never inferred from a gap**: an activity counts when it is not
+a round activity and either its `activityCode` is `other-lunch` or its name matches
+`LUNCH_NAME_RE` (lunch / dîner / déjeuner / almuerzo / almoço / comida) - delegates routinely
+file lunch under `other-misc` with a localised name. Only lunch draws a rule; awards and
+tutorials would clutter a busy day. Lunch activities are collected across **every** room of
+the day, since a competition typically breaks once while the rule belongs on every table. The
+lunch activity itself never becomes a row.
 
-Lunch activities are collected across **every** room of the day, since a competition
-typically enters lunch once while the rule belongs on every table. The lunch activity
-itself never becomes a row: non-round activities stay filtered out of both documents.
+`checking-sheet-layout.test.ts` pins the geometry: every header, in every locale, on both
+LETTER and A4, must fit its column at 8 pt Helvetica-Bold; the event column must additionally
+fit the longest event + round label at 10 pt regular; and the initials columns must keep
+>= 40 pt of writing space beside their tick box.
 
-`src/pdf/checking-sheet-layout.test.ts` pins the geometry: every header, in every locale,
-on both LETTER and A4, must fit inside its column at 8pt Helvetica-Bold; the **event**
-column must additionally fit the longest event + round label at 10pt regular; and the
-initials columns must keep ≥ 40pt of writing space beside their tick box.
 
 ---
 
@@ -441,53 +471,46 @@ A PDF is omitted from the output if it would be empty (e.g., all events have onl
 
 ### Intermediate round modes
 
-Controlled by the `secondRoundMode` setting:
+`secondRoundMode` picks how a **not yet assigned** later round is printed:
 
-- **Prefilled** - N cover cards (one per group) followed by all round-1 participants with a blank group placeholder (`Group _ of N`). Staff sorts the advancing competitors into groups manually and pulls their cards from the stack.
-- **Blanks** - fully blank scorecards per group, same as finals.
+- **Prefilled** - one cover card per group, then every round-1 participant with a blank group
+  placeholder (`Group _ of N`). Staff sort the advancing competitors and pull their cards.
+- **Blanks** - fully blank scorecards per group, as for finals.
 
-These two modes only apply to a round that has **not** been assigned yet - see below.
+Two wrinkles the WCIF forces on this, both implemented in `src/lib/wcif-parser.ts`:
 
-**Later rounds scheduled without groups.** The blank/prefilled buckets and the extras are
-built from the schedule's **group child-activities**. Some organizers schedule a later round
-as a bare time block with no groups; the parser then synthesizes implicit groups from the
-round activity, as many as the round has **scramble sets** (`Round.scrambleSetCount`, floor
-of 1). The fallback applies only to rounds ≥ 2 with no real groups anywhere, and never flips
-`parsed.hasGroups`. See `groupUnitsOf` in `src/lib/wcif-parser.ts`.
-
-**Sizing unassigned later rounds (advancement chain).** Round 1's field is the number of
-**accepted registrations** for the event; each later round applies the previous round's
-advancement condition to the previous field: `ranking` → top *X*, `percent` →
-`floor(level/100 × previous field)`. Blank stacks hold `ceil(field / groups) + 2` cards per
-group; prefilled Round-2 cover counts sum to the field. An `attemptResult` (or absent)
-condition makes the downstream field unknown, so those rounds fall back to a flat **16**
-blanks. Applies to all *unassigned* later rounds, never to assigned ones. See
-`roundFieldSize` in `src/lib/wcif-parser.ts`.
+- **Later rounds scheduled without groups.** The buckets are built from the schedule's group
+  child-activities, but some organizers schedule a later round as a bare time block. The
+  parser then synthesizes as many implicit groups as the round has scramble sets
+  (`Round.scrambleSetCount`, floor 1). Rounds >= 2 with no real groups anywhere only, and it
+  never flips `parsed.hasGroups`. See `groupUnitsOf`.
+- **Sizing them (the advancement chain).** Round 1's field is the accepted registration count;
+  each later round applies the previous round's advancement condition - `ranking` takes the
+  top X, `percent` takes `floor(level/100 * previous)`. Blank stacks hold
+  `ceil(field / groups) + 2` per group. An `attemptResult` or absent condition makes the
+  field unknowable, so those fall back to a flat **16** blanks. See `roundFieldSize`.
 
 ### Mid-competition generation (live group assignments)
 
-When the parser finds real `competitor` assignments for a round ≥ 2 (the organizer assigned
-groups mid-competition and re-exported the WCIF), it produces **named** scorecards with the
-actual group, routed to the matching `intermediate` / `semis` / `finals` PDF instead of the
-prefilled/blank output above. Unassigned rounds still use the blank/prefilled fallback.
+When the parser finds real `competitor` assignments for a round >= 2 - the organizer assigned
+groups mid-competition and re-exported the WCIF - it emits **named** scorecards with the
+actual group, routed to the matching bucket instead of the prefilled/blank output above.
+Unassigned rounds still use the fallback.
 
-Detection happens **up front** on `RoundScopePage` (right after picking the competition), not
-at download time. When at least one later round has real assignments, that page asks a
-**scope** question:
+Detection happens up front on `RoundScopePage`, right after picking the competition, not at
+download time. If at least one later round has assignments, that page asks a **scope**
+question:
 
-- **Latest round only** *(default)* - print only the most recent round that has groups. Best
-  during a competition (you don't reprint earlier rounds).
-- **Everything** - print all rounds (plus name tags, schedule, etc.), using assigned groups
-  where available.
+- **Latest round only** *(default)* - only the most recent round that has groups. Best
+  mid-competition: you do not reprint earlier rounds.
+- **Everything** - all rounds, using assigned groups where available.
 - **Select rounds** - pick individual event + round combinations.
 
-The scoped modes (`latest` / `selected`) emit scorecard PDFs only - name tags, the schedule
-tracker, and extras are pre-competition artifacts and are skipped, and the Settings page hides
-those sections accordingly. When no later round has assignments (the normal pre-competition
-WCIF) there is no prompt, the page auto-advances to Settings, and output is unchanged.
+The scoped modes emit scorecards only; name tags, the schedule tracker and extras are
+pre-competition artifacts, so they are skipped and the Settings page hides those sections.
+With a normal pre-competition WCIF there is no prompt and the page auto-advances.
 
-Independently of the round question, the same page carries a **Document types** checklist
-(`DocumentSelection`), shown in both the pre- and mid-competition flows:
+Independently, the same page carries a **Document types** checklist (`DocumentSelection`):
 
 | Key | Label | Default |
 |---|---|---|
@@ -497,57 +520,56 @@ Independently of the round question, the same page carries a **Document types** 
 | `roundChecklist` | Round Checklist | **off** |
 | `firstTimerSlips` | First-Timer Slips | off |
 
-`filterParsedByScope` applies these flags by **emptying the corresponding arrays**, so every
-consumer downstream just checks `.length > 0` and needs no knowledge of the selection. Continue
-is disabled when nothing is ticked.
-
-The scope filtering lives in `src/lib/generationScope.ts` (`GenerationScope`,
-`filterParsedByScope`, `availableRounds`, `latestAssignedRound`, `hasUnassignedIntermediate`);
-the parser exposes `ParsedWCIF.laterRoundsWithAssignments` and a `roundNum` on every entry to
-drive it. The chosen scope is persisted on `CompetitionSettings.generationScope`.
+`filterParsedByScope` applies these by **emptying the corresponding arrays**, so everything
+downstream just checks `.length > 0` and needs no knowledge of the selection. Continue is
+disabled when nothing is ticked. Scope logic lives in `src/lib/generationScope.ts`; the
+chosen scope persists on `CompetitionSettings.generationScope`.
 
 ### Print layout (quad-reorder / cut-and-stack)
 
-Each page holds 4 scorecards. Cards are **not** laid out in reading order. Instead they are interleaved so that after printing, cutting along the centre lines, and stacking the half-sheets on top of each other, each resulting stack is already sorted in the correct order for distribution. This is called a cut-and-stack or quadrant reorder.
-
-Concretely: input position 0 → page 1 top-left, input position 1 → page 2 top-left, input position 2 → page 3 top-left, etc. All "top-left" cards come first, then all "top-right", and so on. The `reorderQuadrants` function in `wcif-parser.ts` implements this mapping.
-
-The number of entries is always padded to a multiple of 4 (with empty cover placeholders) before reordering so that every page is full and the stacking math works out.
+Four cards per page, deliberately **not** in reading order. They are interleaved so that
+after printing, cutting the centre lines and stacking the half-sheets, each stack is already
+in distribution order: input 0 goes to page 1 top-left, input 1 to page 2 top-left, and so
+on, so all top-left cards come first, then all top-right. `reorderQuadrants` in
+`src/lib/wcif-parser.ts` implements it, and entries are padded to a multiple of 4 first so
+the stacking arithmetic holds.
 
 ### Page geometry
 
-Cards preserve the aspect ratio of the original HTML scorecards (561:726 ≈ 0.773). Absolute positioning is used so that cutting guides (gaps between cards) are exact.
+Cards preserve the original HTML scorecards' aspect ratio (561:726 = 0.773) and are
+absolutely positioned so the cutting gaps are exact.
 
 | Paper | Card size | Positions (left, top in pt) |
 |---|---|---|
-| LETTER (612×792 pt) | 282×365 pt | (12,12), (318,12), (12,415), (318,415) |
-| A4 (595×842 pt) | 274×354 pt | (12,36), (309,36), (12,452), (309,452) |
+| LETTER (612x792 pt) | 282x365 pt | (12,12), (318,12), (12,415), (318,415) |
+| A4 (595x842 pt) | 274x354 pt | (12,36), (309,36), (12,452), (309,452) |
 
 ### Bilingual result header
 
-When a secondary language is set, both `resultPrefix` and the result suffix have two lines (one per language). Concatenating them naively produces four lines in the narrow result column header. Instead, the two strings are split on `\n` and interleaved: line 1 of the prefix + space + line 1 of the suffix, then line 2 of the prefix + space + line 2 of the suffix. This keeps the header to exactly two lines.
+With a secondary language, both the result prefix and its suffix are two lines. Concatenating
+them naively gives four lines in a narrow column, so they are split on `\n` and interleaved -
+prefix line 1 + suffix line 1, then prefix line 2 + suffix line 2 - keeping the header at
+exactly two lines.
 
-### Name font size (scorecards)
+### Name font size
 
-The competitor name is auto-scaled to fit on one line inside the name cell. The formula approximates Helvetica-Bold character width as 0.65 pt per pt of font size per character:
-
-```
-fontSize = clamp(7, floor(available / (name.length * 0.65)), 18)
-```
-
-Available width is ~158 pt when any logo cell is present (custom or default), ~210 pt when the header is the narrow comp-name-only cell.
+Auto-scaled to fit one line in the name cell; see `nameFontSize` in
+`src/pdf/ScorecardDocument.tsx` for the formula and its bounds. Available width depends on
+the header mode below (~158 pt with a logo cell, ~210 pt without).
 
 ### Logo vs competition name
 
-The header has three mutually exclusive modes, resolved by `src/lib/logo.ts`:
+Three mutually exclusive header modes, resolved by `src/lib/logo.ts`:
 
 | `logoDataUrl` | `useDefaultLogo` | State | Header content |
 |---|---|---|---|
-| set | - | `custom` | Uploaded logo alone in an 80 pt cell; competition name is **not printed** on the card |
-| `null` | `true` (default) | `default` | Competition name text + bundled Speedcubing Canada logo side by side in an 80 pt cell |
-| `null` | `false` | `none` | Competition name only, printed vertically in a narrow 26 pt cell on the left |
+| set | - | `custom` | Uploaded logo alone in an 80 pt cell; competition name **not printed** |
+| `null` | `true` (default) | `default` | Competition name + bundled SCC logo side by side, 80 pt cell |
+| `null` | `false` | `none` | Competition name only, printed vertically in a narrow 26 pt cell |
 
-The `default` state is intended as the standard for Canadian competitions; competitions outside Canada toggle `useDefaultLogo` off to fall back to the legacy `none` layout.
+`default` is the standard for Canadian competitions; competitions elsewhere turn
+`useDefaultLogo` off to get the `none` layout.
+
 
 ---
 
@@ -555,25 +577,21 @@ The `default` state is intended as the standard for Canadian competitions; compe
 
 ### Physical layout
 
-The two layouts use **different page orientations and card sizes**; both produce 8 panels (4 front/back pairs) per page.
+Both layouts produce 8 panels (4 front/back pairs) per page, but differ in page orientation
+and card size. Exact slot sizes, margins and gaps live in `CONFIGS` / `H_CONFIGS` at the top
+of `src/pdf/NametTagDocument.tsx`.
 
-**Vertical layout** (`nametagLayout: 'vertical'`, default) - landscape page, 4-column × 2-row grid:
+**Vertical** (`nametagLayout: 'vertical'`, default) - landscape page, 4 columns x 2 rows:
 
 ```
 row 0: [Front_A] [Back_A] [Front_B] [Back_B]
 row 1: [Front_C] [Back_C] [Front_D] [Back_D]
 ```
 
-| Paper | Slot size | Margin | Gap |
-|---|---|---|---|
-| LETTER | 189 × 292 pt | 12 pt | 4 pt H, 4 pt V |
-| A4 | 201 × 283 pt | 12 pt | 4 pt H, 4 pt V |
+Cut between column pairs (each front/back pair is adjacent) and fold front-to-back.
 
-Cut between column pairs (each [Front/Back] pair is adjacent) and fold front-to-back.
-
----
-
-**Horizontal layout** (`nametagLayout: 'horizontal'`) - portrait page, 2-column × 4-row grid. Each row holds one person's front and back side-by-side:
+**Horizontal** (`nametagLayout: 'horizontal'`) - portrait page, 2 columns x 4 rows, one
+person per row:
 
 ```
 row 0: [Front_A] [Back_A]
@@ -582,38 +600,33 @@ row 2: [Front_C] [Back_C]
 row 3: [Front_D] [Back_D]
 ```
 
-| Paper | Slot size | Margin | Gap |
-|---|---|---|---|
-| LETTER | 244 × 147 pt (86 × 52 mm) | 15 pt | 10 pt H, 10 pt V |
-| A4 | 244 × 147 pt (86 × 52 mm) | 15 pt | 10 pt H, 10 pt V |
+Cut horizontally between rows and vertically down the centre; each row pair goes into the
+holder front-and-back.
 
-Cards are sized to fit **90 × 55 mm badge holders** with ~2 mm clearance per edge - holder-dictated, so both paper formats use the same size. No rotation is applied. Cut horizontally between rows and vertically down the centre; each row pair goes into the holder front-and-back.
+The constraint that fixes horizontal card size: **90 x 55 mm badge holders**, with ~2 mm
+clearance per edge. That is dictated by the holder, not the paper, so LETTER and A4 use the
+same 244 x 147 pt card. Do not "optimise" it per paper size.
 
-In horizontal mode the top section is compressed (≈ 58 pt vs 127–146 pt) and the WCA ID is shown only on the back panel to fit the shorter (147 pt) card height.
+The 147 pt card height is also why compact mode compresses the top section and moves the WCA
+ID to the back panel only, and why event icons are dropped from the QR side - see
+`eventIconsVisible` in `src/pdf/layoutConstants.ts`, the single source of truth for that rule.
 
-**Event icons appear only on the side without the QR codes.** `eventIconsVisible({ isQrSide, compact })` in `src/pdf/layoutConstants.ts` is the single source of truth: icons are hidden only when a panel is the QR side *and* the layout is compact, so the vertical layout keeps icons on both panels.
-
-In compact layout the competition name, competitor name, and role badge are **top-packed with equal gaps on both panels**, so the role badge lands at the same Y on front and back regardless of what follows it. A very dense duty list can still push the front's section taller, breaking the alignment.
+Known limit: in compact mode the top section is top-packed with equal gaps so the role badge
+lands at the same Y on both panels, but a very dense duty list can still push the front
+taller and break that alignment.
 
 ### Panel contents
 
-Every panel (front and back) starts with the same top section:
+Every panel opens with the same top section: logo or competition name (per
+`nametagLogoMode`), competitor name (auto-sized), role badge (coloured by role, pinned to a
+fixed Y so it does not move with name length), event icons, and the WCA ID or a first-timer
+placeholder.
 
-- **Logo or competition name** - controlled by `nametagLogoMode` (see below)
-- **Competitor name** - auto-sized to fill available width (see formula below)
-- **Role badge** - DÉLÉGUÉ / COMPÉTITEUR / COMPÉTITRICE / NOUVEAU COMPÉTITEUR / etc. (or English equivalents on the back panel), coloured by role. The badge is pinned at a fixed vertical position within the top section so it appears at the same height regardless of name length
-- **Event icons** - one icon per registered event (in horizontal layout, only on the non-QR side - see above)
-- **WCA ID** - or a blank placeholder for first-timers
-
-**Front panel** (primary language) - duty assignments grouped by role, e.g. in French:
-- `Concourir:` - events and groups the competitor competes in
-- `Mélanger:` - scrambling assignments
-- `Juger:` - judging assignments
-- `Courir:` - running assignments
-
-**Back panel** (secondary language, or the primary when none is set) - two QR codes side by side:
-- **competitiongroups.com** - links to the competitor's personal schedule using their `registrantId`
-- **WCA Live** - links to the competitor's live results page using the WCA Live internal person ID (looked up via `wcaLivePersonIds[registrantId]`); falls back to the WCA Live homepage if the mapping is unavailable
+The **front** carries duty assignments in the primary language, grouped as compete /
+scramble / judge / run. The **back** uses the secondary language (or the primary when none is
+set) and carries two QR codes: competitiongroups.com, keyed by `registrantId`; and WCA Live,
+keyed by `wcaLivePersonIds[registrantId]`, falling back to the WCA Live homepage when that
+mapping is unavailable.
 
 ### QR code modes (`nametagQrMode`)
 
@@ -622,52 +635,44 @@ Every panel (front and back) starts with the same top section:
 | `back-only` (default) | Duty assignments | QR codes |
 | `both-sides` | QR codes (primary language) | QR codes (secondary language) |
 
-`both-sides` is useful when the logo takes enough space that assignments become hard to read, or when the organiser simply prefers QR codes on both sides.
+`both-sides` helps when the logo squeezes the assignments, or simply on preference.
 
 ### Logo modes (`nametagLogoMode`)
 
-Available whenever a logo will be rendered - either a custom upload or the bundled Speedcubing Canada default (when `useDefaultLogo` is true). Has no effect when both sources are unavailable.
+Applies whenever a logo will render - a custom upload, or the bundled Speedcubing Canada
+default when `useDefaultLogo` is set. No effect when neither is available.
 
 | Value | Header row |
 |---|---|
 | `hidden` | Competition name text |
-| `with-name` | Small logo (20 pt) + competition name text side by side |
-| `logo-only` | Large logo (28 pt) centred, no competition name text; QR codes are 65 pt instead of 75 pt to compensate |
+| `with-name` | Small logo (20 pt) beside the competition name |
+| `logo-only` | Large logo (28 pt) centred, no name; QR codes shrink 75 -> 65 pt to compensate |
 
-### Name font size (name tags)
+### Auto-sizing
 
-```
-fontSize = clamp(9, floor((panelW − 14) / (name.length × 0.55)), 20)
-```
-
-The 0.55 factor approximates Helvetica regular character width. The 20 pt cap prevents short names from becoming disproportionately large compared to competitors with longer names.
-
-### Duty assignment font size
-
-Duties are rendered as a flex-wrap row of items. Font size scales down for competitors with many assignments to prevent overflow:
-
-```
-dutyFs = clamp(5, 7.5 − max(0, totalItems − 8) × 0.12, 7.5)
-```
-
-where `totalItems` is the total count of duty strings across all four roles. An entry with 8 or fewer duties uses the full 7.5 pt; each item beyond 8 reduces the size by 0.12 pt, bottoming out at 5 pt.
-
-When the estimated natural height of the duty rows is below 65% of the available panel height, `justifyContent: space-evenly` is applied so the rows spread to fill the space. Otherwise rows stack from the top with 3 pt gaps to avoid the overflow that `space-evenly` causes when content is dense.
+Both the name and the duty-list font size are computed, not fixed - see `nameFontSize` and
+the duty sizing in `src/pdf/NametTagDocument.tsx`, which carry the constants and the reason
+for each bound. The short version: names cap at 20 pt so a short name does not dwarf a long
+one, and duties shrink past 8 items, bottoming out at 5 pt.
 
 ### QR code rendering
 
-QR codes are rendered as native react-pdf SVG elements (`<Svg>` / `<Rect>`) rather than as rasterised images. Consecutive dark modules in each row are collapsed into horizontal bars to minimise the number of SVG elements. This produces sharp, resolution-independent QR codes without any external image dependency.
+QR codes are native react-pdf SVG (`<Svg>` / `<Rect>`), not rasterised images, so they stay
+sharp at any print resolution with no image dependency. Consecutive dark modules in a row are
+merged into one bar to keep the element count down.
 
 ### Development helper
 
-`generate-nametags.mjs` is a standalone Node.js ESM script that generates a name-tag PDF from a local legacy data file without needing a browser or a running dev server. Run it with:
+`npm run render:fixtures` renders the name tags (among all six documents) from the real Gros
+Jouets export in `example-comp/`, without a browser or a running dev server:
 
 ```
-node generate-nametags.mjs              # vertical layout (default)
-node generate-nametags.mjs --horizontal # horizontal layout
+npm run render:fixtures                  # vertical layout (default)
+npm run render:fixtures -- --horizontal  # horizontal layout
 ```
 
-Output is written to `../current-output/`.
+Output is written to `../current-output/`. See [Rendering PDFs outside the browser](#rendering-pdfs-outside-the-browser).
+
 
 ---
 
@@ -692,55 +697,40 @@ Each slip lists, in order:
 
 ### Development helper
 
-`generate-first-timer-slips.mjs` renders the slip PDF from a fixture (the real newcomers reconstructed from the original Gros Jouets PDF, including birthdates) for layout verification against `original-output/`:
+`npm run render:fixtures` also renders the slip PDF, from a fixture of the real newcomers reconstructed from the original Gros Jouets PDF (birthdates included), for layout verification against `original-output/`:
 
 ```
-node generate-first-timer-slips.mjs   # → ../current-output/GrosJouetsaMontreal2026_first_timers.pdf
+npm run render:fixtures   # → ../current-output/GrosJouetsaMontreal2026_first_timers.pdf
 ```
 
 ---
 
 ## WCIF parsing
 
-The parser (`src/lib/wcif-parser.ts`) reads the competition's WCIF (WCA Interchange Format) JSON and produces a `ParsedWCIF` object:
-
-```ts
-interface ParsedWCIF {
-  firstRound:   ScorecardData[];
-  intermediate: ScorecardData[];
-  semis:        ScorecardData[];
-  finals:       ScorecardData[];
-  nametags:     NametTagEntry[];
-  extras:       ScorecardData[];     // one blank scorecard per round per event
-  scheduleDays: ScheduleDay[];       // chronological schedule tracker data
-  // Rounds (≥ 2) that already have real competitor group assignments - empty for a
-  // standard pre-competition WCIF. Drives the generation-scope prompt.
-  laterRoundsWithAssignments: { eventId: string; roundNum: number }[];
-}
-```
-
-Every `ScorecardData` entry also carries a `roundNum` (1-based; `0` for custom events) so the generation-scope filter can select cards by event + round.
+`src/lib/wcif-parser.ts` turns the competition's WCIF JSON into a `ParsedWCIF`: the four
+scorecard buckets, plus name tags, first-timers, extras, and the schedule/checklist day
+lists. Read the interface at the top of that file for the current shape - it is commented
+per field, and this section only records the decisions the types cannot show.
 
 ### What is skipped
 
-- **FMC (`333fm`)** - no scorecard format exists for this event; it is silently ignored throughout.
-- **Multi-Blind (`333mbf`)** - treated specially: always `bo2` format (2 attempts), result cell shows "X out of X / Time / ___" template. Named assignments are skipped (delegates handle MBF manually).
-- **Persons** with `registration.status !== 'accepted'` are ignored.
+- **FMC (`333fm`)** - no scorecard format exists, so it is skipped for scorecards and
+  extras. It *is* included in the schedule tracker, which staff still need.
+- **Multi-Blind (`333mbf`)** - named assignments are skipped; delegates handle MBF by hand.
+- **Persons** whose `registration.status` is not `accepted`.
 
 ### Round categorisation
 
 ```
 firstRound   - roundNum === 1 for any event
-intermediate - roundNum in [2, N-1] AND event has N >= 3 rounds total
-semis        - roundNum === N-1 AND event has N >= 4 rounds total
-finals       - roundNum === N AND N >= 2 (i.e., the event has more than one round)
+intermediate - roundNum in [2, N-1] AND the event has N >= 3 rounds
+semis        - roundNum === N-1 AND the event has N >= 4 rounds
+finals       - roundNum === N AND N >= 2
 ```
 
-A 2-round event's second round goes directly to finals, never to intermediate. A 3-round event contributes round 2 to intermediate and round 3 to finals.
+A 2-round event's second round goes straight to finals, never to intermediate.
 
 ### Scorecard format selection
-
-The WCIF `round.format` field maps to a scorecard layout:
 
 | WCIF format | Cutoff? | Scorecard format |
 |---|---|---|
@@ -750,74 +740,66 @@ The WCIF `round.format` field maps to a scorecard layout:
 | `3` or `m` | yes | `bo1-mo3` (1 pre-cutoff + 2 post-cutoff rows) |
 | `2` (best-of-2) | - | `bo2` (2 rows) |
 
-**Override: blind events.** `444bf` and `555bf` are always forced to `mo3` / `bo1-mo3` (3 attempts) regardless of what the WCIF says for `round.format`. This is because the WCIF sometimes reports these as `2` but the WCA regulations require a mean-of-3 attempt structure.
+Two overrides the WCIF cannot express:
 
-**Override: Multi-Blind.** `333mbf` is always `bo2` (2 attempts). The result cell content ("`___ out of ___`") is driven by `eventId === '333mbf'`, not by the format code, because 6×6 and 7×7 also use `bo2` and must not show the MBF template.
+- **`444bf` / `555bf` are forced to `mo3` / `bo1-mo3`.** The WCIF sometimes reports these
+  as format `2`, but the regulations require a mean-of-3 structure.
+- **`333mbf` is always `bo2`.** Its "`___ out of ___`" result template keys off
+  `eventId`, not the format code - 6x6 and 7x7 are also `bo2` and must not show it.
 
-**Note on 3×3 Blindfolded.** `333bf` uses `avg5` format as of 2026 and is treated as a standard event. It is not in the blind-events override set.
+`333bf` uses `avg5` as of 2026 and is *not* in the blind-events override set.
 
-### Timeslot ordering
+### Ordering and labels
 
-The parser assigns each child activity a short timeslot key (e.g., `A01`, `B03`) derived from the activity's start time and room name. These keys are used as the primary sort key for all three output buckets, ensuring scorecards print in schedule order. Multiple rooms active at the same time get different stage prefixes (first letter of the room name) but the same numeric slot.
+Entries sort by `timeslot -> eventId -> stage -> group -> kind -> name`, where the timeslot
+key (`A01`, `B03`, ...) encodes start time and room so cards print in schedule order.
 
-### Group labels
+The stage sort key is what keeps a **stationary round** (assignments carrying a
+`stationNumber`, shown as `Station 01` instead of a group label) in one contiguous pile per
+stage rather than interleaving stages whose stations are numbered across them. For rotation
+rounds it is a no-op, since the stage already prefixes the group label.
 
-Group labels are built from the activity code's group number and the room/stage name. If the stage name matches a room name prefix, it is replaced with `"Group"`. Falls back to `"Group {N}"` if the heuristic does not match. Labels are translated into the primary language (`Groupe X de Y` in French).
+A final that is a single group in a single stage uses station numbers on its blank cards -
+the event and round already identify the stack, so `Group 1 of 1` would be noise.
 
-**Greyed "of Y".** On scorecards (and cover cards), the trailing connector + total of every "X of Y" label - the `of 2` in `Group 1 of 2`, the `de 3` in `Tour 1 de 3`, etc. - is rendered in grey (`#808080`) to de-emphasise it and draw attention to the current group/round number (Sarah's feedback). The connector word per language is `ofConnector` in `src/lib/i18n.ts` (`of` for EN, `de` for FR/ES/PT); `splitLabelTotal(label, connector)` splits the label on the **last** connector occurrence (so colour/stage names like `Bleu 1 de 2` keep their colour black) and returns `tail: null` for labels with no connector (e.g. `Final Round` / `Tour Final`), which render entirely in the normal colour. The `LabelWithGreyTotal` component in `src/pdf/ScorecardDocument.tsx` does the rendering.
+The trailing "of Y" of every `X of Y` label renders grey; `splitLabelTotal` in
+`src/lib/i18n.ts` documents how it splits, including why it splits on the *last* connector.
 
-For a final that is a single group in a single stage (`totalGroups === 1 && numStages <= 1`), station numbers replace group labels on the blank cards: `Station 01`, `Station 02`, … (`Estación 01`, … in Spanish). The event and round already identify the stack, so a `Group 1 of 1` label would be redundant noise.
+### Counts
 
-**Stationary rounds.** When a competitor's assignment carries a `stationNumber`, the visible group label becomes a station label instead (`Station 01`, … / `Estação 01`, … in Portuguese), so the stage/colour is not shown on the card. Each entry still keeps the stage as a separate sort key, and `finalizeEntries` sorts by `timeslot → eventId → stage → group → …`. This keeps every stage's cards in one contiguous pile (all of one stage, then the next) instead of interleaving stages whose stations happen to be numbered across stages. The per-stack cover card identifies each stage. For rotation rounds the stage key is a no-op, since the stage is already the prefix of the group label.
+When the previous round has an `advancementCondition` of type `ranking`, blanks per group in
+finals/intermediate are `ceil(level / totalGroups) + 2`. Otherwise 16 per group.
 
-### Advancement condition and blank count
+### Name tags
 
-When the previous round has `advancementCondition.type === 'ranking'`, the number of blank scorecards per group in finals/intermediate is `ceil(level / totalGroups) + 2` (a small buffer above the exact cut). Otherwise 16 blanks are printed per group.
+Sorted **Delegates -> Organizers -> Returning competitors -> New competitors**, alphabetical
+within each group, so first-timers can be separated at check-in.
 
-### New competitors
+Three different person IDs are in play and must not be confused:
 
-Persons without a `wcaId` get a placeholder. In French the placeholder is gendered: `Nouvelle Compétitrice` for female competitors, `Nouveau Compétiteur` for male/other.
+| Field | What it is | Used for |
+|---|---|---|
+| `registrantId` | sequential per competition | competitiongroups.com URLs, and the key into `wcaLivePersonIds` |
+| `wcaUserId` | WCA website account ID | nothing in the QR codes |
+| WCA Live person ID | WCA Live's own internal ID | the WCA Live URL, resolved via `fetchWcaLivePersonIds` |
 
-### Nametag entries (`NametTagEntry`)
+### Extras
 
-Each accepted person produces one `NametTagEntry`. The `buildDuties` function converts WCIF assignment codes (e.g., `competitor`, `staff-scrambler`, `staff-judge`, `staff-runner`) into human-readable duty strings of the form `"EventName: Group label"`. Duties are grouped into four arrays (`compete`, `scramble`, `judge`, `run`) and sorted alphabetically within each group.
+One blank card per round per event, in schedule order, padded to a multiple of 4 but **not**
+quadrant-reordered - extras are a loose stack, not a cut-and-stack bundle.
 
-Entries are sorted in this order: **Delegates → Organizers → Returning competitors → New competitors** (persons without a WCA ID), each sub-group alphabetically by name. New competitors are placed at the end so their nametags can be separated at check-in for first-timer orientation.
+### Schedule tracker and checklist
 
-The `registrantId` field is the sequential person ID used by competitiongroups.com and as the key into `wcaLivePersonIds` to resolve the WCA Live competitor URL. `wcaUserId` is the WCA website account ID. These are different numbers and must not be confused - WCA Live uses its own internal person IDs (neither `registrantId` nor `wcaUserId`).
+Both are built in one pass: each room's activities reduce to `RoundSlot`s, and `buildRows`
+turns a slot list into either row shape. The tracker keeps one table per room per day; the
+checklist concatenates every room's slots for the date and runs `mergeSlots`, giving one
+table per day. See **The Round Checklist** above.
 
-### Extra / spare scorecards (`extras`)
+Day labels come from a global date-to-day-number map across all rooms, so "Day 1" is the
+competition's earliest date whichever room you are looking at. Times use the venue timezone
+(`wcif.schedule.venues[0].timezone`), 24-hour. Round labels in the tracker are always
+English - it is a staff document.
 
-One blank `ScorecardEntry` is generated per round per event (excluding `333fm`, which has no scorecard format). The extra scorecards are sorted by schedule order - using the earliest child-activity start time for each round as the sort key, then by event ID as a tiebreaker. The list is padded to a multiple of 4 (with empty cover placeholders) but is **not** quadrant-reordered: extras are handled as a loose stack, not a cut-and-stack bundle.
-
-Group labels follow the same rules as regular scorecards: single-group rounds use `"Group 1 of 1"` and multi-group rounds use `"Group _ of N"` (a blank placeholder indicating the group number is to be written in by hand). FMC is excluded because no printed scorecard format exists for it.
-
-### Schedule tracker (`scheduleDays`)
-
-The schedule tracker is built in **day-primary, chronological order**: the output is a list of `ScheduleDay` objects, each representing one calendar date. Each day contains a list of `ScheduleStage` objects (one per room that has events on that day), and each stage holds `ScheduleRow` entries sorted by start time.
-
-Day labels (`"Day 1 - Monday"`, `"Day 2 - Tuesday"`, …) are computed from a global date→day-number map built across all rooms, so "Day 1" always refers to the earliest calendar date in the entire competition regardless of which room's activities you're looking at.
-
-Times are formatted in the venue's local timezone (from `wcif.schedule.venues[0].timezone`) using `Intl.DateTimeFormat` with `hour12: false`. Event round labels in the schedule tracker always use English event names regardless of the scorecard language setting, since the tracker is a staff document.
-
-`333fm` is **included** in the schedule tracker (staff still need to track it), unlike extras and scorecards where it is excluded.
-
-`ScheduleRow.breakBefore` marks the first round after a scheduled lunch, which the tracker
-renders as a thick rule - see **The lunch rule** above.
-
-### Checking sheet (`checkingDays`)
-
-Built in the same pass as `scheduleDays`: each room's activities are reduced to
-`RoundSlot`s (round code, start, end, the set of group activity codes) by `slotsOf`, and
-`buildRows` turns a slot list into both row shapes, since they share the filtering and the
-event+round labelling. The tracker builds one table per room from that room's slots; the
-checklist concatenates **every** room's slots for the date and runs them through
-`mergeSlots`, giving one table per day. See **The Round Checklist** above for the columns,
-the group-count rule and **One table per day**.
-
-`CheckingRow` adds two fields on top of the schedule row's start/end/event: `preChecked`
-(true for `roundNum === 1`, printing the groups and scorecards boxes already ticked) and
-`breakBefore` (shared with `ScheduleRow`, the lunch rule).
 
 ---
 
@@ -911,7 +893,22 @@ All PDF rendering happens inside `src/pdf/scorecardWorker.ts` (a Vite module wor
 
 ### Hyphenation disabled
 
-`Font.registerHyphenationCallback((word) => [word])` tells react-pdf never to hyphenate any word. Without this, react-pdf hyphenates long names mid-word, which looks wrong on scorecards and name tags.
+`Font.registerHyphenationCallback((word) => [word])` tells react-pdf never to hyphenate any word. Without this, react-pdf hyphenates long names mid-word, which looks wrong on scorecards and name tags. It is a global registration on the shared `Font` object, so it lives in `src/pdf/fontSetup.ts` and each document imports that module for its side effect.
+
+### Rendering PDFs outside the browser
+
+`npm run render:fixtures` renders every document from the **real** components, headlessly, to `../current-output/`:
+
+```
+npm run render:fixtures                  # all six documents
+npm run render:fixtures -- --horizontal  # name tags in the horizontal layout
+```
+
+`scripts/renderFixtures.ts` imports the actual `.tsx` documents and calls `renderToBuffer`. It runs under `vite-node` because the components are JSX, which Node's native type stripping does not handle. Name tags and first-timer slips use the real Gros Jouets data from `example-comp/` with the same settings as the originals, so their output is directly comparable to `original-output/`; the scorecard, schedule and checklist fixtures are synthetic and chosen to exercise the hand-tuned constants.
+
+`scripts/checkFixtures.sh <baseline-dir>` re-renders all six and pixel-diffs them against a saved baseline, exiting non-zero on any difference. Use it whenever a change touches `layoutConstants.ts`, `fontSetup.ts`, or `lib/i18n.ts` - the layout unit tests assert measurements and cannot see a changed border colour or row tint.
+
+Add new cases to `renderFixtures.ts` rather than writing a separate script. A generator that re-declares a component's styles reports "no change" for edits it never saw, which is how the previous `generate-*.mjs` scripts drifted from the components they were meant to verify.
 
 ---
 
@@ -990,11 +987,11 @@ src/
     settings.ts            - CompetitionSettings interface (language, paper, logo, nametag modes)
     wcif.ts                - WCIF type definitions
   assets/
-    events/                - PNG event icons (one colour + one grey per WCA event ID)
+    events/                - PNG event icons (one per WCA event ID)
     events.ts              - Maps event IDs to their icon data URLs (Vite ?inline imports)
     SC_Logo.png            - Bundled Speedcubing Canada logo (black & white)
     scc-logo.ts            - Re-exports SC_Logo.png as a data URL for the PDF worker
-generate-nametags.mjs      - Dev-only Node.js scripts to render a PDF locally without a browser
-generate-first-timer-slips.mjs
-generate-scorecards-test.mjs
+scripts/
+  renderFixtures.ts        - Renders every PDF from the real components, headlessly (vite-node)
+  checkFixtures.sh         - Re-renders and pixel-diffs all six against a saved baseline
 ```

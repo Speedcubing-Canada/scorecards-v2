@@ -4,7 +4,7 @@ node_modules/
 # Test / lint tooling not needed for the build
 vitest.config.ts
 eslint.config.js
-generate-*.mjs
+scripts/
 *.test.*
 
 # Misc

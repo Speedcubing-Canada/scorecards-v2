@@ -113,7 +113,7 @@ describe('first-timer slip geometry', () => {
   const PAGE_H = { LETTER: 792, A4: 842 } as const;
 
   it('separates slips by one blank line beyond the base 18pt gap (cut clarity)', () => {
-    // Sarah's feedback: one extra blank line between slips makes the cut obvious.
+    // One extra blank line between slips is what makes the cut point obvious.
     expect(SLIP_GAP).toBe(18 + LINE_H);
   });
 

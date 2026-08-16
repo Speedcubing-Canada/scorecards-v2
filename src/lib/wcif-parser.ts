@@ -225,10 +225,9 @@ export interface ParsedWCIF {
   extras: ScorecardData[];
   // Schedule tracker data in chronological (day-primary) order.
   scheduleDays: ScheduleDay[];
-  // Rows for the **Round Checklist** document (the UI's name for it; the internals kept
-  // the older "checking sheet" vocabulary). Same day/room partition as `scheduleDays` but
-  // one row per round. Always built; emptied by filterParsedByScope unless the user
-  // selected the Round Checklist, which is what gates rendering.
+  // Rows for the Round Checklist (see CheckingSheetDocument.tsx for the naming). One row per
+  // round. Always built; emptied by filterParsedByScope unless the user selected the Round
+  // Checklist, which is what gates rendering.
   checkingDays: CheckingDay[];
   // True once groups have been generated for this competition (the schedule has group
   // child-activities). False for a fresh pre-competition WCIF, which is why scorecard
@@ -363,7 +362,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   }
 
   // Front panels use the primary language; back panels use the secondary (or the
-  // primary when there is none) - generalizes the old bilingual front/back split.
+  // primary when there is none).
   const nametTagTitles = getNametTagTitleStrings(language, secondaryLanguage);
   const nametTagDutyStrings = getNametTagStrings(language);
   const shortNametTagNames = getShortNametTagNames(language);
@@ -473,7 +472,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     }
   }
 
-  // Derived from unique group codes - replaces the old per-room sum.
+  // Derived from unique group codes, so one group running in two rooms counts once.
   const numGroups: Record<string, number> = Object.fromEntries(
     Object.entries(roundGroupCodes).map(([k, s]) => [k, s.size]),
   );
@@ -930,7 +929,6 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         });
       }
 
-      // All round-1 participants with blank group placeholder
       const blankGroup = buildBlankGroupLabel(stageCount);
       for (const p of (round1Participants[eventId] ?? [])) {
         intermediateEntries.push({
@@ -945,7 +943,6 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         });
       }
     } else {
-      // Blanks mode: blank entries per group
       const blankCount = field != null ? Math.ceil(field / stageCount) + 2 : 16;
 
       for (const { gNum, stage, timeslot } of sortGroups(groups)) {
@@ -1042,7 +1039,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     return p !== 0 ? p : a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
   });
 
-  // First-timer slips: alphabetical by name (matches the legacy script's sort).
+  // First-timer slips: alphabetical by name.
   firstTimers.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 
   // ── Extra scorecards ──────────────────────────────────────────────────────

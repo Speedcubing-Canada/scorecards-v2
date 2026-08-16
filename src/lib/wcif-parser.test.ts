@@ -359,9 +359,9 @@ describe('group labels - multi-stage (event across multiple rooms)', () => {
 describe('stationary rounds (station-number assignments)', () => {
   // Round 1 across two stages (Rouge g1, Bleu g2). Competitors sit at fixed stations
   // numbered across both stages: Rouge → 1,3,5  Bleu → 2,4,6. Because the visible group
-  // label becomes the station number (stage is dropped), sorting purely by that label used
-  // to interleave the stages (Rouge,Bleu,Rouge,Bleu…). The stage sort key must keep each
-  // stage's cards together (Sarah's "latest rounds only" report).
+  // label becomes the station number (stage is dropped), sorting purely by that label
+  // interleaves the stages (Rouge,Bleu,Rouge,Bleu…). The stage sort key must keep each
+  // stage's cards together.
   function mkStationary() {
     const e = evt('333', [rSpec('a')]);
     const rRouge = room('Scène Rouge', [act('333', 1, [ch(100, '333', 1, 1)])]);

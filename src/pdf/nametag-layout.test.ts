@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { eventIconsVisible } from './layoutConstants';
 
-// Sarah's feedback: on horizontal name tags, event icons should appear only on the
-// side WITHOUT the QR codes. The vertical layout is unchanged (icons on both sides).
+// On horizontal name tags, event icons appear only on the side WITHOUT the QR codes.
+// The vertical layout keeps icons on both sides.
 describe('eventIconsVisible', () => {
   it('hides icons on the QR side of a horizontal (compact) tag', () => {
     expect(eventIconsVisible({ isQrSide: true, compact: true })).toBe(false);

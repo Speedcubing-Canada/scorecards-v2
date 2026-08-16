@@ -11,14 +11,15 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "render:fixtures": "vite-node scripts/renderFixtures.ts"
   },
   "dependencies": {
     "@google-cloud/secret-manager": "^6.1.2",
     "@react-pdf/renderer": "^4.5.1",
-    "@tanstack/react-query": "^5.100.14",
     "buffer": "^6.0.3",
     "express": "^5.1.0",
+    "fflate": "^0.8.3",
     "helmet": "^8.1.0",
     "i18next": "^26.3.0",
     "i18next-browser-languagedetector": "^8.2.1",
@@ -43,6 +44,7 @@
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
+    "vite-node": "^6.0.0",
     "vitest": "^4.1.7"
   }
 }

@@ -1,17 +1,16 @@
-import { Document, Page, View, Text, StyleSheet, Font } from '@react-pdf/renderer';
+import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import type { CompetitionSettings } from '../types/settings';
 import type { ScheduleDay } from '../lib/wcif-parser';
 import { getScheduleStrings, type ScheduleStrings } from '../lib/i18n';
-import { CHECKING_BREAK_RULE } from './layoutConstants';
+import {
+  CHECKING_BREAK_RULE,
+  PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
+  TABLE_BORDER as BORDER, TABLE_BORDER_INNER as BORDER_INNER,
+  TABLE_ROW_ALT as ROW_ALT, TABLE_HEADER_BG as HEADER_BG,
+} from './layoutConstants';
+import './fontSetup';
 
-Font.registerHyphenationCallback((word) => [word]);
 
-const FONT      = 'Helvetica';
-const FONT_BOLD = 'Helvetica-Bold';
-const BORDER       = '0.75pt solid #888';
-const BORDER_INNER = '0.5pt solid #bbb';
-const ROW_ALT   = '#f2f2f2';
-const HEADER_BG = '#d8d8d8';
 
 const FLEX = { time: 1, event: 2.5, competitors: 1.2 };
 

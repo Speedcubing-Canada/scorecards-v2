@@ -2,11 +2,15 @@ import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { Check, ChevronDown, ChevronRight, RectangleHorizontal, RectangleVertical } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import type { CompetitionSettings, CustomEvent, DoubleCheckRound, LocaleCode, NametTagLayout, NametTagLogoMode, NametTagQrMode, PaperFormat, ScorecardCheckMode, ScrambleDoubleCheckOverrides, SecondRoundMode } from '../types/settings';
+import type { CompetitionSettings, DoubleCheckRound, LocaleCode, NametTagLogoMode, NametTagQrMode, PaperFormat, ScorecardCheckMode, SecondRoundMode } from '../types/settings';
 import type { GenerationScope, DocumentSelection } from '../lib/generationScope';
 import { LANGUAGES } from '../i18n/index';
 import { resolveDefaultPrimaryLanguage, secondaryLanguageRow, isCanadianLanguage } from '../lib/languageSelector';
 import { parseDoubleCheckOverrides } from '../lib/parseDoubleCheckOverrides';
+import {
+  readCompetition, readCustomEvents, readDetection, readHasGroups, readIsCustom,
+  readScope, writeSettings,
+} from '../lib/flowState';
 import { readPresetSettings } from '../presets';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 import Header from '../components/Header';
@@ -15,34 +19,37 @@ import CustomEventEditor from '../components/CustomEventEditor';
 import { useIsMobile } from '../lib/useIsMobile';
 import { fetchWcaLiveId, fetchWcaLivePersonIds } from '../auth/wca';
 
+/**
+ * The settings this page owns: `CompetitionSettings` minus the four values that come from
+ * the flow rather than from the form. Deriving it with Omit means a field added to
+ * CompetitionSettings is a type error here until it is given an initial value, instead of
+ * silently missing from the saved payload.
+ */
+type SettingsDraft = Omit<
+  CompetitionSettings,
+  'competitionId' | 'competitionName' | 'generationScope' | 'isCustomCompetition'
+>;
+
 export default function SettingsPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  const competitionId = sessionStorage.getItem('selected_competition_id') ?? '';
-  const competitionName = sessionStorage.getItem('selected_competition_name') ?? '';
+  const { id: competitionId, name: competitionName } = readCompetition();
   // Custom (non-WCA) competition: no WCIF, no WCA Live, events defined on /custom.
-  const isCustom = sessionStorage.getItem('custom_competition') === 'true';
+  const isCustom = readIsCustom();
   // Set on the scope step from the parsed WCIF. When groups haven't been generated yet,
   // scorecard counts will read 0 - warn so organizers aren't confused.
-  const noGroups = sessionStorage.getItem('competition_has_groups') === 'false';
+  const noGroups = !readHasGroups();
 
   // Decided on the scope step. When generating scorecards only (scope ≠ everything), the
   // Settings page shows just what's relevant to scorecards.
-  const scopeRaw = sessionStorage.getItem('generation_scope');
-  const generationScope: GenerationScope = scopeRaw
-    ? JSON.parse(scopeRaw)
-    : { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false } };
-  const detectionRaw = sessionStorage.getItem('generation_detection');
-  const detection = detectionRaw ? JSON.parse(detectionRaw) as { showSecondRoundMode?: boolean } : null;
+  const generationScope: GenerationScope = readScope();
   const everything = generationScope.mode === 'everything';
   const docs = (generationScope as { documents?: DocumentSelection }).documents;
   const showScorecards = docs?.scorecards !== false;
   const showNametags   = docs?.nametags   !== false;
-  // Round 2 prefilled/blanks only matters when an unassigned Round 2 will actually be
-  // generated. Absent detection (step bypassed) ⇒ show it, preserving prior behaviour.
-  const showSecondRoundMode = detection?.showSecondRoundMode !== false;
+  const { showSecondRoundMode } = readDetection();
 
   // Default the primary scorecard language to whatever interface language the
   // user is already using (saves a click for most people); secondary starts as
@@ -56,36 +63,44 @@ export default function SettingsPage() {
   // of each option below - nothing here is locked, and `{}` means plain defaults.
   const preset = readPresetSettings();
 
-  const [language, setLanguage] = useState<LocaleCode>(preset.language ?? defaultPrimary);
-  const [secondaryLanguage, setSecondaryLanguage] = useState<LocaleCode | null>(preset.secondaryLanguage ?? null);
-  const [paperFormat, setPaperFormat] = useState<PaperFormat>(preset.paperFormat ?? 'LETTER');
-  const [secondRoundMode, setSecondRoundMode] = useState<SecondRoundMode>(preset.secondRoundMode ?? 'prefilled');
-  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  // Every field the user can change on this page, in one object: exactly the mutable half of
+  // CompetitionSettings, so `handleSubmit` is a spread plus the four values derived from the
+  // flow (id, name, scope, custom flag) - a new setting can't be forgotten there.
+  // A preset seeds the initial values and nothing more; every field stays editable.
+  const [draft, setDraft] = useState<SettingsDraft>(() => ({
+    language: preset.language ?? defaultPrimary,
+    secondaryLanguage: preset.secondaryLanguage ?? null,
+    paperFormat: preset.paperFormat ?? 'LETTER',
+    secondRoundMode: preset.secondRoundMode ?? 'prefilled',
+    logoDataUrl: null,
+    useDefaultLogo: preset.useDefaultLogo ?? isCanadianLanguage(i18n.resolvedLanguage ?? i18n.language),
+    wcaLiveId: '',
+    wcaLivePersonIds: null,
+    hideWcaLiveId: preset.hideWcaLiveId ?? false,
+    nametagLogoMode: preset.nametagLogoMode ?? 'with-name',
+    nametagQrMode: preset.nametagQrMode ?? 'back-only',
+    nametagLayout: preset.nametagLayout ?? 'vertical',
+    scorecardCheckMode: preset.scorecardCheckMode ?? 'per-group-card',
+    // For a custom competition the events were defined on /custom and ride along here.
+    customEvents: isCustom ? readCustomEvents() : [],
+    scrambleDoubleCheck: preset.scrambleDoubleCheck ?? false,
+    scrambleDoubleCheckRounds: ['finals'],
+    scrambleDoubleCheckOverrides: {},
+  }));
+
+  const patch = (fields: Partial<SettingsDraft>) => setDraft(d => ({ ...d, ...fields }));
+
+  const {
+    language, secondaryLanguage, paperFormat, secondRoundMode, logoDataUrl, useDefaultLogo,
+    wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,
+    scorecardCheckMode, customEvents, scrambleDoubleCheck, scrambleDoubleCheckRounds,
+    scrambleDoubleCheckOverrides,
+  } = draft;
+
+  // Purely presentational - never leaves this page, so not part of the draft.
   const [logoName, setLogoName] = useState<string | null>(null);
-  const [useDefaultLogo, setUseDefaultLogo] = useState<boolean>(
-    preset.useDefaultLogo ?? isCanadianLanguage(i18n.resolvedLanguage ?? i18n.language),
-  );
-  const [wcaLiveId, setWcaLiveId] = useState<string>('');
-  const [wcaLivePersonIds, setWcaLivePersonIds] = useState<Record<number, string> | null>(null);
   const [wcaLiveFetchStatus, setWcaLiveFetchStatus] = useState<'loading' | 'found' | 'not-found'>('loading');
-  const [hideWcaLiveId, setHideWcaLiveId] = useState<boolean>(preset.hideWcaLiveId ?? false);
-  const [nametagLogoMode, setNametagLogoMode] = useState<NametTagLogoMode>(preset.nametagLogoMode ?? 'with-name');
-  const [nametagQrMode, setNametagQrMode] = useState<NametTagQrMode>(preset.nametagQrMode ?? 'back-only');
-  const [nametagLayout, setNametagLayout] = useState<NametTagLayout>(preset.nametagLayout ?? 'vertical');
-  const [scorecardCheckMode, setScorecardCheckMode] = useState<ScorecardCheckMode>(preset.scorecardCheckMode ?? 'per-group-card');
-  // For a custom competition the events were defined on /custom and ride along here.
-  const [customEvents, setCustomEvents] = useState<CustomEvent[]>(() => {
-    if (!isCustom) return [];
-    try {
-      return JSON.parse(sessionStorage.getItem('custom_competition_events') ?? '[]') as CustomEvent[];
-    } catch {
-      return [];
-    }
-  });
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [scrambleDoubleCheck, setScrambleDoubleCheck] = useState<boolean>(preset.scrambleDoubleCheck ?? false);
-  const [scrambleDoubleCheckRounds, setScrambleDoubleCheckRounds] = useState<DoubleCheckRound[]>(['finals']);
-  const [scrambleDoubleCheckOverrides, setScrambleDoubleCheckOverrides] = useState<ScrambleDoubleCheckOverrides>({});
   const [dcOverridesName, setDcOverridesName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dcFileInputRef = useRef<HTMLInputElement>(null);
@@ -95,10 +110,10 @@ export default function SettingsPage() {
     if (!competitionId || isCustom) return;
     fetchWcaLiveId(competitionId).then(async id => {
       if (id) {
-        setWcaLiveId(id);
+        patch({ wcaLiveId: id });
         setWcaLiveFetchStatus('found');
         const personIds = await fetchWcaLivePersonIds(id);
-        setWcaLivePersonIds(personIds);
+        patch({ wcaLivePersonIds: personIds });
       } else {
         setWcaLiveFetchStatus('not-found');
       }
@@ -117,8 +132,9 @@ export default function SettingsPage() {
   // secondary rows share the same fixed columns (one language each); the column
   // under the selected primary becomes the "None" tile so nothing ever shifts.
   function handlePrimaryLanguageChange(code: LocaleCode) {
-    setLanguage(code);
-    if (secondaryLanguage === code) setSecondaryLanguage(null);
+    // Selecting the current secondary as primary clears the secondary - one language
+    // must never appear on both sides.
+    patch({ language: code, ...(secondaryLanguage === code ? { secondaryLanguage: null } : {}) });
   }
 
   // A compact, tappable language tile (monogram badge + native label) in the
@@ -160,20 +176,23 @@ export default function SettingsPage() {
     if (!file) return;
     setLogoName(file.name);
     const reader = new FileReader();
-    reader.onload = () => setLogoDataUrl(reader.result as string);
+    reader.onload = () => patch({ logoDataUrl: reader.result as string });
     reader.readAsDataURL(file);
   }
 
   function handleRemoveLogo() {
-    setLogoDataUrl(null);
+    patch({ logoDataUrl: null });
     setLogoName(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
   function toggleDoubleCheckRound(round: DoubleCheckRound) {
-    setScrambleDoubleCheckRounds(prev =>
-      prev.includes(round) ? prev.filter(r => r !== round) : [...prev, round]
-    );
+    setDraft(d => ({
+      ...d,
+      scrambleDoubleCheckRounds: d.scrambleDoubleCheckRounds.includes(round)
+        ? d.scrambleDoubleCheckRounds.filter(r => r !== round)
+        : [...d.scrambleDoubleCheckRounds, round],
+    }));
   }
 
   function handleDcOverridesChange(e: ChangeEvent<HTMLInputElement>) {
@@ -181,43 +200,31 @@ export default function SettingsPage() {
     if (!file) return;
     setDcOverridesName(file.name);
     const reader = new FileReader();
-    reader.onload = () => setScrambleDoubleCheckOverrides(parseDoubleCheckOverrides(reader.result as string));
+    reader.onload = () => patch({ scrambleDoubleCheckOverrides: parseDoubleCheckOverrides(reader.result as string) });
     reader.readAsText(file);
   }
 
   function handleRemoveDcOverrides() {
-    setScrambleDoubleCheckOverrides({});
+    patch({ scrambleDoubleCheckOverrides: {} });
     setDcOverridesName(null);
     if (dcFileInputRef.current) dcFileInputRef.current.value = '';
   }
 
   function handleSubmit() {
-    const settings: CompetitionSettings = {
+    writeSettings({
+      ...draft,
       competitionId,
       competitionName,
-      language,
-      secondaryLanguage,
-      paperFormat,
-      secondRoundMode,
-      logoDataUrl,
-      useDefaultLogo,
-      // Custom competitions are unofficial: no WCA Live id, and the card's
-      // "WCA Live:" line is forced off (it prints whenever hideWcaLiveId is false).
-      wcaLiveId: isCustom ? null : (wcaLiveId.trim() || null),
-      wcaLivePersonIds: isCustom ? null : wcaLivePersonIds,
-      hideWcaLiveId: isCustom ? true : hideWcaLiveId,
-      nametagLogoMode,
-      nametagQrMode,
-      nametagLayout,
-      scorecardCheckMode,
-      customEvents: customEvents.filter(e => e.name.trim()),
-      scrambleDoubleCheck: isCustom ? false : scrambleDoubleCheck,
-      scrambleDoubleCheckRounds,
-      scrambleDoubleCheckOverrides,
       generationScope,
       isCustomCompetition: isCustom,
-    };
-    sessionStorage.setItem('competition_settings', JSON.stringify(settings));
+      customEvents: draft.customEvents.filter(e => e.name.trim()),
+      // Custom competitions are unofficial: no WCA Live id, no double-checking, and the
+      // card's "WCA Live:" line forced off (it prints whenever hideWcaLiveId is false).
+      wcaLiveId: isCustom ? null : (draft.wcaLiveId?.trim() || null),
+      wcaLivePersonIds: isCustom ? null : draft.wcaLivePersonIds,
+      hideWcaLiveId: isCustom ? true : draft.hideWcaLiveId,
+      scrambleDoubleCheck: isCustom ? false : draft.scrambleDoubleCheck,
+    });
     navigate('/generate');
   }
 
@@ -275,14 +282,14 @@ export default function SettingsPage() {
                     badge: '-',
                     label: t('settings.language.secondary_none'),
                     selected: tile.selected,
-                    onClick: () => setSecondaryLanguage(null),
+                    onClick: () => patch({ secondaryLanguage: null }),
                   }
                 : {
                     key: lang.code,
                     badge: lang.code.toUpperCase(),
                     label: lang.label,
                     selected: tile.selected,
-                    onClick: () => setSecondaryLanguage(tile.value),
+                    onClick: () => patch({ secondaryLanguage: tile.value }),
                   });
             })}
           </div>
@@ -298,7 +305,7 @@ export default function SettingsPage() {
                   name="paper"
                   value={opt.value}
                   checked={paperFormat === opt.value}
-                  onChange={() => setPaperFormat(opt.value)}
+                  onChange={() => patch({ paperFormat: opt.value })}
                   style={s.radio}
                 />
                 <div>
@@ -321,7 +328,7 @@ export default function SettingsPage() {
                   name="roundMode"
                   value={opt.value}
                   checked={secondRoundMode === opt.value}
-                  onChange={() => setSecondRoundMode(opt.value)}
+                  onChange={() => patch({ secondRoundMode: opt.value })}
                   style={s.radio}
                 />
                 <div>
@@ -346,7 +353,7 @@ export default function SettingsPage() {
                   name="checkMode"
                   value={opt.value}
                   checked={scorecardCheckMode === opt.value}
-                  onChange={() => setScorecardCheckMode(opt.value)}
+                  onChange={() => patch({ scorecardCheckMode: opt.value })}
                   style={s.radio}
                 />
                 <div>
@@ -371,7 +378,7 @@ export default function SettingsPage() {
             <input
               type="checkbox"
               checked={scrambleDoubleCheck}
-              onChange={e => setScrambleDoubleCheck(e.target.checked)}
+              onChange={e => patch({ scrambleDoubleCheck: e.target.checked })}
               style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
             />
             <div>
@@ -453,8 +460,8 @@ export default function SettingsPage() {
           <input
             type="text"
             inputMode="numeric"
-            value={wcaLiveId}
-            onChange={e => setWcaLiveId(e.target.value.replace(/\D/g, ''))}
+            value={wcaLiveId ?? ''}
+            onChange={e => patch({ wcaLiveId: e.target.value.replace(/\D/g, '') })}
             placeholder={t('settings.wca_live.placeholder')}
             style={s.textInput}
           />
@@ -462,7 +469,7 @@ export default function SettingsPage() {
             <input
               type="checkbox"
               checked={hideWcaLiveId}
-              onChange={e => setHideWcaLiveId(e.target.checked)}
+              onChange={e => patch({ hideWcaLiveId: e.target.checked })}
               style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
             />
             <div>
@@ -498,7 +505,7 @@ export default function SettingsPage() {
                 <input
                   type="checkbox"
                   checked={useDefaultLogo}
-                  onChange={e => setUseDefaultLogo(e.target.checked)}
+                  onChange={e => patch({ useDefaultLogo: e.target.checked })}
                   style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
                 />
                 <img src={SCC_DEFAULT_LOGO} alt="Speedcubing Canada logo" style={s.logoImg} />
@@ -537,7 +544,7 @@ export default function SettingsPage() {
                       name="logoMode"
                       value={opt.value}
                       checked={nametagLogoMode === opt.value}
-                      onChange={() => setNametagLogoMode(opt.value)}
+                      onChange={() => patch({ nametagLogoMode: opt.value })}
                       style={s.radio}
                     />
                     <div>
@@ -561,7 +568,7 @@ export default function SettingsPage() {
                   name="qrMode"
                   value={opt.value}
                   checked={nametagQrMode === opt.value}
-                  onChange={() => setNametagQrMode(opt.value)}
+                  onChange={() => patch({ nametagQrMode: opt.value })}
                   style={s.radio}
                 />
                 <div>
@@ -578,7 +585,7 @@ export default function SettingsPage() {
           <div style={s.segmentedControl}>
             <button
               type="button"
-              onClick={() => setNametagLayout('vertical')}
+              onClick={() => patch({ nametagLayout: 'vertical' })}
               aria-pressed={nametagLayout === 'vertical'}
               style={{ ...s.segment, ...(nametagLayout === 'vertical' ? s.segmentActive : s.segmentInactive) }}
             >
@@ -587,7 +594,7 @@ export default function SettingsPage() {
             </button>
             <button
               type="button"
-              onClick={() => setNametagLayout('horizontal')}
+              onClick={() => patch({ nametagLayout: 'horizontal' })}
               aria-pressed={nametagLayout === 'horizontal'}
               style={{ ...s.segment, ...(nametagLayout === 'horizontal' ? s.segmentActive : s.segmentInactive) }}
             >
@@ -615,7 +622,7 @@ export default function SettingsPage() {
               </h3>
               <p style={s.hint}>{t('settings.advanced.custom_events_hint')}</p>
 
-              <CustomEventEditor events={customEvents} onChange={setCustomEvents} />
+              <CustomEventEditor events={customEvents} onChange={events => patch({ customEvents: events })} />
             </div>
           )}
         </section>

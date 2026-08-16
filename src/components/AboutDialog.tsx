@@ -6,17 +6,15 @@ import Tooltip from './Tooltip';
 import { REPO_URL, SUPPORT_EMAIL } from './ContactLinks';
 
 /**
- * "About this tool" explainer. Renders a trigger (a small circular "i" button, or a
- * text link when `as="text"`) that opens a modal describing what the tool is, the WCIF
- * concept, and where it sits in the competition workflow. Self-contained open state so
- * it can be dropped onto any page (used on the login and competition-picker pages).
+ * "About this tool" explainer: a circular "i" button (or a text link when `as="text"`)
+ * opening a modal on what the tool is, what a WCIF is, and where both sit in the
+ * competition workflow. Self-contained open state, so it drops onto any page.
  */
 export default function AboutDialog({ as = 'icon' }: { as?: 'icon' | 'text' }) {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
 
-  // Close on Escape while open.
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
