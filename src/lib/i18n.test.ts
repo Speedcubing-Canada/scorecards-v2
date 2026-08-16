@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   getStrings, getScheduleStrings, getCheckingSheetStrings, getNametTagStrings,
   getFirstTimerSlipStrings, getNametTagTitleStrings, getShortNametTagNames,
-  getEventName, splitLabelTotal, EVENT_NAMES_EN,
+  getEventName, getWorkerStrings, splitLabelTotal, EVENT_NAMES_EN,
   type ScorecardStrings,
 } from './i18n';
 import type { LocaleCode } from '../types/settings';
@@ -32,6 +32,9 @@ function bundle(lc: LocaleCode) {
     firstTimer: getFirstTimerSlipStrings(lc),
     title: getNametTagTitleStrings(lc).front,
     shortNames: getShortNametTagNames(lc),
+    // Progress-bar strings for the render worker. Previously a private table inside
+    // scorecardWorker.ts that no test could see.
+    worker: getWorkerStrings(lc),
   };
 }
 

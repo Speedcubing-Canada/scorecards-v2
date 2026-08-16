@@ -606,7 +606,11 @@ export function getNametTagTitleStrings(
 }
 
 // ── Short event names for nametag duty labels ──────────────────────────────────
-const SHORT_NAMETAG_NAMES_EN: Record<string, string> = {
+// Puzzle names are brand names, so 16 of these 17 entries are the same in every
+// language; only 3x3x3 One-Handed is actually translated. The table is therefore a
+// shared base plus a one-entry override per locale, rather than four near-copies that
+// have to be edited in lockstep whenever an event is added.
+const SHORT_NAMETAG_NAMES_BASE: Record<string, string> = {
   '333': '3x3x3', '222': '2x2x2', '444': '4x4x4', '555': '5x5x5',
   '666': '6x6x6', '777': '7x7x7', '333bf': '3x3x3 BLD', '333fm': 'FMC',
   '333oh': 'One-Hand', 'clock': 'Clock', 'minx': 'Megaminx', 'pyram': 'Pyraminx',
@@ -614,29 +618,13 @@ const SHORT_NAMETAG_NAMES_EN: Record<string, string> = {
   '333mbf': 'Multi-BLD',
 };
 
-const SHORT_NAMETAG_NAMES_FR: Record<string, string> = {
-  '333': '3x3x3', '222': '2x2x2', '444': '4x4x4', '555': '5x5x5',
-  '666': '6x6x6', '777': '7x7x7', '333bf': '3x3x3 BLD', '333fm': 'FMC',
-  '333oh': 'À une main', 'clock': 'Clock', 'minx': 'Megaminx', 'pyram': 'Pyraminx',
-  'skewb': 'Skewb', 'sq1': 'Square-1', '444bf': '4x4x4 BLD', '555bf': '5x5x5 BLD',
-  '333mbf': 'Multi-BLD',
-};
+const shortNames = (overrides: Record<string, string> = {}): Record<string, string> =>
+  ({ ...SHORT_NAMETAG_NAMES_BASE, ...overrides });
 
-const SHORT_NAMETAG_NAMES_ES: Record<string, string> = {
-  '333': '3x3x3', '222': '2x2x2', '444': '4x4x4', '555': '5x5x5',
-  '666': '6x6x6', '777': '7x7x7', '333bf': '3x3x3 BLD', '333fm': 'FMC',
-  '333oh': 'Una mano', 'clock': 'Clock', 'minx': 'Megaminx', 'pyram': 'Pyraminx',
-  'skewb': 'Skewb', 'sq1': 'Square-1', '444bf': '4x4x4 BLD', '555bf': '5x5x5 BLD',
-  '333mbf': 'Multi-BLD',
-};
-
-const SHORT_NAMETAG_NAMES_PT: Record<string, string> = {
-  '333': '3x3x3', '222': '2x2x2', '444': '4x4x4', '555': '5x5x5',
-  '666': '6x6x6', '777': '7x7x7', '333bf': '3x3x3 BLD', '333fm': 'FMC',
-  '333oh': 'Uma Mão', 'clock': 'Clock', 'minx': 'Megaminx', 'pyram': 'Pyraminx',
-  'skewb': 'Skewb', 'sq1': 'Square-1', '444bf': '4x4x4 BLD', '555bf': '5x5x5 BLD',
-  '333mbf': 'Multi-BLD',
-};
+const SHORT_NAMETAG_NAMES_EN = shortNames();
+const SHORT_NAMETAG_NAMES_FR = shortNames({ '333oh': 'À une main' });
+const SHORT_NAMETAG_NAMES_ES = shortNames({ '333oh': 'Una mano' });
+const SHORT_NAMETAG_NAMES_PT = shortNames({ '333oh': 'Uma Mão' });
 
 export function getShortNametTagNames(language: LocaleCode): Record<string, string> {
   return LOCALES[language].shortNames;
@@ -683,6 +671,60 @@ export function getEventName(eventId: string, language: LocaleCode): string {
   return LOCALES[language].eventNames[eventId] ?? eventId;
 }
 
+// ── PDF worker progress strings ────────────────────────────────────────────────
+// Shown on the generate page's progress bar while the worker renders. These used to be a
+// fourth translation table hand-maintained inside scorecardWorker.ts, where nothing
+// checked them - a locale missing an entry silently fell back to English at runtime.
+// Living in the registry below puts them under i18n.test.ts's parity loop.
+export interface WorkerStrings {
+  starting: string;
+  rendering: (label: string) => string;
+  done: (label: string) => string;
+  creatingZip: string;
+  finalizing: string;
+  noEntries: string;
+}
+
+const WORKER_EN: WorkerStrings = {
+  starting: 'Starting…',
+  rendering: (label) => `Rendering ${label}…`,
+  done: (label) => `${label} done`,
+  creatingZip: 'Creating ZIP…',
+  finalizing: 'Finalizing…',
+  noEntries: 'No entries to render.',
+};
+
+const WORKER_FR: WorkerStrings = {
+  starting: 'Démarrage…',
+  rendering: (label) => `Rendu de ${label}…`,
+  done: (label) => `${label} terminé`,
+  creatingZip: 'Création du ZIP…',
+  finalizing: 'Finalisation…',
+  noEntries: 'Aucune feuille à générer.',
+};
+
+const WORKER_ES: WorkerStrings = {
+  starting: 'Iniciando…',
+  rendering: (label) => `Renderizando ${label}…`,
+  done: (label) => `${label} listo`,
+  creatingZip: 'Creando ZIP…',
+  finalizing: 'Finalizando…',
+  noEntries: 'Sin hojas que generar.',
+};
+
+const WORKER_PT: WorkerStrings = {
+  starting: 'Iniciando…',
+  rendering: (label) => `Renderizando ${label}…`,
+  done: (label) => `${label} concluído`,
+  creatingZip: 'Criando ZIP…',
+  finalizing: 'Finalizando…',
+  noEntries: 'Nenhuma folha para gerar.',
+};
+
+export function getWorkerStrings(language: LocaleCode): WorkerStrings {
+  return LOCALES[language].worker;
+}
+
 // ── Locale registry ────────────────────────────────────────────────────────────
 // Single source of truth tying every per-language string set to its code. Adding
 // a language = add its string objects above and one entry here (plus a UI JSON +
@@ -696,11 +738,12 @@ interface LocaleBundle {
   title: NametTagTitleStrings;
   shortNames: Record<string, string>;
   eventNames: Record<string, string>;
+  worker: WorkerStrings;
 }
 
 const LOCALES: Record<LocaleCode, LocaleBundle> = {
-  en: { scorecard: EN, schedule: SCHEDULE_EN, checking: CHECKING_EN, nametag: NAMETAG_EN, firstTimer: FIRST_TIMER_EN, title: NAMETAG_TITLE_EN, shortNames: SHORT_NAMETAG_NAMES_EN, eventNames: EVENT_NAMES_EN },
-  fr: { scorecard: FR, schedule: SCHEDULE_FR, checking: CHECKING_FR, nametag: NAMETAG_FR, firstTimer: FIRST_TIMER_FR, title: NAMETAG_TITLE_FR, shortNames: SHORT_NAMETAG_NAMES_FR, eventNames: EVENT_NAMES_FR },
-  es: { scorecard: ES, schedule: SCHEDULE_ES, checking: CHECKING_ES, nametag: NAMETAG_ES, firstTimer: FIRST_TIMER_ES, title: NAMETAG_TITLE_ES, shortNames: SHORT_NAMETAG_NAMES_ES, eventNames: EVENT_NAMES_ES },
-  pt: { scorecard: PT, schedule: SCHEDULE_PT, checking: CHECKING_PT, nametag: NAMETAG_PT, firstTimer: FIRST_TIMER_PT, title: NAMETAG_TITLE_PT, shortNames: SHORT_NAMETAG_NAMES_PT, eventNames: EVENT_NAMES_PT },
+  en: { scorecard: EN, schedule: SCHEDULE_EN, checking: CHECKING_EN, nametag: NAMETAG_EN, firstTimer: FIRST_TIMER_EN, title: NAMETAG_TITLE_EN, shortNames: SHORT_NAMETAG_NAMES_EN, eventNames: EVENT_NAMES_EN, worker: WORKER_EN },
+  fr: { scorecard: FR, schedule: SCHEDULE_FR, checking: CHECKING_FR, nametag: NAMETAG_FR, firstTimer: FIRST_TIMER_FR, title: NAMETAG_TITLE_FR, shortNames: SHORT_NAMETAG_NAMES_FR, eventNames: EVENT_NAMES_FR, worker: WORKER_FR },
+  es: { scorecard: ES, schedule: SCHEDULE_ES, checking: CHECKING_ES, nametag: NAMETAG_ES, firstTimer: FIRST_TIMER_ES, title: NAMETAG_TITLE_ES, shortNames: SHORT_NAMETAG_NAMES_ES, eventNames: EVENT_NAMES_ES, worker: WORKER_ES },
+  pt: { scorecard: PT, schedule: SCHEDULE_PT, checking: CHECKING_PT, nametag: NAMETAG_PT, firstTimer: FIRST_TIMER_PT, title: NAMETAG_TITLE_PT, shortNames: SHORT_NAMETAG_NAMES_PT, eventNames: EVENT_NAMES_PT, worker: WORKER_PT },
 };

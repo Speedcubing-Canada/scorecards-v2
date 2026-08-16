@@ -5,10 +5,11 @@ import './bufferPolyfill';
 import React from 'react';
 import { pdf } from '@react-pdf/renderer';
 import { zipSync } from 'fflate';
-import type { ScorecardData, ParsedWCIF } from '../lib/wcif-parser';
-import type { CompetitionSettings } from '../types/settings';
+import type { ParsedWCIF } from '../lib/wcif-parser';
+import type { CompetitionSettings, LocaleCode } from '../types/settings';
 import { buildCustomEntries } from '../lib/customScorecards';
-import { buildPdfJobs, downloadTarget } from '../lib/pdfJobs';
+import { buildPdfJobs, downloadTarget, type PdfJob } from '../lib/pdfJobs';
+import { getWorkerStrings } from '../lib/i18n';
 import { ScorecardDocument } from './ScorecardDocument';
 import { NametTagDocument } from './NametTagDocument';
 import { ScheduleTrackerDocument } from './ScheduleTrackerDocument';
@@ -18,42 +19,7 @@ import { FirstTimerSlipDocument } from './FirstTimerSlipDocument';
 export type WorkerRequest = {
   parsed: ParsedWCIF;
   settings: CompetitionSettings;
-  uiLanguage: 'en' | 'fr' | 'es' | 'pt';
-};
-
-const WORKER_MSGS = {
-  en: {
-    starting: 'Starting…',
-    rendering: (label: string) => `Rendering ${label}…`,
-    done: (label: string) => `${label} done`,
-    creatingZip: 'Creating ZIP…',
-    finalizing: 'Finalizing…',
-    noEntries: 'No entries to render.',
-  },
-  fr: {
-    starting: 'Démarrage…',
-    rendering: (label: string) => `Rendu de ${label}…`,
-    done: (label: string) => `${label} terminé`,
-    creatingZip: 'Création du ZIP…',
-    finalizing: 'Finalisation…',
-    noEntries: 'Aucune feuille à générer.',
-  },
-  es: {
-    starting: 'Iniciando…',
-    rendering: (label: string) => `Renderizando ${label}…`,
-    done: (label: string) => `${label} listo`,
-    creatingZip: 'Creando ZIP…',
-    finalizing: 'Finalizando…',
-    noEntries: 'Sin hojas que generar.',
-  },
-  pt: {
-    starting: 'Iniciando…',
-    rendering: (label: string) => `Renderizando ${label}…`,
-    done: (label: string) => `${label} concluído`,
-    creatingZip: 'Criando ZIP…',
-    finalizing: 'Finalizando…',
-    noEntries: 'Nenhuma folha para gerar.',
-  },
+  uiLanguage: LocaleCode;
 };
 
 export type WorkerResponse =
@@ -66,44 +32,37 @@ export type WorkerResponse =
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const workerSelf = self as any;
 
-async function renderPdf(entries: ScorecardData[], settings: CompetitionSettings): Promise<Uint8Array> {
+/**
+ * Render one document component to PDF bytes. Every document goes through here, so the
+ * `any` casts that @react-pdf's element typing forces on us live in exactly one place.
+ */
+async function renderDoc<P extends object>(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const element = React.createElement(ScorecardDocument, { entries, settings }) as any;
+  component: (props: P) => any,
+  props: P,
+): Promise<Uint8Array> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const element = React.createElement(component as any, props) as any;
   const blob = await pdf(element).toBlob();
-  const ab = await blob.arrayBuffer();
-  return new Uint8Array(ab);
+  return new Uint8Array(await blob.arrayBuffer());
 }
 
-async function renderNametags(parsed: ParsedWCIF, settings: CompetitionSettings): Promise<Uint8Array> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const element = React.createElement(NametTagDocument, { nametags: parsed.nametags, settings }) as any;
-  const blob = await pdf(element).toBlob();
-  const ab = await blob.arrayBuffer();
-  return new Uint8Array(ab);
-}
-
-async function renderFirstTimerSlips(parsed: ParsedWCIF, settings: CompetitionSettings): Promise<Uint8Array> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const element = React.createElement(FirstTimerSlipDocument, { entries: parsed.firstTimers, settings }) as any;
-  const blob = await pdf(element).toBlob();
-  const ab = await blob.arrayBuffer();
-  return new Uint8Array(ab);
-}
-
-async function renderScheduleTracker(parsed: ParsedWCIF, settings: CompetitionSettings): Promise<Uint8Array> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const element = React.createElement(ScheduleTrackerDocument, { days: parsed.scheduleDays, settings }) as any;
-  const blob = await pdf(element).toBlob();
-  const ab = await blob.arrayBuffer();
-  return new Uint8Array(ab);
-}
-
-async function renderCheckingSheet(parsed: ParsedWCIF, settings: CompetitionSettings): Promise<Uint8Array> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const element = React.createElement(CheckingSheetDocument, { days: parsed.checkingDays, settings }) as any;
-  const blob = await pdf(element).toBlob();
-  const ab = await blob.arrayBuffer();
-  return new Uint8Array(ab);
+/**
+ * The document each job kind renders. Adding a document type means adding one line here
+ * and one in `buildPdfJobs` - the two lists are what keep the worker and the generate
+ * page's file count in agreement.
+ */
+function renderJob(
+  job: PdfJob, parsed: ParsedWCIF, settings: CompetitionSettings,
+): Promise<Uint8Array> {
+  switch (job.kind) {
+    case 'nametags':     return renderDoc(NametTagDocument,        { nametags: parsed.nametags, settings });
+    case 'schedule':     return renderDoc(ScheduleTrackerDocument, { days: parsed.scheduleDays, settings });
+    case 'checking':     return renderDoc(CheckingSheetDocument,   { days: parsed.checkingDays, settings });
+    case 'first-timers': return renderDoc(FirstTimerSlipDocument,  { entries: parsed.firstTimers, settings });
+    case 'custom':       return renderDoc(ScorecardDocument,       { entries: buildCustomEntries(job.custom), settings });
+    case 'scorecards':   return renderDoc(ScorecardDocument,       { entries: job.entries, settings });
+  }
 }
 
 workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
@@ -112,7 +71,7 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
   }
 
   const { parsed, settings, uiLanguage } = e.data;
-  const msgs = WORKER_MSGS[uiLanguage] ?? WORKER_MSGS.en;
+  const msgs = getWorkerStrings(uiLanguage);
 
   // Which PDFs to render, and what the browser will receive. Shared with the
   // generate page so its "PDFs" stat and button label can't drift from this.
@@ -146,17 +105,7 @@ workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {
       }, 100);
 
       try {
-        const data = job.kind === 'nametags'
-          ? await renderNametags(parsed, settings)
-          : job.kind === 'schedule'
-          ? await renderScheduleTracker(parsed, settings)
-          : job.kind === 'checking'
-          ? await renderCheckingSheet(parsed, settings)
-          : job.kind === 'first-timers'
-          ? await renderFirstTimerSlips(parsed, settings)
-          : job.kind === 'custom'
-          ? await renderPdf(buildCustomEntries(job.custom), settings)
-          : await renderPdf(job.entries, settings);
+        const data = await renderJob(job, parsed, settings);
         clearInterval(timer);
         files[job.filename] = [data, { level: 0 }];
         post({ type: 'progress', percent: endPct, message: msgs.done(job.label) });
