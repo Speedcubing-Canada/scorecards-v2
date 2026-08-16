@@ -13,7 +13,7 @@ export interface ChangelogEntry {
   items: { en: string[] } & Partial<Record<LocaleCode, string[]>>;
 }
 
-/** Newest first. See the "What's new" section of the README before adding an entry. */
+/** Newest first. See "Contributing" in the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
     id: '2026-08-06',
