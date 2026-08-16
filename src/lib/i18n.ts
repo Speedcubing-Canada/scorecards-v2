@@ -248,17 +248,17 @@ const ES: ScorecardStrings = {
 
 // ── Portuguese (Brazil) ─────────────────────────────────────────────────────────
 const PT: ScorecardStrings = {
-  scrambler: 'Misturador',
+  scrambler: 'Embaralhador',
   scramblerCheck: 'Verif.',
   attempt: 'Tentativa',
   judge: 'Juiz',
   competitor: 'Competidor',
   resultPrefix: 'Resultado',
   dnfSuffix: (limit) => `(DNF se não for inferior a ${limit})`,
-  cumulativeSuffix: (limit) => `(Limite de Tempo Acumulado: ${limit})`,
+  cumulativeSuffix: (limit) => `(Limite de tempo acumulado: ${limit})`,
   shortDnfSuffix: (limit) => `(DNF se <${limit})`,
   shortCumulativeSuffix: (limit) => `(acum. <${limit})`,
-  mbfSuffix: '(Limite: Reg. H1b)',
+  mbfSuffix: '(Limite: Art. H1b)',
   cutoffLine: (cutoff, mo3) =>
     mo3
       ? `─── Continue se a Tentativa 1 for inferior a ${cutoff} ───`
@@ -273,16 +273,16 @@ const PT: ScorecardStrings = {
   blankGroupLabel: (total) => `Grupo _ de ${total}`,
   ofConnector: 'de',
   stationLabel: (n) => `Estação ${n}`,
-  seatLabel: (n) => `Assento ${n}`,
+  seatLabel: (n) => `Cadeira ${n}`,
   cover: {
     forDelegate: 'PARA O DELEGADO',
-    bundledScorecards: (n) => `1. Agrupadas todas as ${n} folhas`,
+    bundledScorecards: (n) => `1. Todas as ${n} súmulas agrupadas`,
     checkedSignatures: '2. Verificadas as assinaturas faltantes',
-    incidentsCount: '3. Número de folhas com incidentes: _____',
+    incidentsCount: '3. Número de súmulas com incidentes: _____',
     delegateInitials: 'Iniciais do Delegado ______',
-    forDataEntry: 'PARA ENTRADA DE DADOS',
-    resultsEntered: '4. Resultados inseridos pelo Digitador de Resultados',
-    scoretakerInitials: 'Iniciais do Digitador ______',
+    forDataEntry: 'PARA A EQUIPE DE RESULTADOS',
+    resultsEntered: '4. Resultados inseridos pelo Anotador de Resultados',
+    scoretakerInitials: 'Iniciais do Anotador ______',
     incidentsLogged: '5. Incidentes registrados pelo Delegado',
     resultsChecked: '6. Resultados verificados pelo Delegado',
     allGroups: (n) => (n === 1 ? 'O único grupo' : `Os ${n} grupos`),
