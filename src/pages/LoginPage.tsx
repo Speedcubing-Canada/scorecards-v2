@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/useAuth';
 import { CLIENT_ID } from '../auth/wca';
 import LanguageSelect from '../components/LanguageSelect';
 import ThemeToggle from '../components/ThemeToggle';

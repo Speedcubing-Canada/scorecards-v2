@@ -524,12 +524,12 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   for (const event of wcif.events) {
     const eid = event.id;
     if (eid === '333fm') continue;
-    let field: number | null = registeredCount[eid] ?? 0;
+    let field = registeredCount[eid] ?? 0;
     for (let j = 0; j < event.rounds.length - 1; j++) {
       const adv = event.rounds[j].advancementCondition;
       if (adv?.type === 'ranking') field = adv.level;
       else if (adv?.type === 'percent') field = Math.floor((adv.level / 100) * field);
-      else { field = null; break; }
+      else break;
       roundFieldSize[`${eid}-r${j + 2}`] = field;
     }
   }

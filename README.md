@@ -31,9 +31,32 @@ npm install
 npm run dev
 ```
 
+### Tests and CI
+
+```
+npm test          # vitest, ~5s, no network and no PDF rendering
+npm run test:watch
+npm run lint      # eslint
+npx tsc -b        # typecheck (also the first half of npm run build)
+```
+
+All three run in CI on every pull request and every push to `main`, as the `test` job in [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). The deploy job `needs: test`, so a red test never reaches production; on a pull request the deploy job is skipped entirely.
+
+**Tests never assert a translated value.** Rewording a printed string is routine editorial work and must not turn CI red, so the guards around `src/lib/i18n.ts` (printed output) and `src/i18n/*.json` (interface) are structural:
+
+| Guarded by | What it enforces |
+|---|---|
+| `src/lib/i18n.test.ts` | Every locale carries every field (recursively, functions included); interpolation still lands its argument; the bilingual merge stacks the right fields and leaves the rest primary-only; gendered titles differ outside English; no em dash. |
+| `src/i18n/locale-parity.test.ts` | Same key parity, non-empty leaves and no-em-dash rule for the interface JSON bundles. |
+| `src/pdf/*-layout.test.ts` | Whether the string still **fits**: header and column width sweeps across all four locales and both paper sizes, measured against a Helvetica AFM glyph table. |
+
+So a translation edit only fails CI when it breaks something real: a field missing from one locale, a lost `\n` in a two-line column header, or text too wide for its column. If a width sweep does fail, the string is genuinely too long for the printed layout - shorten it rather than loosening the test. A character absent from the glyph table is measured at the widest Helvetica glyph, so an unlisted accent errs towards failing rather than silently passing; add its real width to both tables if you hit that.
+
+The few remaining wording assertions are *negative* and encode decisions rather than words, e.g. the Round Checklist's two pre-round tick columns must never read as "collected" or "checked".
+
 ### Production deployment
 
-Deploys run automatically from [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) on every push to `main`. The workflow builds the bundle on a GitHub-hosted runner (injecting `VITE_WCA_CLIENT_ID` from the repo variable of the same name), then uploads the prebuilt `dist/` to App Engine via Workload Identity Federation. One-time GCP setup (WIF pool, service account, IAM bindings) is documented in [`.github/workflows/README.md`](.github/workflows/README.md).
+Deploys run automatically from [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) on every push to `main`, after the `test` job passes. The workflow builds the bundle on a GitHub-hosted runner (injecting `VITE_WCA_CLIENT_ID` from the repo variable of the same name), then uploads the prebuilt `dist/` to App Engine via Workload Identity Federation. One-time GCP setup (WIF pool, service account, IAM bindings) is documented in [`.github/workflows/README.md`](.github/workflows/README.md).
 
 `package.json`'s `gcp-build` script is intentionally a no-op echo. App Engine's Cloud Build runs that hook after upload; we do **not** want it to rebuild, because the build environment there has no access to `VITE_WCA_CLIENT_ID` and would clobber the good `dist/` with one that ships `client_id=undefined`.
 
@@ -920,7 +943,8 @@ src/
   auth/
     pkce.ts               - PKCE code verifier / challenge generation
     wca.ts                - OAuth endpoints, token exchange, WCA API helpers
-    AuthContext.tsx        - React context: token + user, persisted in sessionStorage
+    AuthContext.tsx        - AuthProvider: token + user, persisted in sessionStorage
+    useAuth.ts             - The context object and its hook (kept out of the .tsx for fast refresh)
   lib/
     wcif-parser.ts         - WCIF → ParsedWCIF (scorecards, nametags, schedule + checking days)
     pdfJobs.ts             - Which PDFs to render and what the download is called (bare PDF vs ZIP)
