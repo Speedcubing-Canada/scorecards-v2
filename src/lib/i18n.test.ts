@@ -5,6 +5,8 @@ import {
   getEventName, getWorkerStrings, splitLabelTotal, EVENT_NAMES_EN,
   type ScorecardStrings,
 } from './i18n';
+import { WCA_EVENT_ORDER } from './wcif-parser';
+import { EVENT_ICONS } from '../assets/events';
 import type { LocaleCode } from '../types/settings';
 
 // These tests deliberately assert *no* translated value. Rewording a PDF string is a
@@ -117,6 +119,19 @@ describe('event names', () => {
         expect(getEventName(id, lc), `${lc} ${id}`).not.toBe(id);
         expect(getEventName(id, lc).trim().length).toBeGreaterThan(0);
       }
+    }
+  });
+
+  // The tables an event has to appear in are spread across three modules and every
+  // lookup falls back silently, so a new official event that was only half-added would
+  // ship with a raw id on the checking sheet or a blank icon on the scorecard. Driving
+  // this off WCA_EVENT_ORDER - the list the WCIF ingest actually filters on - turns all
+  // of that into one failure.
+  it('every event in WCA_EVENT_ORDER has a name, a short name and an icon', () => {
+    for (const id of WCA_EVENT_ORDER) {
+      expect(EVENT_NAMES_EN, id).toHaveProperty(id);
+      expect(EVENT_ICONS, id).toHaveProperty(id);
+      for (const lc of LOCALES) expect(getShortNametTagNames(lc), `${lc} ${id}`).toHaveProperty(id);
     }
   });
 

@@ -606,15 +606,15 @@ export function getNametTagTitleStrings(
 }
 
 // ── Short event names for nametag duty labels ──────────────────────────────────
-// Puzzle names are brand names, so 16 of these 17 entries are the same in every
-// language; only 3x3x3 One-Handed is actually translated. The table is therefore a
-// shared base plus a one-entry override per locale, rather than four near-copies that
-// have to be edited in lockstep whenever an event is added.
+// Puzzle names are brand names, so 16 of these 18 entries are the same in every
+// language; only 3x3x3 One-Handed and FTO (Octaminx in French) are actually translated.
+// The table is therefore a shared base plus a per-locale override, rather than four
+// near-copies that have to be edited in lockstep whenever an event is added.
 const SHORT_NAMETAG_NAMES_BASE: Record<string, string> = {
   '333': '3x3x3', '222': '2x2x2', '444': '4x4x4', '555': '5x5x5',
   '666': '6x6x6', '777': '7x7x7', '333bf': '3x3x3 BLD', '333fm': 'FMC',
   '333oh': 'One-Hand', 'clock': 'Clock', 'minx': 'Megaminx', 'pyram': 'Pyraminx',
-  'skewb': 'Skewb', 'sq1': 'Square-1', '444bf': '4x4x4 BLD', '555bf': '5x5x5 BLD',
+  'skewb': 'Skewb', 'sq1': 'Square-1', 'fto': 'FTO', '444bf': '4x4x4 BLD', '555bf': '5x5x5 BLD',
   '333mbf': 'Multi-BLD',
 };
 
@@ -622,7 +622,7 @@ const shortNames = (overrides: Record<string, string> = {}): Record<string, stri
   ({ ...SHORT_NAMETAG_NAMES_BASE, ...overrides });
 
 const SHORT_NAMETAG_NAMES_EN = shortNames();
-const SHORT_NAMETAG_NAMES_FR = shortNames({ '333oh': 'À une main' });
+const SHORT_NAMETAG_NAMES_FR = shortNames({ '333oh': 'À une main', 'fto': 'Octaminx' });
 const SHORT_NAMETAG_NAMES_ES = shortNames({ '333oh': 'Una mano' });
 const SHORT_NAMETAG_NAMES_PT = shortNames({ '333oh': 'Uma Mão' });
 
@@ -636,7 +636,7 @@ export const EVENT_NAMES_EN: Record<string, string> = {
   '555': '5x5x5 Cube', '666': '6x6x6 Cube', '777': '7x7x7 Cube',
   '333bf': '3x3x3 Blindfolded', '333fm': 'FMC', '333oh': '3x3x3 One-Handed',
   'clock': 'Clock', 'minx': 'Megaminx', 'pyram': 'Pyraminx',
-  'skewb': 'Skewb', 'sq1': 'Square-1', '444bf': '4x4x4 Blindfolded',
+  'skewb': 'Skewb', 'sq1': 'Square-1', 'fto': 'FTO', '444bf': '4x4x4 Blindfolded',
   '555bf': '5x5x5 Blindfolded', '333mbf': '3x3x3 Multi-Blind',
 };
 
@@ -645,7 +645,7 @@ const EVENT_NAMES_FR: Record<string, string> = {
   '555': 'Cube 5x5x5', '666': 'Cube 6x6x6', '777': 'Cube 7x7x7',
   '333bf': "3x3x3 à L'aveugle", '333fm': 'FMC', '333oh': '3x3x3 à Une Main',
   'clock': 'Clock', 'minx': 'Megaminx', 'pyram': 'Pyraminx',
-  'skewb': 'Skewb', 'sq1': 'Square-1', '444bf': "4x4x4 à L'aveugle",
+  'skewb': 'Skewb', 'sq1': 'Square-1', 'fto': 'Octaminx', '444bf': "4x4x4 à L'aveugle",
   '555bf': "5x5x5 à L'aveugle", '333mbf': 'Multi-BLD',
 };
 
@@ -654,7 +654,7 @@ const EVENT_NAMES_ES: Record<string, string> = {
   '555': 'Cubo 5x5x5', '666': 'Cubo 6x6x6', '777': 'Cubo 7x7x7',
   '333bf': '3x3x3 A Ciegas', '333fm': 'FMC', '333oh': '3x3x3 Una Mano',
   'clock': 'Clock', 'minx': 'Megaminx', 'pyram': 'Pyraminx',
-  'skewb': 'Skewb', 'sq1': 'Square-1', '444bf': '4x4x4 A Ciegas',
+  'skewb': 'Skewb', 'sq1': 'Square-1', 'fto': 'FTO', '444bf': '4x4x4 A Ciegas',
   '555bf': '5x5x5 A Ciegas', '333mbf': '3x3x3 Multi-BLD',
 };
 
@@ -663,7 +663,7 @@ const EVENT_NAMES_PT: Record<string, string> = {
   '555': 'Cubo 5x5x5', '666': 'Cubo 6x6x6', '777': 'Cubo 7x7x7',
   '333bf': '3x3x3 Às Cegas', '333fm': 'FMC', '333oh': '3x3x3 Uma Mão',
   'clock': 'Clock', 'minx': 'Megaminx', 'pyram': 'Pyraminx',
-  'skewb': 'Skewb', 'sq1': 'Square-1', '444bf': '4x4x4 Às Cegas',
+  'skewb': 'Skewb', 'sq1': 'Square-1', 'fto': 'FTO', '444bf': '4x4x4 Às Cegas',
   '555bf': '5x5x5 Às Cegas', '333mbf': '3x3x3 Multi-BLD',
 };
 

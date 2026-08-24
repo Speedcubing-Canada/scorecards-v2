@@ -107,6 +107,15 @@ Non-obvious constraints that look arbitrary in the code but break real output if
   [`src/presets/README.md`](src/presets/README.md).
 - **Adding a language** is two entries: a bundle in `LOCALES` (`src/lib/i18n.ts`, printed output)
   and a `LANGUAGES` entry plus UI JSON (`src/i18n/`, interface).
+- **Adding a WCA event** touches five files: the `EventId` union (`src/types/wcif.ts`),
+  `WCA_EVENT_ORDER` (`src/lib/wcif-parser.ts`, which is also the sort order), `EVENT_ICONS`
+  (`src/assets/events.ts`), the name tables in `src/lib/i18n.ts` (`SHORT_NAMETAG_NAMES_BASE`
+  plus `EVENT_NAMES_EN/FR/ES/PT`), and `WCA_EVENT_LABELS` (`src/components/CustomEventEditor.tsx`).
+  Only the union fails at compile time; `i18n.test.ts` catches the rest. The icon is a
+  165x165 RGBA PNG, glyph `#212121` on white, traced from
+  [cubing/icons](https://github.com/cubing/icons/tree/main/src/svg). Keep the printed name
+  short: the Round Checklist event column has ~136pt of content width on A4, which is why
+  FTO is named "FTO" and not "Face-Turning Octahedron".
 - **User-visible changes** get a bullet in `src/changelog.ts` in all four locales, newest first.
   Returning organizers see it as a "What's new" dialog, so the bar is high: no refactors, bug
   fixes or small tweaks.

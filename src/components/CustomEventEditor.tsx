@@ -11,7 +11,7 @@ const WCA_EVENT_LABELS: Record<string, string> = {
   '222': '2×2', '333': '3×3', '444': '4×4', '555': '5×5',
   '666': '6×6', '777': '7×7', '333bf': '3BLD', '333fm': 'FMC',
   '333oh': 'OH', 'clock': 'Clock', 'minx': 'Mega', 'pyram': 'Pyra',
-  'skewb': 'Skewb', 'sq1': 'SQ1', '444bf': '4BLD', '555bf': '5BLD',
+  'skewb': 'Skewb', 'sq1': 'SQ1', 'fto': 'FTO', '444bf': '4BLD', '555bf': '5BLD',
   '333mbf': 'MBLD',
 };
 

@@ -16,6 +16,23 @@ export interface ChangelogEntry {
 /** Newest first. See "Contributing" in the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-08-23',
+    items: {
+      en: [
+        'FTO is now supported: it gets its own icon and name everywhere the other events do, ready for the day the WCA makes it official.',
+      ],
+      fr: [
+        "L'Octaminx est maintenant pris en charge : il a son icône et son nom partout comme les autres épreuves, prêt pour le jour où la WCA le rendra officiel.",
+      ],
+      es: [
+        'FTO ya es compatible: tiene su propio icono y nombre en todas partes, listo para el día en que la WCA lo haga oficial.',
+      ],
+      pt: [
+        'O FTO já é suportado: tem o seu próprio ícone e nome em todo o lado, pronto para o dia em que a WCA o tornar oficial.',
+      ],
+    },
+  },
+  {
     id: '2026-08-06',
     items: {
       en: [

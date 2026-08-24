@@ -7,6 +7,7 @@ import {
   getCheckingSheetStrings, getScheduleStrings, getEventName,
   type CheckingSheetStrings,
 } from '../lib/i18n';
+import { WCA_EVENT_ORDER } from '../lib/wcif-parser';
 import type { LocaleCode, PaperFormat } from '../types/settings';
 
 // ── Header text fit ──────────────────────────────────────────────────────────
@@ -124,16 +125,10 @@ describe('Checking sheet event column fits its row text', () => {
   // ("Event") says nothing about how wide it needs to be - so the header-fit sweep
   // below cannot protect it. This is the column with the least headroom; anything
   // that steals flex from it must fail here first.
-  // Fixed by the WCA regulations, not by our code, so listing them is stable.
-  const EVENT_IDS = [
-    '333', '222', '444', '555', '666', '777', '333bf', '333fm', '333oh',
-    'clock', 'minx', 'pyram', 'skewb', 'sq1', '444bf', '555bf', '333mbf',
-  ];
-
   function widest(lc: LocaleCode): { text: string; w: number } {
     const s = getScheduleStrings(lc);
     let best = { text: '', w: 0 };
-    for (const id of EVENT_IDS) {
+    for (const id of WCA_EVENT_ORDER) {
       for (const label of [s.finalLabel, s.roundLabel(1), s.roundLabel(2), s.roundLabel(3)]) {
         const text = `${getEventName(id, lc)} ${label}`;
         const w = helveticaWidth(text, CELL_FONT);

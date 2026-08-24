@@ -5,7 +5,7 @@ import {
   SLIP_PAGE_PAD_TOP, SLIP_PAGE_PAD_BOTTOM,
 } from './layoutConstants';
 import { getFirstTimerSlipStrings, getEventName } from '../lib/i18n';
-import type { FirstTimerEntry } from '../lib/wcif-parser';
+import { WCA_EVENT_ORDER, type FirstTimerEntry } from '../lib/wcif-parser';
 import type { EventId } from '../types/wcif';
 import type { LocaleCode } from '../types/settings';
 
@@ -122,14 +122,9 @@ describe('first-timer slip geometry', () => {
     return 2 * LINE_H + INTRO_GAP + (lineCount - 2) * LINE_H;
   }
 
-  const ALL_EVENTS: FirstTimerEntry['eventIds'] = [
-    '333', '222', '444', '555', '666', '777', '333bf', '333fm', '333oh',
-    'clock', 'minx', 'pyram', 'skewb', 'sq1', '444bf', '555bf', '333mbf',
-  ];
-
   it('a worst-case slip (all events, minor) fits within one page on LETTER and A4', () => {
     const lines = buildSlipLines(
-      entry({ eventIds: ALL_EVENTS, birthdate: '2015-01-13' }), EN, 'en',
+      entry({ eventIds: WCA_EVENT_ORDER, birthdate: '2015-01-13' }), EN, 'en',
     );
     const h = slipHeight(lines.length) + SLIP_GAP;
     for (const fmt of ['LETTER', 'A4'] as const) {

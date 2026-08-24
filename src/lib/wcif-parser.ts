@@ -7,9 +7,9 @@ export type ScorecardFormat = 'avg5' | 'bo2-avg5' | 'mo3' | 'bo1-mo3' | 'bo2' | 
 // ── Nametag types ─────────────────────────────────────────────────────────────
 
 
-const WCA_EVENT_ORDER: EventId[] = [
+export const WCA_EVENT_ORDER: EventId[] = [
   '333','222','444','555','666','777','333bf','333fm','333oh',
-  'clock','minx','pyram','skewb','sq1','444bf','555bf','333mbf',
+  'clock','minx','pyram','skewb','sq1','fto','444bf','555bf','333mbf',
 ];
 
 export type NametTagRole = 'delegate' | 'organizer' | 'new-competitor' | 'competitor';
