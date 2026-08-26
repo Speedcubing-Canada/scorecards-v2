@@ -7,6 +7,15 @@ updates:
     groups:
       all:
         patterns: ["*"]
+    ignore:
+      # typescript-eslint 8.x peers `typescript >=4.8.4 <6.1.0`, so a TS 7 bump breaks
+      # `npm ci` outright (PR #6). Remove once typescript-eslint supports TS 7.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      # Keep @types/node on the same major as the runtime (app.yaml: runtime: nodejs24).
+      # Bump both together once nodejs26 leaves preview / Node 26 reaches LTS (Oct 2026).
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
