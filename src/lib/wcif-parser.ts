@@ -437,40 +437,69 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   const roundGroupCodes: Record<string, Set<string>> = {};
   const roundStages: Record<string, Set<string>> = {}; // distinct stage colors per round key
 
-  for (const venue of wcif.schedule.venues) {
-    for (const room of venue.rooms) {
-      // Keep only the identifying part of the room name (everything after the first word).
-      // "Scène Rouge" → "rouge", "Stage" → "stage", "Main Stage" → "stage"
-      const words = room.name.trim().split(/\s+/);
-      const color = (words.length > 1 ? words.slice(1).join(' ') : words[0]).toLowerCase();
-      for (const activity of room.activities) {
-        let groupCount = 0;
-        for (const child of groupUnitsOf(activity)) {
-          activityCode[child.id] = child.activityCode;
-          activityStage[child.id] = color;
-          if (!startTimes[child.startTime]) startTimes[child.startTime] = [];
-          startTimes[child.startTime].push(child.id);
-          groupCount++;
-          // Track unique group codes (g1, g2, …) so that one group split across
-          // multiple rooms still counts as one group.
-          const cParts = child.activityCode.split('-');
-          if (cParts.length >= 3) {
-            const rk = `${cParts[0]}-${cParts[1]}`;
-            if (!roundGroupCodes[rk]) roundGroupCodes[rk] = new Set();
-            roundGroupCodes[rk].add(cParts[2]);
-          }
-        }
-        const parts = activity.activityCode.split('-');
-        if (parts.length >= 2) {
-          const roundKey = `${parts[0]}-${parts[1]}`;
-          if (groupCount > 0) {
-            if (!roundStages[roundKey]) roundStages[roundKey] = new Set();
-            roundStages[roundKey].add(color);
-          }
+  // A round's stage key is whatever distinguishes the rooms running THAT round: words shared
+  // by every one of them carry no information and are dropped. "Blue Stage"/"Red Stage" →
+  // blue/red, "Scène Rouge"/"Scène Bleu" → rouge/bleu, "Red"/"Blue" → red/blue. Scoped per
+  // round so an FMC side room elsewhere in the schedule can't stop the two main stages from
+  // trimming - and harmless for a single-room round, whose key is never displayed (a stage
+  // label only appears when roundStages[rid].size > 1).
+  function distinguishingNames(names: string[]): string[] {
+    const full = names.map((n) => n.trim().toLowerCase());
+    const words = full.map((n) => n.split(/\s+/));
+    const shared = words[0].filter((w) => words.every((ws) => ws.includes(w)));
+    const trimmed = words.map((ws) => ws.filter((w) => !shared.includes(w)).join(' '));
+    // The key doubles as a sort key, so it has to stay distinct and non-empty per room.
+    return trimmed.some((t) => !t) || new Set(trimmed).size !== new Set(full).size
+      ? full : trimmed;
+  }
+
+  const allRooms = wcif.schedule.venues.flatMap((v) => v.rooms);
+  // Round key → indexes into allRooms, for rooms that actually host groups. Rooms with only
+  // check-in/lunch/tutorial activities are excluded, so they never dilute the shared words.
+  const roundRoomIdx = new Map<string, number[]>();
+  allRooms.forEach((room, i) => {
+    for (const activity of room.activities) {
+      if (groupUnitsOf(activity).length === 0) continue;
+      const parts = activity.activityCode.split('-');
+      if (parts.length < 2) continue;
+      const list = roundRoomIdx.get(`${parts[0]}-${parts[1]}`) ?? [];
+      if (!list.includes(i)) list.push(i);
+      roundRoomIdx.set(`${parts[0]}-${parts[1]}`, list);
+    }
+  });
+  const stageKey = new Map<string, string>(); // `${roundKey}|${roomIndex}` → stage key
+  for (const [rk, idxs] of roundRoomIdx) {
+    const keys = distinguishingNames(idxs.map((i) => allRooms[i].name));
+    idxs.forEach((i, k) => stageKey.set(`${rk}|${i}`, keys[k]));
+  }
+
+  allRooms.forEach((room, roomIdx) => {
+    for (const activity of room.activities) {
+      const parts = activity.activityCode.split('-');
+      const roundKey = parts.length >= 2 ? `${parts[0]}-${parts[1]}` : '';
+      const color = stageKey.get(`${roundKey}|${roomIdx}`) ?? room.name.trim().toLowerCase();
+      let groupCount = 0;
+      for (const child of groupUnitsOf(activity)) {
+        activityCode[child.id] = child.activityCode;
+        activityStage[child.id] = color;
+        if (!startTimes[child.startTime]) startTimes[child.startTime] = [];
+        startTimes[child.startTime].push(child.id);
+        groupCount++;
+        // Track unique group codes (g1, g2, …) so that one group split across
+        // multiple rooms still counts as one group.
+        const cParts = child.activityCode.split('-');
+        if (cParts.length >= 3) {
+          const rk = `${cParts[0]}-${cParts[1]}`;
+          if (!roundGroupCodes[rk]) roundGroupCodes[rk] = new Set();
+          roundGroupCodes[rk].add(cParts[2]);
         }
       }
+      if (roundKey && groupCount > 0) {
+        if (!roundStages[roundKey]) roundStages[roundKey] = new Set();
+        roundStages[roundKey].add(color);
+      }
     }
-  }
+  });
 
   // Derived from unique group codes, so one group running in two rooms counts once.
   const numGroups: Record<string, number> = Object.fromEntries(

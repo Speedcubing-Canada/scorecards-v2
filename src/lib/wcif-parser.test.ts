@@ -308,6 +308,67 @@ describe('group labels - single stage', () => {
   });
 });
 
+// ── Stage keys from room names ───────────────────────────────────────────────
+// The stage key is the part of a room's name that distinguishes it from the other rooms
+// running the same round. "Blue Stage"/"Red Stage" (colour first) has to work exactly like
+// "Scène Rouge"/"Scène Bleu" (colour last) - the Brampton Summer 2026 bug report.
+
+describe('stage keys from room names', () => {
+  // Two rooms running 333-r1, two groups each.
+  const twoStages = (nameA: string, nameB: string, extra: Room[] = []) => {
+    const rA = room(nameA, [act('333', 1, [ch(100, '333', 1, 1), ch(101, '333', 1, 2)])]);
+    const rB = room(nameB, [act('333', 1, [ch(102, '333', 1, 3), ch(103, '333', 1, 4)])]);
+    const persons = [
+      per(1, [{ aid: 100 }]), per(2, [{ aid: 101 }]),
+      per(3, [{ aid: 102 }]), per(4, [{ aid: 103 }]),
+    ];
+    return parseWCIF(mkWCIF([evt('333', [rSpec('a')])], [rA, rB, ...extra], persons), cfg());
+  };
+  const stagesOf = (r: ReturnType<typeof parseWCIF>) =>
+    [...new Set(scs(r.firstRound).map(s => s.stage))].sort();
+
+  it('colour-first names: "Blue Stage"/"Red Stage" → blue/red, not both "stage"', () => {
+    const result = twoStages('Blue Stage', 'Red Stage');
+    expect(stagesOf(result)).toEqual(['blue', 'red']);
+    const groups = new Set(scs(result.firstRound).map(s => s.group));
+    expect(groups).toContain('Blue 1 of 4');
+    expect(groups).toContain('Red 3 of 4');
+    expect(groups).not.toContain('Group 1 of 4');
+  });
+
+  it('keeps the two stages as separate piles (distinct timeslot prefixes)', () => {
+    // With both rooms collapsing to "stage" the piles interleaved - Sarah's "mixed together".
+    const cards = scs(twoStages('Blue Stage', 'Red Stage').firstRound);
+    const prefixes = new Set(cards.map(c => c.timeslot[0]));
+    expect(prefixes).toEqual(new Set(['b', 'r']));
+  });
+
+  it('a side room running another event does not block the trim', () => {
+    const side = room('Side Room', [act('333fm', 1, [ch(200, '333fm', 1, 1)])]);
+    expect(stagesOf(twoStages('Blue Stage', 'Red Stage', [side]))).toEqual(['blue', 'red']);
+  });
+
+  it('rooms with no shared word keep their full names', () => {
+    expect(stagesOf(twoStages('Red', 'Blue'))).toEqual(['blue', 'red']);
+  });
+
+  it('falls back to full names when trimming would empty one', () => {
+    // "Stage" minus the shared word "stage" is nothing, so neither room is trimmed.
+    expect(stagesOf(twoStages('Stage', 'Stage 2'))).toEqual(['stage', 'stage 2']);
+  });
+
+  it('ignores rooms that host no groups when computing the shared words', () => {
+    // "General" (check-in, lunch) shares no word with the stages; counting it would leave
+    // "blue stage"/"red stage" untrimmed.
+    const general = room('General', [{
+      id: uid(), name: '', activityCode: 'other-lunch',
+      startTime: '2024-01-01T12:00:00Z', endTime: '2024-01-01T13:00:00Z',
+      childActivities: [], scrambleSets: [],
+    }]);
+    expect(stagesOf(twoStages('Blue Stage', 'Red Stage', [general]))).toEqual(['blue', 'red']);
+  });
+});
+
 describe('group labels - multi-stage (event across multiple rooms)', () => {
   it('4 distinct groups across 2 stages → "Rouge N of 4" / "Bleu N of 4"', () => {
     // rouge: g1, g2 - bleu: g3, g4 → 4 unique group codes
