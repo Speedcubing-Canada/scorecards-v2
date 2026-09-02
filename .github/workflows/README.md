@@ -185,8 +185,17 @@ gcloud projects add-iam-policy-binding scorecards-v2-prod \
   --role="roles/bigquery.dataEditor"
 ```
 
-Then build the dashboard in [Looker Studio](https://lookerstudio.google.com): new
-report, BigQuery connector, the `analytics` dataset's table.
+Then create the reporting view, which flattens the sink's lowercased, deeply nested
+columns into usable names and builds the single `latlng` field Looker maps require:
+
+```bash
+bq --project_id=scorecards-v2-prod query --use_legacy_sql=false < docs/analytics-view.sql
+```
+
+Build the dashboard in [Looker Studio](https://lookerstudio.google.com): new report,
+BigQuery connector, the `analytics.events` view (not the raw `stdout` table). Set
+`latlng`'s type to Geo > Latitude, Longitude by hand, Looker cannot infer it. Set the
+data source's freshness to 1 hour, down from the 12 hour default, for auto-refresh.
 
 - **Map**: Google Maps bubble chart, latitude `jsonPayload.comp.lat`, longitude
   `jsonPayload.comp.lng`, bubble size by record count. `jsonPayload.comp.country`
