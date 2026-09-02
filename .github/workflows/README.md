@@ -158,3 +158,43 @@ on the next instance start (or after `gcloud app versions migrate`).
 | `WIF_PROVIDER` | WIF provider resource name (from step 3) |
 | `WIF_SA` | `github-deploy@scorecards-v2-prod.iam.gserviceaccount.com` |
 | `VITE_WCA_CLIENT_ID` | WCA OAuth client ID |
+
+---
+
+## 6. Usage analytics: log sink and dashboard
+
+One-time, and independent of the deploy: without it the events still land in Cloud
+Logging (queryable in Logs Explorer with `jsonPayload.component="analytics"`), they
+just never reach the dashboard.
+
+```bash
+bq --location=northamerica-northeast1 mk --dataset scorecards-v2-prod:analytics
+
+gcloud logging sinks create scorecards-analytics \
+  bigquery.googleapis.com/projects/scorecards-v2-prod/datasets/analytics \
+  --log-filter='resource.type="gae_app" AND jsonPayload.component="analytics"' \
+  --use-partitioned-tables \
+  --project=scorecards-v2-prod
+```
+
+The command prints a writer service account. Grant it write access to the dataset:
+
+```bash
+gcloud projects add-iam-policy-binding scorecards-v2-prod \
+  --member="serviceAccount:<writer identity printed above>" \
+  --role="roles/bigquery.dataEditor"
+```
+
+Then build the dashboard in [Looker Studio](https://lookerstudio.google.com): new
+report, BigQuery connector, the `analytics` dataset's table.
+
+- **Map**: Google Maps bubble chart, latitude `jsonPayload.comp.lat`, longitude
+  `jsonPayload.comp.lng`, bubble size by record count. `jsonPayload.comp.country`
+  drives a coarser filled-map view.
+- **Charts**: events over time, competition size distribution, breakdowns by
+  `settings.language` / `settings.paperFormat` / `settings.preset` /
+  `scope.documents`, and `event="error"` as an error rate.
+
+The sink is **not retroactive**: anything logged before it exists stays in Cloud
+Logging only. Cloud Logging's free tier is 50 GiB/month of ingestion and BigQuery's
+is 10 GiB of storage plus 1 TiB of queries, so this costs nothing at our volume.

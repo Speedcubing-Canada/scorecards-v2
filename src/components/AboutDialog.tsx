@@ -55,6 +55,9 @@ export default function AboutDialog({ as = 'icon' }: { as?: 'icon' | 'text' }) {
             <h3 style={s.section}>{t('about.workflow_title')}</h3>
             <p style={s.body}>{t('about.workflow_body')}</p>
 
+            <h3 style={s.section}>{t('about.privacy_title')}</h3>
+            <p style={s.body}>{t('about.privacy_body')}</p>
+
             {/* The login page has no Header, so this is the only place a signed-out
                 organizer can find where to send a bug report. */}
             <h3 style={s.section}>{t('about.feedback_title')}</h3>

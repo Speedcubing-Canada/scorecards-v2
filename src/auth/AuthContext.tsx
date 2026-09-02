@@ -10,6 +10,7 @@ import {
   exchangeCodeForToken,
   fetchMe,
 } from './wca';
+import { buildSessionEvent, send } from '../lib/analytics';
 
 const STORAGE_TOKEN = 'wca_token';
 const STORAGE_USER = 'wca_user';
@@ -68,6 +69,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(newToken);
       const me = await fetchMe(newToken.access_token);
       setUser(me);
+      // Once per sign-in, carrying nothing but the fact that one happened. Lets us compare
+      // organizers who start the flow against those who reach a download.
+      send(buildSessionEvent());
     } finally {
       setIsLoading(false);
     }

@@ -12,7 +12,7 @@ import {
 } from '../lib/generationScope';
 import type { CompetitionSettings, LocaleCode } from '../types/settings';
 import { readCompetition, writeHasGroups, writeScope } from '../lib/flowState';
-import { PRESETS, writePresetSettings, type Preset } from '../presets';
+import { PRESETS, writePresetSettings, writePresetId, type Preset } from '../presets';
 import Header from '../components/Header';
 import Skeleton from '../components/Skeleton';
 import { useIsMobile } from '../lib/useIsMobile';
@@ -195,6 +195,7 @@ export default function RoundScopePage() {
     // The other half of the preset lives on /settings. Always write (or clear) it so
     // going back and switching presets can't leave the previous one's settings behind.
     writePresetSettings(PRESETS.find(p => p.id === presetId)?.settings ?? null);
+    writePresetId(presetId);
     navigate('/settings');
   }
 

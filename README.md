@@ -11,8 +11,10 @@
 </p>
 
 Delegates and organizers sign in with their WCA account, pick a competition they manage, choose
-what to print, and download the PDFs. Everything runs client-side: the WCIF never leaves the
-browser, and there is no database.
+what to print, and download the PDFs. The PDFs are built entirely in the browser: the WCIF is
+never uploaded, and there is no database. One anonymous usage event is sent per generation so
+we can see which competitions the tool is used on and which settings people pick, see
+[Usage analytics](#usage-analytics).
 
 ---
 
@@ -70,6 +72,7 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
 ```
 
 - Auth and settings live in `sessionStorage` only, cleared when the tab closes, never sent anywhere.
+- One anonymous event per sign-in, generation, and failure goes to `POST /api/event` (see below).
 - PDF rendering runs in a Web Worker (`src/pdf/scorecardWorker.ts`) so the UI stays responsive.
 - `/scope` picks which documents and which rounds to generate; regional presets there seed
   defaults for a province, and everything stays editable afterwards.
@@ -130,6 +133,29 @@ Pushing to `main` deploys automatically via
 GCP setup lives in [`.github/workflows/README.md`](.github/workflows/README.md). For an emergency
 manual deploy: `VITE_WCA_CLIENT_ID=… npm run build && ./deploy.sh`.
 
+## Usage analytics
+
+The tool is used well beyond Canada now, and nothing used to record that. One anonymous JSON
+event is posted to `POST /api/event` on sign-in, on a successful generation, and on a failure.
+`server.js` sanitises it and writes it to stdout; App Engine forwards stdout to Cloud Logging,
+a log sink carries `component: "analytics"` lines into BigQuery, and a Looker Studio report
+draws the map and the charts. There is no database and no read API.
+
+**Collected:** the public WCA competition id, the venue's country and coordinates, how big the
+competition is (competitors, events, rounds, groups, stages, days), what was produced (PDFs,
+pages, scorecards, cover cards), and the settings chosen (languages, paper format, name tag
+options, logo choice, check mode, regional preset, generation scope).
+
+**Not collected:** WCA user ids, competitor names, anything from the WCIF, and the uploaded
+logo. `src/lib/analytics.test.ts` asserts that none of it can reach the payload.
+
+Nothing is sent from `npm run dev` or `npm run render:fixtures`: `send()` is a no-op unless
+`import.meta.env.PROD`. `analytics.js` is the sanitiser both `server.js` and the tests use, and
+it is structural rather than a field whitelist so the payload can grow without drifting.
+
+One-time GCP setup for the sink and the dashboard is in
+[`.github/workflows/README.md`](.github/workflows/README.md).
+
 ## Where things live
 
 | Path | |
@@ -142,6 +168,7 @@ manual deploy: `VITE_WCA_CLIENT_ID=… npm run build && ./deploy.sh`.
 | `src/presets/` | Regional presets, one JSON per region |
 | `src/theme/` | Light/dark theme context |
 | `scripts/` | Headless fixture rendering and pixel diffing |
+| `analytics.js` | Server-side sanitiser for the usage events, next to `server.js` |
 
 For anything deeper, [ask DeepWiki](https://deepwiki.com/Speedcubing-Canada/scorecards-v2) or read
 the file: both track the code, this README does not.

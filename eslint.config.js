@@ -10,7 +10,7 @@ export default defineConfig([
   // The production server and the build/render tooling are Node, not browser, and were
   // previously unlinted entirely - server.js serves every request in production.
   {
-    files: ['server.js'],
+    files: ['server.js', 'analytics.js', 'analytics.test.js'],
     extends: [js.configs.recommended],
     languageOptions: {
       globals: globals.node,

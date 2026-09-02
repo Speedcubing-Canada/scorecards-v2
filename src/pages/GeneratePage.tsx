@@ -11,6 +11,8 @@ import { filterParsedByScope, type GenerationScope } from '../lib/generationScop
 import { estimateTotalPages } from '../lib/pageEstimate';
 import { customEventPageCount } from '../lib/customScorecards';
 import { buildPdfJobs, downloadTarget } from '../lib/pdfJobs';
+import * as analytics from '../lib/analytics';
+import { readPresetId } from '../presets';
 import type { WorkerRequest, WorkerResponse } from '../pdf/scorecardWorker';
 import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
@@ -85,6 +87,9 @@ export default function GeneratePage() {
       }
 
       setStatus('fetching');
+      // React state is stale inside this closure, so track the step separately for the
+      // error event.
+      let stage: analytics.ErrorStage = 'fetch';
       try {
         const wcif = getCachedWcif(settings!.competitionId)
           ?? await fetchWcif(settings!.competitionId, token!.access_token);
@@ -92,13 +97,16 @@ export default function GeneratePage() {
         setCachedWcif(settings!.competitionId, wcif);
 
         setStatus('parsing');
+        stage = 'parse';
         const result = parseWCIF(wcif, settings!);
         if (cancelled) return;
 
         setParsed(result);
         setStatus('ready');
       } catch (e) {
-        if (!cancelled) { setStatusMsg(String(e)); setStatus('error'); }
+        if (cancelled) return;
+        analytics.send(analytics.buildErrorEvent(settings!.competitionId, stage, e));
+        setStatusMsg(String(e)); setStatus('error');
       }
     }
 
@@ -149,7 +157,10 @@ export default function GeneratePage() {
     setStatusMsg('');
     setBuildPercent(0);
 
+    const uiLang = (i18n.language?.slice(0, 2) ?? 'en') as 'en' | 'fr' | 'es' | 'pt';
+
     worker.onerror = (e) => {
+      analytics.send(analytics.buildErrorEvent(settings!.competitionId, 'render', e.message));
       setStatusMsg(`Worker error: ${e.message}`);
       setStatus('error');
       worker.terminate();
@@ -173,7 +184,19 @@ export default function GeneratePage() {
         worker.terminate();
         workerRef.current = null;
         setStatus('ready');
+        // After the download, so a beacon failure can never cost anyone their PDFs.
+        // `parsed` (not `effectiveParsed`) sizes the competition; the counts below
+        // describe only what this download contains.
+        analytics.send(analytics.buildGenerateEvent({
+          parsed: parsed!,
+          wcif: getCachedWcif(settings!.competitionId) ?? null,
+          settings: settings!,
+          uiLanguage: uiLang,
+          presetId: readPresetId(),
+          output: analytics.buildOutput(jobs, totalPages, scorecardCount, coverCount),
+        }));
       } else {
+        analytics.send(analytics.buildErrorEvent(settings!.competitionId, 'render', msg.message));
         setStatusMsg(msg.message);
         setStatus('error');
         worker.terminate();
@@ -181,7 +204,6 @@ export default function GeneratePage() {
       }
     };
 
-    const uiLang = (i18n.language?.slice(0, 2) ?? 'en') as 'en' | 'fr' | 'es' | 'pt';
     const req: WorkerRequest = { parsed: effectiveParsed, settings: settings!, uiLanguage: uiLang };
     worker.postMessage(req);
   }

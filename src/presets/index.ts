@@ -110,6 +110,9 @@ export const PRESETS: Preset[] = Object.values(modules)
   .sort((a, b) => a.name.localeCompare(b.name));
 
 const PRESET_SETTINGS_KEY = 'preset_settings';
+// Kept apart from the settings half: those are merged into the draft and lose their origin,
+// but which region an organizer picked is worth knowing on its own (src/lib/analytics.ts).
+const PRESET_ID_KEY = 'preset_id';
 
 /** Stash the settings half of a preset for the /settings step. `null` clears it. */
 export function writePresetSettings(settings: PresetSettings | null): void {
@@ -127,6 +130,22 @@ export function readPresetSettings(): PresetSettings {
   }
 }
 
+/** Remember which preset the settings came from. `null` clears it. */
+export function writePresetId(id: string | null): void {
+  if (!id) sessionStorage.removeItem(PRESET_ID_KEY);
+  else sessionStorage.setItem(PRESET_ID_KEY, id);
+}
+
+/** The preset chosen this session, or `null` if none was (or storage is unavailable). */
+export function readPresetId(): string | null {
+  try {
+    return sessionStorage.getItem(PRESET_ID_KEY);
+  } catch {
+    return null;
+  }
+}
+
 export function clearPresetSettings(): void {
   sessionStorage.removeItem(PRESET_SETTINGS_KEY);
+  sessionStorage.removeItem(PRESET_ID_KEY);
 }

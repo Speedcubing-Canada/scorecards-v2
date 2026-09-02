@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import helmet from 'helmet';
+import { sanitizeEvent } from './analytics.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -87,6 +88,34 @@ app.post('/wca-token', express.urlencoded({ extended: false }), async (req, res)
   } catch {
     res.status(502).json({ error: 'Token exchange failed' });
   }
+});
+
+// Anonymous usage events from the app (src/lib/analytics.ts). Nothing is stored here:
+// App Engine forwards stdout to Cloud Logging, and a log sink carries `component:
+// "analytics"` lines into BigQuery for the dashboard.
+//
+// ponytail: unauthenticated, guarded only by the body-size cap and the sanitiser. If it
+// ever gets spammed, add an App Engine dispatch rate limit or a build-time shared secret.
+app.post(
+  '/api/event',
+  express.json({ limit: '2kb' }),
+  (req, res) => {
+    const event = sanitizeEvent(req.body);
+    // Fields last: a sender must not be able to spoof the sink's filter or the severity.
+    if (event)
+      console.log(JSON.stringify({ ...event, component: 'analytics', severity: 'INFO' }));
+    // Always 204, valid or not - a prober learns nothing, and the app ignores the reply.
+    res.status(204).end();
+  },
+);
+
+// Oversized and malformed bodies are what a prober or a spammer sends. Express would
+// otherwise answer 413/400 and print a stack trace, which leaks the shape of the endpoint
+// and lets anyone fill Cloud Logging with error-severity noise. Express only routes errors
+// to a four-argument handler mounted on the app, not to one inside the route's own stack.
+// eslint-disable-next-line no-unused-vars
+app.use('/api/event', (err, req, res, next) => {
+  res.status(204).end();
 });
 
 // Hashed assets are content-addressed - safe to cache for 1 year.
