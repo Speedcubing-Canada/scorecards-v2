@@ -1,5 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { buildGenerateEvent, buildErrorEvent, buildSessionEvent, buildOutput } from './analytics';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import {
+  buildGenerateEvent, buildErrorEvent, buildSessionEvent, buildOutput,
+  isOptedOut, setOptedOut,
+} from './analytics';
 import { emptyParsedWcif, type ParsedWCIF, type NametTagEntry } from './wcif-parser';
 import type { CompetitionSettings } from '../types/settings';
 import type { WCIF } from '../types/wcif';
@@ -177,5 +180,42 @@ describe('buildErrorEvent', () => {
 describe('buildSessionEvent', () => {
   it('carries nothing but the fact that a session started', () => {
     expect(buildSessionEvent()).toEqual({ v: 1, event: 'session' });
+  });
+});
+
+// vitest runs in the `node` environment here, so provide the storage the module expects.
+const store = new Map<string, string>();
+// Re-stubbed per test, so the throwing-storage case can't leak into the others.
+beforeEach(() => {
+  store.clear();
+  vi.stubGlobal('localStorage', {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
+    clear: () => store.clear(),
+  });
+});
+
+// `send` can't be tested for this: it already returns early because import.meta.env.PROD is
+// false under vitest, so such a test would pass whether or not the opt-out works.
+describe('opt-out', () => {
+  it('defaults to opted in', () => {
+    expect(isOptedOut()).toBe(false);
+  });
+
+  it('round-trips both ways', () => {
+    setOptedOut(true);
+    expect(isOptedOut()).toBe(true);
+    setOptedOut(false);
+    expect(isOptedOut()).toBe(false);
+  });
+
+  it('degrades to opted in when storage throws (private mode)', () => {
+    vi.stubGlobal('localStorage', {
+      getItem: () => { throw new Error('denied'); },
+      setItem: () => { throw new Error('denied'); },
+    });
+    expect(() => setOptedOut(true)).not.toThrow();
+    expect(isOptedOut()).toBe(false);
   });
 });

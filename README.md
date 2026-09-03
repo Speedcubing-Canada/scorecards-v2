@@ -149,6 +149,11 @@ options, logo choice, check mode, regional preset, generation scope).
 **Not collected:** WCA user ids, competitor names, anything from the WCIF, and the uploaded
 logo. `src/lib/analytics.test.ts` asserts that none of it can reach the payload.
 
+**Opting out:** organizers can tick a box under "Your data" in the About dialog ("What is
+this?"), which is reachable from the login page too. The choice lives in `localStorage` under
+`analytics_opt_out`, so it is per browser and survives reloads, and `send()` checks it in one
+place so it covers every event.
+
 Nothing is sent from `npm run dev` or `npm run render:fixtures`: `send()` is a no-op unless
 `import.meta.env.PROD`. `analytics.js` is the sanitiser both `server.js` and the tests use, and
 it is structural rather than a field whitelist so the payload can grow without drifting.

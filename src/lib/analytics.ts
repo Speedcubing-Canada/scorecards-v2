@@ -17,6 +17,26 @@ import type { PdfJob } from './pdfJobs';
 
 const ENDPOINT = '/api/event';
 
+/** localStorage, not sessionStorage: an opt-out that dies with the tab is not an opt-out. */
+const OPT_OUT_KEY = 'analytics_opt_out';
+
+/** Storage throws in private mode, and this runs mid-render, so a failure means opted in. */
+export function isOptedOut(): boolean {
+  try {
+    return localStorage.getItem(OPT_OUT_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function setOptedOut(optedOut: boolean): void {
+  try {
+    localStorage.setItem(OPT_OUT_KEY, String(optedOut));
+  } catch {
+    // ignore persistence failures (e.g. private mode)
+  }
+}
+
 export type AnalyticsEvent = Record<string, unknown> & { v: 1; event: string };
 
 /** Where a failure happened, coarse enough to stay anonymous. */
@@ -148,9 +168,11 @@ export function buildOutput(
 /**
  * Fire and forget. Silent in dev and in the fixture renderer, so only real use is counted.
  * Analytics must never be able to break generation, so every failure is swallowed.
+ *
+ * The opt-out is checked here and nowhere else, so it covers every event and call site.
  */
 export function send(event: AnalyticsEvent): void {
-  if (!import.meta.env.PROD) return;
+  if (!import.meta.env.PROD || isOptedOut()) return;
   try {
     navigator.sendBeacon?.(
       ENDPOINT,
