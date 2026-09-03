@@ -47,7 +47,12 @@ SELECT
   jsonPayload.settings.scrambledoublecheck AS scramble_double_check,
   CAST(jsonPayload.settings.customevents AS INT64) AS custom_events,
   jsonPayload.scope.mode                  AS scope_mode,
-  ARRAY_TO_STRING(jsonPayload.scope.documents, ', ') AS documents
+  ARRAY_TO_STRING(jsonPayload.scope.documents, ', ') AS documents,
+  REGEXP_CONTAINS(ARRAY_TO_STRING(jsonPayload.scope.documents, ','), 'scorecards')      AS doc_scorecards,
+  REGEXP_CONTAINS(ARRAY_TO_STRING(jsonPayload.scope.documents, ','), 'nametags')        AS doc_nametags,
+  REGEXP_CONTAINS(ARRAY_TO_STRING(jsonPayload.scope.documents, ','), 'scheduleTracker') AS doc_schedule,
+  REGEXP_CONTAINS(ARRAY_TO_STRING(jsonPayload.scope.documents, ','), 'roundChecklist')  AS doc_checklist,
+  REGEXP_CONTAINS(ARRAY_TO_STRING(jsonPayload.scope.documents, ','), 'firstTimerSlips') AS doc_first_timers,
   -- The sink adds a column only when an event shape first appears, and no `error`
   -- event has been logged yet. Once one is, re-run this DDL with the two lines below
   -- uncommented to expose them:
