@@ -20,15 +20,19 @@ export const CHANGELOG: ChangelogEntry[] = [
     items: {
       en: [
         'The tool now sends an anonymous record of each generation: the competition id, its size, and the settings you picked. It helps us see where it is used and what to improve. Your name, your WCA account and competitor details are never sent, and your competition data is still never uploaded. "What is this?" has the details.',
+        'You can now turn this off: open "What is this?" and tick the box under "Your data". The choice is remembered in this browser.',
       ],
       fr: [
         "L'outil envoie maintenant un enregistrement anonyme de chaque génération : l'identifiant de la compétition, sa taille et les réglages choisis. Cela nous aide à voir où il est utilisé et quoi améliorer. Votre nom, votre compte WCA et les informations des compétiteurs ne sont jamais envoyés, et les données de votre compétition ne sont toujours pas téléversées. Voir « Qu'est-ce que c'est ? » pour les détails.",
+        "Vous pouvez maintenant le désactiver : ouvrez « Qu'est-ce que c'est ? » et cochez la case sous « Vos données ». Le choix est retenu dans ce navigateur.",
       ],
       es: [
         'La herramienta ahora envía un registro anónimo de cada generación: el identificador de la competencia, su tamaño y los ajustes que elegiste. Nos ayuda a ver dónde se usa y qué mejorar. Tu nombre, tu cuenta de la WCA y los datos de los competidores nunca se envían, y los datos de tu competencia siguen sin subirse. Consulta "¿Qué es esto?" para más detalles.',
+        'Ahora puedes desactivarlo: abre "¿Qué es esto?" y marca la casilla bajo "Tus datos". La elección se recuerda en este navegador.',
       ],
       pt: [
         'A ferramenta agora envia um registro anônimo de cada geração: o identificador da competição, o seu tamanho e as configurações que escolheu. Ajuda-nos a ver onde ela é usada e o que melhorar. O seu nome, a sua conta da WCA e os dados dos competidores nunca são enviados, e os dados da sua competição continuam a não ser enviados. Veja "O que é isto?" para mais detalhes.',
+        'Agora pode desativar isto: abra "O que é isto?" e marque a caixa em "Seus dados". A escolha fica guardada neste navegador.',
       ],
     },
   },

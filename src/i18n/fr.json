@@ -222,6 +222,7 @@
     "workflow_body": "C'est la dernière étape avant l'impression. Une fois les groupes assignés, l'outil lit le WCIF de la compétition et le transforme en documents à imprimer et à découper pour le jour de la compétition.",
     "privacy_title": "Vos données",
     "privacy_body": "Les PDF sont créés dans votre navigateur et les données de votre compétition ne sont jamais téléversées. Lors de la génération, l'outil envoie un enregistrement anonyme de l'identifiant de la compétition, de sa taille et des réglages choisis, afin que nous sachions où il est utilisé et quoi améliorer. Il n'envoie jamais votre nom, votre compte WCA, ni les informations d'un compétiteur.",
+    "privacy_optout": "Ne pas envoyer de statistiques d'utilisation anonymes depuis ce navigateur",
     "feedback_title": "Un bogue ou des commentaires ?",
     "feedback_body": "Signalez un problème sur GitHub, ou écrivez à l'équipe logicielle.",
     "close": "Compris"

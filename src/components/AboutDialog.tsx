@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '../lib/useIsMobile';
 import Tooltip from './Tooltip';
 import { REPO_URL, SUPPORT_EMAIL } from './ContactLinks';
+import { isOptedOut, setOptedOut } from '../lib/analytics';
 
 /**
  * "About this tool" explainer: a circular "i" button (or a text link when `as="text"`)
@@ -14,6 +15,7 @@ export default function AboutDialog({ as = 'icon' }: { as?: 'icon' | 'text' }) {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
+  const [optedOut, setOptOut] = useState(isOptedOut);
 
   useEffect(() => {
     if (!open) return;
@@ -57,6 +59,16 @@ export default function AboutDialog({ as = 'icon' }: { as?: 'icon' | 'text' }) {
 
             <h3 style={s.section}>{t('about.privacy_title')}</h3>
             <p style={s.body}>{t('about.privacy_body')}</p>
+
+            <label style={{ ...s.optOut, ...(optedOut ? s.optOutActive : {}) }}>
+              <input
+                type="checkbox"
+                checked={optedOut}
+                onChange={e => { setOptOut(e.target.checked); setOptedOut(e.target.checked); }}
+                style={s.optOutBox}
+              />
+              <div style={s.optOutLabel}>{t('about.privacy_optout')}</div>
+            </label>
 
             {/* The login page has no Header, so this is the only place a signed-out
                 organizer can find where to send a bug report. */}
@@ -106,6 +118,15 @@ const s: Record<string, React.CSSProperties> = {
   title: { margin: '0 0 12px', fontSize: 'var(--fs-title)', fontWeight: 700, color: 'var(--text)' },
   section: { margin: '20px 0 6px', fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--text)' },
   body: { margin: 0, fontSize: 'var(--fs-body)', fontWeight: 400, lineHeight: 1.6, color: 'var(--text-muted)' },
+  optOut: {
+    display: 'flex', alignItems: 'flex-start', gap: 12, marginTop: 12,
+    backgroundColor: 'var(--surface)',
+    borderWidth: 2, borderStyle: 'solid', borderColor: 'var(--border)',
+    borderRadius: 'var(--radius-md)', padding: '12px 16px', cursor: 'pointer',
+  },
+  optOutActive: { borderColor: 'var(--primary)', backgroundColor: 'var(--primary-soft-bg)' },
+  optOutBox: { marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 },
+  optOutLabel: { fontSize: 'var(--fs-label)', fontWeight: 500, color: 'var(--text)' },
   links: { margin: '8px 0 0', display: 'flex', flexDirection: 'column', gap: 4 },
   link: {
     fontSize: 'var(--fs-body)', fontWeight: 500, lineHeight: 1.6,
