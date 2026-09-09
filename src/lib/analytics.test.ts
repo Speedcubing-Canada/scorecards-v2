@@ -33,6 +33,9 @@ function settings(over: Partial<CompetitionSettings> = {}): CompetitionSettings 
     scrambleDoubleCheck: false,
     scrambleDoubleCheckRounds: 'finals',
     scrambleDoubleCheckOverrides: null,
+    scrambleDoubleCheckWorldTop: 50,
+    scrambleDoubleCheckRegionTop: null,
+    scrambleDoubleCheckRegionScope: 'national',
     generationScope: {
       mode: 'everything',
       documents: {
@@ -127,6 +130,14 @@ describe('buildGenerateEvent', () => {
     expect(JSON.parse(payload).settings.logo).toBe('custom');
     expect((generate().settings as { logo: string }).logo).toBe('default');
     expect((generate({ useDefaultLogo: false }).settings as { logo: string }).logo).toBe('none');
+  });
+
+  // The scope is only meaningful while the regional rule is on, so it reports as null when off.
+  it('reports the regional ranking scope only when that rule is on', () => {
+    type Dc = { scrambleDoubleCheckRegionScope: string | null };
+    expect((generate().settings as Dc).scrambleDoubleCheckRegionScope).toBeNull();
+    const on = generate({ scrambleDoubleCheckRegionTop: 1, scrambleDoubleCheckRegionScope: 'continental' });
+    expect((on.settings as Dc).scrambleDoubleCheckRegionScope).toBe('continental');
   });
 
   it('lists only the selected documents, sorted', () => {

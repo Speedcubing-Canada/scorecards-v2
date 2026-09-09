@@ -64,7 +64,6 @@
     },
     "double_check": {
       "title": "Scramble double-checking",
-      "optional_note": "optional - for major championships",
       "hint": "Adds a second scrambler-signature column so scrambles can be independently double-checked.",
       "enable": "Enable scramble double-checking",
       "enable_desc": "Adds a second scrambler signature column to the selected scorecards.",
@@ -73,8 +72,15 @@
       "round_second": "Round 2",
       "round_semis": "Semi-finals",
       "round_finals": "Finals",
+      "ranking_title": "Always double-check top-ranked competitors",
+      "ranking_tooltip": "Regulation 11i only owes a replacement attempt for a mis-scramble when the result is a regional record, a personal record in the world top 50, or a championship final scrambled by two scramblers.",
+      "ranking_hint": "Matched against each competitor's personal bests, single or average. Their scrambles are double-checked in every round.",
+      "ranking_world": "World rankings, top",
+      "ranking_region": "Regional rankings, top",
+      "ranking_scope_national": "National",
+      "ranking_scope_continental": "Continental",
       "overrides_title": "Always double-check specific competitors (optional)",
-      "overrides_hint": "Upload a CSV file - one line per competitor: WCAID,event1,event2 (e.g. 2015FOOB01,333,444). These competitors are double-checked for those events in every round.",
+      "overrides_hint": "Upload a CSV file - one line per competitor: WCAID,event1,event2 (e.g. 2015FOOB01,333,444). Their scrambles for those events are double-checked in every round.",
       "overrides_count": "{{count}} competitor(s) loaded"
     },
     "wca_live": {

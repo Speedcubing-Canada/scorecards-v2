@@ -206,6 +206,11 @@ describe('settings restore', () => {
       hideWcaLiveId: false,
       isCustomCompetition: false,
       scorecardCheckMode: 'per-group-card',
+      // The ranking rules land on the live defaults, so an old blob and a fresh one
+      // don't mean two different things.
+      scrambleDoubleCheckWorldTop: 50,
+      scrambleDoubleCheckRegionTop: null,
+      scrambleDoubleCheckRegionScope: 'national',
     });
   });
 

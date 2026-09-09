@@ -64,7 +64,6 @@
     },
     "double_check": {
       "title": "Doble verificación de mezclas",
-      "optional_note": "opcional - para grandes campeonatos",
       "hint": "Añade una segunda columna de firma del mezclador para verificar las mezclas de forma independiente.",
       "enable": "Activar la doble verificación de mezclas",
       "enable_desc": "Añade una segunda columna de firma del mezclador a las hojas seleccionadas.",
@@ -73,8 +72,15 @@
       "round_second": "Ronda 2",
       "round_semis": "Semifinales",
       "round_finals": "Finales",
+      "ranking_title": "Verificar siempre a los competidores mejor clasificados",
+      "ranking_tooltip": "El reglamento 11i solo exige un intento de reemplazo por un mezclado incorrecto cuando el resultado es un récord regional, un récord personal dentro del top 50 mundial, o una final de campeonato mezclada por dos mezcladores.",
+      "ranking_hint": "Se compara con los récords personales de cada competidor, single o media. Sus mezclas se verifican dos veces en todas las rondas.",
+      "ranking_world": "Ranking mundial, top",
+      "ranking_region": "Ranking regional, top",
+      "ranking_scope_national": "Nacional",
+      "ranking_scope_continental": "Continental",
       "overrides_title": "Verificar siempre a competidores específicos (opcional)",
-      "overrides_hint": "Sube un archivo CSV - una línea por competidor: WCAID,evento1,evento2 (ej. 2015FOOB01,333,444). Estos competidores se verifican dos veces en esos eventos en todas las rondas.",
+      "overrides_hint": "Sube un archivo CSV - una línea por competidor: WCAID,evento1,evento2 (ej. 2015FOOB01,333,444). Sus mezclas de esos eventos se verifican dos veces en todas las rondas.",
       "overrides_count": "{{count}} competidor(es) cargado(s)"
     },
     "wca_live": {

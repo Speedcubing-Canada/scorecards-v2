@@ -58,6 +58,9 @@ const stored = (overrides: Partial<CompetitionSettings> = {}): CompetitionSettin
   scrambleDoubleCheck: false,
   scrambleDoubleCheckRounds: ['finals'],
   scrambleDoubleCheckOverrides: {},
+  scrambleDoubleCheckWorldTop: 50,
+  scrambleDoubleCheckRegionTop: null,
+  scrambleDoubleCheckRegionScope: 'national',
   generationScope: DEFAULT_SCOPE,
   isCustomCompetition: false,
   ...overrides,
@@ -93,6 +96,85 @@ beforeEach(async () => {
 });
 
 afterEach(cleanup);
+
+// The ranking rules (reg. 11i) are the only settings whose control is a checkbox and a number
+// that have to stay in step: the threshold IS the switch, so an empty box must never be saved.
+describe('scramble double-check ranking rules', () => {
+  // Checkbox and threshold share the rule's name; the role tells them apart.
+  const box = (name: string) => screen.getByRole('checkbox', { name });
+  const top = (name: string) => screen.getByRole('textbox', { name }) as HTMLInputElement;
+  const worldTop = () => top('World rankings, top');
+  const regionTop = () => top('Regional rankings, top');
+
+  async function openDoubleCheck() {
+    writeSettings(stored({ scrambleDoubleCheck: true }));
+    await renderSettings();
+  }
+
+  it('starts on the world top 50 with the regional rule off', async () => {
+    await openDoubleCheck();
+    expect(worldTop().value).toBe('50');
+    expect(regionTop().value).toBe('');
+    expect(regionTop().disabled).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Continental' })).toBeNull();
+  });
+
+  it('ticking the regional rule reveals its scope and saves the pair', async () => {
+    await openDoubleCheck();
+    fireEvent.click(box('Regional rankings, top'));
+    fireEvent.click(screen.getByRole('button', { name: 'Continental' }));
+    generate();
+
+    expect(readSettings()).toMatchObject({
+      scrambleDoubleCheckRegionTop: 1,
+      scrambleDoubleCheckRegionScope: 'continental',
+    });
+  });
+
+  it('unticking a rule stores null, not a number', async () => {
+    await openDoubleCheck();
+    fireEvent.click(box('World rankings, top'));
+    generate();
+
+    expect(readSettings()?.scrambleDoubleCheckWorldTop).toBeNull();
+  });
+
+  it('an emptied threshold snaps back to its default instead of saving blank', async () => {
+    await openDoubleCheck();
+    fireEvent.change(worldTop(), { target: { value: '' } });
+    expect(worldTop().value).toBe('0');
+    fireEvent.blur(worldTop());
+    generate();
+
+    expect(readSettings()?.scrambleDoubleCheckWorldTop).toBe(50);
+  });
+
+  // The ranking rules already cover reg. 11i, so a whole round is only worth double-checking
+  // at a championship. Nothing in the WCIF or the WCA API says whether one is, so the name
+  // is the only signal. Seeded from a preset, not a stored blob, which would beat the default.
+  it('leaves the round rule off, and ticks Finals only for a championship', async () => {
+    const finalsChecked = () =>
+      (screen.getByRole('checkbox', { name: 'Finals' }) as HTMLInputElement).checked;
+
+    writeCompetition('TorontoOpen2026', 'Toronto Open 2026');
+    writePresetSettings({ scrambleDoubleCheck: true });
+    await renderSettings();
+    expect(finalsChecked()).toBe(false);
+
+    cleanup();
+    writeCompetition('CanChamp2026', 'Canadian Championship 2026');
+    await renderSettings();
+    expect(finalsChecked()).toBe(true);
+  });
+
+  it('keeps digits only', async () => {
+    await openDoubleCheck();
+    fireEvent.change(worldTop(), { target: { value: '1e2!' } });
+    generate();
+
+    expect(readSettings()?.scrambleDoubleCheckWorldTop).toBe(12);
+  });
+});
 
 describe('restoring the previous submission', () => {
   // The reported bug: a custom event added to a WCA competition lives only in the settings

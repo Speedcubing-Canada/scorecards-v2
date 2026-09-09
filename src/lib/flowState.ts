@@ -192,6 +192,11 @@ export function readSettings(): CompetitionSettings | null {
   // The retired 'checking-sheet' value meant "no cover cards, print the standalone sheet".
   // The sheet is now an independently-selected document, so only its cover-card half survives.
   if (s.scorecardCheckMode === 'checking-sheet') s.scorecardCheckMode = 'none';
+  // Backfilled to the live defaults, not to "off": otherwise the same settings would mean
+  // two different things depending on when the blob was written.
+  if (s.scrambleDoubleCheckWorldTop === undefined) s.scrambleDoubleCheckWorldTop = 50;
+  if (s.scrambleDoubleCheckRegionTop === undefined) s.scrambleDoubleCheckRegionTop = null;
+  if (s.scrambleDoubleCheckRegionScope === undefined) s.scrambleDoubleCheckRegionScope = 'national';
   return s as unknown as CompetitionSettings;
 }
 

@@ -125,6 +125,10 @@ export function buildGenerateEvent(args: {
       secondRoundMode: settings.secondRoundMode,
       scorecardCheckMode: settings.scorecardCheckMode,
       scrambleDoubleCheck: settings.scrambleDoubleCheck,
+      scrambleDoubleCheckWorldTop: settings.scrambleDoubleCheckWorldTop,
+      scrambleDoubleCheckRegionTop: settings.scrambleDoubleCheckRegionTop,
+      scrambleDoubleCheckRegionScope: settings.scrambleDoubleCheckRegionTop === null
+        ? null : settings.scrambleDoubleCheckRegionScope,
       customEvents: (settings.customEvents ?? []).filter(c => c.name.trim()).length,
       preset: presetId,
     },

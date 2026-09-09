@@ -16,6 +16,27 @@ export interface ChangelogEntry {
 /** Newest first. See "Contributing" in the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-09-09',
+    items: {
+      en: [
+        'Scramble double-checking can now pick competitors by ranking: world top 50 by default, plus an optional national or continental threshold.',
+        'Whole rounds are no longer double-checked by default, except finals at a championship.',
+      ],
+      fr: [
+        'La revérification des mélanges peut maintenant cibler les compétiteurs par classement : top 50 mondial par défaut, avec un seuil national ou continental en option.',
+        'Les tours entiers ne sont plus revérifiés par défaut, sauf les finales lors d\'un championnat.',
+      ],
+      es: [
+        'La verificación doble de mezclas ya puede elegir competidores por ranking: top 50 mundial por defecto, más un umbral nacional o continental opcional.',
+        'Las rondas completas ya no se verifican por defecto, salvo las finales en un campeonato.',
+      ],
+      pt: [
+        'A verificação dupla de embaralhamentos agora pode escolher competidores por ranking: top 50 mundial por padrão, mais um limite nacional ou continental opcional.',
+        'Rodadas inteiras não passam mais por verificação dupla por padrão, exceto as finais em um campeonato.',
+      ],
+    },
+  },
+  {
     id: '2026-09-02',
     items: {
       en: [

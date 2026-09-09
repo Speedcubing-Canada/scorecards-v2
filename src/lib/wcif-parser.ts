@@ -1,4 +1,4 @@
-import type { WCIF, Round, EventId, Assignment, ChildActivity } from '../types/wcif';
+import type { WCIF, Round, EventId, Assignment, ChildActivity, PersonalBest } from '../types/wcif';
 import type { CompetitionSettings, DoubleCheckRound } from '../types/settings';
 import { getStrings, getEventName, getNametTagTitleStrings, getNametTagStrings, getShortNametTagNames, getScheduleStrings, type NametTagTitleStrings } from './i18n';
 
@@ -347,18 +347,42 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   // ── Scramble double-checking ────────────────────────────────────────────────
   // Decide per-card whether to add the second scrambler-signature column. The round
   // rule keys off the destination bucket (which maps 1:1 to the emitted PDFs); the
-  // override rule matches a named card's WCA ID + event across all rounds.
+  // override and ranking rules match a named card's WCA ID + event across all rounds.
   const dcEnabled = settings.scrambleDoubleCheck === true;
   const dcRounds = new Set(settings.scrambleDoubleCheckRounds ?? []);
   const dcOverrides = settings.scrambleDoubleCheckOverrides ?? {};
+  const dcWorldTop = settings.scrambleDoubleCheckWorldTop ?? null;
+  const dcRegionTop = settings.scrambleDoubleCheckRegionTop ?? null;
+  const dcRegionScope = settings.scrambleDoubleCheckRegionScope ?? 'national';
+
+  // Personal bests per WCA ID, for the ranking rule. Newcomers have neither an ID nor bests.
+  const dcPersonalBests = new Map<string, PersonalBest[]>();
+  if (dcEnabled && (dcWorldTop || dcRegionTop))
+    for (const person of wcif.persons)
+      if (person.wcaId) dcPersonalBests.set(person.wcaId, person.personalBests ?? []);
+
+  // Regulation 11i1a/b: a mis-scramble only owes a replacement attempt when the result is a
+  // regional record or a personal record in the world top 50. Either best type qualifies -
+  // 11i1a covers the single, 11i1b the average. A ranking below 1 means unranked.
+  function rankedForDoubleCheck(wcaId: string, eventId: string): boolean {
+    for (const pb of dcPersonalBests.get(wcaId) ?? []) {
+      if (pb.eventId !== eventId) continue;
+      if (dcWorldTop && pb.worldRanking >= 1 && pb.worldRanking <= dcWorldTop) return true;
+      const regional = dcRegionScope === 'national' ? pb.nationalRanking : pb.continentalRanking;
+      if (dcRegionTop && regional >= 1 && regional <= dcRegionTop) return true;
+    }
+    return false;
+  }
+
   // `buckets` lists every round-category the card belongs to. A single-round event's
   // only round is both 'firstRound' and 'finals', so selecting either covers it.
   function wantsDoubleCheck(buckets: DoubleCheckRound[], wcaId: string, eventId: string): boolean {
     if (!dcEnabled) return false;
     if (buckets.some(b => dcRounds.has(b))) return true;
-    if (!wcaId) return false; // override matches named cards only
+    if (!wcaId) return false; // override and ranking rules match named cards only
     const evs = dcOverrides[wcaId];
-    return !!evs && evs.includes(eventId);
+    if (evs && evs.includes(eventId)) return true;
+    return rankedForDoubleCheck(wcaId, eventId);
   }
 
   // Front panels use the primary language; back panels use the secondary (or the

@@ -4,7 +4,7 @@ import { hasUnassignedIntermediate } from './generationScope';
 import type { ScorecardEntry, CoverEntry, ScorecardData, NametTagEntry } from './wcif-parser';
 import type {
   WCIF, Event, Round, RoundFormat, Activity, ChildActivity,
-  Room, Person, EventId, AdvancementCondition,
+  Room, Person, EventId, AdvancementCondition, PersonalBest,
 } from '../types/wcif';
 import type { CompetitionSettings } from '../types/settings';
 
@@ -21,6 +21,7 @@ const BASE: CompetitionSettings = {
   hideWcaLiveId: false, nametagLogoMode: 'hidden', nametagQrMode: 'back-only', nametagLayout: 'vertical',
   customEvents: [], scorecardCheckMode: 'per-group-card',
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
+  scrambleDoubleCheckWorldTop: 50, scrambleDoubleCheckRegionTop: null, scrambleDoubleCheckRegionScope: 'national',
   generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false } },
   isCustomCompetition: false,
 };
@@ -80,19 +81,23 @@ type PersonOpts = {
   wcaId?: string | null;
   gender?: 'm' | 'f' | 'o';
   status?: 'accepted' | 'pending' | 'deleted';
+  personalBests?: PersonalBest[];
 };
 function per(
   registrantId: number,
   assignments: Array<{ aid: number; station?: number | null }>,
   opts: PersonOpts = {},
 ): Person {
-  const { name = `P${registrantId}`, wcaId = `2024T${registrantId}`, gender = 'm', status = 'accepted' } = opts;
+  const {
+    name = `P${registrantId}`, wcaId = `2024T${registrantId}`, gender = 'm',
+    status = 'accepted', personalBests = [],
+  } = opts;
   return {
     registrantId, name,
     wcaUserId: registrantId, wcaId,
     countryIso2: 'FR', gender,
     registration: { wcaRegistrationId: registrantId, eventIds: ['333' as EventId], status, isCompeting: true },
-    avatar: null, roles: [], personalBests: [],
+    avatar: null, roles: [], personalBests,
     assignments: assignments.map(a => ({
       activityId: a.aid, assignmentCode: 'competitor', stationNumber: a.station ?? null,
     })),
@@ -1578,6 +1583,101 @@ describe('Scramble double-checking', () => {
       scrambleDoubleCheckOverrides: { '2015FOOB01': ['333'] },
     });
     expect(scs(result.finals).some(s => s.scrambleDoubleCheck)).toBe(false);
+  });
+
+  // ── Ranking rules (regulation 11i) ──────────────────────────────────────────
+  // A personal best with only the ranking that matters set; the rest are 0 (unranked).
+  function pb(
+    type: 'single' | 'average',
+    ranks: { world?: number; continental?: number; national?: number },
+    eventId = '333',
+  ): PersonalBest {
+    return {
+      eventId: eventId as EventId, best: 700, type,
+      worldRanking: ranks.world ?? 0,
+      continentalRanking: ranks.continental ?? 0,
+      nationalRanking: ranks.national ?? 0,
+    };
+  }
+
+  // Same 2-round event as mk2Round, with personal bests on the round-1 competitor.
+  function mkRanked(bests: PersonalBest[], settings: Partial<CompetitionSettings>) {
+    const e = evt('333', [rSpec('a', { adv: { type: 'ranking', level: 8 } }), rSpec('a')]);
+    const r = room('Stage', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      act('333', 2, [ch(110, '333', 2, 1, '2024-01-01T16:00:00Z')]),
+    ]);
+    const persons = [per(1, [{ aid: 100 }], { wcaId: '2015FOOB01', personalBests: bests })];
+    return parseWCIF(mkWCIF([e], [r], persons), cfg({
+      scrambleDoubleCheck: true, scrambleDoubleCheckRounds: [], ...settings,
+    }));
+  }
+
+  it('world rule: a top-50 competitor is flagged with no round selected', () => {
+    const result = mkRanked([pb('single', { world: 30 })], { scrambleDoubleCheckWorldTop: 50 });
+    expect(scs(result.firstRound).every(s => s.scrambleDoubleCheck)).toBe(true);
+  });
+
+  it('world rule: a rank outside the threshold is not flagged', () => {
+    const result = mkRanked([pb('single', { world: 51 })], { scrambleDoubleCheckWorldTop: 50 });
+    expect(scs(result.firstRound).some(s => s.scrambleDoubleCheck)).toBe(false);
+  });
+
+  it('world rule: a top-50 best in another event does not flag this card', () => {
+    const result = mkRanked([pb('single', { world: 3 }, '444')], { scrambleDoubleCheckWorldTop: 50 });
+    expect(scs(result.firstRound).some(s => s.scrambleDoubleCheck)).toBe(false);
+  });
+
+  it('world rule: an average best counts too (11i1b), not only the single', () => {
+    const result = mkRanked([pb('average', { world: 12 })], { scrambleDoubleCheckWorldTop: 50 });
+    expect(scs(result.firstRound).every(s => s.scrambleDoubleCheck)).toBe(true);
+  });
+
+  it('regional rule: the national record holder is flagged even when far outside the world top', () => {
+    const result = mkRanked([pb('single', { world: 900, national: 1 })], {
+      scrambleDoubleCheckWorldTop: 50,
+      scrambleDoubleCheckRegionTop: 1,
+      scrambleDoubleCheckRegionScope: 'national',
+    });
+    expect(scs(result.firstRound).every(s => s.scrambleDoubleCheck)).toBe(true);
+  });
+
+  it('regional rule: the continental scope reads the continental ranking, not the national one', () => {
+    const bests = [pb('single', { world: 900, national: 1, continental: 40 })];
+    const flagged = (settings: Partial<CompetitionSettings>) =>
+      scs(mkRanked(bests, settings).firstRound).some(s => s.scrambleDoubleCheck);
+    const base = { scrambleDoubleCheckWorldTop: null, scrambleDoubleCheckRegionTop: 1 } as const;
+    expect(flagged({ ...base, scrambleDoubleCheckRegionScope: 'continental' })).toBe(false);
+    expect(flagged({ ...base, scrambleDoubleCheckRegionScope: 'national' })).toBe(true);
+  });
+
+  it('both thresholds null: a world-number-one is not flagged', () => {
+    const result = mkRanked([pb('single', { world: 1, national: 1 })], {
+      scrambleDoubleCheckWorldTop: null, scrambleDoubleCheckRegionTop: null,
+    });
+    expect(scs(result.firstRound).some(s => s.scrambleDoubleCheck)).toBe(false);
+  });
+
+  it('an unranked (0) personal best is never inside a threshold', () => {
+    const result = mkRanked([pb('single', {})], {
+      scrambleDoubleCheckWorldTop: 50, scrambleDoubleCheckRegionTop: 1,
+    });
+    expect(scs(result.firstRound).some(s => s.scrambleDoubleCheck)).toBe(false);
+  });
+
+  it('ranking rules do not flag blank later-round cards (no WCA ID)', () => {
+    const result = mkRanked([pb('single', { world: 1 })], { scrambleDoubleCheckWorldTop: 50 });
+    expect(scs(result.finals).some(s => s.scrambleDoubleCheck)).toBe(false);
+  });
+
+  it('a newcomer with no WCA ID and no bests is never flagged', () => {
+    const e = evt('333', [rSpec('a')]);
+    const r = room('Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const persons = [per(1, [{ aid: 100 }], { wcaId: null })];
+    const result = parseWCIF(mkWCIF([e], [r], persons), cfg({
+      scrambleDoubleCheck: true, scrambleDoubleCheckRounds: [], scrambleDoubleCheckWorldTop: 50,
+    }));
+    expect(scs(result.firstRound).some(s => s.scrambleDoubleCheck)).toBe(false);
   });
 
   it('single-round event: its only round counts as a final for the Finals selection', () => {

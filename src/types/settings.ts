@@ -28,6 +28,8 @@ export type ScorecardCheckMode =
 export type DoubleCheckRound = 'firstRound' | 'intermediate' | 'semis' | 'finals';
 // WCA ID -> event IDs that must always be double-checked for that competitor.
 export type ScrambleDoubleCheckOverrides = Record<string, string[]>;
+// Which ranking the regional threshold reads off a competitor's personal bests.
+export type DoubleCheckRegionScope = 'continental' | 'national';
 
 // Card layouts a custom event can pick. bo3 renders with the mo3 layout (same 3
 // attempt rows - mirrors how WCIF format '3' is handled); bo2/bo1 take no cutoff.
@@ -82,6 +84,12 @@ export interface CompetitionSettings {
   scrambleDoubleCheck: boolean;
   scrambleDoubleCheckRounds: DoubleCheckRound[];
   scrambleDoubleCheckOverrides: ScrambleDoubleCheckOverrides;
+  // Ranking rules (regulation 11i). A `null` top switches its rule off. Both are OR'd with
+  // the round and override rules and apply to every round, so a top-ranked competitor always
+  // gets the column. Matched against the WCIF personal bests, single or average.
+  scrambleDoubleCheckWorldTop: number | null;
+  scrambleDoubleCheckRegionTop: number | null;
+  scrambleDoubleCheckRegionScope: DoubleCheckRegionScope;
   // What to generate. Defaults to `{ mode: 'everything' }` (the normal pre-competition case).
   // Set on the scope step when the WCIF already has groups for a later round.
   generationScope: GenerationScope;

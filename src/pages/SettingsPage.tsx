@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect, type ChangeEvent } from 'react';
-import { Check, ChevronDown, ChevronRight, RectangleHorizontal, RectangleVertical } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Info, RectangleHorizontal, RectangleVertical } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import type { CompetitionSettings, DoubleCheckRound, LocaleCode, NametTagLogoMode, NametTagQrMode, PaperFormat, ScorecardCheckMode, SecondRoundMode } from '../types/settings';
+import type { CompetitionSettings, DoubleCheckRegionScope, DoubleCheckRound, LocaleCode, NametTagLogoMode, NametTagQrMode, PaperFormat, ScorecardCheckMode, SecondRoundMode } from '../types/settings';
 import type { GenerationScope, DocumentSelection } from '../lib/generationScope';
 import { LANGUAGES } from '../i18n/index';
 import { resolveDefaultPrimaryLanguage, secondaryLanguageRow, isCanadianLanguage } from '../lib/languageSelector';
 import { parseDoubleCheckOverrides } from '../lib/parseDoubleCheckOverrides';
+import { isChampionship } from '../lib/championship';
+import Tooltip from '../components/Tooltip';
 import {
   readCompetition, readCustomEvents, readDetection, readHasGroups, readIsCustom,
   readFileName, readScope, readSettings, writeCustom, writeFileName, writeSettings,
@@ -18,6 +20,11 @@ import WarningBanner from '../components/WarningBanner';
 import CustomEventEditor from '../components/CustomEventEditor';
 import { useIsMobile } from '../lib/useIsMobile';
 import { fetchWcaLiveId, fetchWcaLivePersonIds } from '../auth/wca';
+
+// Where each ranking rule lands when it is ticked. 50 is the world top the regulation names;
+// 1 is the national/continental record holder, who a world-50 threshold misses in a small region.
+const DC_WORLD_TOP_DEFAULT = 50;
+const DC_REGION_TOP_DEFAULT = 1;
 
 /**
  * The settings this page owns: `CompetitionSettings` minus the four values that come from
@@ -102,8 +109,13 @@ export default function SettingsPage() {
     nametagLayout: preset.nametagLayout ?? 'vertical',
     scorecardCheckMode: preset.scorecardCheckMode ?? 'per-group-card',
     scrambleDoubleCheck: preset.scrambleDoubleCheck ?? false,
-    scrambleDoubleCheckRounds: ['finals'],
+    // The ranking rules cover regulation 11i on their own. A whole round is only worth
+    // double-checking at a championship, whose finals 11i1f singles out.
+    scrambleDoubleCheckRounds: isChampionship(competitionName) ? ['finals'] : [],
     scrambleDoubleCheckOverrides: {},
+    scrambleDoubleCheckWorldTop: DC_WORLD_TOP_DEFAULT,
+    scrambleDoubleCheckRegionTop: null,
+    scrambleDoubleCheckRegionScope: 'national',
     customEvents: [],
     ...restorableSettings(previous),
     // A custom competition's events live in their own key, which /custom may have changed since
@@ -117,7 +129,8 @@ export default function SettingsPage() {
     language, secondaryLanguage, paperFormat, secondRoundMode, logoDataUrl, useDefaultLogo,
     wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,
     scorecardCheckMode, customEvents, scrambleDoubleCheck, scrambleDoubleCheckRounds,
-    scrambleDoubleCheckOverrides,
+    scrambleDoubleCheckOverrides, scrambleDoubleCheckWorldTop, scrambleDoubleCheckRegionTop,
+    scrambleDoubleCheckRegionScope,
   } = draft;
 
   // Purely presentational - not part of the draft, but stored so a restored upload isn't nameless.
@@ -195,6 +208,11 @@ export default function SettingsPage() {
     { value: 'finals',       label: t('settings.double_check.round_finals') },
   ];
 
+  const DOUBLE_CHECK_REGION_OPTIONS: { value: DoubleCheckRegionScope; label: string }[] = [
+    { value: 'national',    label: t('settings.double_check.ranking_scope_national') },
+    { value: 'continental', label: t('settings.double_check.ranking_scope_continental') },
+  ];
+
   const dcOverrideCount = Object.keys(scrambleDoubleCheckOverrides).length;
 
   function handleLogoChange(e: ChangeEvent<HTMLInputElement>) {
@@ -219,6 +237,27 @@ export default function SettingsPage() {
         ? d.scrambleDoubleCheckRounds.filter(r => r !== round)
         : [...d.scrambleDoubleCheckRounds, round],
     }));
+  }
+
+  // A ranking rule is off when its threshold is null. Ticking it restores the default rather
+  // than the last value: the box is a rule switch, the number beside it is the rule.
+  function toggleDcRankingRule(key: 'scrambleDoubleCheckWorldTop' | 'scrambleDoubleCheckRegionTop') {
+    const fallback = key === 'scrambleDoubleCheckWorldTop' ? DC_WORLD_TOP_DEFAULT : DC_REGION_TOP_DEFAULT;
+    setDraft(d => ({ ...d, [key]: d[key] === null ? fallback : null }));
+  }
+
+  // Digits only, like the WCA Live ID field. An emptied box holds 0 (which matches nobody)
+  // while typing and snaps back to the rule's default on blur, so it can never be saved blank.
+  function setDcRankingTop(
+    key: 'scrambleDoubleCheckWorldTop' | 'scrambleDoubleCheckRegionTop',
+    raw: string,
+  ) {
+    patch({ [key]: Number(raw.replace(/\D/g, '').slice(0, 5)) });
+  }
+
+  function normalizeDcRankingTop(key: 'scrambleDoubleCheckWorldTop' | 'scrambleDoubleCheckRegionTop') {
+    const fallback = key === 'scrambleDoubleCheckWorldTop' ? DC_WORLD_TOP_DEFAULT : DC_REGION_TOP_DEFAULT;
+    setDraft(d => (d[key] === 0 ? { ...d, [key]: fallback } : d));
   }
 
   function handleDcOverridesChange(e: ChangeEvent<HTMLInputElement>) {
@@ -398,10 +437,7 @@ export default function SettingsPage() {
 
         {showScorecards && !isCustom && (
         <section style={s.section}>
-          <h3 style={s.sectionTitle}>
-            {t('settings.double_check.title')}{' '}
-            <span style={s.optional}>({t('settings.double_check.optional_note')})</span>
-          </h3>
+          <h3 style={s.sectionTitle}>{t('settings.double_check.title')}</h3>
           <p style={s.hint}>{t('settings.double_check.hint')}</p>
 
           <label style={{ ...s.optionCard, cursor: 'pointer' }}>
@@ -419,7 +455,83 @@ export default function SettingsPage() {
 
           {scrambleDoubleCheck && (
             <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>
+              <div style={{ ...s.subheading, marginTop: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+                {t('settings.double_check.ranking_title')}
+                <Tooltip label={t('settings.double_check.ranking_tooltip')}>
+                  <span
+                    tabIndex={0}
+                    aria-label={t('settings.double_check.ranking_tooltip')}
+                    style={s.infoIcon}
+                  >
+                    <Info size={14} strokeWidth={2} aria-hidden="true" />
+                  </span>
+                </Tooltip>
+              </div>
+              <p style={s.hint}>{t('settings.double_check.ranking_hint')}</p>
+
+              <div style={s.optionGroup}>
+                <div style={{ ...s.optionCard, ...(scrambleDoubleCheckWorldTop !== null ? s.optionCardActive : {}), alignItems: 'center' }}>
+                  <label style={s.rankingRule}>
+                    <input
+                      type="checkbox"
+                      checked={scrambleDoubleCheckWorldTop !== null}
+                      onChange={() => toggleDcRankingRule('scrambleDoubleCheckWorldTop')}
+                      style={{ accentColor: 'var(--primary)', flexShrink: 0 }}
+                    />
+                    <span style={s.optionLabel}>{t('settings.double_check.ranking_world')}</span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={scrambleDoubleCheckWorldTop ?? ''}
+                    disabled={scrambleDoubleCheckWorldTop === null}
+                    aria-label={t('settings.double_check.ranking_world')}
+                    onChange={e => setDcRankingTop('scrambleDoubleCheckWorldTop', e.target.value)}
+                    onBlur={() => normalizeDcRankingTop('scrambleDoubleCheckWorldTop')}
+                    style={s.rankingInput}
+                  />
+                </div>
+
+                <div style={{ ...s.optionCard, ...(scrambleDoubleCheckRegionTop !== null ? s.optionCardActive : {}), alignItems: 'center' }}>
+                  <label style={s.rankingRule}>
+                    <input
+                      type="checkbox"
+                      checked={scrambleDoubleCheckRegionTop !== null}
+                      onChange={() => toggleDcRankingRule('scrambleDoubleCheckRegionTop')}
+                      style={{ accentColor: 'var(--primary)', flexShrink: 0 }}
+                    />
+                    <span style={s.optionLabel}>{t('settings.double_check.ranking_region')}</span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={scrambleDoubleCheckRegionTop ?? ''}
+                    disabled={scrambleDoubleCheckRegionTop === null}
+                    aria-label={t('settings.double_check.ranking_region')}
+                    onChange={e => setDcRankingTop('scrambleDoubleCheckRegionTop', e.target.value)}
+                    onBlur={() => normalizeDcRankingTop('scrambleDoubleCheckRegionTop')}
+                    style={s.rankingInput}
+                  />
+                </div>
+              </div>
+
+              {scrambleDoubleCheckRegionTop !== null && (
+                <div style={{ ...s.segmentedControl, marginTop: 8 }}>
+                  {DOUBLE_CHECK_REGION_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => patch({ scrambleDoubleCheckRegionScope: opt.value })}
+                      aria-pressed={scrambleDoubleCheckRegionScope === opt.value}
+                      style={{ ...s.segment, ...(scrambleDoubleCheckRegionScope === opt.value ? s.segmentActive : s.segmentInactive) }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div style={s.subheading}>
                 {t('settings.double_check.rounds_title')}
               </div>
               <div style={s.optionGroup}>
@@ -438,7 +550,7 @@ export default function SettingsPage() {
                 ))}
               </div>
 
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: '16px 0 8px' }}>
+              <div style={s.subheading}>
                 {t('settings.double_check.overrides_title')}
               </div>
               <p style={s.hint}>{t('settings.double_check.overrides_hint')}</p>
@@ -686,6 +798,18 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 700, color: 'var(--success)', fontSize: 'var(--fs-caption)',
   },
   hint: { margin: '0 0 12px', fontSize: 'var(--fs-label)', color: 'var(--text-muted)' },
+  subheading: { fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: '16px 0 8px' },
+  infoIcon: { display: 'inline-flex', color: 'var(--text-muted)', cursor: 'help' },
+  // The checkbox half of a ranking rule card; the threshold input is its sibling, so that
+  // each label owns exactly one control.
+  rankingRule: { display: 'flex', alignItems: 'center', gap: 12, flex: 1, cursor: 'pointer' },
+  rankingInput: {
+    width: 72, boxSizing: 'border-box',
+    backgroundColor: 'var(--surface)', color: 'var(--text)',
+    border: '2px solid var(--border)', borderRadius: 'var(--radius-md)',
+    padding: '6px 10px', fontSize: 'var(--fs-body)', fontFamily: 'inherit',
+    outline: 'none', textAlign: 'center',
+  },
   optionGroup: { display: 'flex', flexDirection: 'column', gap: 8 },
   optionCard: {
     display: 'flex', alignItems: 'flex-start', gap: 12,

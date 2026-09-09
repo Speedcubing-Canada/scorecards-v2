@@ -64,7 +64,6 @@
     },
     "double_check": {
       "title": "Verificação dupla de embaralhamentos",
-      "optional_note": "opcional - para grandes campeonatos",
       "hint": "Adiciona uma segunda coluna de assinatura do embaralhador para verificar os embaralhamentos de forma independente.",
       "enable": "Ativar a verificação dupla de embaralhamento",
       "enable_desc": "Adiciona uma segunda coluna de assinatura do embaralhador às súmulas selecionadas.",
@@ -73,8 +72,15 @@
       "round_second": "Rodada 2",
       "round_semis": "Semifinais",
       "round_finals": "Finais",
+      "ranking_title": "Sempre aplicar verificação dupla aos competidores mais bem classificados",
+      "ranking_tooltip": "O artigo 11i só exige uma tentativa de substituição por um embaralhamento incorreto quando o resultado é um recorde regional, um recorde pessoal no top 50 mundial, ou uma final de campeonato embaralhada por dois embaralhadores.",
+      "ranking_hint": "Comparado com os recordes pessoais de cada competidor, single ou média. Seus embaralhamentos passam por verificação dupla em todas as rodadas.",
+      "ranking_world": "Ranking mundial, top",
+      "ranking_region": "Ranking regional, top",
+      "ranking_scope_national": "Nacional",
+      "ranking_scope_continental": "Continental",
       "overrides_title": "Sempre verificar competidores específicos (opcional)",
-      "overrides_hint": "Envie um arquivo CSV - uma linha por competidor: WCAID,evento1,evento2 (ex. 2015FOOB01,333,444). Esses competidores são verificados duas vezes nesses eventos em todas as rodadas.",
+      "overrides_hint": "Envie um arquivo CSV - uma linha por competidor: WCAID,evento1,evento2 (ex. 2015FOOB01,333,444). Seus embaralhamentos nesses eventos passam por verificação dupla em todas as rodadas.",
       "overrides_count": "{{count}} competidor(es) carregado(s)"
     },
     "wca_live": {

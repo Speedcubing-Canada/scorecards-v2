@@ -83,6 +83,16 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
 - PDF rendering runs in a Web Worker (`src/pdf/scorecardWorker.ts`) so the UI stays responsive.
 - `/scope` picks which documents and which rounds to generate; regional presets there seed
   defaults for a province, and everything stays editable afterwards.
+- **Scramble double-checking** adds a second scrambler-signature column to the scorecards that
+  need it, picked by any of three rules OR'd together: by round; by ranking (world top 50 by
+  default, plus an optional national or continental threshold, read from the WCIF personal bests);
+  and by an uploaded `WCAID,event1,event2` CSV. The ranking and CSV rules apply in every round and
+  only to named cards, since a blank card has no competitor to look up. The round rule starts
+  unticked, except Finals when the competition name reads as a championship, because the ranking
+  rules already cover who needs it. The thresholds mirror
+  [regulation 11i](https://www.worldcubeassociation.org/regulations/#11i), which only owes a
+  replacement attempt for a regional record, a personal record in the world top 50, or a
+  championship final scrambled by two scramblers.
 - Scorecards come out in **cut-and-stack order**: print, cut each sheet into 4, keep the four
   positions separated, stack them in order, and the deck is already sorted. The download page
   spells this out per document.

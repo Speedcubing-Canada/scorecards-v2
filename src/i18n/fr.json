@@ -64,7 +64,6 @@
     },
     "double_check": {
       "title": "Double vérification des mélanges",
-      "optional_note": "optionnel - pour les grands championnats",
       "hint": "Ajoute une deuxième colonne de signature du mélangeur pour vérifier les mélanges de façon indépendante.",
       "enable": "Activer la double vérification des mélanges",
       "enable_desc": "Ajoute une deuxième colonne de signature du mélangeur aux feuilles sélectionnées.",
@@ -73,8 +72,15 @@
       "round_second": "Ronde 2",
       "round_semis": "Demi-finales",
       "round_finals": "Finales",
+      "ranking_title": "Toujours revérifier les meilleurs compétiteurs au classement",
+      "ranking_tooltip": "Le règlement 11i n'impose une tentative de remplacement en cas de mélange incorrect que si le résultat est un record régional, un record personnel dans le top 50 mondial, ou une finale de championnat mélangée par deux mélangeurs.",
+      "ranking_hint": "Comparé aux records personnels de chaque compétiteur, au simple ou à la moyenne. Leurs mélanges sont double-vérifiés à toutes les rondes.",
+      "ranking_world": "Classement mondial, top",
+      "ranking_region": "Classement régional, top",
+      "ranking_scope_national": "National",
+      "ranking_scope_continental": "Continental",
       "overrides_title": "Toujours double-vérifier certains compétiteurs (optionnel)",
-      "overrides_hint": "Téléverser un fichier CSV - une ligne par compétiteur : WCAID,épreuve1,épreuve2 (ex. 2015FOOB01,333,444). Ces compétiteurs sont double-vérifiés pour ces épreuves à toutes les rondes.",
+      "overrides_hint": "Téléverser un fichier CSV - une ligne par compétiteur : WCAID,épreuve1,épreuve2 (ex. 2015FOOB01,333,444). Leurs mélanges pour ces épreuves sont double-vérifiés à toutes les rondes.",
       "overrides_count": "{{count}} compétiteur(s) chargé(s)"
     },
     "wca_live": {

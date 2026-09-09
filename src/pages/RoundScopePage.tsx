@@ -98,6 +98,8 @@ export default function RoundScopePage() {
           // Detection-only parse; the real mode is chosen later on /settings.
           scorecardCheckMode: 'per-group-card',
           scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
+          scrambleDoubleCheckWorldTop: null, scrambleDoubleCheckRegionTop: null,
+          scrambleDoubleCheckRegionScope: 'national',
           generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false } },
           isCustomCompetition: false,
         };
