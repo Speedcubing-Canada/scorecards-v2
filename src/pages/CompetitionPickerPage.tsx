@@ -9,7 +9,7 @@ import Header from '../components/Header';
 import AboutDialog from '../components/AboutDialog';
 import Skeleton from '../components/Skeleton';
 import { useIsMobile } from '../lib/useIsMobile';
-import { clearCustom, writeCompetition } from '../lib/flowState';
+import { clearCustom, clearDownstream, readCompetition, writeCompetition } from '../lib/flowState';
 import { clearPresetSettings } from '../presets';
 
 export default function CompetitionPickerPage() {
@@ -20,11 +20,6 @@ export default function CompetitionPickerPage() {
   const [competitions, setCompetitions] = useState<WCACompetition[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Starting over: drop any preset picked for a previous competition in this tab.
-  // Covers both exits from this page - the custom-competition flow skips /scope, so
-  // it would otherwise inherit a stale seed.
-  useEffect(() => clearPresetSettings(), []);
 
   useEffect(() => {
     if (!token) return;
@@ -44,6 +39,12 @@ export default function CompetitionPickerPage() {
   function selectCompetition(comp: WCACompetition) {
     // Drop any stale custom-competition state so it never leaks into a WCA flow.
     clearCustom();
+    // A different competition starts over: the later steps restore what was picked before, and
+    // must not hand the previous competition's scope, rounds and settings to this one.
+    if (readCompetition().id !== comp.id) {
+      clearDownstream();
+      clearPresetSettings();
+    }
     writeCompetition(comp.id, comp.name);
     navigate('/scope');
   }
@@ -90,9 +91,10 @@ export default function CompetitionPickerPage() {
           ))}
         </div>
 
-        {/* Niche flow: keep it discoverable but secondary, below the WCA list. */}
+        {/* Niche flow: keep it discoverable but secondary, below the WCA list. It skips
+            /scope, where a preset is otherwise re-written, so clear the seed on the way in. */}
         {!isLoading && !error && (
-          <button style={styles.customCard} onClick={() => navigate('/custom')}>
+          <button style={styles.customCard} onClick={() => { clearPresetSettings(); navigate('/custom'); }}>
             <span style={styles.customCardTitle}>
               <Plus size={16} strokeWidth={2.5} aria-hidden="true" />
               {t('picker.create_custom_title')}

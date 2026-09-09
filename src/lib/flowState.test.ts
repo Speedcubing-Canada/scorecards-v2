@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   DEFAULT_SCOPE,
-  clearCustom, readCompetition, readCustomEvents, readDetection, readHasGroups,
-  readIsCustom, readScope, readStoredSettings,
-  writeCompetition, writeCustom, writeHasGroups, writeScope, writeSettings,
+  clearCustom, clearDownstream, clearSettings, readCompetition, readCustomEvents, readDetection,
+  readHasGroups, readIsCustom, readFileName, readScope, readSettings, readStoredScope,
+  readStoredSettings, writeCompetition, writeCustom, writeFileName, writeHasGroups, writeScope,
+  writeSettings,
 } from './flowState';
 import type { CompetitionSettings } from '../types/settings';
 
@@ -78,6 +79,21 @@ describe('generation scope', () => {
   it('falls back to the everything-scope when the blob is corrupt', () => {
     sessionStorage.setItem('generation_scope', '{not json');
     expect(readScope()).toEqual(DEFAULT_SCOPE);
+  });
+
+  // The scope step restores the organizer's selection from this, so it must be able to tell
+  // "nothing stored yet" from a real scope - which readScope, defaulting, cannot.
+  it('readStoredScope reads null when unset and the scope when set', () => {
+    expect(readStoredScope()).toBeNull();
+    writeScope(scope, { showSecondRoundMode: false });
+    expect(readStoredScope()).toEqual(scope);
+  });
+
+  it('readStoredScope reads null for a corrupt blob or one written before document selection', () => {
+    sessionStorage.setItem('generation_scope', '{not json');
+    expect(readStoredScope()).toBeNull();
+    sessionStorage.setItem('generation_scope', JSON.stringify({ mode: 'everything' }));
+    expect(readStoredScope()).toBeNull();
   });
 
   // Absent detection means the scope step was bypassed; showing the Round 2 mode
@@ -160,5 +176,103 @@ describe('settings blob', () => {
   it('reads null when the blob is corrupt', () => {
     sessionStorage.setItem('competition_settings', '{"language":');
     expect(readStoredSettings()).toBeNull();
+  });
+});
+
+describe('settings restore', () => {
+  const stored = (extra: Record<string, unknown>) =>
+    sessionStorage.setItem('competition_settings', JSON.stringify({ language: 'en', ...extra }));
+
+  it('reads null when absent or corrupt', () => {
+    expect(readSettings()).toBeNull();
+    sessionStorage.setItem('competition_settings', '{"language":');
+    expect(readSettings()).toBeNull();
+  });
+
+  // Migrations, previously private to the generate page. A session can still hold a blob
+  // written by an older build, and the settings step now seeds its whole form from it.
+  it('migrates the retired bilingual languages onto primary + secondary', () => {
+    stored({ language: 'bilingual-fr' });
+    expect(readSettings()).toMatchObject({ language: 'fr', secondaryLanguage: 'en' });
+    stored({ language: 'bilingual-en' });
+    expect(readSettings()).toMatchObject({ language: 'en', secondaryLanguage: 'fr' });
+  });
+
+  it('backfills the fields added since a blob may have been written', () => {
+    stored({});
+    expect(readSettings()).toMatchObject({
+      secondaryLanguage: null,
+      generationScope: { mode: 'everything', documents: DEFAULT_SCOPE.documents },
+      hideWcaLiveId: false,
+      isCustomCompetition: false,
+      scorecardCheckMode: 'per-group-card',
+    });
+  });
+
+  it('backfills roundChecklist into an earlier four-key document selection', () => {
+    stored({ generationScope: { mode: 'latest', documents: {
+      scorecards: true, scheduleTracker: false, nametags: false, firstTimerSlips: false,
+    } } });
+    expect(readSettings()?.generationScope.documents.roundChecklist).toBe(false);
+  });
+
+  // The standalone checking sheet is its own document now; only the cover-card half survives.
+  it('maps the retired checking-sheet mode onto none', () => {
+    stored({ scorecardCheckMode: 'checking-sheet' });
+    expect(readSettings()?.scorecardCheckMode).toBe('none');
+  });
+});
+
+describe('uploaded file names', () => {
+  it('round-trips each kind independently, and null clears', () => {
+    writeFileName('logo', 'club-logo.png');
+    writeFileName('dcOverrides', 'double-checks.csv');
+    expect(readFileName('logo')).toBe('club-logo.png');
+    expect(readFileName('dcOverrides')).toBe('double-checks.csv');
+    writeFileName('logo', null);
+    expect(readFileName('logo')).toBeNull();
+    expect(readFileName('dcOverrides')).toBe('double-checks.csv');
+  });
+
+  it('reads null when unset', () => {
+    expect(readFileName('logo')).toBeNull();
+    expect(readFileName('dcOverrides')).toBeNull();
+  });
+});
+
+describe('clearing', () => {
+  function fillFlow() {
+    writeCompetition('WC2026', 'World Championship 2026');
+    writeHasGroups(false);
+    writeScope(DEFAULT_SCOPE, { showSecondRoundMode: false });
+    writeSettings({ competitionId: 'WC2026' } as CompetitionSettings);
+    writeFileName('logo', 'club-logo.png');
+    writeFileName('dcOverrides', 'double-checks.csv');
+  }
+
+  // Picking a different competition must not let it inherit the previous one's scope,
+  // rounds and settings through the restore-on-back-navigation.
+  it('clearDownstream drops everything after the picker, keeping the competition', () => {
+    fillFlow();
+    clearDownstream();
+    expect(readStoredScope()).toBeNull();
+    expect(readDetection()).toEqual({ showSecondRoundMode: true });
+    expect(readHasGroups()).toBe(true);
+    expect(readSettings()).toBeNull();
+    expect(readFileName('logo')).toBeNull();
+    expect(readFileName('dcOverrides')).toBeNull();
+    expect(readCompetition()).toEqual({ id: 'WC2026', name: 'World Championship 2026' });
+  });
+
+  // Changing the preset on the scope step: its new seeds must not lose to what was
+  // submitted under the old one.
+  it('clearSettings drops only the settings and the upload names', () => {
+    fillFlow();
+    clearSettings();
+    expect(readSettings()).toBeNull();
+    expect(readFileName('logo')).toBeNull();
+    expect(readFileName('dcOverrides')).toBeNull();
+    expect(readStoredScope()).toEqual(DEFAULT_SCOPE);
+    expect(readHasGroups()).toBe(false);
   });
 });

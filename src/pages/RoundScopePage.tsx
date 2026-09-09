@@ -11,8 +11,8 @@ import {
   type GenerationScope, type DocumentSelection,
 } from '../lib/generationScope';
 import type { CompetitionSettings, LocaleCode } from '../types/settings';
-import { readCompetition, writeHasGroups, writeScope } from '../lib/flowState';
-import { PRESETS, writePresetSettings, writePresetId, type Preset } from '../presets';
+import { clearSettings, readCompetition, readStoredScope, writeHasGroups, writeScope } from '../lib/flowState';
+import { PRESETS, readPresetId, writePresetSettings, writePresetId, type Preset } from '../presets';
 import Header from '../components/Header';
 import Skeleton from '../components/Skeleton';
 import { useIsMobile } from '../lib/useIsMobile';
@@ -49,21 +49,32 @@ export default function RoundScopePage() {
   const [parsed, setParsed] = useState<ParsedWCIF | null>(null);
   const [isMidComp, setIsMidComp] = useState(false);
 
+  // What this step wrote last time, if the organizer came back to it. Every choice below is
+  // seeded from it, so going back never silently discards the selection. Read once: after
+  // mount the React state is the truth.
+  const [restored] = useState(readStoredScope);
+
   // Round-scope state (mid-competition only)
-  const [scopeMode, setScopeMode] = useState<'everything' | 'latest' | 'selected'>('latest');
-  const [selectedKeys, setSelectedKeys] = useState<Set<string> | null>(null);
+  const [scopeMode, setScopeMode] = useState<'everything' | 'latest' | 'selected'>(
+    restored?.mode ?? 'latest',
+  );
+  const [selectedKeys, setSelectedKeys] = useState<Set<string> | null>(
+    restored?.mode === 'selected'
+      ? new Set(restored.rounds.map(r => keyOf(r.eventId, r.roundNum)))
+      : null,
+  );
 
   // Document-type state - pre-comp defaults; overridden to mid-comp defaults once data loads
-  const [docScorecards, setDocScorecards] = useState(true);
-  const [docSchedule, setDocSchedule]     = useState(true);
-  const [docNametags, setDocNametags]     = useState(true);
+  const [docScorecards, setDocScorecards] = useState(restored?.documents.scorecards ?? true);
+  const [docSchedule, setDocSchedule]     = useState(restored?.documents.scheduleTracker ?? true);
+  const [docNametags, setDocNametags]     = useState(restored?.documents.nametags ?? true);
   // Opt-in in both pre- and mid-competition defaults - most delegates don't need it.
-  const [docRoundChecklist, setDocRoundChecklist] = useState(false);
-  const [docFirstTimers, setDocFirstTimers] = useState(false);
+  const [docRoundChecklist, setDocRoundChecklist] = useState(restored?.documents.roundChecklist ?? false);
+  const [docFirstTimers, setDocFirstTimers] = useState(restored?.documents.firstTimerSlips ?? false);
 
   // Regional preset - null means "Default". A preset only seeds the options below
   // (and, via sessionStorage, the /settings step); everything stays editable after.
-  const [presetId, setPresetId] = useState<string | null>(null);
+  const [presetId, setPresetId] = useState<string | null>(restored ? readPresetId() : null);
 
   useEffect(() => {
     if (!competitionId || !token) return;
@@ -100,7 +111,8 @@ export default function RoundScopePage() {
         const midComp = result.laterRoundsWithAssignments.length > 0;
         setIsMidComp(midComp);
 
-        if (midComp) {
+        // Defaults only: a restored selection is the organizer's own and outranks them.
+        if (midComp && !restored) {
           // Mid-competition default: scorecards only
           setDocSchedule(false);
           setDocNametags(false);
@@ -192,6 +204,9 @@ export default function RoundScopePage() {
 
     const showSecondRoundMode = hasUnassignedIntermediate(filterParsedByScope(parsed, scope));
     persistScope(scope, showSecondRoundMode);
+    // A different preset must actually reach /settings: that step restores what was submitted
+    // before in preference to any seed, so the old submission has to go.
+    if (presetId !== readPresetId()) clearSettings();
     // The other half of the preset lives on /settings. Always write (or clear) it so
     // going back and switching presets can't leave the previous one's settings behind.
     writePresetSettings(PRESETS.find(p => p.id === presetId)?.settings ?? null);

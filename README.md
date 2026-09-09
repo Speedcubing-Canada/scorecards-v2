@@ -64,6 +64,10 @@ WCA token endpoint (which sends no CORS headers, so the browser cannot call it d
 
 The first three run in CI on every PR and every push to `main`.
 
+Tests run in Node. A test that mounts a page opts into a DOM per file with a
+`// @vitest-environment jsdom` docblock and stubs `matchMedia`, which jsdom does not implement -
+see `src/pages/SettingsPage.test.tsx`.
+
 ## How it works
 
 ```
@@ -72,6 +76,9 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
 ```
 
 - Auth and settings live in `sessionStorage` only, cleared when the tab closes, never sent anywhere.
+- Going back re-opens a step with the choices already made on it (`src/lib/flowState.ts`), so
+  nothing is retyped; picking a different competition resets them. `/settings` goes back to
+  `/scope`, or to `/custom` for a custom competition.
 - One anonymous event per sign-in, generation, and failure goes to `POST /api/event` (see below).
 - PDF rendering runs in a Web Worker (`src/pdf/scorecardWorker.ts`) so the UI stays responsive.
 - `/scope` picks which documents and which rounds to generate; regional presets there seed

@@ -9,7 +9,7 @@ import { resolveDefaultPrimaryLanguage, secondaryLanguageRow, isCanadianLanguage
 import { parseDoubleCheckOverrides } from '../lib/parseDoubleCheckOverrides';
 import {
   readCompetition, readCustomEvents, readDetection, readHasGroups, readIsCustom,
-  readScope, writeSettings,
+  readFileName, readScope, readSettings, writeCustom, writeFileName, writeSettings,
 } from '../lib/flowState';
 import { readPresetSettings } from '../presets';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
@@ -29,6 +29,21 @@ type SettingsDraft = Omit<
   CompetitionSettings,
   'competitionId' | 'competitionName' | 'generationScope' | 'isCustomCompetition'
 >;
+
+/**
+ * The part of a stored `CompetitionSettings` that seeds this page's form: everything except the
+ * four values the flow owns. `wcaLiveId` is normalised back to `''` because `handleSubmit`
+ * writes `null` for an empty one, and `null` would make its input uncontrolled.
+ */
+function restorableSettings(previous: CompetitionSettings | null): Partial<SettingsDraft> {
+  if (!previous) return {};
+  const rest: Partial<CompetitionSettings> = { ...previous };
+  delete rest.competitionId;
+  delete rest.competitionName;
+  delete rest.generationScope;
+  delete rest.isCustomCompetition;
+  return { ...rest, wcaLiveId: rest.wcaLiveId ?? '' };
+}
 
 export default function SettingsPage() {
   const { t, i18n } = useTranslation();
@@ -63,6 +78,11 @@ export default function SettingsPage() {
   // of each option below - nothing here is locked, and `{}` means plain defaults.
   const preset = readPresetSettings();
 
+  // What was submitted last time, when the organizer came back from /generate. Spread over the
+  // defaults rather than replacing them, so a field added since the blob was written still gets
+  // its initial value. /scope drops the blob when the preset changes, so the two never fight.
+  const previous = readSettings();
+
   // Every field the user can change on this page, in one object: exactly the mutable half of
   // CompetitionSettings, so `handleSubmit` is a spread plus the four values derived from the
   // flow (id, name, scope, custom flag) - a new setting can't be forgotten there.
@@ -81,11 +101,14 @@ export default function SettingsPage() {
     nametagQrMode: preset.nametagQrMode ?? 'back-only',
     nametagLayout: preset.nametagLayout ?? 'vertical',
     scorecardCheckMode: preset.scorecardCheckMode ?? 'per-group-card',
-    // For a custom competition the events were defined on /custom and ride along here.
-    customEvents: isCustom ? readCustomEvents() : [],
     scrambleDoubleCheck: preset.scrambleDoubleCheck ?? false,
     scrambleDoubleCheckRounds: ['finals'],
     scrambleDoubleCheckOverrides: {},
+    customEvents: [],
+    ...restorableSettings(previous),
+    // A custom competition's events live in their own key, which /custom may have changed since
+    // this blob was written. A WCA competition's live only in the blob - leave those restored.
+    ...(isCustom ? { customEvents: readCustomEvents() } : {}),
   }));
 
   const patch = (fields: Partial<SettingsDraft>) => setDraft(d => ({ ...d, ...fields }));
@@ -97,11 +120,13 @@ export default function SettingsPage() {
     scrambleDoubleCheckOverrides,
   } = draft;
 
-  // Purely presentational - never leaves this page, so not part of the draft.
-  const [logoName, setLogoName] = useState<string | null>(null);
+  // Purely presentational - not part of the draft, but stored so a restored upload isn't nameless.
+  const [logoName, setLogoName] = useState<string | null>(() => readFileName('logo'));
   const [wcaLiveFetchStatus, setWcaLiveFetchStatus] = useState<'loading' | 'found' | 'not-found'>('loading');
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [dcOverridesName, setDcOverridesName] = useState<string | null>(null);
+  // Open when it already holds something: a restored custom event behind a collapsed section
+  // reads as lost, which is the whole complaint this restore exists to answer.
+  const [advancedOpen, setAdvancedOpen] = useState(customEvents.length > 0);
+  const [dcOverridesName, setDcOverridesName] = useState<string | null>(() => readFileName('dcOverrides'));
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dcFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -110,7 +135,8 @@ export default function SettingsPage() {
     if (!competitionId || isCustom) return;
     fetchWcaLiveId(competitionId).then(async id => {
       if (id) {
-        patch({ wcaLiveId: id });
+        // Only fill an empty field: a restored or hand-typed id is the organizer's.
+        setDraft(d => (d.wcaLiveId ? d : { ...d, wcaLiveId: id }));
         setWcaLiveFetchStatus('found');
         const personIds = await fetchWcaLivePersonIds(id);
         patch({ wcaLivePersonIds: personIds });
@@ -211,6 +237,10 @@ export default function SettingsPage() {
   }
 
   function handleSubmit() {
+    writeFileName('logo', logoName);
+    writeFileName('dcOverrides', dcOverridesName);
+    // Events are editable here too; write them back so /custom and the restore above see them.
+    if (isCustom) writeCustom(draft.customEvents.filter(e => e.name.trim()));
     writeSettings({
       ...draft,
       competitionId,
@@ -248,7 +278,7 @@ export default function SettingsPage() {
 
   return (
     <div style={s.page}>
-      <Header showBack onBack={() => navigate(isCustom ? '/custom' : '/competitions')} showSignOut />
+      <Header showBack onBack={() => navigate(isCustom ? '/custom' : '/scope')} showSignOut />
 
       <main style={{ ...s.main, ...(isMobile ? s.mainMobile : {}) }}>
         <div style={s.compBadge}>{competitionName}</div>

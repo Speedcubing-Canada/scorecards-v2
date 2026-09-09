@@ -19,41 +19,11 @@ import WarningBanner from '../components/WarningBanner';
 import Skeleton from '../components/Skeleton';
 import PrintGuide from '../components/PrintGuide';
 import { useIsMobile } from '../lib/useIsMobile';
-import { readStoredSettings } from '../lib/flowState';
+import { readSettings } from '../lib/flowState';
 import { downloadButtonFontSize } from '../lib/downloadButtonFontSize';
 import i18n from '../i18n/index';
 
 type Status = 'idle' | 'fetching' | 'parsing' | 'ready' | 'building' | 'error';
-
-/**
- * Read persisted settings, migrating the retired bilingual presets onto the
- * primary + optional-secondary model. Also backfills `secondaryLanguage` so
- * settings saved before that field existed don't render as `undefined`, and
- * `generationScope` for settings saved before scoped generation existed.
- */
-function loadSettings(s: Record<string, unknown> | null): CompetitionSettings | null {
-  if (!s) return null;
-  if (s.language === 'bilingual-fr') { s.language = 'fr'; s.secondaryLanguage = 'en'; }
-  else if (s.language === 'bilingual-en') { s.language = 'en'; s.secondaryLanguage = 'fr'; }
-  else if (s.secondaryLanguage === undefined) { s.secondaryLanguage = null; }
-  if (s.generationScope === undefined) s.generationScope = { mode: 'everything' };
-  const gs = s.generationScope as Record<string, unknown>;
-  if (gs.documents === undefined) gs.documents = {
-    scorecards: true, scheduleTracker: true, nametags: true,
-    roundChecklist: false, firstTimerSlips: false,
-  };
-  // Payloads saved with the earlier four-key `documents` object are missing this one.
-  const gsDocs = gs.documents as Record<string, unknown>;
-  if (gsDocs.roundChecklist === undefined) gsDocs.roundChecklist = false;
-  if (s.hideWcaLiveId === undefined) s.hideWcaLiveId = false;
-  if (s.isCustomCompetition === undefined) s.isCustomCompetition = false;
-  // Settings saved before the checking-mode option existed keep the original behaviour.
-  if (s.scorecardCheckMode === undefined) s.scorecardCheckMode = 'per-group-card';
-  // The retired 'checking-sheet' value meant "no cover cards, print the standalone sheet".
-  // The sheet is now an independently-selected document, so only its cover-card half survives.
-  if (s.scorecardCheckMode === 'checking-sheet') s.scorecardCheckMode = 'none';
-  return s as unknown as CompetitionSettings;
-}
 
 export default function GeneratePage() {
   const { t } = useTranslation();
@@ -61,7 +31,7 @@ export default function GeneratePage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  const settings: CompetitionSettings | null = loadSettings(readStoredSettings());
+  const settings: CompetitionSettings | null = readSettings();
 
   const [status, setStatus] = useState<Status>('idle');
   const [statusMsg, setStatusMsg] = useState('');
