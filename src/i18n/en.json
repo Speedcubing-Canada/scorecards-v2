@@ -23,10 +23,10 @@
   },
   "picker": {
     "heading": "Select a Competition",
-    "hint": "Showing competitions you manage or delegate.",
+    "hint": "Showing upcoming and ongoing competitions you manage or delegate.",
     "loading": "Loading competitions…",
     "error": "Error: {{message}}",
-    "empty": "No competitions found. Make sure you are a delegate or organizer.",
+    "empty": "No upcoming competitions found. Make sure you are a delegate or organizer.",
     "create_custom_title": "Create a custom competition",
     "create_custom_desc": "Unofficial competition - define events manually and print scorecards"
   },

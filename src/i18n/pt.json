@@ -23,10 +23,10 @@
   },
   "picker": {
     "heading": "Selecionar uma competição",
-    "hint": "Exibindo competições que você gerencia ou delega.",
+    "hint": "Exibindo competições futuras e em andamento que você gerencia ou delega.",
     "loading": "Carregando competições…",
     "error": "Erro: {{message}}",
-    "empty": "Nenhuma competição encontrada. Verifique se você é delegado ou organizador.",
+    "empty": "Nenhuma competição futura encontrada. Verifique se você é delegado ou organizador.",
     "create_custom_title": "Criar uma competição personalizada",
     "create_custom_desc": "Competição não oficial - defina os eventos manualmente e imprima as súmulas"
   },

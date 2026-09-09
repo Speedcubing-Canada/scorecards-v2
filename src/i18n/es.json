@@ -23,10 +23,10 @@
   },
   "picker": {
     "heading": "Seleccionar una competencia",
-    "hint": "Mostrando competencias que usted gestiona o delega.",
+    "hint": "Mostrando competencias próximas y en curso que usted gestiona o delega.",
     "loading": "Cargando competencias…",
     "error": "Error: {{message}}",
-    "empty": "No se encontraron competencias. Asegúrese de ser delegado u organizador.",
+    "empty": "No se encontraron competencias próximas. Asegúrese de ser delegado u organizador.",
     "create_custom_title": "Crear una competencia personalizada",
     "create_custom_desc": "Competencia no oficial - defina los eventos manualmente e imprima las hojas"
   },

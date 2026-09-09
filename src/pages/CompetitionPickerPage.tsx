@@ -9,6 +9,7 @@ import Header from '../components/Header';
 import AboutDialog from '../components/AboutDialog';
 import Skeleton from '../components/Skeleton';
 import { useIsMobile } from '../lib/useIsMobile';
+import { visibleCompetitions } from '../lib/competitionList';
 import { clearCustom, clearDownstream, readCompetition, writeCompetition } from '../lib/flowState';
 import { clearPresetSettings } from '../presets';
 
@@ -26,11 +27,10 @@ export default function CompetitionPickerPage() {
     // isLoading starts true, so no setState here - the skeleton is already showing.
     fetchManagedCompetitions(token.access_token)
       .then((data) => {
-        const sorted = [...data].sort(
-          (a: WCACompetition, b: WCACompetition) =>
-            new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
+        // Past competitions are kept in dev: off-season they are the only real WCIF to test with.
+        setCompetitions(
+          visibleCompetitions(data, new Date().toLocaleDateString('en-CA'), import.meta.env.DEV)
         );
-        setCompetitions(sorted);
       })
       .catch((err) => setError(err.message))
       .finally(() => setIsLoading(false));
