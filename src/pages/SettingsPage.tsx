@@ -49,6 +49,9 @@ function restorableSettings(previous: CompetitionSettings | null): Partial<Setti
   delete rest.competitionName;
   delete rest.generationScope;
   delete rest.isCustomCompetition;
+  // Blobs written before the double-check switch was removed carry `false`, and no control
+  // is left to undo that.
+  delete rest.scrambleDoubleCheck;
   return { ...rest, wcaLiveId: rest.wcaLiveId ?? '' };
 }
 
@@ -108,9 +111,11 @@ export default function SettingsPage() {
     nametagQrMode: preset.nametagQrMode ?? 'back-only',
     nametagLayout: preset.nametagLayout ?? 'vertical',
     scorecardCheckMode: preset.scorecardCheckMode ?? 'per-group-card',
-    scrambleDoubleCheck: preset.scrambleDoubleCheck ?? false,
-    // The ranking rules cover regulation 11i on their own. A whole round is only worth
-    // double-checking at a championship, whose finals 11i1f singles out.
+    // Regulation 11i binds every competition, so there is no switch for it - "off" is
+    // untick both ranking rules and leave the round and CSV rules empty. The ranking rules
+    // cover 11i on their own; a whole round is only worth double-checking at a
+    // championship, whose finals 11i1f singles out.
+    scrambleDoubleCheck: true,
     scrambleDoubleCheckRounds: isChampionship(competitionName) ? ['finals'] : [],
     scrambleDoubleCheckOverrides: {},
     scrambleDoubleCheckWorldTop: DC_WORLD_TOP_DEFAULT,
@@ -128,7 +133,7 @@ export default function SettingsPage() {
   const {
     language, secondaryLanguage, paperFormat, secondRoundMode, logoDataUrl, useDefaultLogo,
     wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,
-    scorecardCheckMode, customEvents, scrambleDoubleCheck, scrambleDoubleCheckRounds,
+    scorecardCheckMode, customEvents, scrambleDoubleCheckRounds,
     scrambleDoubleCheckOverrides, scrambleDoubleCheckWorldTop, scrambleDoubleCheckRegionTop,
     scrambleDoubleCheckRegionScope,
   } = draft;
@@ -138,7 +143,9 @@ export default function SettingsPage() {
   const [wcaLiveFetchStatus, setWcaLiveFetchStatus] = useState<'loading' | 'found' | 'not-found'>('loading');
   // Open when it already holds something: a restored custom event behind a collapsed section
   // reads as lost, which is the whole complaint this restore exists to answer.
-  const [advancedOpen, setAdvancedOpen] = useState(customEvents.length > 0);
+  const [advancedOpen, setAdvancedOpen] = useState(
+    customEvents.length > 0 || Object.keys(scrambleDoubleCheckOverrides).length > 0,
+  );
   const [dcOverridesName, setDcOverridesName] = useState<string | null>(() => readFileName('dcOverrides'));
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dcFileInputRef = useRef<HTMLInputElement>(null);
@@ -292,7 +299,7 @@ export default function SettingsPage() {
       wcaLiveId: isCustom ? null : (draft.wcaLiveId?.trim() || null),
       wcaLivePersonIds: isCustom ? null : draft.wcaLivePersonIds,
       hideWcaLiveId: isCustom ? true : draft.hideWcaLiveId,
-      scrambleDoubleCheck: isCustom ? false : draft.scrambleDoubleCheck,
+      scrambleDoubleCheck: !isCustom,
     });
     navigate('/generate');
   }
@@ -432,150 +439,6 @@ export default function SettingsPage() {
               </label>
             ))}
           </div>
-        </section>
-        )}
-
-        {showScorecards && !isCustom && (
-        <section style={s.section}>
-          <h3 style={s.sectionTitle}>{t('settings.double_check.title')}</h3>
-          <p style={s.hint}>{t('settings.double_check.hint')}</p>
-
-          <label style={{ ...s.optionCard, cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={scrambleDoubleCheck}
-              onChange={e => patch({ scrambleDoubleCheck: e.target.checked })}
-              style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
-            />
-            <div>
-              <div style={s.optionLabel}>{t('settings.double_check.enable')}</div>
-              <div style={s.optionDesc}>{t('settings.double_check.enable_desc')}</div>
-            </div>
-          </label>
-
-          {scrambleDoubleCheck && (
-            <div style={{ marginTop: 16 }}>
-              <div style={{ ...s.subheading, marginTop: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-                {t('settings.double_check.ranking_title')}
-                <Tooltip label={t('settings.double_check.ranking_tooltip')}>
-                  <span
-                    tabIndex={0}
-                    aria-label={t('settings.double_check.ranking_tooltip')}
-                    style={s.infoIcon}
-                  >
-                    <Info size={14} strokeWidth={2} aria-hidden="true" />
-                  </span>
-                </Tooltip>
-              </div>
-              <p style={s.hint}>{t('settings.double_check.ranking_hint')}</p>
-
-              <div style={s.optionGroup}>
-                <div style={{ ...s.optionCard, ...(scrambleDoubleCheckWorldTop !== null ? s.optionCardActive : {}), alignItems: 'center' }}>
-                  <label style={s.rankingRule}>
-                    <input
-                      type="checkbox"
-                      checked={scrambleDoubleCheckWorldTop !== null}
-                      onChange={() => toggleDcRankingRule('scrambleDoubleCheckWorldTop')}
-                      style={{ accentColor: 'var(--primary)', flexShrink: 0 }}
-                    />
-                    <span style={s.optionLabel}>{t('settings.double_check.ranking_world')}</span>
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={scrambleDoubleCheckWorldTop ?? ''}
-                    disabled={scrambleDoubleCheckWorldTop === null}
-                    aria-label={t('settings.double_check.ranking_world')}
-                    onChange={e => setDcRankingTop('scrambleDoubleCheckWorldTop', e.target.value)}
-                    onBlur={() => normalizeDcRankingTop('scrambleDoubleCheckWorldTop')}
-                    style={s.rankingInput}
-                  />
-                </div>
-
-                <div style={{ ...s.optionCard, ...(scrambleDoubleCheckRegionTop !== null ? s.optionCardActive : {}), alignItems: 'center' }}>
-                  <label style={s.rankingRule}>
-                    <input
-                      type="checkbox"
-                      checked={scrambleDoubleCheckRegionTop !== null}
-                      onChange={() => toggleDcRankingRule('scrambleDoubleCheckRegionTop')}
-                      style={{ accentColor: 'var(--primary)', flexShrink: 0 }}
-                    />
-                    <span style={s.optionLabel}>{t('settings.double_check.ranking_region')}</span>
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={scrambleDoubleCheckRegionTop ?? ''}
-                    disabled={scrambleDoubleCheckRegionTop === null}
-                    aria-label={t('settings.double_check.ranking_region')}
-                    onChange={e => setDcRankingTop('scrambleDoubleCheckRegionTop', e.target.value)}
-                    onBlur={() => normalizeDcRankingTop('scrambleDoubleCheckRegionTop')}
-                    style={s.rankingInput}
-                  />
-                </div>
-              </div>
-
-              {scrambleDoubleCheckRegionTop !== null && (
-                <div style={{ ...s.segmentedControl, marginTop: 8 }}>
-                  {DOUBLE_CHECK_REGION_OPTIONS.map(opt => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => patch({ scrambleDoubleCheckRegionScope: opt.value })}
-                      aria-pressed={scrambleDoubleCheckRegionScope === opt.value}
-                      style={{ ...s.segment, ...(scrambleDoubleCheckRegionScope === opt.value ? s.segmentActive : s.segmentInactive) }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <div style={s.subheading}>
-                {t('settings.double_check.rounds_title')}
-              </div>
-              <div style={s.optionGroup}>
-                {DOUBLE_CHECK_ROUND_OPTIONS.map(opt => (
-                  <label key={opt.value} style={{ ...s.optionCard, ...(scrambleDoubleCheckRounds.includes(opt.value) ? s.optionCardActive : {}), cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={scrambleDoubleCheckRounds.includes(opt.value)}
-                      onChange={() => toggleDoubleCheckRound(opt.value)}
-                      style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
-                    />
-                    <div>
-                      <div style={s.optionLabel}>{opt.label}</div>
-                    </div>
-                  </label>
-                ))}
-              </div>
-
-              <div style={s.subheading}>
-                {t('settings.double_check.overrides_title')}
-              </div>
-              <p style={s.hint}>{t('settings.double_check.overrides_hint')}</p>
-              {dcOverrideCount > 0 ? (
-                <div style={s.logoPreview}>
-                  <div style={s.logoMeta}>
-                    <span style={s.logoName}>{dcOverridesName}</span>
-                    <span style={s.optionDesc}>{t('settings.double_check.overrides_count', { count: dcOverrideCount })}</span>
-                    <button style={s.removeBtn} onClick={handleRemoveDcOverrides}>{t('common.remove')}</button>
-                  </div>
-                </div>
-              ) : (
-                <button style={s.uploadBtn} onClick={() => dcFileInputRef.current?.click()}>
-                  {t('common.choose_file')}
-                </button>
-              )}
-              <input
-                ref={dcFileInputRef}
-                type="file"
-                accept=".csv,text/csv,text/plain"
-                style={{ display: 'none' }}
-                onChange={handleDcOverridesChange}
-              />
-            </div>
-          )}
         </section>
         )}
 
@@ -747,7 +610,7 @@ export default function SettingsPage() {
         </section>
         )}
 
-        {everything && showScorecards && !isCustom && (
+        {showScorecards && !isCustom && (
         <section style={s.section}>
           <button style={s.advancedToggle} onClick={() => setAdvancedOpen(o => !o)} aria-expanded={advancedOpen}>
             <span style={s.advancedToggleArrow}>
@@ -758,13 +621,140 @@ export default function SettingsPage() {
 
           {advancedOpen && (
             <div style={{ marginTop: 16 }}>
-              <h3 style={s.sectionTitle}>
-                {t('settings.advanced.custom_events_title')}{' '}
-                <span style={s.optional}>({t('settings.advanced.custom_events_optional')})</span>
-              </h3>
-              <p style={s.hint}>{t('settings.advanced.custom_events_hint')}</p>
+              <h3 style={s.sectionTitle}>{t('settings.double_check.title')}</h3>
+              <p style={s.hint}>{t('settings.double_check.hint')}</p>
 
-              <CustomEventEditor events={customEvents} onChange={events => patch({ customEvents: events })} />
+              <div style={{ ...s.subheading, marginTop: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+                {t('settings.double_check.ranking_title')}
+                <Tooltip label={t('settings.double_check.ranking_tooltip')}>
+                  <span
+                    tabIndex={0}
+                    aria-label={t('settings.double_check.ranking_tooltip')}
+                    style={s.infoIcon}
+                  >
+                    <Info size={14} strokeWidth={2} aria-hidden="true" />
+                  </span>
+                </Tooltip>
+              </div>
+              <p style={s.hint}>{t('settings.double_check.ranking_hint')}</p>
+
+              <div style={s.optionGroup}>
+                <div style={{ ...s.optionCard, ...(scrambleDoubleCheckWorldTop !== null ? s.optionCardActive : {}), alignItems: 'center' }}>
+                  <label style={s.rankingRule}>
+                    <input
+                      type="checkbox"
+                      checked={scrambleDoubleCheckWorldTop !== null}
+                      onChange={() => toggleDcRankingRule('scrambleDoubleCheckWorldTop')}
+                      style={{ accentColor: 'var(--primary)', flexShrink: 0 }}
+                    />
+                    <span style={s.optionLabel}>{t('settings.double_check.ranking_world')}</span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={scrambleDoubleCheckWorldTop ?? ''}
+                    disabled={scrambleDoubleCheckWorldTop === null}
+                    aria-label={t('settings.double_check.ranking_world')}
+                    onChange={e => setDcRankingTop('scrambleDoubleCheckWorldTop', e.target.value)}
+                    onBlur={() => normalizeDcRankingTop('scrambleDoubleCheckWorldTop')}
+                    style={s.rankingInput}
+                  />
+                </div>
+
+                <div style={{ ...s.optionCard, ...(scrambleDoubleCheckRegionTop !== null ? s.optionCardActive : {}), alignItems: 'center' }}>
+                  <label style={s.rankingRule}>
+                    <input
+                      type="checkbox"
+                      checked={scrambleDoubleCheckRegionTop !== null}
+                      onChange={() => toggleDcRankingRule('scrambleDoubleCheckRegionTop')}
+                      style={{ accentColor: 'var(--primary)', flexShrink: 0 }}
+                    />
+                    <span style={s.optionLabel}>{t('settings.double_check.ranking_region')}</span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={scrambleDoubleCheckRegionTop ?? ''}
+                    disabled={scrambleDoubleCheckRegionTop === null}
+                    aria-label={t('settings.double_check.ranking_region')}
+                    onChange={e => setDcRankingTop('scrambleDoubleCheckRegionTop', e.target.value)}
+                    onBlur={() => normalizeDcRankingTop('scrambleDoubleCheckRegionTop')}
+                    style={s.rankingInput}
+                  />
+                </div>
+              </div>
+
+              {scrambleDoubleCheckRegionTop !== null && (
+                <div style={{ ...s.segmentedControl, marginTop: 8 }}>
+                  {DOUBLE_CHECK_REGION_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => patch({ scrambleDoubleCheckRegionScope: opt.value })}
+                      aria-pressed={scrambleDoubleCheckRegionScope === opt.value}
+                      style={{ ...s.segment, ...(scrambleDoubleCheckRegionScope === opt.value ? s.segmentActive : s.segmentInactive) }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div style={s.subheading}>
+                {t('settings.double_check.rounds_title')}
+              </div>
+              <div style={s.optionGroup}>
+                {DOUBLE_CHECK_ROUND_OPTIONS.map(opt => (
+                  <label key={opt.value} style={{ ...s.optionCard, ...(scrambleDoubleCheckRounds.includes(opt.value) ? s.optionCardActive : {}), cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={scrambleDoubleCheckRounds.includes(opt.value)}
+                      onChange={() => toggleDoubleCheckRound(opt.value)}
+                      style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
+                    />
+                    <div>
+                      <div style={s.optionLabel}>{opt.label}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+
+              <div style={s.subheading}>
+                {t('settings.double_check.overrides_title')}
+              </div>
+              <p style={s.hint}>{t('settings.double_check.overrides_hint')}</p>
+              {dcOverrideCount > 0 ? (
+                <div style={s.logoPreview}>
+                  <div style={s.logoMeta}>
+                    <span style={s.logoName}>{dcOverridesName}</span>
+                    <span style={s.optionDesc}>{t('settings.double_check.overrides_count', { count: dcOverrideCount })}</span>
+                    <button style={s.removeBtn} onClick={handleRemoveDcOverrides}>{t('common.remove')}</button>
+                  </div>
+                </div>
+              ) : (
+                <button style={s.uploadBtn} onClick={() => dcFileInputRef.current?.click()}>
+                  {t('common.choose_file')}
+                </button>
+              )}
+              <input
+                ref={dcFileInputRef}
+                type="file"
+                accept=".csv,text/csv,text/plain"
+                style={{ display: 'none' }}
+                onChange={handleDcOverridesChange}
+              />
+
+              {everything && (
+                <>
+                  <h3 style={{ ...s.sectionTitle, marginTop: 28 }}>
+                    {t('settings.advanced.custom_events_title')}{' '}
+                    <span style={s.optional}>({t('settings.advanced.custom_events_optional')})</span>
+                  </h3>
+                  <p style={s.hint}>{t('settings.advanced.custom_events_hint')}</p>
+
+                  <CustomEventEditor events={customEvents} onChange={events => patch({ customEvents: events })} />
+                </>
+              )}
             </div>
           )}
         </section>

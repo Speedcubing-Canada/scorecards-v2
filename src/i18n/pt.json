@@ -65,8 +65,6 @@
     "double_check": {
       "title": "Verificação dupla de embaralhamentos",
       "hint": "Adiciona uma segunda coluna de assinatura do embaralhador para verificar os embaralhamentos de forma independente.",
-      "enable": "Ativar a verificação dupla de embaralhamento",
-      "enable_desc": "Adiciona uma segunda coluna de assinatura do embaralhador às súmulas selecionadas.",
       "rounds_title": "Aplicar às rodadas",
       "round_first": "Rodada 1",
       "round_second": "Rodada 2",

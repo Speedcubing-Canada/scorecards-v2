@@ -92,7 +92,10 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
   rules already cover who needs it. The thresholds mirror
   [regulation 11i](https://www.worldcubeassociation.org/regulations/#11i), which only owes a
   replacement attempt for a regional record, a personal record in the world top 50, or a
-  championship final scrambled by two scramblers.
+  championship final scrambled by two scramblers. 11i binds every competition, so there is no
+  switch to turn the feature on: it is on for every WCA competition, its rules live under
+  **Advanced** at the bottom of `/settings`, and "off" is unticking both ranking rules with no
+  round and no CSV. Custom (non-WCA) competitions never get it, having no WCIF to rank against.
 - Scorecards come out in **cut-and-stack order**: print, cut each sheet into 4, keep the four
   positions separated, stack them in order, and the deck is already sorted. The download page
   spells this out per document.

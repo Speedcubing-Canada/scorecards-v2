@@ -65,8 +65,6 @@
     "double_check": {
       "title": "Double vérification des mélanges",
       "hint": "Ajoute une deuxième colonne de signature du mélangeur pour vérifier les mélanges de façon indépendante.",
-      "enable": "Activer la double vérification des mélanges",
-      "enable_desc": "Ajoute une deuxième colonne de signature du mélangeur aux feuilles sélectionnées.",
       "rounds_title": "Appliquer aux rondes",
       "round_first": "Ronde 1",
       "round_second": "Ronde 2",

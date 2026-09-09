@@ -52,7 +52,6 @@ Note: mid-competition, `scheduleTracker` and `nametags` default to `false` inste
 | `nametagQrMode` | `"back-only"` `"both-sides"` | `"back-only"` |
 | `nametagLayout` | `"vertical"` `"horizontal"` | `"vertical"` |
 | `scorecardCheckMode` | `"per-group-card"` `"per-round-card"` `"none"` | `"per-group-card"` |
-| `scrambleDoubleCheck` | boolean | `false` |
 
 Competition-specific things (logo upload, custom events, WCA Live ID, round scope) are deliberately not
 seedable — they differ per competition, not per region.

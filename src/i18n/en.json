@@ -65,8 +65,6 @@
     "double_check": {
       "title": "Scramble double-checking",
       "hint": "Adds a second scrambler-signature column so scrambles can be independently double-checked.",
-      "enable": "Enable scramble double-checking",
-      "enable_desc": "Adds a second scrambler signature column to the selected scorecards.",
       "rounds_title": "Apply to rounds",
       "round_first": "Round 1",
       "round_second": "Round 2",

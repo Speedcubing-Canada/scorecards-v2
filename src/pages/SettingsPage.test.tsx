@@ -55,7 +55,7 @@ const stored = (overrides: Partial<CompetitionSettings> = {}): CompetitionSettin
   nametagLayout: 'vertical',
   customEvents: [],
   scorecardCheckMode: 'per-group-card',
-  scrambleDoubleCheck: false,
+  scrambleDoubleCheck: true,
   scrambleDoubleCheckRounds: ['finals'],
   scrambleDoubleCheckOverrides: {},
   scrambleDoubleCheckWorldTop: 50,
@@ -106,9 +106,10 @@ describe('scramble double-check ranking rules', () => {
   const worldTop = () => top('World rankings, top');
   const regionTop = () => top('Regional rankings, top');
 
+  // The rules live under Advanced, collapsed by default.
   async function openDoubleCheck() {
-    writeSettings(stored({ scrambleDoubleCheck: true }));
     await renderSettings();
+    fireEvent.click(advancedToggle());
   }
 
   it('starts on the world top 50 with the regional rule off', async () => {
@@ -157,14 +158,50 @@ describe('scramble double-check ranking rules', () => {
       (screen.getByRole('checkbox', { name: 'Finals' }) as HTMLInputElement).checked;
 
     writeCompetition('TorontoOpen2026', 'Toronto Open 2026');
-    writePresetSettings({ scrambleDoubleCheck: true });
-    await renderSettings();
+    await openDoubleCheck();
     expect(finalsChecked()).toBe(false);
 
     cleanup();
     writeCompetition('CanChamp2026', 'Canadian Championship 2026');
-    await renderSettings();
+    await openDoubleCheck();
     expect(finalsChecked()).toBe(true);
+  });
+
+  // Regulation 11i applies at every competition, so there is no opt-in checkbox left - just
+  // rules that can be unticked, out of the way until an organizer goes looking for them.
+  it('has no enable switch and is collapsed until Advanced is opened', async () => {
+    await renderSettings();
+    expect(screen.queryByRole('checkbox', { name: /Enable scramble/i })).toBeNull();
+    expect(screen.queryByRole('checkbox', { name: 'World rankings, top' })).toBeNull();
+    generate();
+
+    expect(readSettings()).toMatchObject({
+      scrambleDoubleCheck: true,
+      scrambleDoubleCheckWorldTop: 50,
+      scrambleDoubleCheckRegionTop: null,
+    });
+  });
+
+  // A blob written before the switch was removed carries `false`, with nothing left to undo it.
+  it('re-enables a restored submission that had it switched off', async () => {
+    writeSettings(stored({ scrambleDoubleCheck: false }));
+    await renderSettings();
+    generate();
+
+    expect(readSettings()?.scrambleDoubleCheck).toBe(true);
+  });
+
+  // Generating scorecards alone mid-competition must not hide the rules; only the custom-event
+  // editor below them is whole-generation-only.
+  it('stays reachable when only some documents are generated', async () => {
+    writeScope({
+      mode: 'latest',
+      documents: { scorecards: true, scheduleTracker: false, nametags: false, roundChecklist: false, firstTimerSlips: false },
+    }, { showSecondRoundMode: false });
+    await openDoubleCheck();
+
+    expect(box('World rankings, top')).toBeTruthy();
+    expect(screen.queryByPlaceholderText(/Event name/)).toBeNull();
   });
 
   it('keeps digits only', async () => {
@@ -224,6 +261,7 @@ describe('restoring the previous submission', () => {
     await renderSettings();
 
     expect(screen.getByText('club-logo.png')).toBeTruthy();
+    expect(advancedToggle().getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByText('double-checks.csv')).toBeTruthy();
   });
 

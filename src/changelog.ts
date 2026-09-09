@@ -21,18 +21,22 @@ export const CHANGELOG: ChangelogEntry[] = [
       en: [
         'Scramble double-checking can now pick competitors by ranking: world top 50 by default, plus an optional national or continental threshold.',
         'Whole rounds are no longer double-checked by default, except finals at a championship.',
+        'Scramble double-checking is now always on, with its settings under Advanced in the settings page.',
       ],
       fr: [
         'La revérification des mélanges peut maintenant cibler les compétiteurs par classement : top 50 mondial par défaut, avec un seuil national ou continental en option.',
         'Les tours entiers ne sont plus revérifiés par défaut, sauf les finales lors d\'un championnat.',
+        'La revérification des mélanges est maintenant toujours active, avec ses réglages sous « Avancé » dans les paramètres.',
       ],
       es: [
         'La verificación doble de mezclas ya puede elegir competidores por ranking: top 50 mundial por defecto, más un umbral nacional o continental opcional.',
         'Las rondas completas ya no se verifican por defecto, salvo las finales en un campeonato.',
+        'La verificación doble de mezclas ahora está siempre activa, con sus ajustes en "Avanzado" en la página de ajustes.',
       ],
       pt: [
         'A verificação dupla de embaralhamentos agora pode escolher competidores por ranking: top 50 mundial por padrão, mais um limite nacional ou continental opcional.',
         'Rodadas inteiras não passam mais por verificação dupla por padrão, exceto as finais em um campeonato.',
+        'A verificação dupla de embaralhamentos agora está sempre ativa, com as configurações em "Avançado" na página de configurações.',
       ],
     },
   },

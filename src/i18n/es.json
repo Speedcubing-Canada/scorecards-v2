@@ -65,8 +65,6 @@
     "double_check": {
       "title": "Doble verificación de mezclas",
       "hint": "Añade una segunda columna de firma del mezclador para verificar las mezclas de forma independiente.",
-      "enable": "Activar la doble verificación de mezclas",
-      "enable_desc": "Añade una segunda columna de firma del mezclador a las hojas seleccionadas.",
       "rounds_title": "Aplicar a las rondas",
       "round_first": "Ronda 1",
       "round_second": "Ronda 2",

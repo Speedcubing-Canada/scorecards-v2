@@ -74,7 +74,7 @@ describe('parsePresetSettings', () => {
       language: 'fr', secondaryLanguage: 'en', paperFormat: 'A4', secondRoundMode: 'blanks',
       useDefaultLogo: false, hideWcaLiveId: true, nametagLogoMode: 'hidden',
       nametagQrMode: 'both-sides', nametagLayout: 'horizontal',
-      scorecardCheckMode: 'none', scrambleDoubleCheck: true,
+      scorecardCheckMode: 'none',
     };
     expect(parsePresetSettings(all)).toEqual(all);
   });

@@ -23,7 +23,7 @@ export type PresetSettings = Partial<Pick<CompetitionSettings,
   | 'language' | 'secondaryLanguage' | 'paperFormat' | 'secondRoundMode'
   | 'useDefaultLogo' | 'hideWcaLiveId'
   | 'nametagLogoMode' | 'nametagQrMode' | 'nametagLayout'
-  | 'scorecardCheckMode' | 'scrambleDoubleCheck'
+  | 'scorecardCheckMode'
 >>;
 
 const DOCUMENT_KEYS: (keyof DocumentSelection)[] = [
@@ -43,7 +43,6 @@ const SETTING_VALUES: Record<keyof PresetSettings, readonly string[] | 'boolean'
   nametagQrMode: ['back-only', 'both-sides'],
   nametagLayout: ['vertical', 'horizontal'],
   scorecardCheckMode: ['per-group-card', 'per-round-card', 'none'],
-  scrambleDoubleCheck: 'boolean',
 };
 
 const SETTING_KEYS = Object.keys(SETTING_VALUES) as (keyof PresetSettings)[];
