@@ -1,12 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { cleanup, fireEvent, screen } from '@testing-library/react';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
-import { AuthContext, type AuthState } from '../auth/useAuth';
-import { ThemeProvider } from '../theme/ThemeContext';
 import { markAllSeen } from '../changelog';
-import i18n from '../i18n/index';
+import { renderWithProviders, useEnglish } from '../test/render';
+import { testSettings } from '../test/fixtures';
 import {
   DEFAULT_SCOPE, readSettings, writeCompetition, writeCustom, writeFileName, writeScope,
   writeSettings,
@@ -31,57 +29,23 @@ import { fetchScoretakingSoftware, fetchWcaLiveId } from '../auth/wca';
 const mockScoretaking = vi.mocked(fetchScoretakingSoftware);
 const mockWcaLiveId = vi.mocked(fetchWcaLiveId);
 
-// jsdom ships no matchMedia; the theme provider and the mobile breakpoint both read one.
-vi.stubGlobal('matchMedia', (media: string) => ({
-  media, matches: false, onchange: null,
-  addEventListener() {}, removeEventListener() {}, dispatchEvent: () => false,
-}));
-
-const auth = { token: null, user: null, isLoading: false } as unknown as AuthState;
-
 const event = (name: string): CustomEvent =>
   ({ name, iconDataUrl: null, format: 'avg5', cutoff: '', limit: '' });
 
 /** A full settings blob as `handleSubmit` would have written it. */
-const stored = (overrides: Partial<CompetitionSettings> = {}): CompetitionSettings => ({
-  competitionId: 'WC2026',
-  competitionName: 'World Championship 2026',
-  language: 'en',
-  secondaryLanguage: null,
-  paperFormat: 'LETTER',
-  secondRoundMode: 'prefilled',
-  logoDataUrl: null,
-  useDefaultLogo: false,
-  liveResultsMode: 'wca-live',
-  wcaLiveId: null,
-  wcaLivePersonIds: null,
-  hideWcaLiveId: false,
-  nametagLogoMode: 'with-name',
-  nametagQrMode: 'back-only',
-  nametagLayout: 'vertical',
-  customEvents: [],
-  scorecardCheckMode: 'per-group-card',
-  scrambleDoubleCheck: true,
-  scrambleDoubleCheckRounds: ['finals'],
-  scrambleDoubleCheckOverrides: {},
-  scrambleDoubleCheckWorldTop: 50,
-  scrambleDoubleCheckRegionTop: null,
-  scrambleDoubleCheckRegionScope: 'national',
-  generationScope: DEFAULT_SCOPE,
-  isCustomCompetition: false,
-  ...overrides,
-});
+const stored = (overrides: Partial<CompetitionSettings> = {}): CompetitionSettings =>
+  testSettings({
+    competitionId: 'WC2026',
+    competitionName: 'World Championship 2026',
+    useDefaultLogo: false,
+    generationScope: DEFAULT_SCOPE,
+    scrambleDoubleCheck: true,
+    scrambleDoubleCheckWorldTop: 50,
+    ...overrides,
+  });
 
 async function renderSettings() {
-  const view = render(
-    <ThemeProvider>
-      <MemoryRouter>
-        <AuthContext.Provider value={auth}>
-          <SettingsPage />
-        </AuthContext.Provider>
-      </MemoryRouter>
-    </ThemeProvider>,
-  );
+  const view = renderWithProviders(<SettingsPage />);
   // Settles the WCA Live lookup the page fires on mount.
   await screen.findByRole('button', { name: /Generate/ });
   return view;
@@ -96,7 +60,7 @@ beforeEach(async () => {
   // Keep the What's New dialog from opening over the page, and the copy in one language so
   // queries by accessible name are stable.
   markAllSeen();
-  await i18n.changeLanguage('en');
+  await useEnglish();
   vi.clearAllMocks();
   mockScoretaking.mockResolvedValue('wca_live');
   mockWcaLiveId.mockResolvedValue(null);

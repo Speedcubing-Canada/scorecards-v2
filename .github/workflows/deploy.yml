@@ -1,6 +1,11 @@
 # CI + deployment pipeline.
-#   pull request  → lint, typecheck, test (no deploy)
-#   push to main  → lint, typecheck, test → build → deploy to App Engine
+#   push to any branch → lint, typecheck, test with coverage (no deploy)
+#   pull request       → same
+#   push to main       → same → build → deploy to App Engine
+#
+# There is no staging environment, so the test job is the only thing standing
+# between a branch and production. It runs on every branch push, not just on
+# PRs, so a branch is known-good before anyone opens one.
 #
 # See .github/workflows/README.md for one-time GCP setup instructions.
 #
@@ -17,9 +22,14 @@ env:
 
 on:
   push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
+
+# A branch push and its PR event are the same commit: run one, cancel the stale
+# one on a rapid re-push. Never cancel on main - that would kill a live deploy.
+concurrency:
+  group: ci-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -27,7 +37,8 @@ permissions:
 
 jobs:
   # ── 1. Lint, typecheck, test ──────────────────────────────────────────────
-  # Runs on pull requests too, where the deploy job below is skipped.
+  # Runs on every push and pull request; the deploy job below is skipped unless
+  # the ref is main.
   test:
     name: Lint, typecheck & test
     runs-on: ubuntu-latest
@@ -50,16 +61,38 @@ jobs:
       # `npm run build` runs this too, but as its own step it typechecks src/**
       # (test files included) and fails a PR that never reaches a build.
       - name: Typecheck
-        run: npx tsc -b
+        run: npm run typecheck
 
+      # Fails if coverage drops below the thresholds committed in
+      # vitest.config.ts. Raising them is automatic (thresholds.autoUpdate).
       - name: Test
-        run: npm test
+        run: npm run test:coverage
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          [ -f coverage/coverage-summary.json ] || exit 0
+          jq -r '.total | "| metric | % | covered / total |",
+                          "|---|---|---|",
+                          "| lines | \(.lines.pct)% | \(.lines.covered) / \(.lines.total) |",
+                          "| statements | \(.statements.pct)% | \(.statements.covered) / \(.statements.total) |",
+                          "| functions | \(.functions.pct)% | \(.functions.covered) / \(.functions.total) |",
+                          "| branches | \(.branches.pct)% | \(.branches.covered) / \(.branches.total) |"' \
+            coverage/coverage-summary.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
 
   # ── 2. Build and deploy ───────────────────────────────────────────────────
   deploy:
     name: Deploy → Production
     needs: test
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:

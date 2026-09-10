@@ -57,16 +57,36 @@ WCA token endpoint (which sends no CORS headers, so the browser cannot call it d
 
 | Command | |
 |---|---|
-| `npm test` | Vitest, ~5s, no network and no PDF rendering |
+| `npm test` | Vitest, no network |
+| `npm run test:coverage` | The same run, with coverage and its thresholds enforced |
 | `npm run lint` | ESLint |
-| `npx tsc -b` | Typecheck (also the first half of `npm run build`) |
+| `npm run typecheck` | `tsc -b` (also the first half of `npm run build`) |
 | `npm run render:fixtures` | Render every PDF headlessly to `../current-output/` |
 
-The first three run in CI on every PR and every push to `main`.
+Lint, typecheck and `test:coverage` run in CI on **every branch push** and every PR. There is
+no staging environment, so that job is the only thing between a branch and production.
+
+### Coverage is a ratchet
+
+`npm run test:coverage` fails if coverage falls below the thresholds committed in
+`vitest.config.ts`, and Vitest's `thresholds.autoUpdate` rewrites them **upward** whenever a run
+improves on them. So: add tests, commit the raised numbers, and the floor never slips back.
+Never lower them by hand. Uncovered files are included on purpose, so the number is the honest
+one; only `src/assets`, `src/types`, `src/main.tsx` and the test helpers are excluded.
+
+### Writing tests
 
 Tests run in Node. A test that mounts a page opts into a DOM per file with a
-`// @vitest-environment jsdom` docblock and stubs `matchMedia`, which jsdom does not implement -
-see `src/pages/SettingsPage.test.tsx`.
+`// @vitest-environment jsdom` docblock and renders through `renderWithProviders`
+(`src/test/render.tsx`), which wires the router, the theme and the auth context and stubs
+`matchMedia`, which jsdom does not implement. `src/test/fixtures.ts` has `testSettings()` (a
+complete `CompetitionSettings`) and `sampleWcif()` (a one-day competition that fills every
+bucket `parseWCIF` produces); `scripts/renderFixtures.ts` uses the same settings builder.
+
+`src/pdf/render.integration.test.ts` renders every job kind `buildPdfJobs` can emit through the
+real documents with `renderToBuffer`. It asserts only that a valid PDF comes out, never layout:
+the `*-layout.test.ts` files own the measurements, and `scripts/checkFixtures.sh` owns the
+pixels.
 
 ## How it works
 
@@ -124,7 +144,9 @@ Non-obvious constraints that look arbitrary in the code but break real output if
   rebuilding there ships `client_id=undefined` over the good `dist/`.
 - **No test asserts a translated string.** Rewording printed copy must never turn CI red, so the
   guards are structural: key parity across locales, and width sweeps that check a string still
-  *fits* its column. A failing sweep means the text is genuinely too long, shorten it.
+  *fits* its column. A failing sweep means the text is genuinely too long, shorten it. A page
+  test that has to find a control by its accessible name looks the name up through `i18n.t()`,
+  so it follows a rewording instead of breaking on it.
 
 ## Contributing
 
@@ -155,7 +177,8 @@ Non-obvious constraints that look arbitrary in the code but break real output if
 ## Deploying
 
 Pushing to `main` deploys automatically via
-[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) once the test job passes. One-time
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) once the test job passes. A push
+to any other branch runs the same test job and stops there. One-time
 GCP setup lives in [`.github/workflows/README.md`](.github/workflows/README.md). For an emergency
 manual deploy: `VITE_WCA_CLIENT_ID=… npm run build && ./deploy.sh`.
 

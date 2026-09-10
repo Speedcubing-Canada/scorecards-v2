@@ -26,49 +26,10 @@ import type {
   NametTagEntry, FirstTimerEntry, ScorecardData, ScheduleDay, CheckingDay,
 } from '../src/lib/wcif-parser';
 import { finalizeEntries } from '../src/lib/wcif-parser';
-import type { CompetitionSettings } from '../src/types/settings';
+import { testSettings as settings } from '../src/test/fixtures';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = resolve(__dir, '../../current-output');
-
-/**
- * A plausible default settings object. Individual fixtures override what they exercise.
- * Kept here rather than in a shared fixture module because only this script needs a
- * *complete* CompetitionSettings - the unit tests build minimal ones.
- */
-function settings(over: Partial<CompetitionSettings> = {}): CompetitionSettings {
-  return {
-    competitionId: 'GrosJouetsaMontreal2026',
-    competitionName: 'Gros Jouets à Montréal 2026',
-    language: 'en',
-    secondaryLanguage: null,
-    paperFormat: 'LETTER',
-    secondRoundMode: 'prefilled',
-    logoDataUrl: null,
-    useDefaultLogo: true,
-    liveResultsMode: 'wca-live',
-    wcaLiveId: null,
-    wcaLivePersonIds: null,
-    hideWcaLiveId: false,
-    nametagLogoMode: 'with-name',
-    nametagQrMode: 'back-only',
-    nametagLayout: 'vertical',
-    customEvents: [],
-    scorecardCheckMode: 'per-group-card',
-    scrambleDoubleCheck: false,
-    scrambleDoubleCheckRounds: ['finals'],
-    scrambleDoubleCheckOverrides: {},
-    generationScope: {
-      mode: 'everything',
-      documents: {
-        scorecards: true, scheduleTracker: true, nametags: true,
-        roundChecklist: false, firstTimerSlips: false,
-      },
-    },
-    isCustomCompetition: false,
-    ...over,
-  };
-}
 
 // ── Name tags: the real Gros Jouets 2026 export ───────────────────────────────
 // Path is built via readdir rather than a literal, because the directory names contain
