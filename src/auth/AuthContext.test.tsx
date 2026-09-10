@@ -13,14 +13,11 @@ import { send } from '../lib/analytics';
 import { AuthProvider } from './AuthContext';
 import { useAuth, type AuthState } from './useAuth';
 
-// The OAuth round trip. Two of its branches are the app's only CSRF and PKCE defences and
-// nothing else touches them: a returned `state` that does not match what was stored must be
-// refused, and a callback with no stored verifier must not be exchanged. Both are one `if`
-// deep, so a refactor can drop either without any other test noticing.
+// The state check and the missing-verifier check are the app's only CSRF and PKCE defences,
+// and each is one `if` deep.
 //
-// jsdom's crypto has getRandomValues but no subtle, which generatePKCE needs for the S256
-// challenge - hence the webcrypto stub rather than a mocked pkce module. The real PKCE code
-// runs here.
+// jsdom's crypto has getRandomValues but no subtle, which the S256 challenge needs: hence the
+// webcrypto stub rather than a mocked pkce module. The real PKCE code runs here.
 
 // Updated after every render rather than during one: reassigning an outer variable
 // mid-render is the side effect react-hooks/globals rejects.
@@ -41,7 +38,6 @@ function mount() {
 const token = { access_token: 'tok', token_type: 'Bearer', expires_in: 7200, scope: 'public', created_at: 0 };
 const user = { id: 7, name: 'Test Organizer', wca_id: '2018TEST01' };
 
-/** Responses for the two calls handleCallback makes, in order. */
 function stubExchange(...over: Partial<Response>[]) {
   const fn = vi.fn()
     .mockResolvedValueOnce(over[0] ?? { ok: true, status: 200, json: async () => token })

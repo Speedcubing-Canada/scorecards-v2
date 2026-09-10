@@ -12,10 +12,9 @@ import {
 import { writePresetSettings } from '../presets';
 import SettingsPage from './SettingsPage';
 
-// The one page whose whole form is seeded from storage: it restores what was submitted before
-// so back-navigation from /generate doesn't throw the organizer's choices away. That seeding is
-// too easy to break silently - a stray key after the restore spread once wiped the custom
-// events, which live behind a collapsed section where nobody notices until they print.
+// The one page whose whole form is seeded from storage, so back-navigation from /generate
+// keeps the organizer's choices. A stray key after the restore spread once wiped the custom
+// events, which sit behind a collapsed section where nobody notices until they print.
 
 vi.mock('../auth/wca', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../auth/wca')>()),
@@ -32,7 +31,6 @@ const mockWcaLiveId = vi.mocked(fetchWcaLiveId);
 const event = (name: string): CustomEvent =>
   ({ name, iconDataUrl: null, format: 'avg5', cutoff: '', limit: '' });
 
-/** A full settings blob as `handleSubmit` would have written it. */
 const stored = (overrides: Partial<CompetitionSettings> = {}): CompetitionSettings =>
   testSettings({
     competitionId: 'WC2026',
@@ -57,8 +55,7 @@ const advancedToggle = () => screen.getByRole('button', { name: 'Advanced' });
 beforeEach(async () => {
   sessionStorage.clear();
   localStorage.clear();
-  // Keep the What's New dialog from opening over the page, and the copy in one language so
-  // queries by accessible name are stable.
+  // No What's New dialog over the page, and one language so accessible names are stable.
   markAllSeen();
   await useEnglish();
   vi.clearAllMocks();
@@ -70,8 +67,8 @@ beforeEach(async () => {
 
 afterEach(cleanup);
 
-// The ranking rules (reg. 11i) are the only settings whose control is a checkbox and a number
-// that have to stay in step: the threshold IS the switch, so an empty box must never be saved.
+// The only settings whose checkbox and number must stay in step: the threshold IS the switch,
+// so an empty box must never be saved.
 describe('scramble double-check ranking rules', () => {
   // Checkbox and threshold share the rule's name; the role tells them apart.
   const box = (name: string) => screen.getByRole('checkbox', { name });
@@ -123,9 +120,9 @@ describe('scramble double-check ranking rules', () => {
     expect(readSettings()?.scrambleDoubleCheckWorldTop).toBe(50);
   });
 
-  // The ranking rules already cover reg. 11i, so a whole round is only worth double-checking
-  // at a championship. Nothing in the WCIF or the WCA API says whether one is, so the name
-  // is the only signal. Seeded from a preset, not a stored blob, which would beat the default.
+  // A whole round is only worth double-checking at a championship, and neither the WCIF nor
+  // the API says whether one is: the name is the only signal. Seeded from a preset, since a
+  // stored blob would beat the default.
   it('leaves the round rule off, and ticks Finals only for a championship', async () => {
     const finalsChecked = () =>
       (screen.getByRole('checkbox', { name: 'Finals' }) as HTMLInputElement).checked;
@@ -140,8 +137,7 @@ describe('scramble double-check ranking rules', () => {
     expect(finalsChecked()).toBe(true);
   });
 
-  // Regulation 11i applies at every competition, so there is no opt-in checkbox left - just
-  // rules that can be unticked, out of the way until an organizer goes looking for them.
+  // Regulation 11i applies everywhere, so there is no opt-in: just rules that can be unticked.
   it('has no enable switch and is collapsed until Advanced is opened', async () => {
     await renderSettings();
     expect(screen.queryByRole('checkbox', { name: /Enable scramble/i })).toBeNull();
@@ -155,7 +151,7 @@ describe('scramble double-check ranking rules', () => {
     });
   });
 
-  // A blob written before the switch was removed carries `false`, with nothing left to undo it.
+  // An older blob carries `false`, with nothing left to undo it.
   it('re-enables a restored submission that had it switched off', async () => {
     writeSettings(stored({ scrambleDoubleCheck: false }));
     await renderSettings();
@@ -164,8 +160,7 @@ describe('scramble double-check ranking rules', () => {
     expect(readSettings()?.scrambleDoubleCheck).toBe(true);
   });
 
-  // Generating scorecards alone mid-competition must not hide the rules; only the custom-event
-  // editor below them is whole-generation-only.
+  // Scorecards-only must not hide the rules; only the custom-event editor below them.
   it('stays reachable when only some documents are generated', async () => {
     writeScope({
       mode: 'latest',
@@ -187,8 +182,8 @@ describe('scramble double-check ranking rules', () => {
 });
 
 describe('restoring the previous submission', () => {
-  // The reported bug: a custom event added to a WCA competition lives only in the settings
-  // blob, and came back empty after pressing Back on the download page.
+  // Reported bug: a custom event on a WCA competition lives only in the settings blob, and
+  // came back empty after Back on the download page.
   it('restores a custom event and opens the section holding it', async () => {
     writeSettings(stored({ customEvents: [event('Mini Guildford')] }));
     await renderSettings();
@@ -238,8 +233,7 @@ describe('restoring the previous submission', () => {
     expect(screen.getByText('double-checks.csv')).toBeTruthy();
   });
 
-  // Restore, submit without touching anything, and the payload must be what came back - a
-  // field dropped from the draft would show up here as a lost value.
+  // Restore and submit untouched: a field dropped from the draft shows up here as a loss.
   it('re-submits everything it restored', async () => {
     const settings = stored({
       language: 'fr', secondaryLanguage: 'en', paperFormat: 'A4', secondRoundMode: 'blanks',
@@ -258,8 +252,7 @@ describe('restoring the previous submission', () => {
 });
 
 describe('custom competitions', () => {
-  // Their events are edited on /custom, which writes its own key. A blob written before that
-  // edit must not win over it.
+  // /custom writes its own key, and an older blob must not win over it.
   it('takes its events from the custom-competition key, not the older blob', async () => {
     writeCompetition('custom-my-comp', 'My Comp');
     writeSettings(stored({
@@ -274,8 +267,8 @@ describe('custom competitions', () => {
   });
 });
 
-// The competition's own `scoretaking_software` decides which live-results system the name tag
-// QR codes point at. ILR needs nothing from the WCA Live API, so we must not call it.
+// `scoretaking_software` decides where the name tag QR codes point. ILR needs nothing from
+// the WCA Live API, so it must not be called.
 describe('live results mode', () => {
   it('preselects ILR and skips the WCA Live lookups when scoretaking is internal', async () => {
     mockScoretaking.mockResolvedValue('internal');
@@ -296,7 +289,7 @@ describe('live results mode', () => {
     expect(readSettings()?.wcaLiveId).toBe('9667');
   });
 
-  // The organizer may know the competition is about to switch before the WCA record does.
+  // The organizer may know about a switch before the WCA record does.
   it('does not overwrite a restored choice', async () => {
     mockScoretaking.mockResolvedValue('wca_live');
     writeSettings(stored({ liveResultsMode: 'ilr' }));
@@ -306,9 +299,8 @@ describe('live results mode', () => {
     expect(readSettings()?.liveResultsMode).toBe('ilr');
   });
 
-  // The mode only decides where the name tag QR codes point, so it has to be reachable
-  // whenever name tags are generated - including without scorecards, whose "WCA Live:"
-  // checkbox used to gate this whole section.
+  // The mode only decides where the name tag QR codes point, so it must be reachable whenever
+  // name tags are generated, scorecards or not.
   it('is reachable when name tags are generated without scorecards', async () => {
     writeScope({
       mode: 'latest',

@@ -8,8 +8,6 @@ import type {
 } from '../types/wcif';
 import type { CompetitionSettings } from '../types/settings';
 
-// ── Builder helpers ──────────────────────────────────────────────────────────
-
 let _id = 0;
 const uid = () => ++_id;
 beforeEach(() => { _id = 0; });
@@ -126,9 +124,8 @@ const scs = (entries: ScorecardData[]) =>
 const cvs = (entries: ScorecardData[]) =>
   entries.filter((e): e is CoverEntry => e.kind === 'cover' && !!e.eventId);
 
-// Invert the 4-up quadrant imposition applied by finalizeEntries: reading the printed
-// pages column-by-column with stride 4 (one quadrant pile at a time) reconstructs the
-// logical sorted order. Use this to assert on sort order rather than print layout.
+// Inverts the 4-up imposition: reading with stride 4, one quadrant pile at a time, gives
+// back the logical sorted order. Assert on that rather than on print layout.
 const unimpose = <T,>(arr: T[]): T[] => {
   const out: T[] = [];
   for (let col = 0; col < 4; col++)
@@ -136,7 +133,7 @@ const unimpose = <T,>(arr: T[]): T[] => {
   return out;
 };
 
-// ── Format selection ─────────────────────────────────────────────────────────
+// Format selection
 
 describe('scorecard format selection', () => {
   function fmtFor(eventId: EventId, roundSpec: RoundSpec): string | undefined {
@@ -194,7 +191,7 @@ describe('scorecard format selection', () => {
   });
 });
 
-// ── Round categorisation ─────────────────────────────────────────────────────
+// Round categorisation
 
 describe('round categorisation', () => {
   function mkNRounds(n: number) {
@@ -243,7 +240,6 @@ describe('round categorisation', () => {
 
   it('2-round event round 2 goes to finals, not intermediate', () => {
     const result = mkNRounds(2);
-    // roundLabel for round 2 of 2 should be "Final Round"
     expect(scs(result.finals)[0]?.roundLabel).toBe('Final Round');
   });
 
@@ -260,7 +256,7 @@ describe('round categorisation', () => {
   });
 });
 
-// ── FMC-only competition ─────────────────────────────────────────────────────
+// FMC-only competition
 
 describe('FMC-only competition', () => {
   it('produces no scorecards but still generates nametags and first-timer slips', () => {
@@ -281,7 +277,7 @@ describe('FMC-only competition', () => {
   });
 });
 
-// ── Group labels ─────────────────────────────────────────────────────────────
+// Group labels
 
 describe('group labels - single stage', () => {
   it('English: "Group 1 of 2" / "Group 2 of 2"', () => {
@@ -314,10 +310,9 @@ describe('group labels - single stage', () => {
   });
 });
 
-// ── Stage keys from room names ───────────────────────────────────────────────
-// The stage key is the part of a room's name that distinguishes it from the other rooms
-// running the same round. "Blue Stage"/"Red Stage" (colour first) has to work exactly like
-// "Scène Rouge"/"Scène Bleu" (colour last) - the Brampton Summer 2026 bug report.
+// The stage key is what distinguishes a room from the others running the same round.
+// "Blue Stage"/"Red Stage" (colour first) has to behave exactly like "Scène Rouge"/"Scène
+// Bleu" (colour last): the Brampton Summer 2026 bug report.
 
 describe('stage keys from room names', () => {
   // Two rooms running 333-r1, two groups each.
@@ -421,14 +416,11 @@ describe('group labels - multi-stage (event across multiple rooms)', () => {
   });
 });
 
-// ── Stationary rounds (fixed station-number assignments) ────────────────────
+// Stationary rounds (fixed station-number assignments)
 
 describe('stationary rounds (station-number assignments)', () => {
-  // Round 1 across two stages (Rouge g1, Bleu g2). Competitors sit at fixed stations
-  // numbered across both stages: Rouge → 1,3,5  Bleu → 2,4,6. Because the visible group
-  // label becomes the station number (stage is dropped), sorting purely by that label
-  // interleaves the stages (Rouge,Bleu,Rouge,Bleu…). The stage sort key must keep each
-  // stage's cards together.
+  // Stations are numbered across both stages (Rouge 1,3,5 / Bleu 2,4,6) and the label drops
+  // the stage, so sorting by label alone interleaves them. The stage sort key must not.
   function mkStationary() {
     const e = evt('333', [rSpec('a')]);
     const rRouge = room('Scène Rouge', [act('333', 1, [ch(100, '333', 1, 1)])]);
@@ -463,7 +455,7 @@ describe('stationary rounds (station-number assignments)', () => {
   });
 });
 
-// ── Simultaneous multi-stage finals ─────────────────────────────────────────
+// Simultaneous multi-stage finals
 
 describe('simultaneous multi-stage finals', () => {
   // 2-round event with simultaneous round-2 finals across rouge and bleu
@@ -526,12 +518,11 @@ describe('simultaneous multi-stage finals', () => {
   });
 });
 
-// ── Single-stage finals: numbered blank cards ───────────────────────────────
+// Single-stage finals: numbered blank cards
 
 describe('single-group single-stage finals', () => {
-  // One group in one stage: the event+round already identifies the stack, so a
-  // "Group 1 of 1" label would be redundant noise. The blank cards are numbered
-  // by station instead. Guards the `useStationNumbers` branch in wcif-parser.
+  // One group in one stage: event+round already identifies the stack, so the blanks are
+  // numbered by station instead. Guards the `useStationNumbers` branch.
   function mkSingleStageFinals() {
     const e = evt('333', [rSpec('a'), rSpec('a')]);
     const r = room('Scène Rouge', [
@@ -552,7 +543,7 @@ describe('single-group single-stage finals', () => {
   });
 });
 
-// ── Person filtering ──────────────────────────────────────────────────────────
+// Person filtering
 
 describe('person filtering', () => {
   function singleGroupSetup(opts: PersonOpts = {}) {
@@ -619,7 +610,7 @@ describe('person filtering', () => {
   });
 });
 
-// ── Time limit flags ──────────────────────────────────────────────────────────
+// Time limit flags
 
 describe('time limit flags', () => {
   it('cumulative cumulativeRoundIds sets isCumulative = true', () => {
@@ -649,7 +640,7 @@ describe('time limit flags', () => {
   });
 });
 
-// ── Intermediate round modes ──────────────────────────────────────────────────
+// Intermediate round modes
 
 describe('intermediate round modes (3-round event, round 2)', () => {
   function mk3Round(mode: 'blanks' | 'prefilled', adv?: AdvancementCondition) {
@@ -726,7 +717,7 @@ describe('intermediate round modes (3-round event, round 2)', () => {
     const groups = cov.map(c => c.group).sort();
     expect(groups).toContain('Bleu 1');
     expect(groups).toContain('Rouge 1');
-    // level=16, stageCount=2 → 8 each, sum = 16 ✓
+    // level=16, stageCount=2 → 8 each, sum = 16
     expect(cov.every(c => c.numScorecards === 8)).toBe(true);
   });
 
@@ -840,7 +831,7 @@ describe('intermediate round modes (3-round event, round 2)', () => {
   });
 });
 
-// ── Cover cards ───────────────────────────────────────────────────────────────
+// Cover cards
 
 describe('first-round cover cards', () => {
   it('numScorecards reflects actual participant count per group', () => {
@@ -867,7 +858,7 @@ describe('first-round cover cards', () => {
   });
 });
 
-// ── Simultaneous multi-stage semis ───────────────────────────────────────────
+// Simultaneous multi-stage semis
 
 describe('simultaneous multi-stage semis', () => {
   // 4-round event, round 3 (semis) runs simultaneously in rouge and bleu (same g1)
@@ -911,7 +902,7 @@ describe('simultaneous multi-stage semis', () => {
   });
 });
 
-// ── 4-round events (semis) ────────────────────────────────────────────────────
+// 4-round events (semis)
 
 describe('4-round events - semi-finals bucket', () => {
   function mk4Round() {
@@ -961,13 +952,12 @@ describe('4-round events - semi-finals bucket', () => {
     const semisCards = scs(result.semis).filter(s => s.eventId === '333');
     expect(intCards.length).toBeGreaterThan(0);
     // intermediate cards are round 2 → "Round 2 of 4"
-    // We can verify the intermediate round label
     expect([...scs(result.intermediate)].find(s => s.eventId === '333')?.roundLabel).toBe('Round 2 of 4');
     expect(semisCards[0]?.roundLabel).toBe('Round 3 of 4');
   });
 });
 
-// ── Cover-before-group ordering (cut-and-stack layout) ───────────────────────
+// Cover-before-group ordering (cut-and-stack layout)
 
 describe('cover-before-group ordering', () => {
   it('each cover immediately precedes its own group scorecards (not all covers first)', () => {
@@ -992,16 +982,13 @@ describe('cover-before-group ordering', () => {
     ]);
     const result = parseWCIF(mkWCIF([e], [rRouge, rBleu], [per(1, [{ aid: 100 }])]), cfg());
 
-    // Extract semis entries that belong to this event (exclude padding empty covers)
     const semisReal = result.semis.filter(s => s.eventId === '333');
 
-    // Find positions of cover cards
     const coverPositions = semisReal
       .map((e, i) => e.kind === 'cover' ? i : -1)
       .filter(i => i !== -1);
 
-    // Each cover should be followed immediately by scorecards with the same group label,
-    // not by another cover.
+    // A cover is followed by its own group's scorecards, never by another cover.
     for (const pos of coverPositions) {
       const cover = semisReal[pos] as CoverEntry;
       const next = semisReal[pos + 1];
@@ -1013,7 +1000,7 @@ describe('cover-before-group ordering', () => {
   });
 });
 
-// ── Timeslot ordering ─────────────────────────────────────────────────────────
+// Timeslot ordering
 
 describe('timeslot ordering', () => {
   it('scorecards are sorted by activity start time', () => {
@@ -1031,7 +1018,7 @@ describe('timeslot ordering', () => {
   });
 });
 
-// ── Extra scorecards ──────────────────────────────────────────────────────────
+// Extra scorecards
 
 describe('extra scorecards', () => {
   it('one extra per round per event (two events, one round each)', () => {
@@ -1136,7 +1123,7 @@ describe('extra scorecards', () => {
   });
 });
 
-// ── Schedule tracker ──────────────────────────────────────────────────────────
+// Schedule tracker
 
 describe('schedule tracker', () => {
   it('one room produces one day with one stage', () => {
@@ -1305,7 +1292,7 @@ describe('schedule tracker', () => {
   });
 });
 
-// ── Spanish language support ───────────────────────────────────────────────────
+// Spanish language support
 describe('Spanish language', () => {
   it('no wcaId male → "Nuevo Competidor" in Spanish', () => {
     const c = ch(100, '333', 1, 1);
@@ -1374,7 +1361,7 @@ describe('Spanish language', () => {
   });
 });
 
-// ── Nametag entries ───────────────────────────────────────────────────────────
+// Nametag entries
 
 describe('nametag entries', () => {
   function mkNametag(registrantId: number, wcaUserId: number, wcaRegistrationId = 1385268): NametTagEntry[] {
@@ -1536,7 +1523,7 @@ describe('first-timer entries', () => {
   });
 });
 
-// ── Scramble double-checking ──────────────────────────────────────────────────
+// Scramble double-checking
 describe('Scramble double-checking', () => {
   // 2-round event: round 1 (named) + finals (blank).
   function mk2Round(settings: Partial<CompetitionSettings>) {
@@ -1593,7 +1580,7 @@ describe('Scramble double-checking', () => {
     expect(scs(result.finals).some(s => s.scrambleDoubleCheck)).toBe(false);
   });
 
-  // ── Ranking rules (regulation 11i) ──────────────────────────────────────────
+  // Ranking rules (regulation 11i)
   // A personal best with only the ranking that matters set; the rest are 0 (unranked).
   function pb(
     type: 'single' | 'average',
@@ -1699,7 +1686,7 @@ describe('Scramble double-checking', () => {
   });
 });
 
-// ── Mid-competition: real group assignments for rounds 2+ ─────────────────────
+// Mid-competition: real group assignments for rounds 2+
 describe('mid-competition named later rounds', () => {
   // 3-round 333; both competitors are assigned to BOTH round 1 and round 2 groups
   // (groups generated mid-competition). aid 110/111 are the two round-2 groups.
@@ -1818,9 +1805,8 @@ describe('hasGroups', () => {
   });
 });
 
-// Regression: UtepsaWelcomeSCZ2026 scheduled 3x3 R2 and the final as bare time blocks with
-// no group child-activities, so no R2/final cards were generated and the second-round-mode
-// option never appeared. A later round with no groups now falls back to a single implicit group.
+// Regression: UtepsaWelcomeSCZ2026 scheduled R2 and the final as bare time blocks, so no
+// cards were generated and the second-round-mode option never appeared.
 describe('later rounds scheduled without groups (single implicit group fallback)', () => {
   // A round activity scheduled as a bare time block - no group child-activities.
   function bareAct(eventId: string, r: number, t: string): Activity {
@@ -1923,7 +1909,7 @@ describe('later rounds scheduled without groups (single implicit group fallback)
     expect(cvs(result.intermediate).length).toBe(1);
   });
 
-  // ── Scramble-set group count + advancement-based field size ──────────────
+  // Scramble-set group count + advancement-based field size
   it('synthesizes scrambleSetCount groups (2 sets → 2 groups) and sizes them by the percent field', () => {
     // Mirrors UtepsaWelcomeSCZ2026: 35 registered, R1 percent 60 → R2 field 21, R2 has 2 sets.
     const e = evt('333', [
@@ -2010,10 +1996,8 @@ describe('later rounds scheduled without groups (single implicit group fallback)
   });
 });
 
-// ── Scorecard checking modes ─────────────────────────────────────────────────
-// Covers must be gated at emission time (not filtered afterwards), because
-// finalizeEntries sorts → pads to a multiple of 4 → quadrant-reorders for
-// cut-and-stack. These tests pin both the counts and the pile ordering.
+// Covers are gated at emission, not filtered afterwards: finalizeEntries sorts, pads and
+// quadrant-reorders. These pin both the counts and the pile ordering.
 
 describe('scorecardCheckMode', () => {
   // 333: 3 rounds (r1 named with 2 groups, r2 intermediate, r3 final).
@@ -2120,8 +2104,7 @@ describe('scorecardCheckMode', () => {
   });
 });
 
-// Local copy of the bare (childless) round activity helper, which lives inside
-// another describe block above.
+// Local copy: the original lives inside another describe block.
 function bareAct2(eventId: string, r: number, t: string): Activity {
   return {
     id: uid(), name: '',
@@ -2131,7 +2114,7 @@ function bareAct2(eventId: string, r: number, t: string): Activity {
   };
 }
 
-// ── Checking sheet data ──────────────────────────────────────────────────────
+// Checking sheet data
 
 describe('checking sheet', () => {
   // The two documents share days and nothing else: the tracker keeps one table per room,
@@ -2210,11 +2193,9 @@ describe('checking sheet', () => {
   });
 });
 
-// ── One table per day ────────────────────────────────────────────────────────
-// A round produces one pile of scorecards however many rooms or stages it runs across, and
-// the pile is what the checklist tracks - so the day is the only partition. Room names have
-// no effect whatsoever; an earlier attempt keyed off them ("Red Stage") and was rejected
-// because a competition named "Red"/"Blue" would silently print the wrong layout.
+// A round produces one pile however many rooms it runs across, so the day is the only
+// partition. Room names have no effect: keying off them silently prints the wrong layout for
+// a competition with rooms named "Red"/"Blue".
 
 describe('checking sheet: one table per day', () => {
   const twoRooms = (nameA: string, nameB: string) => {
@@ -2328,7 +2309,7 @@ describe('checking sheet: one table per day', () => {
   });
 });
 
-// ── Pre-ticked first rounds ──────────────────────────────────────────────────
+// Pre-ticked first rounds
 // Round 1's groups are created on competitiongroups and its scorecards produced before
 // the competition starts, so the sheet prints those two boxes already ticked.
 
@@ -2365,7 +2346,7 @@ describe('checking sheet: pre-checked first rounds', () => {
   });
 });
 
-// ── Lunch break rule ─────────────────────────────────────────────────────────
+// Lunch break rule
 
 // A non-round activity, e.g. lunch. `code` defaults to the standard WCA activity code.
 function otherAct(name: string, t: string, code = 'other-lunch'): Activity {
@@ -2466,12 +2447,9 @@ describe('lunch break rule', () => {
   });
 });
 
-// ── Cut-and-stack contract ───────────────────────────────────────────────────
-// The download page (`components/PrintGuide.tsx`) tells organisers to cut each sheet
-// into 4, keep one pile per quadrant, and stack them 1-2-3-4 to get the whole
-// competition in order - because that's the whole point of the imposition. Nothing
-// else asserts that property on its own, so if the page layout ever changes this test
-// fails instead of the printed instructions silently becoming wrong.
+// PrintGuide.tsx tells organisers to cut each sheet into 4, keep one pile per quadrant and
+// stack them 1-2-3-4. Nothing else asserts that, so a layout change fails here instead of
+// silently making the printed instructions wrong.
 
 describe('cut-and-stack imposition (what PrintGuide promises)', () => {
   // 333 round 1 with 2 groups and enough competitors to fill several sheets.
@@ -2494,7 +2472,7 @@ describe('cut-and-stack imposition (what PrintGuide promises)', () => {
     const piles = [0, 1, 2, 3].map(q => printed.filter((_, i) => i % 4 === q));
     expect(stacked).toEqual([...piles[0], ...piles[1], ...piles[2], ...piles[3]]);
 
-    // ...and that stack is the sort order the guide claims: group, then name.
+    // ...and the stack is the order the guide claims: group, then name.
     const keys = stacked.map(x => `${x.group}|${x.kind === 'scorecard' ? x.name : ''}`);
     expect(keys.filter(k => !k.startsWith('|'))).toEqual(
       [...keys.filter(k => !k.startsWith('|'))].sort(),

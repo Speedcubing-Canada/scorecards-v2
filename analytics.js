@@ -1,10 +1,9 @@
-// Sanitiser for the anonymous usage events posted to POST /api/event by src/lib/analytics.ts.
-// The endpoint is public and unauthenticated, so nothing here trusts the body.
+// Sanitiser for POST /api/event. The endpoint is public and unauthenticated, so nothing here
+// trusts the body.
 //
-// Deliberately structural rather than a field whitelist: a whitelist duplicated between
-// client and server silently drops any field added on one side only, and the payload is
-// expected to grow. What matters at this boundary is that a log line can't be made huge,
-// deep, or self-describing - not which stat names are in fashion this month.
+// Structural rather than a field whitelist: a whitelist duplicated across client and server
+// silently drops fields added on one side only, and the payload is expected to grow. What
+// matters here is that a log line cannot be made huge, deep or self-describing.
 
 const EVENTS = new Set(['generate', 'error', 'session']);
 const MAX_STRING = 120;
@@ -59,10 +58,7 @@ function sanitizeObject(obj, depth) {
   return out;
 }
 
-/**
- * The event to log, or `null` if the body isn't one of ours. Callers must not tell the
- * sender which it was - see the endpoint in server.js.
- */
+/** `null` if the body isn't one of ours. Callers must not tell the sender which it was. */
 export function sanitizeEvent(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
   if (body.v !== 1 || !EVENTS.has(body.event)) return null;

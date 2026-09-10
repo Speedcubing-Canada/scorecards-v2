@@ -21,13 +21,12 @@ type Status = 'loading' | 'ready' | 'error';
 
 const keyOf = (eventId: string, roundNum: number) => `${eventId}|${roundNum}`;
 
-// Document defaults a preset starts from. Mid-competition, only scorecards are
-// usually wanted - the schedule and name tags were printed before day 1.
+// Mid-competition, only scorecards are usually wanted: the rest printed before day 1.
 const baseDocuments = (isMidComp: boolean): DocumentSelection => ({
   scorecards: true,
   scheduleTracker: !isMidComp,
   nametags: !isMidComp,
-  // Opt-in in both pre- and mid-competition defaults - most delegates don't need them.
+  // Opt-in either way: most delegates don't need them.
   roundChecklist: false,
   firstTimerSlips: false,
 });
@@ -49,9 +48,8 @@ export default function RoundScopePage() {
   const [parsed, setParsed] = useState<ParsedWCIF | null>(null);
   const [isMidComp, setIsMidComp] = useState(false);
 
-  // What this step wrote last time, if the organizer came back to it. Every choice below is
-  // seeded from it, so going back never silently discards the selection. Read once: after
-  // mount the React state is the truth.
+  // What this step wrote last time, seeding every choice below so going back discards
+  // nothing. Read once: after mount the React state is the truth.
   const [restored] = useState(readStoredScope);
 
   // Round-scope state (mid-competition only)
@@ -64,16 +62,16 @@ export default function RoundScopePage() {
       : null,
   );
 
-  // Document-type state - pre-comp defaults; overridden to mid-comp defaults once data loads
+  // Pre-competition defaults, overridden once the data says otherwise.
   const [docScorecards, setDocScorecards] = useState(restored?.documents.scorecards ?? true);
   const [docSchedule, setDocSchedule]     = useState(restored?.documents.scheduleTracker ?? true);
   const [docNametags, setDocNametags]     = useState(restored?.documents.nametags ?? true);
-  // Opt-in in both pre- and mid-competition defaults - most delegates don't need it.
+  // Opt-in either way: most delegates don't need it.
   const [docRoundChecklist, setDocRoundChecklist] = useState(restored?.documents.roundChecklist ?? false);
   const [docFirstTimers, setDocFirstTimers] = useState(restored?.documents.firstTimerSlips ?? false);
 
-  // Regional preset - null means "Default". A preset only seeds the options below
-  // (and, via sessionStorage, the /settings step); everything stays editable after.
+  // `null` means Default. A preset seeds the options below and the /settings step; nothing
+  // is locked.
   const [presetId, setPresetId] = useState<string | null>(restored ? readPresetId() : null);
 
   useEffect(() => {
@@ -106,14 +104,13 @@ export default function RoundScopePage() {
         const result = parseWCIF(wcif, detectionSettings);
         if (cancelled) return;
 
-        // Surface whether groups have been generated so the Settings page can warn
-        // without re-fetching the WCIF (scope always runs before settings).
+        // So the Settings page can warn without re-fetching the WCIF.
         writeHasGroups(result.hasGroups);
 
         const midComp = result.laterRoundsWithAssignments.length > 0;
         setIsMidComp(midComp);
 
-        // Defaults only: a restored selection is the organizer's own and outranks them.
+        // Defaults only: a restored selection outranks them.
         if (midComp && !restored) {
           // Mid-competition default: scorecards only
           setDocSchedule(false);
@@ -160,8 +157,7 @@ export default function RoundScopePage() {
   }, [parsed]);
   const effectiveSelected = selectedKeys ?? defaultSelected;
 
-  // Selecting a preset re-seeds every document flag from the base defaults, so
-  // switching between presets never accumulates the previous one's choices.
+  // Re-seeded from the base defaults, so switching presets never accumulates the last one's.
   function applyPreset(preset: Preset | null) {
     setPresetId(preset?.id ?? null);
     const docs = { ...baseDocuments(isMidComp), ...(preset?.documents ?? {}) };
@@ -206,11 +202,9 @@ export default function RoundScopePage() {
 
     const showSecondRoundMode = hasUnassignedIntermediate(filterParsedByScope(parsed, scope));
     persistScope(scope, showSecondRoundMode);
-    // A different preset must actually reach /settings: that step restores what was submitted
-    // before in preference to any seed, so the old submission has to go.
+    // /settings prefers a previous submission to any seed, so the old one has to go.
     if (presetId !== readPresetId()) clearSettings();
-    // The other half of the preset lives on /settings. Always write (or clear) it so
-    // going back and switching presets can't leave the previous one's settings behind.
+    // Always write or clear, so switching presets leaves nothing of the previous one.
     writePresetSettings(PRESETS.find(p => p.id === presetId)?.settings ?? null);
     writePresetId(presetId);
     navigate('/settings');
@@ -370,8 +364,7 @@ const s: Record<string, React.CSSProperties> = {
   page: { minHeight: '100vh', backgroundColor: 'var(--bg)' },
   main: { maxWidth: 1040, margin: '0 auto', padding: '32px 24px' },
   mainMobile: { padding: '24px 16px' },
-  // auto-fit collapses to a single column on its own once a column would fall under
-  // 300px, so narrow desktop windows need no extra breakpoint beyond useIsMobile().
+  // auto-fit collapses to one column under 300px, so no extra breakpoint is needed.
   columns: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
@@ -385,8 +378,7 @@ const s: Record<string, React.CSSProperties> = {
   pageTitle: { margin: '0 0 8px', fontSize: 'var(--fs-display)', fontWeight: 700, color: 'var(--text)' },
   sectionHeading: { margin: '0 0 12px', fontSize: 'var(--fs-heading)', fontWeight: 700, color: 'var(--text)' },
   sectionHint: { margin: '-6px 0 12px', fontSize: 'var(--fs-label)', color: 'var(--text-muted)' },
-  // Capped: the page is now wide enough that a full-width paragraph would be a
-  // hard-to-track line length.
+  // Capped: full width would be a hard-to-track line length.
   intro: { margin: '0 0 24px', maxWidth: '68ch', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' },
   statusBox: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,

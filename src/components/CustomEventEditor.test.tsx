@@ -7,11 +7,9 @@ import type { CustomEvent } from '../types/settings';
 import { renderWithProviders, useEnglish } from '../test/render';
 import CustomEventEditor from './CustomEventEditor';
 
-// The editor behind both the Settings page's Advanced section and the custom-competition
-// builder. Everything an organizer types here ends up printed on a scorecard with no WCIF
-// to fall back on, so the parts worth pinning are the ones that silently drop or keep data:
-// removing the right row, clearing a cutoff that the chosen format cannot have, and the two
-// FileReader paths (icon, competitor CSV).
+// Everything typed here prints on a scorecard with no WCIF to fall back on, so what is
+// pinned is where data is silently dropped or kept: the removed row, a cutoff the format
+// cannot have, and the two FileReader paths.
 
 /** The component is controlled; hold its state so a sequence of edits behaves like the app. */
 function Harness({ initial = [] as CustomEvent[] }) {

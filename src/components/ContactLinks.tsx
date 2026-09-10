@@ -7,13 +7,11 @@ export const REPO_URL = 'https://github.com/Speedcubing-Canada/scorecards-v2';
 export const SUPPORT_EMAIL = 'software@speedcubingcanada.org';
 
 /**
- * The GitHub mark and a mail icon, for the Header. Public organizers have no other way to
- * find us, so these sit next to the "what's new" sparkles on every signed-in page; the
- * signed-out login page gets the same two links as text inside AboutDialog.
+ * The only way an organizer can reach us, so it sits in the header on every signed-in page;
+ * AboutDialog carries the same two links as text for the signed-out one.
  *
- * The mark is an <img> rather than a lucide icon because lucide 1.x dropped brand icons,
- * and design-system.test.ts forbids inline SVG in components - same escape hatch Logo uses.
- * ponytail: one grey mark for both themes; if it reads washed out, split it into
+ * An <img>, not a lucide icon: lucide 1.x dropped brand icons and design-system.test.ts forbids
+ * inline SVG. ponytail: one grey mark for both themes; if it reads washed out, split it into
  * light/dark files and switch on useTheme() the way Logo.tsx does.
  */
 export default function ContactLinks() {

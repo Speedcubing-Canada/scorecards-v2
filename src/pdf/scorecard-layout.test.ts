@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { getStrings } from '../lib/i18n';
 import { ROW_HEIGHTS, showLiveIdLine } from './layoutConstants';
 
-// ── Layout geometry constraints ──────────────────────────────────────────────
+// Layout geometry constraints
 // Dimensions measured from the original Sarah-scorecard LETTER PDF:
 //   Cards: 257×345pt  |  margins ~22-24pt  |  gaps ~52-53pt
 //   V gap ≈ 2× margin (not 3×) - the constraint the printed output hinges on.
@@ -89,11 +89,9 @@ describe('Scorecard layout geometry', () => {
   }
 });
 
-// ── Attempt-row heights ──────────────────────────────────────────────────────
-// Card inner height budget (LETTER): 335pt. Fixed blocks: header 56, event row 25,
-// table header 19, provisional line 19, plus the extra/provisional attempt row
-// (one more rowH) and a 13pt cutoff line for the split formats. What remains is
-// split into the two flex spacers around the provisional label.
+// Card inner height budget (LETTER): 335pt, minus header 56, event row 25, table header 19,
+// provisional line 19, one extra attempt row and a 13pt cutoff line on the split formats.
+// What remains is split into the two flex spacers around the provisional label.
 
 const INNER_H = 335;
 const FIXED_H = 56 + 25 + 19 + 19; // header + eventRow + tableHeader + provLine
@@ -133,7 +131,7 @@ describe('Scorecard attempt-row heights', () => {
   });
 });
 
-// ── Nametag vertical layout geometry ─────────────────────────────────────────
+// Nametag vertical layout geometry
 // Landscape page, 4 cols × 2 rows = 8 portrait slots = 4 nametag pairs per page.
 // Slot sizes: LETTER 189×292pt, A4 201×283pt. Margins 12pt, gaps 4pt.
 
@@ -174,11 +172,8 @@ describe('Nametag vertical layout geometry', () => {
   }
 });
 
-// ── Nametag horizontal layout geometry ───────────────────────────────────────
-// Portrait page, 2 cols × 4 rows = 8 landscape slots = 4 nametag pairs per page.
-// Slots sized for 90×55mm badge holders (same holder as vertical, rotated sideways)
-// with ~2mm clearance per edge. Both paper formats use the same slot dimensions
-// since the card size is holder-dictated, not paper-dictated.
+// Portrait page, 2 cols x 4 rows = 4 nametag pairs. Slots sized for 90x55mm badge holders
+// with ~2mm clearance. Both paper formats share them: the holder dictates the card size.
 
 const NAMETAG_PORTRAIT_W = { LETTER: 612, A4: 595 };
 const NAMETAG_PORTRAIT_H = { LETTER: 792, A4: 842 };
@@ -229,7 +224,7 @@ describe('Nametag horizontal layout geometry', () => {
   }
 });
 
-// ── Header text fit ──────────────────────────────────────────────────────────
+// Header text fit
 // Standard Helvetica AFM glyph widths (1/1000 em units).
 // Accented variants share the width of their base glyph.
 const HW: Record<string, number> = {
@@ -251,9 +246,8 @@ const HW: Record<string, number> = {
   '0':556,'1':556,'2':556,'3':556,'4':556,'5':556,'6':556,'7':556,'8':556,'9':556,
 };
 
-// An untabulated glyph is measured at the widest Helvetica glyph (W, 944) rather than an
-// average. A translation that introduces a character nobody listed above must then err
-// towards failing the fit checks below, never towards silently passing.
+// An untabulated glyph measures as the widest Helvetica glyph (W, 944), so a translation
+// introducing an unlisted character errs towards failing rather than silently passing.
 const UNKNOWN_GLYPH_W = 944;
 
 function helveticaWidth(text: string, fontSize: number): number {
@@ -290,9 +284,8 @@ function colContentW(frac: number): number {
   return TABLE_CONTENT_W * frac - CELL_BORDER;
 }
 
-// Every single language plus representative two-language combinations. The combos are the
-// real guard: any primary+secondary pair is selectable, and a merged header must still fit
-// inside its column for every pairing we ship.
+// The combos are the real guard: any primary+secondary pair is selectable, and a merged
+// header still has to fit its column.
 const HEADER_CASES = [
   ...(['en', 'fr', 'es', 'pt'] as const).map((l) => ({ label: l, s: getStrings(l) })),
   ...([['fr', 'en'], ['en', 'fr'], ['es', 'pt'], ['en', 'pt']] as const).map(
@@ -343,11 +336,8 @@ describe('Scorecard column widths sum to the full table width', () => {
   });
 });
 
-// ── Per-round cover card ─────────────────────────────────────────────────────
-// In 'per-round-card' mode the cover's group line becomes `cover.allGroups(n)`.
-// styles.coverGroup has a FIXED 19pt size - unlike the event+round line it gets no
-// autosizing - and styles.coverCard has no `overflow: 'hidden'`, so a long
-// translation would silently print past the card edge into the cut gutter.
+// styles.coverGroup is a FIXED 19pt with no autosizing, and coverCard has no
+// `overflow: 'hidden'`, so a long translation prints past the card edge into the cut gutter.
 describe('Cover card allGroups line fits the card', () => {
   const COVER_PAD_H = 14;       // styles.coverCard paddingHorizontal
   const COVER_GROUP_FONT = 19;  // styles.coverGroup fontSize
@@ -357,7 +347,7 @@ describe('Cover card allGroups line fits the card', () => {
   const coverContentW = A4_CARD_W - 2 * CARD_BORDER - 2 * COVER_PAD_H;
 
   for (const lc of ['en', 'fr', 'es', 'pt'] as const) {
-    // 99 groups is far beyond any real competition - a safe upper bound.
+    // Far beyond any real competition: a safe upper bound.
     for (const n of [1, 2, 9, 99]) {
       it(`${lc}, n=${n}: "${getStrings(lc).cover.allGroups(n)}" fits`, () => {
         const w = helveticaWidth(getStrings(lc).cover.allGroups(n), COVER_GROUP_FONT) * BOLD_FACTOR;
@@ -367,9 +357,8 @@ describe('Cover card allGroups line fits the card', () => {
   }
 });
 
-// The "Hide WCA Live ID" setting is meant for the blank/extra cards, where the line
-// prints a dangling "WCA Live:" with nothing after it. It must never strip the ID from
-// a card that has a competitor on it (organizer bug report).
+// "Hide WCA Live ID" is for blank and extra cards, where the line prints a dangling
+// "WCA Live:". It must never strip the ID off a card with a competitor on it.
 describe('WCA Live line visibility', () => {
   it('prints on a named card whether or not the setting is on', () => {
     expect(showLiveIdLine(false, '42')).toBe(true);

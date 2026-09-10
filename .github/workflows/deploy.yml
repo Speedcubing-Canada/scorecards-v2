@@ -40,7 +40,6 @@ permissions:
   id-token: write
 
 jobs:
-  # ── 1. Lint, typecheck, test ──────────────────────────────────────────────
   # Once per commit: the pull_request run for anything under review, the push run for
   # main. The pull_request event tests the merge with main rather than the branch head,
   # which is what actually lands, is the context branch protection requires, and is the
@@ -99,7 +98,6 @@ jobs:
           path: coverage/
           retention-days: 7
 
-  # ── 1b. PDF output regression ─────────────────────────────────────────────
   # Re-renders the fixture PDFs and pixel-diffs them against tests/pdf-baseline. The layout
   # unit tests assert measurements; this catches what they cannot see - a changed colour, a
   # shifted margin, a dropped glyph - on documents that get printed and cut.
@@ -142,7 +140,6 @@ jobs:
           path: /tmp/fixture-check/
           retention-days: 7
 
-  # ── 2. Build and deploy ───────────────────────────────────────────────────
   deploy:
     name: Deploy → Production
     needs: test
@@ -178,7 +175,6 @@ jobs:
       - name: Deploy to App Engine
         run: ./deploy.sh
 
-  # ── 3. Clean up old versions (keep newest 5) ──────────────────────────────
   cleanup:
     name: Cleanup old versions
     needs: deploy
@@ -219,6 +215,6 @@ jobs:
               --project="${PROJECT}" \
               --service="default" \
               --quiet \
-              && echo "✓ deleted ${v}" \
-              || echo "✗ could not delete ${v} (skipping)"
+              && echo "deleted ${v}" \
+              || echo "could not delete ${v} (skipping)"
           done <<< "${to_delete}"

@@ -1,9 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { unzipSync } from 'fflate';
 
-// A stub renderer: real PDF bytes are already covered by ./render.integration.test.ts, so
-// this file covers the orchestration around it - which jobs run, what gets zipped, and what
-// happens when one throws. Overlapping the two would only make both slower.
+// Stub renderer: real PDF bytes are covered by ./render.integration.test.ts. This file
+// covers the orchestration around it.
 const toBlob = vi.fn();
 vi.mock('@react-pdf/renderer', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@react-pdf/renderer')>()),
@@ -18,15 +17,13 @@ import { emptyParsedWcif } from '../lib/wcif-parser';
 import { sampleWcif, testSettings } from '../test/fixtures';
 import { runJobs, type WorkerResponse } from './renderBundle';
 
-// The seam between "what the generate page promised" and "what the browser receives".
-// buildPdfJobs is tested on its own and the documents render on their own; nothing else
-// checks that every job in that list actually reaches the bundle, which is the failure that
-// hands an organizer a zip missing a document they were told they would get.
+// The seam between what the generate page promised and what the browser receives: nothing
+// else checks that every job in the list reaches the bundle.
 
 const settings = testSettings();
 const parsed = parseWCIF(sampleWcif(), settings);
 
-/** A blob standing in for one rendered PDF, tagged so the zip entries can be told apart. */
+// Tagged so the zip entries can be told apart.
 const fakePdf = (tag: string) => ({
   arrayBuffer: async () => new TextEncoder().encode(`%PDF-${tag}`).buffer,
 });
@@ -65,8 +62,7 @@ describe('nothing to render', () => {
 });
 
 describe('a single document', () => {
-  // Only the schedule tracker selected: it ships as the PDF itself, since zipping one file
-  // would make the organizer unzip it before printing.
+  // One document ships as the PDF itself, not a zip.
   const scope = {
     mode: 'everything' as const,
     documents: {
@@ -105,8 +101,7 @@ describe('a bundle', () => {
     expect(d.mimeType).toBe('application/zip');
     expect(d.filename).toBe(`${settings.competitionId}_pdfs.zip`);
 
-    // The assertion that catches a document silently dropped between the count the
-    // generate page shows and the bytes that actually download.
+    // Catches a document dropped between the count shown and the bytes downloaded.
     const entries = Object.keys(unzipSync(new Uint8Array(d.buffer)));
     expect(entries.sort()).toEqual(jobs.map(j => j.filename).sort());
   });

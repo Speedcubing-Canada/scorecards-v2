@@ -11,18 +11,11 @@ import {
   fetchWcif,
 } from './wca';
 
-// Eight fetch wrappers, and the only place the app talks to the WCA or WCA Live.
-// Two contracts are asserted here that nothing else can see:
-//
-//  - the four throwing functions carry the status into the message, because that string is
-//    what the pages render back to the organizer (picker.error, GeneratePage's error state).
-//  - the three WCA Live / scoretaking functions swallow every failure and return null *by
-//    design*. That is what keeps a WCA Live outage from blocking a download, and it is also
-//    what makes a regression invisible: nametag QR codes silently degrade instead of failing.
+// The thrown messages carry the status because the pages render them back to the organizer.
+// The three WCA Live functions instead return null on every failure, by design.
 //
 // jsdom, not node: the module reads `window.location.origin` at import time for REDIRECT_URI.
 
-/** Queue one response per call, in order. */
 function stubFetch(...responses: Partial<Response>[]) {
   const fn = vi.fn();
   for (const r of responses) fn.mockResolvedValueOnce(r);
@@ -135,9 +128,8 @@ describe('fetchWcif', () => {
   });
 });
 
-// ── The three that never throw ────────────────────────────────────────────────
-// Each returns null on any failure so a WCA Live outage degrades the QR codes instead
-// of blocking the download. Losing that would turn an outage into a failed generation.
+// Null on any failure, so a WCA Live outage degrades the QR codes instead of blocking
+// the download.
 
 describe('fetchScoretakingSoftware', () => {
   it('reads the field off the single-competition endpoint', async () => {

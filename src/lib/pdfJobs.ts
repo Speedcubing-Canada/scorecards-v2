@@ -2,12 +2,11 @@ import type { ScorecardData, ParsedWCIF } from './wcif-parser';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
 
 /**
- * One PDF to render. The worker turns each into a file; the UI counts them for the "PDFs"
- * stat and names the download from them - both read this same list, so a document type can
- * never reach one and not the other.
+ * One PDF to render. The worker builds the files and the UI counts and names them off this
+ * same list, so a document cannot reach one and not the other.
  *
- * Custom events carry the raw `CustomEvent`, not pre-built entries: `buildCustomEntries` is
- * only worth paying for inside the worker, not on every render of the generate page.
+ * Custom events carry the raw `CustomEvent`: `buildCustomEntries` is worth paying for inside
+ * the worker, not on every render of the generate page.
  */
 export type PdfJob =
   | { kind: 'scorecards';   filename: string; label: string; entries: ScorecardData[] }
@@ -23,9 +22,8 @@ function safeCustomName(name: string): string {
 }
 
 /**
- * The PDFs a given parse produces, in the order they are rendered and listed.
- * Buckets that `filterParsedByScope` emptied produce no job, which is how
- * document selection is enforced - there is no per-document flag down here.
+ * The PDFs a parse produces, in render order. An emptied bucket produces no job, which is how
+ * document selection is enforced; there is no per-document flag down here.
  */
 export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings): PdfJob[] {
   const id = settings.competitionId;
@@ -65,10 +63,8 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
 }
 
 /**
- * Print-and-cut guide sections for a download (rendered by `components/PrintGuide.tsx`).
- * Driven by the jobs, not the settings, so someone generating only the schedule tracker is
- * never told how to cut scorecards. Custom-event cards print 4-up on the same sheet as
- * ordinary scorecards, so they fold into that section.
+ * Driven by the jobs, not the settings, so a schedule-only download is never told how to cut
+ * scorecards. Custom-event cards print 4-up alongside ordinary ones, so they fold in.
  */
 export type GuideSection = 'scorecards' | 'schedule' | 'checking' | 'nametags' | 'first-timers';
 
@@ -83,11 +79,7 @@ export function guideSections(jobs: PdfJob[]): GuideSection[] {
   return out;
 }
 
-/**
- * What the browser actually downloads. A lone PDF ships as itself, printable straight from
- * the download; two or more are zipped as "_pdfs", since a bundle routinely carries nametags,
- * slips and the schedule alongside the scorecards.
- */
+/** A lone PDF ships as itself, printable straight from the download; two or more are zipped. */
 export function downloadTarget(
   jobs: PdfJob[],
   competitionId: string,

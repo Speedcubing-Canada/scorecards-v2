@@ -1,6 +1,5 @@
-// Mount harness for page and component tests. Every page reads the router, the
-// theme and the auth context, so rendering one bare throws; this wires all three
-// the way main.tsx does.
+// Every page reads the router, the theme and the auth context, so rendering one bare throws.
+// This wires all three the way main.tsx does.
 //
 // jsdom only: give the test file a `// @vitest-environment jsdom` docblock.
 
@@ -50,8 +49,5 @@ export function renderWithProviders(ui: ReactElement, opts: ProviderOptions = {}
   );
 }
 
-/**
- * Pin the UI to English so queries by accessible name are stable. Tests must not
- * assert translated copy, but they do have to find controls by role+name.
- */
+/** Pins the UI to English: tests never assert copy, but they do find controls by name. */
 export const useEnglish = () => i18n.changeLanguage('en');

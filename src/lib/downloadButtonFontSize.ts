@@ -1,13 +1,9 @@
 /**
- * The download button label embeds the download filename - the bundle
- * (`<competitionId>_pdfs.zip`) or, when a single document was selected, that
- * PDF (`<competitionId>_first_timers.pdf`) - which is a single unbreakable
- * token. For competitions with a long ID the label would otherwise overflow the
- * fixed-width button - especially on phones - so the font shrinks in steps as
- * the label gets longer. (`overflowWrap` on the button is the final safety net
- * for pathologically long IDs.)
+ * The button label embeds the download filename, one unbreakable token, so a long competition
+ * ID would overflow the fixed-width button on a phone. The font shrinks in steps as the label
+ * grows; `overflowWrap` on the button catches the pathological cases.
  *
- * Pure function of the *rendered* label length so it works across languages.
+ * A pure function of the rendered length, so it works in every language.
  */
 export const DOWNLOAD_BUTTON_FONT_SIZE = 15;
 

@@ -3,22 +3,12 @@ import type { CustomCompetitor } from '../types/settings';
 const WCA_ID_RE = /^\d{4}[A-Z]{4}\d{2}$/i;
 
 /**
- * Parse a custom event's competitor CSV.
+ * One competitor per line, unquoted: `Name` or `Name,WCAID`.
  *
- * Format: one competitor per line, no quoting:
- *   Name
- *   Name,WCAID
- * e.g.
- *   Alice Martin
- *   Bob Tremblay,2021TREM02
- *
- * Blank lines and lines beginning with `#` (comments) are ignored. An optional
- * header row is skipped when its first field is "name" (case-insensitive). A
- * leading UTF-8 BOM is stripped. The WCA ID is recognized as the LAST
- * comma-field matching the ID shape (4 digits, 4 letters, 2 digits) and is
- * upper-cased; everything before it is the name, re-joined with ", " so
- * comma-containing names like "Doe, John,2019DOEJ01" survive without quoting.
- * Rows with an empty name are skipped; duplicates are kept (two rows = two cards).
+ * Blank lines, `#` comments, a "name" header row and a leading BOM are skipped. The WCA ID is
+ * the LAST comma-field matching the ID shape; everything before it is the name, re-joined with
+ * ", " so "Doe, John,2019DOEJ01" survives without quoting. Empty names are skipped, duplicates
+ * kept (two rows, two cards).
  */
 export function parseCompetitorCsv(text: string): CustomCompetitor[] {
   const out: CustomCompetitor[] = [];

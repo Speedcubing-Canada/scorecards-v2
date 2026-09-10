@@ -9,22 +9,19 @@ import { WCA_EVENT_ORDER } from './wcif-parser';
 import { EVENT_ICONS } from '../assets/events';
 import type { LocaleCode } from '../types/settings';
 
-// These tests deliberately assert *no* translated value. Rewording a PDF string is a
-// routine editorial change and must not turn CI red; what must stay guarded is the
-// structure around the strings - every locale carries every field, interpolation still
-// lands, the bilingual merge picks the right side, and layout contracts hold. Whether a
-// reworded string still *fits* its column is checked separately by the width sweeps in
-// src/pdf/*-layout.test.ts.
+// No translated value is asserted here: rewording a PDF string is routine and must not turn
+// CI red. What is guarded is the structure - every locale carries every field, interpolation
+// lands, the bilingual merge picks the right side. Whether a reworded string still fits its
+// column is the width sweeps in src/pdf/*-layout.test.ts.
 
 const LOCALES = ['en', 'fr', 'es', 'pt'] as const;
 const TRANSLATIONS = ['fr', 'es', 'pt'] as const;
 
-// Every function in the bundles takes some prefix of (string-ish, number-ish, number-ish);
-// booleans read the first arg's truthiness. Extra args are ignored, so one probe fits all.
+// Every bundle function takes some prefix of (string-ish, number-ish, number-ish) and ignores
+// extra args, so one probe fits all.
 const PROBE = ['7', 7, 7] as const;
 const call = (fn: unknown) => (fn as (...a: unknown[]) => unknown)(...PROBE);
 
-/** Every localized surface a PDF can pull from, keyed the way LOCALES stores it. */
 function bundle(lc: LocaleCode) {
   return {
     scorecard: getStrings(lc),
@@ -41,8 +38,7 @@ function bundle(lc: LocaleCode) {
 
 type Node = { [k: string]: unknown };
 
-// Flatten to dotted paths so a parity failure names the exact field. Strings and
-// functions are both leaves - a locale may implement a label either way.
+// Dotted paths, so a failure names the exact field. Strings and functions are both leaves.
 function paths(obj: Node, prefix = ''): string[] {
   const out: string[] = [];
   for (const [k, v] of Object.entries(obj)) {
@@ -99,8 +95,7 @@ describe('PDF locale bundle parity', () => {
     }
   });
 
-  // Fields that carry real prose - if one of these still reads as English in fr/es/pt,
-  // a locale was added by copy-paste and never translated.
+  // Real prose: still reading as English in fr/es/pt means a copy-pasted locale.
   it('no English leaking through on the headline fields', () => {
     const sample = ['checking.title', 'schedule.title', 'scorecard.scrambler',
       'firstTimer.confirmIntro1', 'nametag.compete'];
@@ -122,11 +117,9 @@ describe('event names', () => {
     }
   });
 
-  // The tables an event has to appear in are spread across three modules and every
-  // lookup falls back silently, so a new official event that was only half-added would
-  // ship with a raw id on the checking sheet or a blank icon on the scorecard. Driving
-  // this off WCA_EVENT_ORDER - the list the WCIF ingest actually filters on - turns all
-  // of that into one failure.
+  // An event's tables live in three modules and every lookup falls back silently, so a
+  // half-added event ships a raw id or a blank icon. Driving this off WCA_EVENT_ORDER, the
+  // list the WCIF ingest filters on, turns that into one failure.
   it('every event in WCA_EVENT_ORDER has a name, a short name and an icon', () => {
     for (const id of WCA_EVENT_ORDER) {
       expect(EVENT_NAMES_EN, id).toHaveProperty(id);
@@ -160,8 +153,8 @@ describe('splitLabelTotal', () => {
   });
 });
 
-// mergeScorecardStrings is the single place deciding which scorecard fields stack both
-// languages and which stay primary-only. The split is the contract; the words are not.
+// mergeScorecardStrings decides which fields stack both languages. The split is the
+// contract; the words are not.
 describe('bilingual scorecard merge', () => {
   const BILINGUAL_TEXT = ['scrambler', 'scramblerCheck', 'attempt', 'judge', 'competitor',
     'resultPrefix', 'provisionalLine'] as const;
@@ -174,8 +167,7 @@ describe('bilingual scorecard merge', () => {
 
   const PAIRS: [LocaleCode, LocaleCode][] = [['fr', 'en'], ['en', 'fr'], ['es', 'pt'], ['pt', 'es']];
 
-  // A field added to ScorecardStrings but forgotten in mergeScorecardStrings would
-  // silently inherit the primary language on a bilingual scorecard. Catch it here.
+  // A field forgotten in mergeScorecardStrings silently inherits the primary language.
   it('the lists below cover every scorecard field', () => {
     const listed = [...BILINGUAL_TEXT, ...BILINGUAL_FN, ...PRIMARY_TEXT, ...PRIMARY_FN, 'cover'];
     expect(Object.keys(getStrings('en')).sort()).toEqual([...listed].sort());
@@ -293,10 +285,8 @@ describe('nametag title panels', () => {
 });
 
 describe('Round Checklist column contract', () => {
-  // The two tick-only columns record work done *ahead* of the round (groups created on
-  // competitiongroups, scorecards produced), not scorecards handed in afterwards. The
-  // wording must never drift into collected/checked: rewording is fine, changing the
-  // meaning is not.
+  // Both tick-only columns record work done ahead of the round, not scorecards handed in
+  // afterwards. Rewording is fine; drifting into collected/checked is not.
   const COLLECTED = /collect|gather|receiv|check|recueill|ramass|v[ée]rifi|contr[ôo]l|recolect|recogid|revisad|recolhid|coletad|conferid/i;
 
   it('the pre-round tick columns never read as collected or checked', () => {
@@ -307,8 +297,7 @@ describe('Round Checklist column contract', () => {
     }
   });
 
-  // The document prints "<competition name> <title>", so the title carries its own
-  // leading separator.
+  // The document prints "<competition name> <title>", so the title leads with a separator.
   it('the title starts with a hyphen, like the schedule tracker', () => {
     for (const lc of LOCALES) {
       expect(getCheckingSheetStrings(lc).title.startsWith('-'), lc).toBe(true);
@@ -328,8 +317,8 @@ describe('Round Checklist column contract', () => {
 
 describe('short nametag names', () => {
   it('language-independent puzzle names stay identical across locales', () => {
-    // Numeric cube names and the FMC acronym are not translated anywhere; a locale that
-    // "translates" them would break the shared nametag layout.
+    // Numeric cube names and FMC are untranslated everywhere; translating one breaks the
+    // shared nametag layout.
     for (const id of ['333', '222', '444', '555', '666', '777', '333fm']) {
       const en = getShortNametTagNames('en')[id];
       for (const lc of TRANSLATIONS) expect(getShortNametTagNames(lc)[id], `${lc} ${id}`).toBe(en);
@@ -337,8 +326,7 @@ describe('short nametag names', () => {
   });
 
   it('every short name is shorter than or equal to its full event name', () => {
-    // The short names exist to fit the duty line on a nametag; one longer than the full
-    // name means the entry was filled in with the wrong string.
+    // They exist to fit the duty line, so one longer than the full name is the wrong string.
     for (const lc of LOCALES) {
       for (const [id, short] of Object.entries(getShortNametTagNames(lc))) {
         expect(short.length, `${lc} ${id}`).toBeLessThanOrEqual(getEventName(id, lc).length);

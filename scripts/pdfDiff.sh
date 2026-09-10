@@ -64,7 +64,7 @@ SUMMARY="$OUTDIR/summary.txt"
 } | tee "$SUMMARY"
 
 if [ "$nb" -ne "$na" ]; then
-  echo "⚠️  PAGE COUNT CHANGED: $nb → $na  (an edit that changes page count is a big deal for a print job)" | tee -a "$SUMMARY"
+  echo "PAGE COUNT CHANGED: $nb → $na  (an edit that changes page count is a big deal for a print job)" | tee -a "$SUMMARY"
 fi
 
 # pdftoppm zero-pads to the width of the page count (e.g. 2 digits for <100 pages,

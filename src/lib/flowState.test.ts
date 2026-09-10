@@ -8,11 +8,9 @@ import {
 } from './flowState';
 import type { CompetitionSettings } from '../types/settings';
 
-// The wizard's four pages are separate routes with no shared React state, so everything
-// one step learns reaches the next through sessionStorage. Nothing else covers that
-// handoff - no test drives the pages themselves - so these assert the two things that
-// actually break it: a value must survive the round trip, and a missing or corrupt blob
-// must degrade to a documented default rather than throwing on a page that is mid-render.
+// The storage layer of the wizard handoff (the pages themselves are driven by
+// pages/wizard.integration.test.tsx). Two things break it: a value not surviving the round
+// trip, and a missing or corrupt blob throwing on a page that is mid-render.
 
 // vitest runs in the `node` environment here, so provide the storage the module expects.
 const store = new Map<string, string>();
@@ -49,8 +47,7 @@ describe('group detection', () => {
     expect(readHasGroups()).toBe(true);
   });
 
-  // Only a positive detection of absent groups may raise the warning: an unset value
-  // means the scope step was skipped, not that the competition has no groups.
+  // Unset means the scope step was skipped, not that there are no groups.
   it('treats unset as "has groups"', () => {
     expect(readHasGroups()).toBe(true);
   });
@@ -81,8 +78,7 @@ describe('generation scope', () => {
     expect(readScope()).toEqual(DEFAULT_SCOPE);
   });
 
-  // The scope step restores the organizer's selection from this, so it must be able to tell
-  // "nothing stored yet" from a real scope - which readScope, defaulting, cannot.
+  // The scope step has to tell "nothing stored yet" from a real scope, which readScope cannot.
   it('readStoredScope reads null when unset and the scope when set', () => {
     expect(readStoredScope()).toBeNull();
     writeScope(scope, { showSecondRoundMode: false });
@@ -96,8 +92,7 @@ describe('generation scope', () => {
     expect(readStoredScope()).toBeNull();
   });
 
-  // Absent detection means the scope step was bypassed; showing the Round 2 mode
-  // preserves the behaviour from before that step existed.
+  // Absent detection means the scope step was bypassed, so the Round 2 mode shows.
   it('shows the second-round mode when detection is absent or corrupt', () => {
     expect(readDetection()).toEqual({ showSecondRoundMode: true });
     sessionStorage.setItem('generation_detection', 'null');
@@ -128,8 +123,7 @@ describe('custom competitions', () => {
     expect(readCustomEvents()).toEqual([]);
   });
 
-  // The whole point of clearCustom: stale custom state must never leak into a WCA flow,
-  // where it would suppress the WCA Live fields and print unofficial cards.
+  // Leaked into a WCA flow it would suppress the WCA Live fields and print unofficial cards.
   it('clearCustom drops both keys', () => {
     writeCustom(events);
     clearCustom();
@@ -189,8 +183,8 @@ describe('settings restore', () => {
     expect(readSettings()).toBeNull();
   });
 
-  // Migrations, previously private to the generate page. A session can still hold a blob
-  // written by an older build, and the settings step now seeds its whole form from it.
+  // A session can hold a blob written by an older build, and the settings step seeds its
+  // whole form from it.
   it('migrates the retired bilingual languages onto primary + secondary', () => {
     stored({ language: 'bilingual-fr' });
     expect(readSettings()).toMatchObject({ language: 'fr', secondaryLanguage: 'en' });
@@ -204,12 +198,10 @@ describe('settings restore', () => {
       secondaryLanguage: null,
       generationScope: { mode: 'everything', documents: DEFAULT_SCOPE.documents },
       hideWcaLiveId: false,
-      // Everything predating ILR ran on WCA Live.
       liveResultsMode: 'wca-live',
       isCustomCompetition: false,
       scorecardCheckMode: 'per-group-card',
-      // The ranking rules land on the live defaults, so an old blob and a fresh one
-      // don't mean two different things.
+      // The live defaults, so an old blob and a fresh one cannot mean two different things.
       scrambleDoubleCheckWorldTop: 50,
       scrambleDoubleCheckRegionTop: null,
       scrambleDoubleCheckRegionScope: 'national',
@@ -223,7 +215,7 @@ describe('settings restore', () => {
     expect(readSettings()?.generationScope.documents.roundChecklist).toBe(false);
   });
 
-  // The standalone checking sheet is its own document now; only the cover-card half survives.
+  // The checking sheet is its own document, so only the cover-card half survives.
   it('maps the retired checking-sheet mode onto none', () => {
     stored({ scorecardCheckMode: 'checking-sheet' });
     expect(readSettings()?.scorecardCheckMode).toBe('none');
@@ -257,8 +249,7 @@ describe('clearing', () => {
     writeFileName('dcOverrides', 'double-checks.csv');
   }
 
-  // Picking a different competition must not let it inherit the previous one's scope,
-  // rounds and settings through the restore-on-back-navigation.
+  // A different competition must not inherit the previous one's scope and settings.
   it('clearDownstream drops everything after the picker, keeping the competition', () => {
     fillFlow();
     clearDownstream();
@@ -271,8 +262,7 @@ describe('clearing', () => {
     expect(readCompetition()).toEqual({ id: 'WC2026', name: 'World Championship 2026' });
   });
 
-  // Changing the preset on the scope step: its new seeds must not lose to what was
-  // submitted under the old one.
+  // A new preset's seeds must not lose to what was submitted under the old one.
   it('clearSettings drops only the settings and the upload names', () => {
     fillFlow();
     clearSettings();

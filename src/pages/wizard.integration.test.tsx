@@ -23,14 +23,11 @@ import { parseWCIF } from '../lib/wcif-parser';
 import { sampleWcif, testSettings } from '../test/fixtures';
 import { anonymousAuth, renderWithProviders, signedInAuth, useEnglish } from '../test/render';
 
-// The wizard runs as four separate routes with no shared React state; everything one step
-// learns reaches the next through sessionStorage. flowState.test.ts covers that storage in
-// isolation and each page test covers one page in isolation, so the joint - four steps
-// agreeing about the same competition - is the part nothing sees.
+// flowState.test.ts covers the storage and each page test covers one page, so the joint -
+// four steps agreeing about the same competition - is what nothing else sees.
 //
-// So this file drives the real routes through the UI only, and never writes flowState
-// directly. It asserts what crossed a page boundary, not what any page rendered; rendered
-// detail belongs to the per-page tests.
+// Drives the real routes through the UI only, never writing flowState directly, and asserts
+// what crossed a page boundary rather than what any page rendered.
 
 const mockList = vi.mocked(fetchManagedCompetitions);
 const mockWcif = vi.mocked(fetchWcif);
@@ -47,8 +44,8 @@ const comp = (over: Record<string, unknown> = {}) => ({
 
 const other = comp({ id: 'AutreCompetition2026', name: 'Autre Compétition 2026' });
 
-// jsdom implements no Worker, and vitest cannot load a `new URL(..., import.meta.url)`
-// module worker. Rendering is covered headlessly by src/pdf/renderBundle.test.ts.
+// jsdom implements no Worker, and vitest cannot load a `new URL(..., import.meta.url)` one.
+// Rendering is covered headlessly by src/pdf/renderBundle.test.ts.
 class StubWorker {
   onmessage: ((e: MessageEvent) => void) | null = null;
   postMessage() {}
@@ -92,8 +89,7 @@ describe('the wizard carries one competition through all four steps', () => {
     await walkToSettings();
     await click(i18n.t('settings.generate_button'));
 
-    // The generate step derives its stat and its button label from buildPdfJobs; both
-    // have to describe the competition chosen three steps earlier.
+    // Both come from buildPdfJobs, and must describe the competition chosen three steps back.
     const settings = readSettings()!;
     expect(settings.competitionId).toBe('GrosJouetsaMontreal2026');
 
@@ -125,8 +121,7 @@ describe('the wizard carries one competition through all four steps', () => {
 
 describe('switching competitions', () => {
   it('drops the first competition\'s scope and settings', async () => {
-    // The regression clearDownstream exists to prevent: competition A's scope and settings
-    // reaching competition B, which would generate the wrong documents under the right name.
+    // The regression clearDownstream exists to prevent: A's scope generating B's documents.
     enter('/competitions');
     await walkToSettings();
     await click(i18n.t('settings.generate_button'));
@@ -135,7 +130,6 @@ describe('switching competitions', () => {
     expect(readSettings()).not.toBeNull();
     expect(readStoredScope()).not.toBeNull();
 
-    // Back to the picker, and choose the other competition.
     cleanup();
     enter('/competitions');
     fireEvent.click(await screen.findByText('Autre Compétition 2026'));

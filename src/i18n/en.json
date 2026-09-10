@@ -165,7 +165,7 @@
       "paper": "Paper",
       "total_pages": "Pages"
     },
-    "download_button": "⬇ Download {{filename}}",
+    "download_button": "Download {{filename}}",
     "building_button": "Building ZIP…",
     "guide": {
       "title": "How to print and cut",

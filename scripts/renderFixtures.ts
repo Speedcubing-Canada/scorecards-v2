@@ -4,9 +4,7 @@
 //   npm run render:fixtures -- --horizontal
 //
 // Writes to ../current-output/, which the pdf-print-edit skill diffs against
-// ../original-output/. This replaces the old generate-*.mjs scripts, which each carried
-// their own copy of the layout (styles, CONFIGS, column widths) and so verified code that
-// was not the code that ships - the exact drift the verification loop exists to catch.
+// ../original-output/. Renders the shipping components, never a copy of them.
 //
 // Run through vite-node, not node: the documents are .tsx, and Node's native type
 // stripping does not handle JSX.
@@ -30,14 +28,12 @@ import type { CompetitionSettings } from '../src/types/settings';
 import { testSettings } from '../src/test/fixtures';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
-// ../../current-output is outside the git repo, so CI overrides this to render somewhere
-// inside the checkout. Local runs keep writing where the pdf-print-edit skill diffs from.
+// ../../current-output is outside the git repo, so CI overrides this.
 const OUT_DIR = process.env.FIXTURE_OUT_DIR
   ? resolve(process.env.FIXTURE_OUT_DIR)
   : resolve(__dir, '../../current-output');
 
-// Every setting the ../original-output/ diff depends on, pinned here rather than inherited:
-// testSettings is a test fixture, and a test that needs a different default must not be able
+// Pinned rather than inherited: a test that changes a testSettings default must not be able
 // to silently rewrite every fixture PDF. New fields still default from testSettings.
 function settings(over: Partial<CompetitionSettings> = {}): CompetitionSettings {
   return testSettings({
@@ -58,9 +54,8 @@ function settings(over: Partial<CompetitionSettings> = {}): CompetitionSettings 
   });
 }
 
-// ── Name tags: the real Gros Jouets 2026 export ───────────────────────────────
-// Path is built via readdir rather than a literal, because the directory names contain
-// accented characters that do not round-trip reliably on WSL/NTFS.
+// The real Gros Jouets 2026 export. Path built via readdir, not a literal: the directory
+// names carry accents that do not round-trip reliably on WSL/NTFS.
 function loadNametagFixture(): {
   entries: NametTagEntry[];
   wcaLivePersonIds: Record<number, string>;
@@ -86,9 +81,8 @@ function loadNametagFixture(): {
   };
   const competitors = fake.competitors as LegacyCompetitor[];
 
-  // The legacy export carries the rendered title, not the role, but the role drives the
-  // badge fill (badgeColors in NametTagDocument), so recover it from the English title.
-  // The live app gets this from `person.roles` in the WCIF.
+  // The export carries the rendered title, not the role, and the role drives the badge fill.
+  // The live app reads `person.roles` off the WCIF instead.
   const roleOf = (titleEn: string): NametTagEntry['role'] =>
     titleEn === 'DELEGATE' ? 'delegate'
       : titleEn === 'ORGANIZER' ? 'organizer'
@@ -106,9 +100,8 @@ function loadNametagFixture(): {
     registrationId: 0,
     gender: c.gender,
     role: roleOf(c.title_en),
-    // The original is French-main: front panel French, back panel English. These come
-    // from the export rather than getNametTagTitleStrings so the fixture reproduces the
-    // original PDF exactly - the fixture supplies data, the component supplies layout.
+    // From the export rather than getNametTagTitleStrings, so the fixture reproduces the
+    // original PDF exactly. The fixture supplies data, the component supplies layout.
     titleFront: c.title_fr,
     titleBack: c.title_en,
     events: c.events,
@@ -119,17 +112,11 @@ function loadNametagFixture(): {
     run: (c.run ?? []).sort(),
   }));
 
-  // In production this map comes from the WCA Live GraphQL API (fetchWcaLivePersonIds),
-  // keyed registrantId → WCA Live person id. Without it QrSection falls back to the bare
-  // domain, whose QR is far sparser than a real one - useless for judging how the code
-  // block prints, so the fixture synthesises one.
+  // Production fills this from the WCA Live GraphQL API. Without it QrSection falls back to
+  // the bare domain, whose QR is too sparse to judge how a real code block prints.
   //
-  // Seeded from wcaUserId specifically so this fixture reproduces the old
-  // generate-nametags.mjs output byte for byte (verified: 15/15 pages MAE 0). Note that
-  // the account id is NOT the WCA Live person id - the old script used it as though it
-  // were, so its fixture PDFs carried QR codes that do not resolve. That only ever
-  // affected the fixture, never production, but it went unnoticed for exactly the reason
-  // this script exists: the old one shared no code with the component it verified.
+  // Seeded from wcaUserId to keep the baseline byte-identical. The account id is NOT a WCA
+  // Live person id, so these QR codes do not resolve: fixture-only, never production.
   const wcaLivePersonIds: Record<number, string> = {};
   for (const e of entries) wcaLivePersonIds[e.registrantId] = String(e.wcaUserId);
 
@@ -142,10 +129,8 @@ function loadNametagFixture(): {
   };
 }
 
-// ── First-timer slips ─────────────────────────────────────────────────────────
-// The real newcomer list reconstructed from the original Gros Jouets slips PDF, so the
-// output can be diffed against original-output/ for layout fidelity. Birthdates are real
-// here; from a live WCIF they appear only when DOB is exposed.
+// The real newcomer list, reconstructed from the original slips PDF so the output can be
+// diffed against original-output/. A live WCIF shows birthdates only when DOB is exposed.
 const FIRST_TIMERS: FirstTimerEntry[] = [
   { name: 'Alex Yang',           gender: 'm', birthdate: '2008-12-06', countryIso2: 'CA', eventIds: ['444', '555', '666', '777'] },
   { name: 'Alexandre Fredette',  gender: 'm', birthdate: '2015-01-13', countryIso2: 'CA', eventIds: ['444', 'minx'] },
@@ -160,9 +145,7 @@ const FIRST_TIMERS: FirstTimerEntry[] = [
   { name: 'Yuri Famelis',        gender: 'm', birthdate: '2015-07-02', countryIso2: 'CA', eventIds: ['444', 'minx'] },
 ];
 
-// ── Scorecards ────────────────────────────────────────────────────────────────
-// A 4-up sheet with one card per hand-tuned row height (see ROW_HEIGHTS in
-// src/pdf/layoutConstants.ts), so a change to any of them shows up on one page.
+// A 4-up sheet with one card per ROW_HEIGHTS entry, so a change to any shows on one page.
 function scorecardFixture(): ScorecardData[] {
   const base = {
     kind: 'scorecard' as const,
@@ -182,11 +165,9 @@ function scorecardFixture(): ScorecardData[] {
   ]);
 }
 
-// ── Schedule tracker / Round Checklist ────────────────────────────────────────
-// A two-day competition with a second room on day 1 (so the tracker renders its room
-// dimension, which the checklist deliberately does not have) and a lunch break on each
-// day (so the thick break rule is exercised). Both documents are ruled tables, so their
-// borders and row tints only show up in a pixel diff, never in the layout unit tests.
+// Two days, a second room on day 1 (the tracker's room dimension, which the checklist has
+// not) and a lunch break each day (the thick break rule). Both are ruled tables: their
+// borders and row tints show up in a pixel diff and nowhere else.
 const SCHEDULE_DAYS: ScheduleDay[] = [
   {
     dayLabel: 'Day 1 - Saturday',
@@ -255,9 +236,8 @@ async function main() {
   const e = React.createElement;
 
   const nt = loadNametagFixture();
-  // Matches the original Gros Jouets name tags: French main / English back, and no logo
-  // (the original predates the logo option). Change these and the diff against
-  // original-output/ stops meaning anything.
+  // Matches the original name tags: French main, English back, no logo. Change these and
+  // the diff against original-output/ stops meaning anything.
   const ntSettings = settings({
     competitionId: nt.competitionId,
     competitionName: nt.competitionName,

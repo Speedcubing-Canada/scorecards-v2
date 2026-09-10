@@ -6,8 +6,8 @@ import { buildPdfJobs, downloadTarget, type PdfJob } from '../lib/pdfJobs';
 import { getWorkerStrings } from '../lib/i18n';
 import { jobElement } from './jobElement';
 
-// The whole render-and-bundle sequence, split out of scorecardWorker.ts so it can be
-// imported without `self` or the Buffer polyfill - the worker is only the adapter now.
+// Split out of scorecardWorker.ts so it imports neither `self` nor the Buffer polyfill and
+// can run outside a worker.
 
 export type WorkerRequest = {
   parsed: ParsedWCIF;
@@ -17,14 +17,13 @@ export type WorkerRequest = {
 
 export type WorkerResponse =
   | { type: 'progress'; percent: number; message: string }
-  // `buffer` is a ZIP or a bare PDF depending on how many documents were built;
-  // `filename` and `mimeType` say which, so the main thread never re-derives it.
+  // A ZIP or a bare PDF, depending on how many documents were built. `mimeType` says which,
+  // so the main thread never re-derives it.
   | { type: 'done'; buffer: ArrayBuffer; filename: string; mimeType: string }
   | { type: 'error'; message: string };
 
 export type Post = (msg: WorkerResponse, transfer?: Transferable[]) => void;
 
-/** Render one job's document to PDF bytes, in the browser (Blob) rendering path. */
 async function renderJob(
   job: PdfJob, parsed: ParsedWCIF, settings: CompetitionSettings,
 ): Promise<Uint8Array> {
@@ -35,8 +34,7 @@ async function renderJob(
 export async function runJobs({ parsed, settings, uiLanguage }: WorkerRequest, post: Post) {
   const msgs = getWorkerStrings(uiLanguage);
 
-  // Which PDFs to render, and what the browser will receive. Shared with the
-  // generate page so its "PDFs" stat and button label can't drift from this.
+  // Shared with the generate page, so its stat and button label cannot drift from this.
   const jobs = buildPdfJobs(parsed, settings);
   const target = downloadTarget(jobs, settings.competitionId);
 
@@ -58,8 +56,7 @@ export async function runJobs({ parsed, settings, uiLanguage }: WorkerRequest, p
 
       post({ type: 'progress', percent: startPct, message: msgs.rendering(job.label) });
 
-      // Exponential easing: closes 6% of remaining gap each 100ms, minimum 0.4%/tick.
-      // This keeps the bar visibly moving throughout without ever truly stalling at capPct.
+      // Closes 6% of the remaining gap per tick, minimum 0.4%: visibly moving, never stalled.
       let fpct = startPct;
       const timer = setInterval(() => {
         fpct = Math.min(fpct + Math.max(0.4, (capPct - fpct) * 0.06), capPct);
@@ -77,12 +74,10 @@ export async function runJobs({ parsed, settings, uiLanguage }: WorkerRequest, p
       }
     }
 
-    // A single document ships as the PDF itself - zipping one file would only
-    // make the user unzip it before printing.
+    // A single document ships as the PDF itself, not a one-file zip.
     if (jobs.length === 1) {
       const only = files[jobs[0].filename][0];
-      // The renderers wrap a fresh ArrayBuffer, but slicing by the view's own
-      // bounds stays correct if one ever arrives offset into a larger buffer.
+      // Sliced by the view's own bounds, in case one ever arrives offset into a larger buffer.
       const buffer = only.buffer.slice(only.byteOffset, only.byteOffset + only.byteLength) as ArrayBuffer;
       post({ type: 'progress', percent: 99, message: msgs.finalizing });
       post({ type: 'done', buffer, filename: target.filename, mimeType: target.mimeType }, [buffer]);

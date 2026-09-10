@@ -6,15 +6,9 @@ import path from 'node:path';
 process.env.WCA_CLIENT_SECRET = 'test-secret';
 const { app } = await import('./server.js');
 
-// The express app that serves production. Three of its behaviours are security contracts
-// that nothing else can see, because they live in headers and status codes rather than in
-// any function the unit tests can call:
-//
-//  - the CSP directives. Dropping one ships silently; the app keeps working.
-//  - /api/event answers 204 to everything, valid or not, so a prober learns nothing and
-//    cannot fill Cloud Logging with error-severity noise.
-//  - a request for a missing *file* must 404, not fall through to the SPA handler and
-//    return index.html with a 200.
+// Three security contracts live in headers and status codes rather than in any function a
+// unit test can call: the CSP directives (dropping one ships silently), /api/event's
+// answer-204-to-everything, and a missing file 404ing instead of returning index.html.
 
 let server;
 let base;

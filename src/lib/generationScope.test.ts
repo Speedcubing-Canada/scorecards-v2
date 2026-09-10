@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { availableRounds, filterParsedByScope, latestAssignedRound, hasUnassignedIntermediate } from './generationScope';
 import type { ParsedWCIF, ScorecardData, ScorecardEntry, CoverEntry } from './wcif-parser';
 
-// ── Builders ──────────────────────────────────────────────────────────────────
 function sc(eventId: string, roundNum: number, name = ''): ScorecardEntry {
   return {
     kind: 'scorecard', timeslot: 'a01', eventId, eventName: eventId,
