@@ -3,6 +3,10 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     environment: 'node',
+    // Pin the one VITE_ var the app reads at module scope. Without this a test
+    // inherits the developer's .env and passes locally while failing in CI,
+    // where no .env exists (src/auth/wca.ts reads CLIENT_ID at import time).
+    env: { VITE_WCA_CLIENT_ID: 'test-client-id' },
     coverage: {
       provider: 'v8',
       // Files no test imports are listed on purpose: the baseline has to be the
@@ -19,7 +23,7 @@ export default defineConfig({
       reporter: ['text', 'json-summary', 'html'],
       // A ratchet: autoUpdate rewrites these upward on any run that improves
       // coverage, so CI only ever fails on a drop. Never lower them by hand.
-      thresholds: { autoUpdate: true, lines: 77.29, functions: 73.16, branches: 73.96, statements: 76.09 },
+      thresholds: { autoUpdate: true, lines: 77.29, functions: 73.16, branches: 74.02, statements: 76.09 },
     },
   },
 });
