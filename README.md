@@ -63,14 +63,17 @@ WCA token endpoint (which sends no CORS headers, so the browser cannot call it d
 | `npm run typecheck` | `tsc -b` (also the first half of `npm run build`) |
 | `npm run render:fixtures` | Render every PDF headlessly to `../current-output/` |
 
-Lint, typecheck and `test:coverage` run in CI on **every branch push** and every PR. There is
-no staging environment, so that job is the only thing between a branch and production. A PR
-runs it a second time on purpose: the push run tests the branch head, the PR run tests its
-merge with `main`, and only the second one is what actually lands.
+Lint, typecheck and `test:coverage` run in CI **once per commit**: on every PR, and on pushes
+to `main`. There is no staging environment, so that job is the only thing between a branch and
+production. The PR run tests the branch merged with `main` rather than the branch head, which
+is what actually lands. A branch with no PR open gets no CI - open the PR.
 
 `main` is protected: that job must be green and the branch must be up to date with `main`
 before a PR can merge, and force-pushes and deletion are blocked. Admins are not bound by it,
 so an emergency fix can still go straight in.
+
+Run `npm run test:coverage`, not `npm test`, before pushing: only the former enforces the
+coverage thresholds, so it is the one that matches CI.
 
 ### Coverage is a ratchet
 
@@ -182,9 +185,9 @@ Non-obvious constraints that look arbitrary in the code but break real output if
 
 ## Deploying
 
-Pushing to `main` deploys automatically via
-[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) once the test job passes. A push
-to any other branch runs the same test job and stops there. One-time
+Merging to `main` deploys automatically via
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) once the test job passes. A pull
+request runs the same test job and stops there. One-time
 GCP setup lives in [`.github/workflows/README.md`](.github/workflows/README.md). For an emergency
 manual deploy: `VITE_WCA_CLIENT_ID=… npm run build && ./deploy.sh`.
 
