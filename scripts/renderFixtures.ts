@@ -9,7 +9,7 @@
 // Run through vite-node, not node: the documents are .tsx, and Node's native type
 // stripping does not handle JSX.
 
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import React from 'react';
@@ -54,8 +54,8 @@ function settings(over: Partial<CompetitionSettings> = {}): CompetitionSettings 
   });
 }
 
-// The real Gros Jouets 2026 export. Path built via readdir, not a literal: the directory
-// names carry accents that do not round-trip reliably on WSL/NTFS.
+// The real Gros Jouets 2026 export, vendored into the repo: the original lives above the git
+// root, and its directory names carry accents that do not round-trip on WSL/NTFS.
 function loadNametagFixture(): {
   entries: NametTagEntry[];
   wcaLivePersonIds: Record<number, string>;
@@ -63,12 +63,7 @@ function loadNametagFixture(): {
   competitionName: string;
   wcaLiveId: string;
 } {
-  const exampleDir = resolve(__dir, '../../example-comp');
-  const outer = readdirSync(exampleDir).find(n => n.includes('Nametags') && !n.startsWith('_'));
-  if (!outer) throw new Error(`No Nametags dir under ${exampleDir}`);
-  const inner = readdirSync(resolve(exampleDir, outer)).find(n => n.includes('Nametags') && !n.startsWith('_'));
-  if (!inner) throw new Error(`No inner Nametags dir under ${outer}`);
-  const raw = readFileSync(resolve(exampleDir, outer, inner, 'gj_2026_nametags.js'), 'utf-8');
+  const raw = readFileSync(resolve(__dir, '../tests/fixtures/gj_2026_nametags.js'), 'utf-8');
 
   // The legacy export is a script that assigns onto `window`.
   const fake: Record<string, unknown> = {};

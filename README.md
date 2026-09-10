@@ -116,7 +116,9 @@ tested on their own and the joint is what breaks:
 
 `scripts/checkFixtures.sh` re-renders the fixture PDFs and pixel-diffs each page against
 `tests/pdf-baseline/`, catching what the measurement tests cannot see: a changed colour, a
-shifted margin, a dropped glyph. It needs `poppler-utils` and `graphicsmagick`.
+shifted margin, a dropped glyph. It needs `poppler-utils` and `graphicsmagick`. Every input it
+uses lives in the repo (`tests/fixtures/`, `tests/pdf-baseline/`), so a fresh checkout can run
+it.
 
 It passes below a max page MAE of `0.002` (override with `FIXTURE_MAE_TOLERANCE`) rather than
 demanding pixel identity, because the CI runner's poppler and font stack are not the ones a
