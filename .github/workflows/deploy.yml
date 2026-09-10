@@ -21,7 +21,9 @@ env:
   PROJECT: scorecards-v2-prod
 
 on:
+  # '**' rather than no filter: an unfiltered `push` also fires on tag pushes.
   push:
+    branches: ['**']
   pull_request:
   workflow_dispatch:
 
@@ -39,20 +41,16 @@ permissions:
 
 jobs:
   # ── 1. Lint, typecheck, test ──────────────────────────────────────────────
-  # Runs on every push, and on pull requests from forks. A same-repo branch already
-  # got a push run for the very same commit, and both events publish their own check
-  # contexts onto it, so running again would only duplicate the work - but the
-  # pull_request event is the ONLY one that ever fires for a fork, whose pushes land
-  # in the contributor's repo and never reach ours. Hence: skip the duplicate, keep
-  # the fork.
+  # Runs on every push AND every pull request, deliberately duplicating work on a
+  # same-repo PR. The two runs do not test the same tree: a push run tests the branch
+  # head, a pull_request run tests its merge with main, which is what actually lands.
+  # The pull_request run is also the one branch protection requires, and the only event
+  # that ever fires for a fork.
   #
   # The deploy job below is skipped unless the ref is main.
   test:
     name: Lint, typecheck & test
     runs-on: ubuntu-latest
-    if: >-
-      github.event_name != 'pull_request'
-      || github.event.pull_request.head.repo.full_name != github.repository
 
     steps:
       - uses: actions/checkout@v7

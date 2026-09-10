@@ -26,10 +26,33 @@ import type {
   NametTagEntry, FirstTimerEntry, ScorecardData, ScheduleDay, CheckingDay,
 } from '../src/lib/wcif-parser';
 import { finalizeEntries } from '../src/lib/wcif-parser';
-import { testSettings as settings } from '../src/test/fixtures';
+import type { CompetitionSettings } from '../src/types/settings';
+import { testSettings } from '../src/test/fixtures';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = resolve(__dir, '../../current-output');
+
+// Every setting the ../original-output/ diff depends on, pinned here rather than inherited:
+// testSettings is a test fixture, and a test that needs a different default must not be able
+// to silently rewrite every fixture PDF. New fields still default from testSettings.
+function settings(over: Partial<CompetitionSettings> = {}): CompetitionSettings {
+  return testSettings({
+    language: 'en',
+    secondaryLanguage: null,
+    paperFormat: 'LETTER',
+    secondRoundMode: 'prefilled',
+    useDefaultLogo: true,
+    logoDataUrl: null,
+    liveResultsMode: 'wca-live',
+    hideWcaLiveId: false,
+    nametagLogoMode: 'with-name',
+    nametagQrMode: 'back-only',
+    nametagLayout: 'vertical',
+    scorecardCheckMode: 'per-group-card',
+    scrambleDoubleCheck: false,
+    ...over,
+  });
+}
 
 // ── Name tags: the real Gros Jouets 2026 export ───────────────────────────────
 // Path is built via readdir rather than a literal, because the directory names contain

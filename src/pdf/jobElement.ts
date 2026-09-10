@@ -36,5 +36,7 @@ export function jobElement(
     case 'first-timers': return e(FirstTimerSlipDocument,  { entries: parsed.firstTimers, settings });
     case 'custom':       return e(ScorecardDocument,       { entries: buildCustomEntries(job.custom), settings });
     case 'scorecards':   return e(ScorecardDocument,       { entries: job.entries, settings });
+    // Element is `any`, so a missing case would compile and hand the worker `undefined`.
+    default: { const _exhaustive: never = job; throw new Error(`unhandled job kind: ${JSON.stringify(_exhaustive)}`); }
   }
 }

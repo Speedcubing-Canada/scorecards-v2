@@ -64,9 +64,13 @@ WCA token endpoint (which sends no CORS headers, so the browser cannot call it d
 | `npm run render:fixtures` | Render every PDF headlessly to `../current-output/` |
 
 Lint, typecheck and `test:coverage` run in CI on **every branch push** and every PR. There is
-no staging environment, so that job is the only thing between a branch and production. A
-same-repo PR does not re-run it - the push for that commit already did. Fork PRs do, since a
-fork's pushes never reach this repo.
+no staging environment, so that job is the only thing between a branch and production. A PR
+runs it a second time on purpose: the push run tests the branch head, the PR run tests its
+merge with `main`, and only the second one is what actually lands.
+
+`main` is protected: that job must be green and the branch must be up to date with `main`
+before a PR can merge, and force-pushes and deletion are blocked. Admins are not bound by it,
+so an emergency fix can still go straight in.
 
 ### Coverage is a ratchet
 
