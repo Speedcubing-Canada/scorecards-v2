@@ -82,6 +82,12 @@
       "overrides_count": "{{count}} competitor(s) loaded"
     },
     "wca_live": {
+      "system_title": "Live results",
+      "system_hint": "Detected from the competition's scoretaking setting. Decides where the name tag QR codes point.",
+      "mode_wca_live": "WCA Live",
+      "mode_wca_live_desc": "live.worldcubeassociation.org, the separate WCA Live site.",
+      "mode_ilr": "Integrated live results (ILR)",
+      "mode_ilr_desc": "Live results on the WCA website itself. No ID needed.",
       "title": "WCA Live ID",
       "optional_note": "optional - for nametag QR codes",
       "fetching": "Fetching from WCA Live…",

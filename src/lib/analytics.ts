@@ -121,6 +121,7 @@ export function buildGenerateEvent(args: {
       nametagLogoMode: settings.nametagLogoMode,
       nametagQrMode: settings.nametagQrMode,
       logo: logoChoice(settings),
+      liveResultsMode: settings.liveResultsMode,
       hideWcaLiveId: settings.hideWcaLiveId,
       secondRoundMode: settings.secondRoundMode,
       scorecardCheckMode: settings.scorecardCheckMode,

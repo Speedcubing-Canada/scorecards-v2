@@ -46,6 +46,7 @@ function settings(over: Partial<CompetitionSettings> = {}): CompetitionSettings 
     secondRoundMode: 'prefilled',
     logoDataUrl: null,
     useDefaultLogo: true,
+    liveResultsMode: 'wca-live',
     wcaLiveId: null,
     wcaLivePersonIds: null,
     hideWcaLiveId: false,
@@ -113,6 +114,8 @@ function loadNametagFixture(): {
     // competitor_id is the WCA user account id used by WCA Live.
     registrantId: parseInt(c.live_id, 10),
     wcaUserId: parseInt(c.competitor_id, 10),
+    // Unused here: the fixture renders WCA Live QR codes, which key off registrantId.
+    registrationId: 0,
     gender: c.gender,
     role: roleOf(c.title_en),
     // The original is French-main: front panel French, back panel English. These come

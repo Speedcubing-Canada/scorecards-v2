@@ -1,3 +1,5 @@
+import type { LiveResultsMode } from '../types/settings';
+
 // Pure layout constants shared between the @react-pdf document components (which run
 // in the PDF worker) and the page-count estimator (src/lib/pageEstimate.ts, main thread).
 // Kept free of any @react-pdf import so the estimator never pulls the PDF engine - and
@@ -86,3 +88,36 @@ export const SLIP_INTRO_MARGIN_BOTTOM = 20;
 // A card with a competitor always keeps its ID, whatever the setting says.
 export const showLiveIdLine = (hideWcaLiveId: boolean, liveId: string) =>
   !hideWcaLiveId || liveId !== '';
+
+// ── Name tag live-results QR ─────────────────────────────────────────────────
+// The second QR on a name tag points at whichever live-results system the competition
+// runs on. The two use unrelated competitor ids:
+//   wca-live - live.worldcubeassociation.org, numeric competition id + WCA Live person id,
+//              both fetched off its GraphQL API. Falls back to the site's home page when
+//              either is missing, so the code still scans to something useful.
+//   ilr      - integrated live results on the WCA site, the WCA competition id + the
+//              competitor's global registration id (WCIF registration.wcaRegistrationId).
+//              Nothing to fetch: both values are already in hand.
+export function liveQrTarget(
+  cfg: {
+    mode: LiveResultsMode;
+    competitionId: string;
+    wcaLiveId: string | null;
+    wcaLivePersonIds: Record<number, string> | null;
+  },
+  entry: { registrantId: number; registrationId: number },
+): { url: string; label: string } {
+  if (cfg.mode === 'ilr') {
+    return {
+      url: `https://www.worldcubeassociation.org/competitions/${cfg.competitionId}/live/competitors/${entry.registrationId}`,
+      label: 'worldcubeassociation.org',
+    };
+  }
+  const personId = cfg.wcaLivePersonIds?.[entry.registrantId] ?? null;
+  return {
+    url: cfg.wcaLiveId && personId
+      ? `https://live.worldcubeassociation.org/competitions/${cfg.wcaLiveId}/competitors/${personId}`
+      : 'https://live.worldcubeassociation.org',
+    label: 'live.worldcubeassociation.org',
+  };
+}

@@ -186,6 +186,8 @@ export function readSettings(): CompetitionSettings | null {
   const gsDocs = gs.documents as Record<string, unknown>;
   if (gsDocs.roundChecklist === undefined) gsDocs.roundChecklist = false;
   if (s.hideWcaLiveId === undefined) s.hideWcaLiveId = false;
+  // Blobs written before ILR existed were all WCA Live.
+  if (s.liveResultsMode === undefined) s.liveResultsMode = 'wca-live';
   if (s.isCustomCompetition === undefined) s.isCustomCompetition = false;
   // Settings saved before the checking-mode option existed keep the original behaviour.
   if (s.scorecardCheckMode === undefined) s.scorecardCheckMode = 'per-group-card';

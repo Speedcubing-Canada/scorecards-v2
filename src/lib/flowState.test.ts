@@ -204,6 +204,8 @@ describe('settings restore', () => {
       secondaryLanguage: null,
       generationScope: { mode: 'everything', documents: DEFAULT_SCOPE.documents },
       hideWcaLiveId: false,
+      // Everything predating ILR ran on WCA Live.
+      liveResultsMode: 'wca-live',
       isCustomCompetition: false,
       scorecardCheckMode: 'per-group-card',
       // The ranking rules land on the live defaults, so an old blob and a fresh one

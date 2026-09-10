@@ -82,6 +82,12 @@
       "overrides_count": "{{count}} compétiteur(s) chargé(s)"
     },
     "wca_live": {
+      "system_title": "Résultats en direct",
+      "system_hint": "Détecté depuis le réglage de saisie des résultats de la compétition. Détermine la cible des QR codes des badges.",
+      "mode_wca_live": "WCA Live",
+      "mode_wca_live_desc": "live.worldcubeassociation.org, le site WCA Live distinct.",
+      "mode_ilr": "Résultats en direct intégrés (ILR)",
+      "mode_ilr_desc": "Résultats en direct sur le site de la WCA même. Aucun ID requis.",
       "title": "ID WCA Live",
       "optional_note": "optionnel - pour les QR codes des badges",
       "fetching": "Récupération depuis WCA Live…",

@@ -70,6 +70,28 @@ export async function fetchWcif(competitionId: string, token: string): Promise<W
   return res.json();
 }
 
+/**
+ * The competition's scoretaking system, or null if it can't be read.
+ * 'internal' is ILR (integrated live results, hosted on the WCA site itself); 'wca_live' is
+ * live.worldcubeassociation.org. Only on the single-competition endpoint, not the index.
+ * Public for announced competitions - the token is only needed for unannounced ones.
+ */
+export async function fetchScoretakingSoftware(
+  competitionId: string,
+  token?: string,
+): Promise<'external' | 'wca_live' | 'internal' | null> {
+  try {
+    const res = await fetch(`${WCA_API_URL}/competitions/${competitionId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.scoretaking_software ?? null;
+  } catch {
+    return null;
+  }
+}
+
 const WCA_LIVE_API = 'https://live.worldcubeassociation.org/api';
 
 /**

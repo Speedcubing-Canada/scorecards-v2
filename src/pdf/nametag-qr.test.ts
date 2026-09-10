@@ -1,0 +1,51 @@
+import { describe, it, expect } from 'vitest';
+import { liveQrTarget } from './layoutConstants';
+
+// The second QR on a name tag is the one an organizer can't check by eye: a wrong id still
+// scans, it just lands on the wrong page or a 404. The two live-results systems use unrelated
+// competitor ids, so the mapping is what this guards.
+const entry = { registrantId: 5, registrationId: 1385268 };
+
+describe('liveQrTarget', () => {
+  it('builds an ILR URL from the WCA competition id and the registration id', () => {
+    expect(liveQrTarget(
+      { mode: 'ilr', competitionId: 'Soorsi2026', wcaLiveId: null, wcaLivePersonIds: null },
+      entry,
+    )).toEqual({
+      url: 'https://www.worldcubeassociation.org/competitions/Soorsi2026/live/competitors/1385268',
+      label: 'worldcubeassociation.org',
+    });
+  });
+
+  it('ignores the WCA Live values in ILR mode - ILR never needs them', () => {
+    expect(liveQrTarget(
+      { mode: 'ilr', competitionId: 'Soorsi2026', wcaLiveId: '9667', wcaLivePersonIds: { 5: '42' } },
+      entry,
+    ).url).toContain('/live/competitors/1385268');
+  });
+
+  it('builds a WCA Live URL from the numeric competition id and the person id', () => {
+    expect(liveQrTarget(
+      { mode: 'wca-live', competitionId: 'Soorsi2026', wcaLiveId: '9667', wcaLivePersonIds: { 5: '42' } },
+      entry,
+    )).toEqual({
+      url: 'https://live.worldcubeassociation.org/competitions/9667/competitors/42',
+      label: 'live.worldcubeassociation.org',
+    });
+  });
+
+  it('falls back to the WCA Live home page when either id is missing', () => {
+    const home = 'https://live.worldcubeassociation.org';
+    expect(liveQrTarget({ mode: 'wca-live', competitionId: 'X', wcaLiveId: null, wcaLivePersonIds: { 5: '42' } }, entry).url).toBe(home);
+    expect(liveQrTarget({ mode: 'wca-live', competitionId: 'X', wcaLiveId: '9667', wcaLivePersonIds: null }, entry).url).toBe(home);
+    // Registered but not on WCA Live: the map has no row for this competitor.
+    expect(liveQrTarget({ mode: 'wca-live', competitionId: 'X', wcaLiveId: '9667', wcaLivePersonIds: { 9: '42' } }, entry).url).toBe(home);
+  });
+
+  it('never uses the registrant id in an ILR URL, or the registration id in a WCA Live one', () => {
+    const ilr = liveQrTarget({ mode: 'ilr', competitionId: 'X', wcaLiveId: null, wcaLivePersonIds: null }, entry).url;
+    const live = liveQrTarget({ mode: 'wca-live', competitionId: 'X', wcaLiveId: '9667', wcaLivePersonIds: { 5: '42' } }, entry).url;
+    expect(ilr.endsWith('/5')).toBe(false);
+    expect(live).not.toContain('1385268');
+  });
+});

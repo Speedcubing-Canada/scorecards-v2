@@ -17,7 +17,8 @@ beforeEach(() => { _id = 0; });
 const BASE: CompetitionSettings = {
   competitionId: 'TC2024', competitionName: 'Test Comp 2024',
   language: 'en', secondaryLanguage: null, paperFormat: 'A4', secondRoundMode: 'blanks',
-  logoDataUrl: null, useDefaultLogo: false, wcaLiveId: null, wcaLivePersonIds: null,
+  logoDataUrl: null, useDefaultLogo: false, liveResultsMode: 'wca-live',
+  wcaLiveId: null, wcaLivePersonIds: null,
   hideWcaLiveId: false, nametagLogoMode: 'hidden', nametagQrMode: 'back-only', nametagLayout: 'vertical',
   customEvents: [], scorecardCheckMode: 'per-group-card',
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
@@ -1376,7 +1377,7 @@ describe('Spanish language', () => {
 // ── Nametag entries ───────────────────────────────────────────────────────────
 
 describe('nametag entries', () => {
-  function mkNametag(registrantId: number, wcaUserId: number): NametTagEntry[] {
+  function mkNametag(registrantId: number, wcaUserId: number, wcaRegistrationId = 1385268): NametTagEntry[] {
     const c = ch(100, '333', 1, 1);
     const e = evt('333', [rSpec('a')]);
     const r = room('Stage', [act('333', 1, [c])]);
@@ -1384,7 +1385,7 @@ describe('nametag entries', () => {
       registrantId, name: `Person ${registrantId}`,
       wcaUserId, wcaId: `2024T${registrantId}`,
       countryIso2: 'FR', gender: 'm',
-      registration: { wcaRegistrationId: registrantId, eventIds: ['333'], status: 'accepted', isCompeting: true },
+      registration: { wcaRegistrationId, eventIds: ['333'], status: 'accepted', isCompeting: true },
       avatar: null, roles: [], personalBests: [],
       assignments: [{ activityId: 100, assignmentCode: 'competitor', stationNumber: null }],
     };
@@ -1401,12 +1402,19 @@ describe('nametag entries', () => {
     expect(tags[0]?.wcaUserId).toBe(99999);
   });
 
-  it('registrantId and wcaUserId are kept separate - they are different numbers', () => {
-    // registrantId is keyed into wcaLivePersonIds to get the WCA Live person URL ID.
-    // wcaUserId is the WCA website account ID and must not be used for WCA Live URLs.
-    const tags = mkNametag(5, 916687);
+  it('registrationId on nametag matches WCIF registration.wcaRegistrationId', () => {
+    const tags = mkNametag(42, 99999, 1385268);
+    expect(tags[0]?.registrationId).toBe(1385268);
+  });
+
+  it('the three ids are kept separate - they are different numbers', () => {
+    // registrantId keys wcaLivePersonIds for a WCA Live person URL, and is what scoretakers type.
+    // wcaUserId is the WCA website account ID, used by neither URL.
+    // registrationId is the global registration row id, the one in an ILR competitor URL.
+    const tags = mkNametag(5, 916687, 1385268);
     expect(tags[0]?.registrantId).toBe(5);
     expect(tags[0]?.wcaUserId).toBe(916687);
+    expect(tags[0]?.registrationId).toBe(1385268);
   });
 
   it('pending persons are excluded from nametags', () => {

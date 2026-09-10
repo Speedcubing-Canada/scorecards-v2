@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { Check, ChevronDown, ChevronRight, Info, RectangleHorizontal, RectangleVertical } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import type { CompetitionSettings, DoubleCheckRegionScope, DoubleCheckRound, LocaleCode, NametTagLogoMode, NametTagQrMode, PaperFormat, ScorecardCheckMode, SecondRoundMode } from '../types/settings';
+import type { CompetitionSettings, DoubleCheckRegionScope, DoubleCheckRound, LiveResultsMode, LocaleCode, NametTagLogoMode, NametTagQrMode, PaperFormat, ScorecardCheckMode, SecondRoundMode } from '../types/settings';
 import type { GenerationScope, DocumentSelection } from '../lib/generationScope';
 import { LANGUAGES } from '../i18n/index';
 import { resolveDefaultPrimaryLanguage, secondaryLanguageRow, isCanadianLanguage } from '../lib/languageSelector';
@@ -19,7 +19,8 @@ import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
 import CustomEventEditor from '../components/CustomEventEditor';
 import { useIsMobile } from '../lib/useIsMobile';
-import { fetchWcaLiveId, fetchWcaLivePersonIds } from '../auth/wca';
+import { fetchScoretakingSoftware, fetchWcaLiveId, fetchWcaLivePersonIds } from '../auth/wca';
+import { useAuth } from '../auth/useAuth';
 
 // Where each ranking rule lands when it is ticked. 50 is the world top the regulation names;
 // 1 is the national/continental record holder, who a world-50 threshold misses in a small region.
@@ -59,6 +60,7 @@ export default function SettingsPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { token } = useAuth();
 
   const { id: competitionId, name: competitionName } = readCompetition();
   // Custom (non-WCA) competition: no WCIF, no WCA Live, events defined on /custom.
@@ -104,6 +106,9 @@ export default function SettingsPage() {
     secondRoundMode: preset.secondRoundMode ?? 'prefilled',
     logoDataUrl: null,
     useDefaultLogo: preset.useDefaultLogo ?? isCanadianLanguage(i18n.resolvedLanguage ?? i18n.language),
+    // Overwritten on mount by the competition's own scoretaking setting, unless the
+    // organizer already picked one (see modeTouched).
+    liveResultsMode: 'wca-live',
     wcaLiveId: '',
     wcaLivePersonIds: null,
     hideWcaLiveId: preset.hideWcaLiveId ?? false,
@@ -132,7 +137,7 @@ export default function SettingsPage() {
 
   const {
     language, secondaryLanguage, paperFormat, secondRoundMode, logoDataUrl, useDefaultLogo,
-    wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,
+    liveResultsMode, wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,
     scorecardCheckMode, customEvents, scrambleDoubleCheckRounds,
     scrambleDoubleCheckOverrides, scrambleDoubleCheckWorldTop, scrambleDoubleCheckRegionTop,
     scrambleDoubleCheckRegionScope,
@@ -141,6 +146,9 @@ export default function SettingsPage() {
   // Purely presentational - not part of the draft, but stored so a restored upload isn't nameless.
   const [logoName, setLogoName] = useState<string | null>(() => readFileName('logo'));
   const [wcaLiveFetchStatus, setWcaLiveFetchStatus] = useState<'loading' | 'found' | 'not-found'>('loading');
+  // A restored or hand-picked choice beats the competition's own setting: the organizer may
+  // know something the WCA record doesn't yet.
+  const [modeTouched, setModeTouched] = useState(previous?.liveResultsMode !== undefined);
   // Open when it already holds something: a restored custom event behind a collapsed section
   // reads as lost, which is the whole complaint this restore exists to answer.
   const [advancedOpen, setAdvancedOpen] = useState(
@@ -151,19 +159,26 @@ export default function SettingsPage() {
   const dcFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Custom competitions are unofficial - they never exist on WCA Live.
+    // Custom competitions are unofficial - they run on neither live-results system.
     if (!competitionId || isCustom) return;
-    fetchWcaLiveId(competitionId).then(async id => {
-      if (id) {
-        // Only fill an empty field: a restored or hand-typed id is the organizer's.
-        setDraft(d => (d.wcaLiveId ? d : { ...d, wcaLiveId: id }));
-        setWcaLiveFetchStatus('found');
-        const personIds = await fetchWcaLivePersonIds(id);
-        patch({ wcaLivePersonIds: personIds });
-      } else {
-        setWcaLiveFetchStatus('not-found');
+    (async () => {
+      const scoretaking = await fetchScoretakingSoftware(competitionId, token?.access_token);
+      // ILR builds its URLs from the WCA competition id and each competitor's registration
+      // id, both already in hand - there is nothing to look up on WCA Live.
+      if (scoretaking === 'internal' && !modeTouched) {
+        patch({ liveResultsMode: 'ilr' });
+        return;
       }
-    });
+      const id = await fetchWcaLiveId(competitionId);
+      if (!id) {
+        setWcaLiveFetchStatus('not-found');
+        return;
+      }
+      // Only fill an empty field: a restored or hand-typed id is the organizer's.
+      setDraft(d => (d.wcaLiveId ? d : { ...d, wcaLiveId: id }));
+      setWcaLiveFetchStatus('found');
+      patch({ wcaLivePersonIds: await fetchWcaLivePersonIds(id) });
+    })();
   // competitionId is stable (from sessionStorage), no deps needed beyond mount
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -294,8 +309,9 @@ export default function SettingsPage() {
       generationScope,
       isCustomCompetition: isCustom,
       customEvents: draft.customEvents.filter(e => e.name.trim()),
-      // Custom competitions are unofficial: no WCA Live id, no double-checking, and the
+      // Custom competitions are unofficial: no live results, no double-checking, and the
       // card's "WCA Live:" line forced off (it prints whenever hideWcaLiveId is false).
+      liveResultsMode: isCustom ? 'wca-live' : draft.liveResultsMode,
       wcaLiveId: isCustom ? null : (draft.wcaLiveId?.trim() || null),
       wcaLivePersonIds: isCustom ? null : draft.wcaLivePersonIds,
       hideWcaLiveId: isCustom ? true : draft.hideWcaLiveId,
@@ -303,6 +319,11 @@ export default function SettingsPage() {
     });
     navigate('/generate');
   }
+
+  const liveModeOptions: { value: LiveResultsMode; label: string; description: string }[] = [
+    { value: 'wca-live', label: t('settings.wca_live.mode_wca_live'), description: t('settings.wca_live.mode_wca_live_desc') },
+    { value: 'ilr',      label: t('settings.wca_live.mode_ilr'),      description: t('settings.wca_live.mode_ilr_desc') },
+  ];
 
   const logoModeOptions: { value: NametTagLogoMode; label: string; description: string }[] = [
     { value: 'hidden',    label: t('settings.nametag.logo_hidden'),    description: t('settings.nametag.logo_hidden_desc') },
@@ -442,9 +463,35 @@ export default function SettingsPage() {
         </section>
         )}
 
-        {showScorecards && !isCustom && (
+        {(showScorecards || showNametags) && !isCustom && (
         <section style={s.section}>
-          <h3 style={s.sectionTitle}>
+          <h3 style={s.sectionTitle}>{t('settings.wca_live.system_title')}</h3>
+          {/* Only the name tag QR codes read the system and the id. The scorecard checkbox
+              below is about the printed "WCA Live:" line, which exists in either system. */}
+          {showNametags && (<>
+          <p style={s.hint}>{t('settings.wca_live.system_hint')}</p>
+          <div style={s.optionGroup}>
+            {liveModeOptions.map(opt => (
+              <label key={opt.value} style={{ ...s.optionCard, ...(liveResultsMode === opt.value ? s.optionCardActive : {}) }}>
+                <input
+                  type="radio"
+                  name="liveResultsMode"
+                  value={opt.value}
+                  checked={liveResultsMode === opt.value}
+                  onChange={() => { setModeTouched(true); patch({ liveResultsMode: opt.value }); }}
+                  style={s.radio}
+                />
+                <div>
+                  <div style={s.optionLabel}>{opt.label}</div>
+                  <div style={s.optionDesc}>{opt.description}</div>
+                </div>
+              </label>
+            ))}
+          </div>
+
+          {/* ILR needs no id: its URLs are built from the WCA competition id we already have. */}
+          {liveResultsMode === 'wca-live' && (<>
+          <h3 style={{ ...s.sectionTitle, marginTop: 20 }}>
             {t('settings.wca_live.title')}{' '}
             <span style={s.optional}>({t('settings.wca_live.optional_note')})</span>
             {wcaLiveFetchStatus === 'loading' && (
@@ -470,6 +517,9 @@ export default function SettingsPage() {
             placeholder={t('settings.wca_live.placeholder')}
             style={s.textInput}
           />
+          </>)}
+          </>)}
+          {showScorecards && (
           <label style={{ ...s.optionCard, cursor: 'pointer', marginTop: 12 }}>
             <input
               type="checkbox"
@@ -482,6 +532,7 @@ export default function SettingsPage() {
               <div style={s.optionDesc}>{t('settings.wca_live.hide_desc')}</div>
             </div>
           </label>
+          )}
         </section>
         )}
 

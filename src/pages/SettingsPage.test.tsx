@@ -22,9 +22,14 @@ import SettingsPage from './SettingsPage';
 vi.mock('../auth/wca', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../auth/wca')>()),
   // No network from a test, and no auto-filled id to compete with a restored one.
+  fetchScoretakingSoftware: vi.fn().mockResolvedValue('wca_live'),
   fetchWcaLiveId: vi.fn().mockResolvedValue(null),
   fetchWcaLivePersonIds: vi.fn().mockResolvedValue(null),
 }));
+
+import { fetchScoretakingSoftware, fetchWcaLiveId } from '../auth/wca';
+const mockScoretaking = vi.mocked(fetchScoretakingSoftware);
+const mockWcaLiveId = vi.mocked(fetchWcaLiveId);
 
 // jsdom ships no matchMedia; the theme provider and the mobile breakpoint both read one.
 vi.stubGlobal('matchMedia', (media: string) => ({
@@ -47,6 +52,7 @@ const stored = (overrides: Partial<CompetitionSettings> = {}): CompetitionSettin
   secondRoundMode: 'prefilled',
   logoDataUrl: null,
   useDefaultLogo: false,
+  liveResultsMode: 'wca-live',
   wcaLiveId: null,
   wcaLivePersonIds: null,
   hideWcaLiveId: false,
@@ -91,6 +97,9 @@ beforeEach(async () => {
   // queries by accessible name are stable.
   markAllSeen();
   await i18n.changeLanguage('en');
+  vi.clearAllMocks();
+  mockScoretaking.mockResolvedValue('wca_live');
+  mockWcaLiveId.mockResolvedValue(null);
   writeCompetition('WC2026', 'World Championship 2026');
   writeScope(DEFAULT_SCOPE, { showSecondRoundMode: false });
 });
@@ -271,7 +280,7 @@ describe('restoring the previous submission', () => {
     const settings = stored({
       language: 'fr', secondaryLanguage: 'en', paperFormat: 'A4', secondRoundMode: 'blanks',
       nametagLayout: 'horizontal', nametagQrMode: 'both-sides', scorecardCheckMode: 'none',
-      hideWcaLiveId: true, wcaLiveId: '9667', useDefaultLogo: true,
+      hideWcaLiveId: true, wcaLiveId: '9667', useDefaultLogo: true, liveResultsMode: 'ilr',
       scrambleDoubleCheck: true, scrambleDoubleCheckRounds: ['firstRound'],
       scrambleDoubleCheckOverrides: { '333|1': ['2019SMIT01'] },
       customEvents: [event('Mini Guildford')],
@@ -298,5 +307,61 @@ describe('custom competitions', () => {
     generate();
 
     expect(readSettings()?.customEvents.map(e => e.name)).toEqual(['Mini Guildford']);
+  });
+});
+
+// The competition's own `scoretaking_software` decides which live-results system the name tag
+// QR codes point at. ILR needs nothing from the WCA Live API, so we must not call it.
+describe('live results mode', () => {
+  it('preselects ILR and skips the WCA Live lookups when scoretaking is internal', async () => {
+    mockScoretaking.mockResolvedValue('internal');
+    await renderSettings();
+    generate();
+
+    expect(readSettings()?.liveResultsMode).toBe('ilr');
+    expect(mockWcaLiveId).not.toHaveBeenCalled();
+  });
+
+  it('stays on WCA Live and looks its id up when scoretaking is wca_live', async () => {
+    mockScoretaking.mockResolvedValue('wca_live');
+    mockWcaLiveId.mockResolvedValue('9667');
+    await renderSettings();
+    generate();
+
+    expect(readSettings()?.liveResultsMode).toBe('wca-live');
+    expect(readSettings()?.wcaLiveId).toBe('9667');
+  });
+
+  // The organizer may know the competition is about to switch before the WCA record does.
+  it('does not overwrite a restored choice', async () => {
+    mockScoretaking.mockResolvedValue('wca_live');
+    writeSettings(stored({ liveResultsMode: 'ilr' }));
+    await renderSettings();
+    generate();
+
+    expect(readSettings()?.liveResultsMode).toBe('ilr');
+  });
+
+  // The mode only decides where the name tag QR codes point, so it has to be reachable
+  // whenever name tags are generated - including without scorecards, whose "WCA Live:"
+  // checkbox used to gate this whole section.
+  it('is reachable when name tags are generated without scorecards', async () => {
+    writeScope({
+      mode: 'latest',
+      documents: { scorecards: false, scheduleTracker: false, nametags: true, roundChecklist: false, firstTimerSlips: false },
+    }, { showSecondRoundMode: false });
+    await renderSettings();
+
+    expect(screen.getByRole('radio', { name: /Integrated live results/ })).toBeTruthy();
+    expect(screen.queryByText(/Hide the WCA Live line/)).toBeNull();
+  });
+
+  it('lets the organizer override the detected system', async () => {
+    mockScoretaking.mockResolvedValue('wca_live');
+    await renderSettings();
+    fireEvent.click(screen.getByRole('radio', { name: /Integrated live results/ }));
+    generate();
+
+    expect(readSettings()?.liveResultsMode).toBe('ilr');
   });
 });

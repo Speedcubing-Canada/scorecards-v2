@@ -92,7 +92,7 @@ export default function RoundScopePage() {
           language: uiLang, secondaryLanguage: null,
           paperFormat: 'LETTER', secondRoundMode: 'blanks',
           logoDataUrl: null, useDefaultLogo: true,
-          wcaLiveId: null, wcaLivePersonIds: null, hideWcaLiveId: false,
+          liveResultsMode: 'wca-live', wcaLiveId: null, wcaLivePersonIds: null, hideWcaLiveId: false,
           nametagLogoMode: 'with-name', nametagQrMode: 'back-only', nametagLayout: 'vertical',
           customEvents: [],
           // Detection-only parse; the real mode is chosen later on /settings.

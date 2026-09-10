@@ -1,13 +1,13 @@
 import type { ReactNode } from 'react';
 import { Document, Page, View, Text, Image, StyleSheet, Svg, Rect } from '@react-pdf/renderer';
 import QRCode from 'qrcode';
-import type { CompetitionSettings, NametTagLayout, NametTagLogoMode } from '../types/settings';
+import type { CompetitionSettings, LiveResultsMode, NametTagLayout, NametTagLogoMode } from '../types/settings';
 import type { NametTagEntry, NametTagRole } from '../lib/wcif-parser';
 import { EVENT_ICONS } from '../assets/events';
 import { getNametTagStrings, type NametTagStrings } from '../lib/i18n';
 import { resolveLogo } from '../lib/logo';
 import {
-  NAMETAGS_PER_PAGE, eventIconsVisible,
+  NAMETAGS_PER_PAGE, eventIconsVisible, liveQrTarget,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
 } from './layoutConstants';
 import './fontSetup';
@@ -170,15 +170,20 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
 }
 
 // ── QR code section ───────────────────────────────────────────────────────────
-function QrSection({ entry, competitionId, wcaLiveId, wcaLivePersonIds, qrSize, compact = false }: {
-  entry: NametTagEntry; competitionId: string; wcaLiveId: string | null;
-  wcaLivePersonIds: Record<number, string> | null; qrSize: number; compact?: boolean;
+// Everything the two QR codes need. Bundled because it threads through both panels
+// untouched, and only QrSection ever reads any of it.
+interface QrConfig {
+  mode: LiveResultsMode;
+  competitionId: string;
+  wcaLiveId: string | null;
+  wcaLivePersonIds: Record<number, string> | null;
+}
+
+function QrSection({ entry, qr, qrSize, compact = false }: {
+  entry: NametTagEntry; qr: QrConfig; qrSize: number; compact?: boolean;
 }) {
-  const cgUrl = `https://www.competitiongroups.com/competitions/${competitionId}/persons/${entry.registrantId}`;
-  const wcaLivePersonId = wcaLivePersonIds?.[entry.registrantId] ?? null;
-  const liveUrl = (wcaLiveId && wcaLivePersonId)
-    ? `https://live.worldcubeassociation.org/competitions/${wcaLiveId}/competitors/${wcaLivePersonId}`
-    : 'https://live.worldcubeassociation.org';
+  const cgUrl = `https://www.competitiongroups.com/competitions/${qr.competitionId}/persons/${entry.registrantId}`;
+  const live = liveQrTarget(qr, entry);
 
   return (
     <View style={[s.qrSection, compact ? { gap: 6 } : {}]}>
@@ -187,8 +192,8 @@ function QrSection({ entry, competitionId, wcaLiveId, wcaLivePersonIds, qrSize, 
         <Text style={s.qrLabel}>competitiongroups.com</Text>
       </View>
       <View style={s.qrCol}>
-        <QrSvg url={liveUrl} size={qrSize} />
-        <Text style={s.qrLabel}>live.worldcubeassociation.org</Text>
+        <QrSvg url={live.url} size={qrSize} />
+        <Text style={s.qrLabel}>{live.label}</Text>
       </View>
     </View>
   );
@@ -240,11 +245,10 @@ function PanelFrame({ pos, slotW, slotH, panelW, panelH, rotate, children }: {
 }
 
 // ── Front panel ───────────────────────────────────────────────────────────────
-function FrontPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName, competitionId, wcaLiveId, wcaLivePersonIds, logoMode, logoDataUrl, qrBothSides, qrSize, nametTagStrings, compact = false }: {
+function FrontPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName, qr, logoMode, logoDataUrl, qrBothSides, qrSize, nametTagStrings, compact = false }: {
   entry: NametTagEntry; panelW: number; panelH: number; slotW: number; slotH: number; rotate: boolean;
   pos: { left: number; top: number }; compName: string;
-  competitionId: string; wcaLiveId: string | null;
-  wcaLivePersonIds: Record<number, string> | null;
+  qr: QrConfig;
   logoMode: NametTagLogoMode; logoDataUrl: string | null;
   qrBothSides: boolean; qrSize: number;
   nametTagStrings: NametTagStrings;
@@ -257,7 +261,7 @@ function FrontPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName
   if (qrBothSides) {
     return frame(<>
       <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleFront} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} showWcaId={!compact} showEvents={eventIconsVisible({ isQrSide: true, compact })} />
-      <QrSection entry={entry} competitionId={competitionId} wcaLiveId={wcaLiveId} wcaLivePersonIds={wcaLivePersonIds} qrSize={qrSize} compact={compact} />
+      <QrSection entry={entry} qr={qr} qrSize={qrSize} compact={compact} />
     </>);
   }
 
@@ -292,11 +296,10 @@ function FrontPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName
 }
 
 // ── Back panel ────────────────────────────────────────────────────────────────
-function BackPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName, competitionId, wcaLiveId, wcaLivePersonIds, logoMode, logoDataUrl, qrSize, compact = false }: {
+function BackPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName, qr, logoMode, logoDataUrl, qrSize, compact = false }: {
   entry: NametTagEntry; panelW: number; panelH: number; slotW: number; slotH: number; rotate: boolean;
   pos: { left: number; top: number }; compName: string;
-  competitionId: string; wcaLiveId: string | null;
-  wcaLivePersonIds: Record<number, string> | null;
+  qr: QrConfig;
   logoMode: NametTagLogoMode; logoDataUrl: string | null; qrSize: number;
   compact?: boolean;
 }) {
@@ -304,7 +307,7 @@ function BackPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName,
     <PanelFrame pos={pos} slotW={slotW} slotH={slotH} panelW={panelW} panelH={panelH} rotate={rotate}>
       <PanelTop entry={entry} panelW={panelW} compName={compName} titleText={entry.titleBack} logoMode={logoMode} logoDataUrl={logoDataUrl} compact={compact} showEvents={eventIconsVisible({ isQrSide: true, compact })} />
       {compact && <Text style={[s.wcaId, { marginTop: 2, marginBottom: 2 }]}>{entry.wcaId || ' '}</Text>}
-      <QrSection entry={entry} competitionId={competitionId} wcaLiveId={wcaLiveId} wcaLivePersonIds={wcaLivePersonIds} qrSize={qrSize} compact={compact} />
+      <QrSection entry={entry} qr={qr} qrSize={qrSize} compact={compact} />
     </PanelFrame>
   );
 }
@@ -343,7 +346,13 @@ interface Props {
 export function NametTagDocument({ nametags, settings }: Props) {
   const layout: NametTagLayout = settings.nametagLayout ?? 'vertical';
   const horizontal = layout === 'horizontal';
-  const { competitionId, competitionName, wcaLiveId, wcaLivePersonIds, nametagLogoMode, nametagQrMode } = settings;
+  const { competitionId, competitionName, nametagLogoMode, nametagQrMode } = settings;
+  const qr: QrConfig = {
+    mode: settings.liveResultsMode,
+    competitionId,
+    wcaLiveId: settings.wcaLiveId,
+    wcaLivePersonIds: settings.wcaLivePersonIds,
+  };
 
   // Custom logo (if any) wins; otherwise fall back to the bundled SCC logo when enabled.
   const logoDataUrl = resolveLogo(settings);
@@ -375,8 +384,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
                   key={`f${ei}`} entry={entry}
                   panelW={panelW} panelH={panelH} slotW={panelW} slotH={panelH} rotate={false} pos={frontPos}
                   compName={competitionName}
-                  competitionId={competitionId} wcaLiveId={wcaLiveId}
-                  wcaLivePersonIds={wcaLivePersonIds}
+                  qr={qr}
                   logoMode={logoMode} logoDataUrl={logoDataUrl}
                   qrBothSides={qrBothSides} qrSize={qrSize}
                   nametTagStrings={nametTagStrings}
@@ -386,8 +394,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
                   key={`b${ei}`} entry={entry}
                   panelW={panelW} panelH={panelH} slotW={panelW} slotH={panelH} rotate={false} pos={backPos}
                   compName={competitionName}
-                  competitionId={competitionId} wcaLiveId={wcaLiveId}
-                  wcaLivePersonIds={wcaLivePersonIds}
+                  qr={qr}
                   logoMode={logoMode} logoDataUrl={logoDataUrl}
                   qrSize={qrSize}
                   compact={true}
@@ -421,8 +428,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
                 key={`f${ei}`} entry={entry}
                 panelW={panelW} panelH={panelH} slotW={panelW} slotH={panelH} rotate={false} pos={frontPos}
                 compName={competitionName}
-                competitionId={competitionId} wcaLiveId={wcaLiveId}
-                wcaLivePersonIds={wcaLivePersonIds}
+                qr={qr}
                 logoMode={logoMode} logoDataUrl={logoDataUrl}
                 qrBothSides={qrBothSides} qrSize={qrSize}
                 nametTagStrings={nametTagStrings}
@@ -432,8 +438,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
                 key={`b${ei}`} entry={entry}
                 panelW={panelW} panelH={panelH} slotW={panelW} slotH={panelH} rotate={false} pos={backPos}
                 compName={competitionName}
-                competitionId={competitionId} wcaLiveId={wcaLiveId}
-                wcaLivePersonIds={wcaLivePersonIds}
+                qr={qr}
                 logoMode={logoMode} logoDataUrl={logoDataUrl}
                 qrSize={qrSize}
                 compact={false}

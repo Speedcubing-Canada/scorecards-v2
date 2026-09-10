@@ -15,6 +15,12 @@ export type NametTagLogoMode = 'hidden' | 'with-name' | 'logo-only';
 
 export type NametTagLayout = 'vertical' | 'horizontal';
 
+// Which live-results system the competition runs on, deciding the name tag QR target.
+//   wca-live - live.worldcubeassociation.org (needs the numeric wcaLiveId + person id map)
+//   ilr      - integrated live results on the WCA site itself; the URL is built from the
+//              WCA competition id and the competitor's WCIF `registration.wcaRegistrationId`
+export type LiveResultsMode = 'wca-live' | 'ilr';
+
 // Where the delegate/scoretaker cover card goes. Purely about cover cards - the Round
 // Checklist is a separate document, chosen in DocumentSelection, not a mode here.
 //   per-group-card - one cover card per group, on the scorecard sheets (default)
@@ -69,6 +75,10 @@ export interface CompetitionSettings {
   // Falls back to the bundled Speedcubing Canada logo when no custom logo is uploaded.
   // Disable for competitions outside Canada that don't want the SCC branding.
   useDefaultLogo: boolean;
+  // Auto-detected on the settings page from the competition's `scoretaking_software`
+  // ('internal' => ilr), and overridable there.
+  liveResultsMode: LiveResultsMode;
+  // Only used by 'wca-live': ILR needs neither.
   wcaLiveId: string | null;
   wcaLivePersonIds: Record<number, string> | null;
   hideWcaLiveId: boolean;

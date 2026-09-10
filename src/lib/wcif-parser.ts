@@ -17,8 +17,14 @@ export type NametTagRole = 'delegate' | 'organizer' | 'new-competitor' | 'compet
 export interface NametTagEntry {
   name: string;
   wcaId: string;
+  // Three different ids, none interchangeable:
+  //   registrantId   - 1..N within the competition; the number scoretakers type, and the
+  //                    Competition Groups / WCA Live person key
+  //   wcaUserId      - the person's WCA website account id
+  //   registrationId - the global registration row id; the one in an ILR competitor URL
   registrantId: number;
   wcaUserId: number;
+  registrationId: number;
   gender: 'm' | 'f' | 'o';
   role: NametTagRole;
   titleFront: string;
@@ -1072,6 +1078,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       wcaId: person.wcaId ?? '',
       registrantId: person.registrantId,
       wcaUserId: person.wcaUserId,
+      registrationId: person.registration.wcaRegistrationId,
       gender: person.gender,
       role,
       titleFront: resolveTitle(nametTagTitles.front, role, isFemale),

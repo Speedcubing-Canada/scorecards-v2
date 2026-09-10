@@ -82,6 +82,12 @@
       "overrides_count": "{{count}} competidor(es) carregado(s)"
     },
     "wca_live": {
+      "system_title": "Resultados ao vivo",
+      "system_hint": "Detectado a partir da configuração de digitação de resultados da competição. Define para onde apontam os QR codes dos crachás.",
+      "mode_wca_live": "WCA Live",
+      "mode_wca_live_desc": "live.worldcubeassociation.org, o site separado do WCA Live.",
+      "mode_ilr": "Resultados ao vivo integrados (ILR)",
+      "mode_ilr_desc": "Resultados ao vivo no próprio site da WCA. Não precisa de ID.",
       "title": "ID do WCA Live",
       "optional_note": "opcional - para QR codes dos crachás",
       "fetching": "Buscando no WCA Live…",
