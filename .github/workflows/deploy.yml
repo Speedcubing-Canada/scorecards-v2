@@ -28,8 +28,6 @@ on:
 # Cancel a run only when a newer commit supersedes it. The event is part of the key
 # on purpose: a push run and a pull_request run of the SAME commit publish separate
 # check contexts onto that commit, so cancelling one leaves the PR permanently red.
-# A branch with an open PR therefore runs the test job twice, which is the price of
-# also covering fork PRs - only the pull_request event ever sees those.
 # Never cancel on main - that would kill a live deploy.
 concurrency:
   group: ci-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
@@ -41,11 +39,20 @@ permissions:
 
 jobs:
   # ── 1. Lint, typecheck, test ──────────────────────────────────────────────
-  # Runs on every push and pull request; the deploy job below is skipped unless
-  # the ref is main.
+  # Runs on every push, and on pull requests from forks. A same-repo branch already
+  # got a push run for the very same commit, and both events publish their own check
+  # contexts onto it, so running again would only duplicate the work - but the
+  # pull_request event is the ONLY one that ever fires for a fork, whose pushes land
+  # in the contributor's repo and never reach ours. Hence: skip the duplicate, keep
+  # the fork.
+  #
+  # The deploy job below is skipped unless the ref is main.
   test:
     name: Lint, typecheck & test
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request'
+      || github.event.pull_request.head.repo.full_name != github.repository
 
     steps:
       - uses: actions/checkout@v7
