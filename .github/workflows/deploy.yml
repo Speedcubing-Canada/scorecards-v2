@@ -25,10 +25,14 @@ on:
   pull_request:
   workflow_dispatch:
 
-# A branch push and its PR event are the same commit: run one, cancel the stale
-# one on a rapid re-push. Never cancel on main - that would kill a live deploy.
+# Cancel a run only when a newer commit supersedes it. The event is part of the key
+# on purpose: a push run and a pull_request run of the SAME commit publish separate
+# check contexts onto that commit, so cancelling one leaves the PR permanently red.
+# A branch with an open PR therefore runs the test job twice, which is the price of
+# also covering fork PRs - only the pull_request event ever sees those.
+# Never cancel on main - that would kill a live deploy.
 concurrency:
-  group: ci-${{ github.head_ref || github.ref_name }}
+  group: ci-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
