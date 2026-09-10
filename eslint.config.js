@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'coverage']),
   // The production server and the build/render tooling are Node, not browser, and were
   // previously unlinted entirely - server.js serves every request in production.
   {

@@ -27,47 +27,31 @@ import type {
 } from '../src/lib/wcif-parser';
 import { finalizeEntries } from '../src/lib/wcif-parser';
 import type { CompetitionSettings } from '../src/types/settings';
+import { testSettings } from '../src/test/fixtures';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = resolve(__dir, '../../current-output');
 
-/**
- * A plausible default settings object. Individual fixtures override what they exercise.
- * Kept here rather than in a shared fixture module because only this script needs a
- * *complete* CompetitionSettings - the unit tests build minimal ones.
- */
+// Every setting the ../original-output/ diff depends on, pinned here rather than inherited:
+// testSettings is a test fixture, and a test that needs a different default must not be able
+// to silently rewrite every fixture PDF. New fields still default from testSettings.
 function settings(over: Partial<CompetitionSettings> = {}): CompetitionSettings {
-  return {
-    competitionId: 'GrosJouetsaMontreal2026',
-    competitionName: 'Gros Jouets à Montréal 2026',
+  return testSettings({
     language: 'en',
     secondaryLanguage: null,
     paperFormat: 'LETTER',
     secondRoundMode: 'prefilled',
-    logoDataUrl: null,
     useDefaultLogo: true,
+    logoDataUrl: null,
     liveResultsMode: 'wca-live',
-    wcaLiveId: null,
-    wcaLivePersonIds: null,
     hideWcaLiveId: false,
     nametagLogoMode: 'with-name',
     nametagQrMode: 'back-only',
     nametagLayout: 'vertical',
-    customEvents: [],
     scorecardCheckMode: 'per-group-card',
     scrambleDoubleCheck: false,
-    scrambleDoubleCheckRounds: ['finals'],
-    scrambleDoubleCheckOverrides: {},
-    generationScope: {
-      mode: 'everything',
-      documents: {
-        scorecards: true, scheduleTracker: true, nametags: true,
-        roundChecklist: false, firstTimerSlips: false,
-      },
-    },
-    isCustomCompetition: false,
     ...over,
-  };
+  });
 }
 
 // ── Name tags: the real Gros Jouets 2026 export ───────────────────────────────

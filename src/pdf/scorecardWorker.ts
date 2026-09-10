@@ -2,19 +2,13 @@
 // order, so this sets globalThis.Buffer before @react-pdf/renderer initializes.
 import './bufferPolyfill';
 
-import React from 'react';
 import { pdf } from '@react-pdf/renderer';
 import { zipSync } from 'fflate';
 import type { ParsedWCIF } from '../lib/wcif-parser';
 import type { CompetitionSettings, LocaleCode } from '../types/settings';
-import { buildCustomEntries } from '../lib/customScorecards';
 import { buildPdfJobs, downloadTarget, type PdfJob } from '../lib/pdfJobs';
 import { getWorkerStrings } from '../lib/i18n';
-import { ScorecardDocument } from './ScorecardDocument';
-import { NametTagDocument } from './NametTagDocument';
-import { ScheduleTrackerDocument } from './ScheduleTrackerDocument';
-import { CheckingSheetDocument } from './CheckingSheetDocument';
-import { FirstTimerSlipDocument } from './FirstTimerSlipDocument';
+import { jobElement } from './jobElement';
 
 export type WorkerRequest = {
   parsed: ParsedWCIF;
@@ -32,37 +26,12 @@ export type WorkerResponse =
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const workerSelf = self as any;
 
-/**
- * Render one document component to PDF bytes. Every document goes through here, so the
- * `any` casts that @react-pdf's element typing forces on us live in exactly one place.
- */
-async function renderDoc<P extends object>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  component: (props: P) => any,
-  props: P,
-): Promise<Uint8Array> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const element = React.createElement(component as any, props) as any;
-  const blob = await pdf(element).toBlob();
-  return new Uint8Array(await blob.arrayBuffer());
-}
-
-/**
- * The document each job kind renders. Adding a document type means adding one line here
- * and one in `buildPdfJobs` - the two lists are what keep the worker and the generate
- * page's file count in agreement.
- */
-function renderJob(
+/** Render one job's document to PDF bytes, in the browser (Blob) rendering path. */
+async function renderJob(
   job: PdfJob, parsed: ParsedWCIF, settings: CompetitionSettings,
 ): Promise<Uint8Array> {
-  switch (job.kind) {
-    case 'nametags':     return renderDoc(NametTagDocument,        { nametags: parsed.nametags, settings });
-    case 'schedule':     return renderDoc(ScheduleTrackerDocument, { days: parsed.scheduleDays, settings });
-    case 'checking':     return renderDoc(CheckingSheetDocument,   { days: parsed.checkingDays, settings });
-    case 'first-timers': return renderDoc(FirstTimerSlipDocument,  { entries: parsed.firstTimers, settings });
-    case 'custom':       return renderDoc(ScorecardDocument,       { entries: buildCustomEntries(job.custom), settings });
-    case 'scorecards':   return renderDoc(ScorecardDocument,       { entries: job.entries, settings });
-  }
+  const blob = await pdf(jobElement(job, parsed, settings)).toBlob();
+  return new Uint8Array(await blob.arrayBuffer());
 }
 
 workerSelf.onmessage = async (e: MessageEvent<WorkerRequest>) => {

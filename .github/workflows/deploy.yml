@@ -1,6 +1,10 @@
 # CI + deployment pipeline.
-#   pull request  → lint, typecheck, test (no deploy)
-#   push to main  → lint, typecheck, test → build → deploy to App Engine
+#   pull request → lint, typecheck, test with coverage (no deploy)
+#   push to main → same → build → deploy to App Engine
+#
+# There is no staging environment, so the test job is the only thing standing
+# between a branch and production. main is protected and requires it, so nothing
+# reaches production without a green run on the merge result.
 #
 # See .github/workflows/README.md for one-time GCP setup instructions.
 #
@@ -16,10 +20,20 @@ env:
   PROJECT: scorecards-v2-prod
 
 on:
+  # main only. A branch is covered by its PR run, so triggering on every branch push
+  # would just run the same tests twice per commit. Naming a branch also keeps an
+  # unfiltered `push` from firing on tag pushes.
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+
+# Cancel a run only when a newer commit supersedes it, and never on main - that would
+# kill a live deploy. The event stays in the key so a PR whose head branch is main
+# cannot share a group with main's own push run.
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -27,7 +41,15 @@ permissions:
 
 jobs:
   # ── 1. Lint, typecheck, test ──────────────────────────────────────────────
-  # Runs on pull requests too, where the deploy job below is skipped.
+  # Once per commit: the pull_request run for anything under review, the push run for
+  # main. The pull_request event tests the merge with main rather than the branch head,
+  # which is what actually lands, is the context branch protection requires, and is the
+  # only event that ever fires for a fork.
+  #
+  # Never gate this job behind an `if:` on the event or the head repo. A skipped job
+  # still reports its check context, and branch protection counts a skip as a pass.
+  #
+  # The deploy job below is skipped unless the ref is main.
   test:
     name: Lint, typecheck & test
     runs-on: ubuntu-latest
@@ -50,16 +72,38 @@ jobs:
       # `npm run build` runs this too, but as its own step it typechecks src/**
       # (test files included) and fails a PR that never reaches a build.
       - name: Typecheck
-        run: npx tsc -b
+        run: npm run typecheck
 
+      # Fails if coverage drops below the thresholds committed in
+      # vitest.config.ts. Raising them is automatic (thresholds.autoUpdate).
       - name: Test
-        run: npm test
+        run: npm run test:coverage
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          [ -f coverage/coverage-summary.json ] || exit 0
+          jq -r '.total | "| metric | % | covered / total |",
+                          "|---|---|---|",
+                          "| lines | \(.lines.pct)% | \(.lines.covered) / \(.lines.total) |",
+                          "| statements | \(.statements.pct)% | \(.statements.covered) / \(.statements.total) |",
+                          "| functions | \(.functions.pct)% | \(.functions.covered) / \(.functions.total) |",
+                          "| branches | \(.branches.pct)% | \(.branches.covered) / \(.branches.total) |"' \
+            coverage/coverage-summary.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
 
   # ── 2. Build and deploy ───────────────────────────────────────────────────
   deploy:
     name: Deploy → Production
     needs: test
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:

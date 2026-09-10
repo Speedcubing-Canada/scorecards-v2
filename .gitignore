@@ -25,3 +25,4 @@ dist-ssr
 
 .env
 pdf-diff-out/
+coverage/
