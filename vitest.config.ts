@@ -23,7 +23,7 @@ export default defineConfig({
       reporter: ['text', 'json-summary', 'html'],
       // A ratchet: autoUpdate rewrites these upward on any run that improves
       // coverage, so CI only ever fails on a drop. Never lower them by hand.
-      thresholds: { autoUpdate: true, lines: 77.29, functions: 73.16, branches: 74.02, statements: 76.09 },
+      thresholds: { autoUpdate: true, lines: 77.3, functions: 73.16, branches: 74.03, statements: 76.11 },
     },
   },
 });

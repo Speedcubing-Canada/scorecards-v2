@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { parseWCIF } from '../lib/wcif-parser';
-import { buildPdfJobs } from '../lib/pdfJobs';
+import { buildPdfJobs, type PdfJob } from '../lib/pdfJobs';
 import { sampleWcif, testSettings } from '../test/fixtures';
 import { jobElement } from './jobElement';
 
@@ -25,6 +25,13 @@ describe('PDF rendering', () => {
     expect(new Set(jobs.map(j => j.kind))).toEqual(
       new Set(['scorecards', 'schedule', 'checking', 'nametags', 'first-timers', 'custom']),
     );
+  });
+
+  // The switch is exhaustive over PdfJob, so only a cast can reach the default. Without
+  // it a new kind would return undefined and fail inside the worker instead.
+  it('throws on an unmapped job kind', () => {
+    expect(() => jobElement({ kind: 'unmapped' } as unknown as PdfJob, parsed, settings))
+      .toThrow(/unhandled job kind/);
   });
 
   it.each(jobs.map(j => [j.filename, j] as const))('renders %s', async (_name, job) => {
