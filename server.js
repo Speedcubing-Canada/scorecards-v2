@@ -158,10 +158,16 @@ app.use((req, res) => {
   });
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`Scorecard server listening on port ${PORT}`);
-});
+export { app };
 
-process.on('SIGTERM', () =>
-  server.close(() => console.log('Process terminated')),
-);
+// Only bind a port when started directly (`npm start`). An import - the test - gets the
+// configured app and picks its own port.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const server = app.listen(PORT, () => {
+    console.log(`Scorecard server listening on port ${PORT}`);
+  });
+
+  process.on('SIGTERM', () =>
+    server.close(() => console.log('Process terminated')),
+  );
+}

@@ -1,31 +1,43 @@
 #!/usr/bin/env bash
-# Re-render every fixture PDF and diff it against a saved baseline.
+# Re-render every fixture PDF and diff it against a committed baseline.
 #
-#   scripts/checkFixtures.sh <baseline-dir> [outdir] [dpi]
+#   scripts/checkFixtures.sh [baseline-dir] [outdir] [dpi]
 #
-# Use after any change that could touch PDF output. The layout unit tests assert
-# measurements; this catches everything they cannot see - a changed colour, a shifted
-# margin, a dropped glyph. Exits non-zero if any page differs.
+# Defaults to tests/pdf-baseline, so CI and a local run check the same thing. The layout
+# unit tests assert measurements; this catches everything they cannot see - a changed
+# colour, a shifted margin, a dropped glyph. Exits non-zero if any page differs.
 #
-# Populate the baseline first, from a known-good commit:
-#   npm run render:fixtures && npm run render:fixtures -- --horizontal
-#   (copying the four PDFs named below into <baseline-dir>)
+# Needs poppler-utils (pdftoppm) and graphicsmagick (gm).
+#
+# Refresh the baseline after an INTENTIONAL layout change, once the new output has been
+# eyeballed:  scripts/updateFixtureBaseline.sh
+#
+# TOLERANCE, not exact zero: the runner's poppler and font stack differ from a dev
+# machine's, and anti-aliasing alone lands around 1e-4. Anything a print job would care
+# about - a shifted margin, a resized card, a dropped glyph - is orders of magnitude above
+# this. Raise it only with a reason; the point is to catch real layout drift.
 set -euo pipefail
-
-BASELINE="${1:?need baseline dir}"
-OUTDIR="${2:-/tmp/fixture-check}"
-DPI="${3:-150}"
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP="$(dirname "$HERE")"
-OUT="$APP/../current-output"
-DIFF="$(cd "$APP/.." && pwd)/.claude/skills/pdf-print-edit/scripts/pdf_diff.sh"
 
-rm -rf "$OUTDIR"; mkdir -p "$OUTDIR"
+BASELINE="$(cd "${1:-$APP/tests/pdf-baseline}" && pwd)"
+OUTDIR="${2:-${TMPDIR:-/tmp}/fixture-check}"
+DPI="${3:-150}"
+TOLERANCE="${FIXTURE_MAE_TOLERANCE:-0.002}"
+
+RENDERED="$OUTDIR/rendered"
+DIFF="$HERE/pdfDiff.sh"
+
+for tool in pdftoppm gm; do
+  command -v "$tool" >/dev/null || { echo "ERROR: $tool not installed" >&2; exit 2; }
+done
+
+rm -rf "$OUTDIR"; mkdir -p "$RENDERED"
 fail=0
 
-check() { # <label> <rendered.pdf> <baseline.pdf>
-  local label="$1" got="$2" want="$3"
+check() { # <label> <rendered-basename> <baseline-basename>
+  local label="$1" got="$RENDERED/$2" want="$BASELINE/$3"
   if [ ! -f "$want" ]; then
     echo "SKIP $label (no baseline at $want)"; return
   fi
@@ -36,30 +48,29 @@ check() { # <label> <rendered.pdf> <baseline.pdf>
   if [ -z "$max" ]; then
     echo "FAIL $label - diff produced no metric (see $OUTDIR/$label.log)"; fail=1; return
   fi
-  if awk -v m="$max" 'BEGIN{exit !(m+0==0)}'; then
-    echo "OK   $label (pixel-identical)"
+  if awk -v m="$max" -v t="$TOLERANCE" 'BEGIN{exit !(m+0<=t+0)}'; then
+    echo "OK   $label (max page MAE $max)"
   else
-    echo "FAIL $label - max page MAE $max (see $OUTDIR/$label/)"
+    echo "FAIL $label - max page MAE $max exceeds $TOLERANCE (see $OUTDIR/$label/)"
     fail=1
   fi
 }
 
 cd "$APP"
-npm run --silent render:fixtures >/dev/null
-check nametags_vertical "$OUT/GrosJouetsaMontreal2026_nametags.pdf" "$BASELINE/nametags_vertical.pdf"
-check first_timers     "$OUT/GrosJouetsaMontreal2026_first_timers.pdf" "$BASELINE/first_timers.pdf"
-check scorecards       "$OUT/scorecard-layout-test.pdf"              "$BASELINE/scorecards.pdf"
-check schedule         "$OUT/schedule-layout-test.pdf"               "$BASELINE/schedule.pdf"
-check checklist        "$OUT/checklist-layout-test.pdf"              "$BASELINE/checklist.pdf"
+FIXTURE_OUT_DIR="$RENDERED" npm run --silent render:fixtures >/dev/null
+check nametags_vertical GrosJouetsaMontreal2026_nametags.pdf     nametags_vertical.pdf
+check first_timers      GrosJouetsaMontreal2026_first_timers.pdf first_timers.pdf
+check scorecards        scorecard-layout-test.pdf                scorecards.pdf
+check schedule          schedule-layout-test.pdf                 schedule.pdf
+check checklist         checklist-layout-test.pdf                checklist.pdf
 
-npm run --silent render:fixtures -- --horizontal >/dev/null
-check nametags_horizontal "$OUT/GrosJouetsaMontreal2026_nametags.pdf" "$BASELINE/nametags_horizontal.pdf"
-
-# Leave current-output/ holding the default (vertical) render.
-npm run --silent render:fixtures >/dev/null
+FIXTURE_OUT_DIR="$RENDERED" npm run --silent render:fixtures -- --horizontal >/dev/null
+check nametags_horizontal GrosJouetsaMontreal2026_nametags.pdf nametags_horizontal.pdf
 
 if [ "$fail" -ne 0 ]; then
-  echo "PDF OUTPUT CHANGED - inspect the diffs above before continuing."
+  echo
+  echo "PDF OUTPUT CHANGED - inspect the diff images under $OUTDIR/ before continuing."
+  echo "If the change was intended: scripts/updateFixtureBaseline.sh"
   exit 1
 fi
-echo "All fixtures pixel-identical to baseline."
+echo "All fixtures match the baseline."

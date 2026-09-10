@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen } from '@testing-library/react';
 
 vi.mock('../auth/wca', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../auth/wca')>()),
@@ -10,7 +10,7 @@ vi.mock('../auth/wca', async (importOriginal) => ({
 import { fetchWcif } from '../auth/wca';
 import i18n from '../i18n/index';
 import { markAllSeen } from '../changelog';
-import { writeCompetition, readStoredScope } from '../lib/flowState';
+import { writeCompetition, readHasGroups, readStoredScope } from '../lib/flowState';
 import { sampleWcif } from '../test/fixtures';
 import { renderWithProviders, signedInAuth, useEnglish } from '../test/render';
 import RoundScopePage from './RoundScopePage';
@@ -40,6 +40,66 @@ describe('RoundScopePage', () => {
     expect(screen.getByRole('button', { name: i18n.t('scope.continue') })).toBeTruthy();
     // Nothing is written until Continue.
     expect(readStoredScope()).toBeNull();
+  });
+
+  it('writes the document selection Continue was pressed with', async () => {
+    renderWithProviders(<RoundScopePage />, { auth: signedInAuth });
+    await screen.findByText(i18n.t('scope.docs_title'));
+
+    // The fixture is mid-competition, so the nametag default depends on that; assert the
+    // toggle flips it rather than pinning the default, which baseDocuments owns.
+    const box = screen.getByLabelText(i18n.t('scope.doc_nametags')) as HTMLInputElement;
+    const before = box.checked;
+    fireEvent.click(box);
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('scope.continue') }));
+
+    // /settings and /generate both read this; a toggle that never lands here is invisible
+    // until the organizer opens a bundle missing a document.
+    const scope = readStoredScope()!;
+    expect(scope.documents.nametags).toBe(!before);
+    expect(scope.documents.scorecards).toBe(true);
+  });
+
+  it('refuses to continue with no documents selected', async () => {
+    renderWithProviders(<RoundScopePage />, { auth: signedInAuth });
+    await screen.findByText(i18n.t('scope.docs_title'));
+
+    for (const key of [
+      'scope.doc_scorecards', 'scope.doc_schedule', 'scope.doc_nametags',
+      'scope.doc_round_checklist', 'scope.doc_first_timers',
+    ] as const) {
+      const box = screen.getByLabelText(i18n.t(key)) as HTMLInputElement;
+      if (box.checked) fireEvent.click(box);
+    }
+
+    const button = screen.getByRole('button', { name: i18n.t('scope.continue') }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    fireEvent.click(button);
+    // An empty bundle would reach /generate and render a download button for nothing.
+    expect(readStoredScope()).toBeNull();
+  });
+
+  it('records whether the competition already has groups, for the settings warning', async () => {
+    renderWithProviders(<RoundScopePage />, { auth: signedInAuth });
+    await screen.findByText(i18n.t('scope.docs_title'));
+    // The fixture assigns groups, and /settings must not re-fetch the WCIF to learn this.
+    expect(readHasGroups()).toBe(true);
+  });
+
+  it('restores the previous selection on back-navigation', async () => {
+    renderWithProviders(<RoundScopePage />, { auth: signedInAuth });
+    await screen.findByText(i18n.t('scope.docs_title'));
+    const box = screen.getByLabelText(i18n.t('scope.doc_schedule')) as HTMLInputElement;
+    const chosen = !box.checked;
+    fireEvent.click(box);
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('scope.continue') }));
+    cleanup();
+
+    renderWithProviders(<RoundScopePage />, { auth: signedInAuth });
+    await screen.findByText(i18n.t('scope.docs_title'));
+    // Coming back must show what was chosen, not the defaults.
+    expect((screen.getByLabelText(i18n.t('scope.doc_schedule')) as HTMLInputElement).checked)
+      .toBe(chosen);
   });
 
   it('surfaces a WCIF fetch failure instead of hanging on the skeleton', async () => {

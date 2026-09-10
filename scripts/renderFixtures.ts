@@ -11,7 +11,7 @@
 // Run through vite-node, not node: the documents are .tsx, and Node's native type
 // stripping does not handle JSX.
 
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import React from 'react';
@@ -30,7 +30,11 @@ import type { CompetitionSettings } from '../src/types/settings';
 import { testSettings } from '../src/test/fixtures';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
-const OUT_DIR = resolve(__dir, '../../current-output');
+// ../../current-output is outside the git repo, so CI overrides this to render somewhere
+// inside the checkout. Local runs keep writing where the pdf-print-edit skill diffs from.
+const OUT_DIR = process.env.FIXTURE_OUT_DIR
+  ? resolve(process.env.FIXTURE_OUT_DIR)
+  : resolve(__dir, '../../current-output');
 
 // Every setting the ../original-output/ diff depends on, pinned here rather than inherited:
 // testSettings is a test fixture, and a test that needs a different default must not be able
@@ -240,6 +244,7 @@ const CHECKING_DAYS: CheckingDay[] = [
 async function write(name: string, element: React.ReactElement): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const buffer = await renderToBuffer(element as any);
+  mkdirSync(OUT_DIR, { recursive: true });
   const out = resolve(OUT_DIR, name);
   writeFileSync(out, buffer);
   console.log(`  → ${out}`);

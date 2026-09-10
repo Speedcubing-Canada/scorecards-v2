@@ -1,5 +1,5 @@
 # CI + deployment pipeline.
-#   pull request → lint, typecheck, test with coverage (no deploy)
+#   pull request → lint, typecheck, test with coverage, PDF fixture diff (no deploy)
 #   push to main → same → build → deploy to App Engine
 #
 # There is no staging environment, so the test job is the only thing standing
@@ -97,6 +97,49 @@ jobs:
         with:
           name: coverage
           path: coverage/
+          retention-days: 7
+
+  # ── 1b. PDF output regression ─────────────────────────────────────────────
+  # Re-renders the fixture PDFs and pixel-diffs them against tests/pdf-baseline. The layout
+  # unit tests assert measurements; this catches what they cannot see - a changed colour, a
+  # shifted margin, a dropped glyph - on documents that get printed and cut.
+  #
+  # continue-on-error while the cross-machine tolerance proves itself: the runner's poppler
+  # and font stack are not the ones a baseline was rendered on. It reports red in the run
+  # without blocking a merge. Promote it to a required check (drop continue-on-error, add it
+  # to `deploy.needs`) once a few PRs show it staying green - a flaky gate on the only thing
+  # between a branch and production is worse than no gate.
+  pdf-fixtures:
+    name: PDF output regression
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # pdftoppm rasterises the PDFs; gm measures the per-page difference.
+      - name: Install poppler-utils and graphicsmagick
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils graphicsmagick
+
+      - name: Check fixtures against the baseline
+        run: scripts/checkFixtures.sh
+
+      # The red-highlighted diff images, so a failure can be judged rather than guessed at.
+      - name: Upload diff images
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pdf-fixture-diff
+          path: /tmp/fixture-check/
           retention-days: 7
 
   # ── 2. Build and deploy ───────────────────────────────────────────────────
