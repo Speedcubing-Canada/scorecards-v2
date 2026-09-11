@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import QRCode from 'qrcode';
 import { liveQrTarget } from './layoutConstants';
+import { qrPathData } from './qrPath';
 
 // The second QR on a name tag is the one an organizer can't check by eye: a wrong id still
 // scans, it just lands on the wrong page or a 404. The two live-results systems use unrelated
@@ -47,5 +49,50 @@ describe('liveQrTarget', () => {
     const live = liveQrTarget({ mode: 'wca-live', competitionId: 'X', wcaLiveId: '9667', wcaLivePersonIds: { 5: '42' } }, entry).url;
     expect(ilr.endsWith('/5')).toBe(false);
     expect(live).not.toContain('1385268');
+  });
+});
+
+// A path is not eyeball-checkable the way a grid of rects is, so this walks the emitted `d`
+// back into a module grid and compares it to the code itself.
+describe('qrPathData', () => {
+  const url = 'https://www.competitiongroups.com/competitions/Soorsi2026/persons/5';
+
+  function gridFromPath(d: string, n: number): boolean[][] {
+    const grid = Array.from({ length: n }, () => new Array<boolean>(n).fill(false));
+    // Each run is emitted as `M<x> <y>h<w>v1h-<w>z`.
+    const re = /M(\d+) (\d+)h(\d+)v1h-(\d+)z/g;
+    let m: RegExpExecArray | null;
+    let consumed = 0;
+    while ((m = re.exec(d)) !== null) {
+      const [full, x, y, w, back] = m;
+      expect(w).toBe(back);       // the closing edge must retrace the opening one
+      consumed += full.length;
+      for (let i = 0; i < Number(w); i++) grid[Number(y)][Number(x) + i] = true;
+    }
+    // Nothing in the path but runs: a stray command would draw something unintended.
+    expect(consumed).toBe(d.length);
+    return grid;
+  }
+
+  it('covers exactly the dark modules of the code', () => {
+    const { d, modules } = qrPathData(url);
+    const qr = QRCode.create(url, { errorCorrectionLevel: 'M' });
+    const data = qr.modules.data as unknown as Uint8Array;
+
+    expect(modules).toBe(qr.modules.size);
+    const grid = gridFromPath(d, modules);
+    for (let row = 0; row < modules; row++)
+      for (let col = 0; col < modules; col++)
+        expect(grid[row][col]).toBe(data[row * modules + col] !== 0);
+  });
+
+  it('emits one run per horizontal dark run, not one per module', () => {
+    const { d, modules } = qrPathData(url);
+    const runs = d.match(/M/g)?.length ?? 0;
+    const dark = (QRCode.create(url, { errorCorrectionLevel: 'M' })
+      .modules.data as unknown as Uint8Array).reduce((n, v) => n + (v !== 0 ? 1 : 0), 0);
+    expect(runs).toBeGreaterThan(0);
+    expect(runs).toBeLessThan(dark);
+    expect(modules).toBeGreaterThan(20);
   });
 });

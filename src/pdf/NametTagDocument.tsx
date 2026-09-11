@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
-import { Document, Page, View, Text, Image, StyleSheet, Svg, Rect } from '@react-pdf/renderer';
-import QRCode from 'qrcode';
+import { Document, Page, View, Text, Image, StyleSheet, Svg, Path } from '@react-pdf/renderer';
 import type { CompetitionSettings, LiveResultsMode, NametTagLayout, NametTagLogoMode } from '../types/settings';
 import type { NametTagEntry, NametTagRole } from '../lib/wcif-parser';
 import { EVENT_ICONS } from '../assets/events';
 import { getNametTagStrings, type NametTagStrings } from '../lib/i18n';
 import { resolveLogo } from '../lib/logo';
+import { qrPathData } from './qrPath';
 import {
   NAMETAGS_PER_PAGE, eventIconsVisible, liveQrTarget,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
@@ -50,23 +50,10 @@ function panelPositions(cfg: { panelW: number; panelH: number; margin: number; g
 }
 
 function QrSvg({ url, size }: { url: string; size: number }) {
-  const qr   = QRCode.create(url, { errorCorrectionLevel: 'M' });
-  const n    = qr.modules.size;
-  const data = qr.modules.data as unknown as Uint8Array;
-
-  const bars: { x: number; y: number; w: number }[] = [];
-  for (let row = 0; row < n; row++) {
-    let start = -1;
-    for (let col = 0; col <= n; col++) {
-      const dark = col < n && data[row * n + col] !== 0;
-      if (dark && start === -1) start = col;
-      else if (!dark && start !== -1) { bars.push({ x: start, y: row, w: col - start }); start = -1; }
-    }
-  }
-
+  const { d, modules } = qrPathData(url);
   return (
-    <Svg width={size} height={size} viewBox={`0 0 ${n} ${n}`}>
-      {bars.map((b, i) => <Rect key={i} x={b.x} y={b.y} width={b.w} height={1} fill="black" />)}
+    <Svg width={size} height={size} viewBox={`0 0 ${modules} ${modules}`}>
+      <Path d={d} fill="black" />
     </Svg>
   );
 }

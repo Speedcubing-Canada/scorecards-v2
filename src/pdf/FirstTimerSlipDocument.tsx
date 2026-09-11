@@ -2,7 +2,7 @@ import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import type { CompetitionSettings, LocaleCode } from '../types/settings';
 import type { FirstTimerEntry } from '../lib/wcif-parser';
 import { getFirstTimerSlipStrings, type FirstTimerSlipStrings } from '../lib/i18n';
-import { buildSlipLines, type SlipLine } from './firstTimerSlipLines';
+import { buildSlipLines, packSlipPages, type SlipLine } from './firstTimerSlipLines';
 import {
   SLIP_LINE_H, SLIP_FONT_SIZE, SLIP_PAGE_PAD_TOP, SLIP_PAGE_PAD_BOTTOM,
   SLIP_MARGIN_BOTTOM, SLIP_INTRO_MARGIN_BOTTOM,
@@ -108,13 +108,19 @@ interface Props {
 export function FirstTimerSlipDocument({ entries, settings }: Props) {
   const s = getFirstTimerSlipStrings(settings.language);
 
+  // Pre-packed rather than flowed: see packSlipPages. The pitch is fixed, so the packing
+  // reproduces what @react-pdf's own pagination did.
+  const pages = packSlipPages(entries, s, settings.language, settings.paperFormat);
+
   return (
     <Document title={`${settings.competitionName} - First-Timer Slips`} author="WCA Scorecard Generator">
-      <Page size={settings.paperFormat} style={styles.page}>
-        {entries.map((entry, i) => (
-          <Slip key={i} entry={entry} s={s} language={settings.language} />
-        ))}
-      </Page>
+      {pages.map((page, pi) => (
+        <Page key={pi} size={settings.paperFormat} style={styles.page}>
+          {page.map((entry, i) => (
+            <Slip key={i} entry={entry} s={s} language={settings.language} />
+          ))}
+        </Page>
+      ))}
     </Document>
   );
 }

@@ -1,5 +1,5 @@
 import { pdf } from '@react-pdf/renderer';
-import { zipSync } from 'fflate';
+import { Zip, ZipPassThrough } from 'fflate';
 import type { ParsedWCIF } from '../lib/wcif-parser';
 import type { CompetitionSettings, LocaleCode } from '../types/settings';
 import { buildPdfJobs, downloadTarget, type PdfJob } from '../lib/pdfJobs';
@@ -17,18 +17,54 @@ export type WorkerRequest = {
 
 export type WorkerResponse =
   | { type: 'progress'; percent: number; message: string }
-  // A ZIP or a bare PDF, depending on how many documents were built. `mimeType` says which,
-  // so the main thread never re-derives it.
-  | { type: 'done'; buffer: ArrayBuffer; filename: string; mimeType: string }
+  // A Blob, not an ArrayBuffer: its bytes live outside the JS heap.
+  | { type: 'done'; blob: Blob; filename: string; mimeType: string }
   | { type: 'error'; message: string };
 
-export type Post = (msg: WorkerResponse, transfer?: Transferable[]) => void;
+export type Post = (msg: WorkerResponse) => void;
 
-async function renderJob(
+function renderJob(
   job: PdfJob, parsed: ParsedWCIF, settings: CompetitionSettings,
-): Promise<Uint8Array> {
-  const blob = await pdf(jobElement(job, parsed, settings)).toBlob();
-  return new Uint8Array(await blob.arrayBuffer());
+): Promise<Blob> {
+  return pdf(jobElement(job, parsed, settings)).toBlob();
+}
+
+// Bytes held in the JS heap before the pending chunks are folded into a Blob part.
+const FOLD_BYTES = 4 * 1024 * 1024;
+
+/** Accumulates the ZIP stream, folding pending chunks into a Blob every few MB. */
+class BlobSink {
+  private parts: BlobPart[] = [];
+  private pending = 0;
+
+  push(chunk: Uint8Array): void {
+    // Copied: fflate reuses its output buffer, and a Blob part must not change underneath.
+    this.parts.push(chunk.slice());
+    this.pending += chunk.length;
+    if (this.pending >= FOLD_BYTES) {
+      this.parts = [new Blob(this.parts)];
+      this.pending = 0;
+    }
+  }
+
+  blob(type: string): Blob {
+    return new Blob(this.parts, { type });
+  }
+}
+
+/** Streams one rendered PDF into the archive, a chunk at a time. */
+async function addToZip(zip: Zip, filename: string, blob: Blob): Promise<void> {
+  // level 0: these are PDFs, already compressed. Deflating them costs time and saves
+  // nothing, which is what the old zipSync({ level: 0 }) said too.
+  const file = new ZipPassThrough(filename);
+  zip.add(file);
+  const reader = blob.stream().getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    file.push(value);
+  }
+  file.push(new Uint8Array(0), true);
 }
 
 export async function runJobs({ parsed, settings, uiLanguage }: WorkerRequest, post: Post) {
@@ -46,7 +82,21 @@ export async function runJobs({ parsed, settings, uiLanguage }: WorkerRequest, p
   post({ type: 'progress', percent: 2, message: msgs.starting });
 
   try {
-    const files: Record<string, [Uint8Array, { level: number }]> = {};
+    // A single document ships as the PDF itself, not a one-file zip.
+    if (jobs.length === 1) {
+      post({ type: 'progress', percent: 5, message: msgs.rendering(jobs[0].label) });
+      const blob = await renderJob(jobs[0], parsed, settings);
+      post({ type: 'progress', percent: 99, message: msgs.finalizing });
+      post({ type: 'done', blob, filename: target.filename, mimeType: target.mimeType });
+      return;
+    }
+
+    const sink = new BlobSink();
+    let zipError: Error | null = null;
+    const zip = new Zip((err, chunk) => {
+      if (err) zipError = err;
+      else if (chunk) sink.push(chunk);
+    });
 
     for (let i = 0; i < jobs.length; i++) {
       const job = jobs[i];
@@ -64,9 +114,10 @@ export async function runJobs({ parsed, settings, uiLanguage }: WorkerRequest, p
       }, 100);
 
       try {
-        const data = await renderJob(job, parsed, settings);
+        // Not retained past this iteration: one document's bytes at a time is the budget.
+        await addToZip(zip, job.filename, await renderJob(job, parsed, settings));
         clearInterval(timer);
-        files[job.filename] = [data, { level: 0 }];
+        if (zipError) throw zipError;
         post({ type: 'progress', percent: endPct, message: msgs.done(job.label) });
       } catch (err) {
         clearInterval(timer);
@@ -74,24 +125,11 @@ export async function runJobs({ parsed, settings, uiLanguage }: WorkerRequest, p
       }
     }
 
-    // A single document ships as the PDF itself, not a one-file zip.
-    if (jobs.length === 1) {
-      const only = files[jobs[0].filename][0];
-      // Sliced by the view's own bounds, in case one ever arrives offset into a larger buffer.
-      const buffer = only.buffer.slice(only.byteOffset, only.byteOffset + only.byteLength) as ArrayBuffer;
-      post({ type: 'progress', percent: 99, message: msgs.finalizing });
-      post({ type: 'done', buffer, filename: target.filename, mimeType: target.mimeType }, [buffer]);
-      return;
-    }
-
     post({ type: 'progress', percent: 95, message: msgs.creatingZip });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const zipped = zipSync(files as any);
+    zip.end();
+    if (zipError) throw zipError;
     post({ type: 'progress', percent: 99, message: msgs.finalizing });
-    post(
-      { type: 'done', buffer: zipped.buffer, filename: target.filename, mimeType: target.mimeType },
-      [zipped.buffer],
-    );
+    post({ type: 'done', blob: sink.blob(target.mimeType), filename: target.filename, mimeType: target.mimeType });
   } catch (err) {
     post({ type: 'error', message: String(err) });
   }

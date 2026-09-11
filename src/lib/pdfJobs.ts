@@ -1,5 +1,17 @@
-import type { ScorecardData, ParsedWCIF } from './wcif-parser';
+import {
+  finalizeEntries, realEntries,
+  type ScorecardData, type ParsedWCIF, type NametTagEntry,
+} from './wcif-parser';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
+import {
+  SCORECARDS_PER_PAGE, MAX_PAGES_PER_SCORECARD_PDF,
+  NAMETAGS_PER_PAGE, MAX_PAGES_PER_NAMETAG_PDF,
+} from '../pdf/layoutConstants';
+
+const CARDS_PER_PDF = MAX_PAGES_PER_SCORECARD_PDF * SCORECARDS_PER_PAGE;
+const TAGS_PER_PDF  = MAX_PAGES_PER_NAMETAG_PDF  * NAMETAGS_PER_PAGE;
+
+const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
 /**
  * One PDF to render. The worker builds the files and the UI counts and names them off this
@@ -10,11 +22,76 @@ import type { CompetitionSettings, CustomEvent } from '../types/settings';
  */
 export type PdfJob =
   | { kind: 'scorecards';   filename: string; label: string; entries: ScorecardData[] }
-  | { kind: 'nametags';     filename: string; label: string }
+  | { kind: 'nametags';     filename: string; label: string; nametags: NametTagEntry[] }
   | { kind: 'schedule';     filename: string; label: string }
   | { kind: 'checking';     filename: string; label: string }
   | { kind: 'first-timers'; filename: string; label: string }
   | { kind: 'custom';       filename: string; label: string; custom: CustomEvent };
+
+/** One PDF, or one per event past the cap. Splits pre-padding: finalizeEntries re-pads and reorders each event. */
+function scorecardJobs(
+  entries: ScorecardData[], competitionId: string, slug: string, label: string,
+): PdfJob[] {
+  if (entries.length === 0) return [];
+  if (entries.length <= CARDS_PER_PDF)
+    return [{ kind: 'scorecards', filename: `${competitionId}_${slug}.pdf`, entries, label }];
+
+  const byEvent = new Map<string, ScorecardData[]>();
+  for (const entry of realEntries(entries)) {
+    const list = byEvent.get(entry.eventId);
+    if (list) list.push(entry);
+    else byEvent.set(entry.eventId, [entry]);
+  }
+
+  return [...byEvent]
+    .map(([eventId, list]) => ({
+      eventId,
+      eventName: list[0].eventName,
+      minTimeslot: list.reduce((m, e) => (e.timeslot < m ? e.timeslot : m), list[0].timeslot),
+      list,
+    }))
+    .sort((a, b) => cmp(a.minTimeslot, b.minTimeslot) || cmp(a.eventId, b.eventId))
+    .flatMap(({ eventId, eventName, list }) =>
+      splitToCap(finalizeEntries(list), `${competitionId}_${slug}_${eventId}`, `${label} (${eventName})`));
+}
+
+/** Cuts on 4-card sheet boundaries, so no printed sheet straddles two files. */
+function splitToCap(entries: ScorecardData[], base: string, label: string): PdfJob[] {
+  if (entries.length <= CARDS_PER_PDF)
+    return [{ kind: 'scorecards', filename: `${base}.pdf`, entries, label }];
+
+  const chunks = evenChunks(entries, CARDS_PER_PDF, SCORECARDS_PER_PAGE);
+  return chunks.map((slice, i) => ({
+    kind: 'scorecards',
+    filename: `${base}_part${i + 1}.pdf`,
+    entries: slice,
+    label: `${label} ${i + 1}/${chunks.length}`,
+  }));
+}
+
+/** Even slices of at most `cap`, each a whole number of `unit`s except the last. */
+function evenChunks<T>(items: T[], cap: number, unit: number): T[][] {
+  const parts = Math.ceil(items.length / cap);
+  const per = Math.ceil(items.length / parts / unit) * unit;
+  const out: T[][] = [];
+  for (let start = 0; start < items.length; start += per) out.push(items.slice(start, start + per));
+  return out;
+}
+
+/** One PDF, or equal parts of one past the cap. */
+function nametagJobs(nametags: NametTagEntry[], competitionId: string): PdfJob[] {
+  if (nametags.length === 0) return [];
+  if (nametags.length <= TAGS_PER_PDF)
+    return [{ kind: 'nametags', filename: `${competitionId}_nametags.pdf`, label: 'Name Tags', nametags }];
+
+  const chunks = evenChunks(nametags, TAGS_PER_PDF, NAMETAGS_PER_PAGE);
+  return chunks.map((slice, i) => ({
+    kind: 'nametags',
+    filename: `${competitionId}_nametags_part${i + 1}.pdf`,
+    label: `Name Tags ${i + 1}/${chunks.length}`,
+    nametags: slice,
+  }));
+}
 
 /** Custom-event names become filenames, so strip anything a filesystem dislikes. */
 function safeCustomName(name: string): string {
@@ -29,14 +106,11 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
   const id = settings.competitionId;
   const jobs: PdfJob[] = [];
 
-  if (parsed.firstRound.length > 0)
-    jobs.push({ kind: 'scorecards', filename: `${id}_round1.pdf`, entries: parsed.firstRound, label: 'Round 1' });
-  if (parsed.intermediate.length > 0)
-    jobs.push({ kind: 'scorecards', filename: `${id}_round2.pdf`, entries: parsed.intermediate, label: 'Round 2' });
-  if (parsed.semis.length > 0)
-    jobs.push({ kind: 'scorecards', filename: `${id}_semis.pdf`, entries: parsed.semis, label: 'Semis' });
-  if (parsed.finals.length > 0)
-    jobs.push({ kind: 'scorecards', filename: `${id}_finals.pdf`, entries: parsed.finals, label: 'Finals' });
+  jobs.push(...scorecardJobs(parsed.firstRound,   id, 'round1', 'Round 1'));
+  jobs.push(...scorecardJobs(parsed.intermediate, id, 'round2', 'Round 2'));
+  jobs.push(...scorecardJobs(parsed.semis,        id, 'semis',  'Semis'));
+  jobs.push(...scorecardJobs(parsed.finals,       id, 'finals', 'Finals'));
+  // Never split: extras are not produced by finalizeEntries, so they must not go back through it.
   if (parsed.extras.length > 0)
     jobs.push({ kind: 'scorecards', filename: `${id}_extras.pdf`, entries: parsed.extras, label: 'Extras' });
   if (parsed.scheduleDays.length > 0)
@@ -44,8 +118,7 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
   // Already emptied by filterParsedByScope unless the Round Checklist was selected.
   if (parsed.checkingDays.length > 0)
     jobs.push({ kind: 'checking', filename: `${id}_checklist.pdf`, label: 'Round Checklist' });
-  if (parsed.nametags.length > 0)
-    jobs.push({ kind: 'nametags', filename: `${id}_nametags.pdf`, label: 'Name Tags' });
+  jobs.push(...nametagJobs(parsed.nametags, id));
   if (parsed.firstTimers.length > 0)
     jobs.push({ kind: 'first-timers', filename: `${id}_first_timers.pdf`, label: 'First-Timer Slips' });
 

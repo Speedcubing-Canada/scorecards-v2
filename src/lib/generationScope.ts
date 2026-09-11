@@ -1,5 +1,5 @@
 import type { ParsedWCIF, ScorecardData } from './wcif-parser';
-import { finalizeEntries } from './wcif-parser';
+import { finalizeEntries, realEntries } from './wcif-parser';
 
 export interface DocumentSelection {
   scorecards: boolean;
@@ -23,12 +23,6 @@ export interface RoundRef {
 }
 
 const SCORECARD_BUCKETS = ['firstRound', 'intermediate', 'semis', 'finals'] as const;
-
-// Padding covers (added to round each bucket to a multiple of 4) carry an empty eventId.
-// Strip them before re-filtering so finalizeEntries can re-pad cleanly.
-function realEntries(entries: ScorecardData[]): ScorecardData[] {
-  return entries.filter((e) => e.kind === 'scorecard' || e.eventId !== '');
-}
 
 // Every distinct (eventId, roundNum) that produces scorecards, in bucket → encounter order.
 // Drives the per-event+round checklist shown for the "select" scope.

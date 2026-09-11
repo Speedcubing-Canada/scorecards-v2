@@ -1,6 +1,10 @@
 import type { FirstTimerEntry } from '../lib/wcif-parser';
 import { getEventName, type FirstTimerSlipStrings } from '../lib/i18n';
-import type { LocaleCode } from '../types/settings';
+import type { LocaleCode, PaperFormat } from '../types/settings';
+import {
+  SLIP_LINE_H, SLIP_PAGE_PAD_TOP, SLIP_PAGE_PAD_BOTTOM,
+  SLIP_MARGIN_BOTTOM, SLIP_INTRO_MARGIN_BOTTOM,
+} from './layoutConstants';
 
 // One rendered line of a slip. `bold` is the trailing value shown in bold (name,
 // gender, birthdate, country); `checkbox` toggles the trailing tick box. The first
@@ -11,21 +15,32 @@ export interface SlipLine {
   checkbox: boolean;
 }
 
+// Constructing an Intl formatter costs far more than using one, and a big competition
+// builds hundreds of slips. Keyed by language: everything else is per-call.
+const dateFormats = new Map<string, Intl.DateTimeFormat | null>();
+const regionNames = new Map<string, Intl.DisplayNames | null>();
+
+function cached<T>(store: Map<string, T | null>, key: string, make: () => T): T | null {
+  if (store.has(key)) return store.get(key)!;
+  let value: T | null;
+  try { value = make(); } catch { value = null; }
+  store.set(key, value);
+  return value;
+}
+
 function formatBirthdate(iso: string, language: LocaleCode): string | null {
   const d = new Date(`${iso}T00:00:00`);
   if (isNaN(d.getTime())) return null;
-  try {
-    return new Intl.DateTimeFormat(language, {
-      month: 'short', day: '2-digit', year: 'numeric',
-    }).format(d);
-  } catch {
-    return iso;
-  }
+  const fmt = cached(dateFormats, language, () => new Intl.DateTimeFormat(language, {
+    month: 'short', day: '2-digit', year: 'numeric',
+  }));
+  return fmt ? fmt.format(d) : iso;
 }
 
 function countryName(iso2: string, language: LocaleCode): string {
+  const names = cached(regionNames, language, () => new Intl.DisplayNames([language], { type: 'region' }));
   try {
-    return new Intl.DisplayNames([language], { type: 'region' }).of(iso2.toUpperCase()) ?? iso2;
+    return names?.of(iso2.toUpperCase()) ?? iso2;
   } catch {
     return iso2;
   }
@@ -78,4 +93,40 @@ export function buildSlipLines(
     for (const name of eventNames) lines.push({ text: `• ${name}`, checkbox: true });
   }
   return lines;
+}
+
+// @react-pdf page heights in points (portrait).
+const PAGE_HEIGHT_PT: Record<PaperFormat, number> = { LETTER: 792, A4: 842 };
+
+/** A slip's height: fixed-pitch rows, plus the intro block's gap and the slip's own. */
+function slipHeight(entry: FirstTimerEntry, s: FirstTimerSlipStrings, language: LocaleCode): number {
+  return buildSlipLines(entry, s, language).length * SLIP_LINE_H
+    + SLIP_INTRO_MARGIN_BOTTOM + SLIP_MARGIN_BOTTOM;
+}
+
+/**
+ * The slips on each page, greedily packed by height - the packing the document renders and
+ * the page estimate counts, so the two cannot disagree.
+ *
+ * Paginated here rather than left to @react-pdf: splitting one tall Page re-measures the
+ * content that did not fit once per page produced, which is quadratic in the number of
+ * newcomers and is the slowest document at competition scale.
+ */
+export function packSlipPages(
+  entries: FirstTimerEntry[], s: FirstTimerSlipStrings,
+  language: LocaleCode, paperFormat: PaperFormat,
+): FirstTimerEntry[][] {
+  if (entries.length === 0) return [];
+  const contentH = (PAGE_HEIGHT_PT[paperFormat] ?? PAGE_HEIGHT_PT.LETTER)
+    - SLIP_PAGE_PAD_TOP - SLIP_PAGE_PAD_BOTTOM;
+
+  const pages: FirstTimerEntry[][] = [[]];
+  let used = 0;
+  for (const entry of entries) {
+    const h = slipHeight(entry, s, language);
+    if (used > 0 && used + h > contentH) { pages.push([]); used = 0; }
+    pages[pages.length - 1].push(entry);
+    used += h;
+  }
+  return pages;
 }

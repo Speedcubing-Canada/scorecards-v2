@@ -2,7 +2,7 @@
   "common": {
     "back": "← Volver",
     "sign_out": "Cerrar sesión",
-    "app_title": "Generador de Scorecards WCA",
+    "app_title": "Generador de Hojas de Puntuación WCA",
     "remove": "Eliminar",
     "clear": "Limpiar",
     "upload": "Subir",
@@ -10,7 +10,7 @@
     "menu": "Menú"
   },
   "login": {
-    "subtitle": "Genere scorecards y etiquetas de nombre listas para imprimir para su competencia WCA.",
+    "subtitle": "Genere hojas de puntuación y etiquetas de nombre listas para imprimir para su competencia WCA.",
     "setup_required": "Configuración requerida:",
     "setup_env_instruction": "Configure {{key}} en su archivo .env.",
     "setup_oauth_instruction": "Cree una aplicación OAuth de WCA en",
@@ -60,11 +60,11 @@
     },
     "check_mode": {
       "title": "Carátulas",
-      "hint": "Dónde se imprime la tarjeta de verificación del delegado y del digitador de resultados.",
+      "hint": "Dónde se imprime la hoja de portada del delegado y del digitador de resultados.",
       "per_group": "Carátula por grupo",
-      "per_group_desc": "Una tarjeta de verificación delante de las hojas de cada grupo (predeterminado).",
+      "per_group_desc": "Una hoja de portada delante de las hojas de cada grupo (predeterminado).",
       "per_round": "Carátula por ronda",
-      "per_round_desc": "Una tarjeta de verificación por ronda de evento en lugar de por grupo - menos tarjetas que imprimir.",
+      "per_round_desc": "Una hoja de portada por ronda de evento en lugar de por grupo - menos hojas que imprimir.",
       "none": "Ninguna",
       "none_desc": "Sin carátulas."
     },
@@ -126,7 +126,7 @@
       "qr_back_only_desc": "Frente = asignaciones de grupos, reverso = códigos QR",
       "qr_both_sides": "Ambos lados",
       "qr_both_sides_desc": "Códigos QR en ambos lados - útil cuando el logo ocupa espacio",
-      "layout": "Orientación de credenciales",
+      "layout": "Orientación de las etiquetas",
       "layout_vertical": "Vertical (retrato)",
       "layout_horizontal": "Horizontal (paisaje)"
     },
@@ -191,7 +191,7 @@
       },
       "schedule": "Seguimiento del horario: se imprime tal cual, una página por día. Colócalo en el escenario o entrégalo al equipo de sala.",
       "checking": "Lista de rondas: se imprime tal cual, una tabla por día. Marca cada ronda a medida que vuelven sus hojas de puntuación.",
-      "nametags": "Credenciales: cuatro personas por página, anverso y reverso lado a lado. Recorta cada par y dóblalo por la mitad antes de meterlo en el portacredenciales.",
+      "nametags": "Etiquetas de nombre: cuatro personas por página, anverso y reverso lado a lado. Recorta cada par y dóblalo por la mitad antes de meterlo en el portacredenciales.",
       "first_timers": "Comprobantes de debutantes: los comprobantes van uno tras otro en la página. Recorta entre ellos y entrega cada uno al delegado para que lo firme tras el primer intento del debutante."
     }
   },
@@ -218,7 +218,7 @@
     },
     "everything": {
       "label": "Todo",
-      "desc": "Imprime todas las rondas (y credenciales, horario, etc.), usando los grupos asignados cuando existan."
+      "desc": "Imprime todas las rondas (y etiquetas, horario, etc.), usando los grupos asignados cuando existan."
     },
     "selected": {
       "label": "Seleccionar rondas",
@@ -233,7 +233,7 @@
     "title": "Acerca de esta herramienta",
     "intro": "Esta herramienta genera PDF listos para imprimir de una competición WCA: hojas de puntuación, acreditaciones, seguimiento del horario y hojas para debutantes (opcionales). Todo está maquetado para imprimir y recortar.",
     "wcif_title": "¿Qué es el WCIF?",
-    "wcif_body": "Los datos de cada competición WCA (pruebas, horario y competidores inscritos) están en el sitio web de la WCA en un formato llamado WCIF. Las asignaciones de grupos se añaden antes, normalmente con una herramienta como Groupifier.",
+    "wcif_body": "Los datos de cada competición WCA (eventos, horario y competidores inscritos) están en el sitio web de la WCA en un formato llamado WCIF. Las asignaciones de grupos se añaden antes, normalmente con una herramienta como Groupifier.",
     "workflow_title": "Dónde encaja",
     "workflow_body": "Este es el último paso antes de imprimir. Una vez asignados los grupos, lee el WCIF de la competición y lo convierte en los documentos que imprimes y recortas para el día de la competición.",
     "privacy_title": "Tus datos",

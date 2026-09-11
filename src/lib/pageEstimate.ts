@@ -1,29 +1,24 @@
 import type { ParsedWCIF } from './wcif-parser';
-import type { CompetitionSettings, PaperFormat } from '../types/settings';
+import type { PdfJob } from './pdfJobs';
+import type { CompetitionSettings } from '../types/settings';
 import { customEventPageCount } from './customScorecards';
 import { getFirstTimerSlipStrings } from './i18n';
-import { buildSlipLines } from '../pdf/firstTimerSlipLines';
-import {
-  SCORECARDS_PER_PAGE, NAMETAGS_PER_PAGE,
-  SLIP_LINE_H, SLIP_PAGE_PAD_TOP, SLIP_PAGE_PAD_BOTTOM,
-  SLIP_MARGIN_BOTTOM, SLIP_INTRO_MARGIN_BOTTOM,
-} from '../pdf/layoutConstants';
-
-// @react-pdf page heights in points (portrait). The schedule and slip docs use these.
-const PAGE_HEIGHT_PT: Record<PaperFormat, number> = { LETTER: 792, A4: 842 };
+import { packSlipPages } from '../pdf/firstTimerSlipLines';
+import { SCORECARDS_PER_PAGE, NAMETAGS_PER_PAGE } from '../pdf/layoutConstants';
 
 /**
- * Printed page count, shown before the expensive render runs. Exact for scorecards and name
- * tags, which paginate at a fixed N-per-page; the schedule tracker and slips flow with
- * @react-pdf auto-pagination and are estimated.
- *
- * Takes the scope-filtered parse, so the count matches the ZIP.
+ * Printed page count, shown before the render runs. Exact where pagination is fixed N-per-page,
+ * estimated for the flowing documents. Counts `jobs`, not `parsed`, so it matches the ZIP.
  */
-export function estimateTotalPages(parsed: ParsedWCIF, settings: CompetitionSettings): number {
+export function estimateTotalPages(
+  parsed: ParsedWCIF, settings: CompetitionSettings, jobs: PdfJob[],
+): number {
   let pages = 0;
 
-  for (const round of [parsed.firstRound, parsed.intermediate, parsed.semis, parsed.finals, parsed.extras]) {
-    if (round.length > 0) pages += Math.ceil(round.length / SCORECARDS_PER_PAGE);
+  // Per job, not per parse: a split bucket pads each file to a full sheet separately.
+  for (const job of jobs) {
+    if (job.kind === 'scorecards') pages += Math.ceil(job.entries.length / SCORECARDS_PER_PAGE);
+    if (job.kind === 'nametags')   pages += Math.ceil(job.nametags.length / NAMETAGS_PER_PAGE);
   }
 
   // Each custom event is its own PDF: a page of blanks, or ceil(n/4) with CSV competitors.
@@ -31,15 +26,13 @@ export function estimateTotalPages(parsed: ParsedWCIF, settings: CompetitionSett
     .filter((c) => c.name.trim() !== '')
     .reduce((n, c) => n + customEventPageCount(c), 0);
 
-  if (parsed.nametags.length > 0) pages += Math.ceil(parsed.nametags.length / NAMETAGS_PER_PAGE);
-
   // A single flowing page, estimated.
   if (parsed.scheduleDays.length > 0) pages += 1;
 
-  // Same approximation. `checkingDays` is already empty when the checklist wasn't selected.
+  // `checkingDays` is already empty when the checklist wasn't selected.
   if (parsed.checkingDays.length > 0) pages += 1;
 
-  // Whole slips greedily packed by height, estimated.
+  // Exact: the document renders this same packing.
   if (parsed.firstTimers.length > 0) {
     pages += estimateSlipPages(parsed, settings);
   }
@@ -48,20 +41,10 @@ export function estimateTotalPages(parsed: ParsedWCIF, settings: CompetitionSett
 }
 
 function estimateSlipPages(parsed: ParsedWCIF, settings: CompetitionSettings): number {
-  const strings = getFirstTimerSlipStrings(settings.language);
-  const contentH = (PAGE_HEIGHT_PT[settings.paperFormat] ?? PAGE_HEIGHT_PT.LETTER)
-    - SLIP_PAGE_PAD_TOP - SLIP_PAGE_PAD_BOTTOM;
-
-  let pages = 1;
-  let used = 0;
-  for (const entry of parsed.firstTimers) {
-    const lineCount = buildSlipLines(entry, strings, settings.language).length;
-    const slipH = lineCount * SLIP_LINE_H + SLIP_INTRO_MARGIN_BOTTOM + SLIP_MARGIN_BOTTOM;
-    if (used > 0 && used + slipH > contentH) {
-      pages += 1;
-      used = 0;
-    }
-    used += slipH;
-  }
-  return pages;
+  return packSlipPages(
+    parsed.firstTimers,
+    getFirstTimerSlipStrings(settings.language),
+    settings.language,
+    settings.paperFormat,
+  ).length;
 }

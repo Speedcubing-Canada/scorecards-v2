@@ -1,10 +1,10 @@
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
 import type { CompetitionSettings } from '../types/settings';
 import type { ScorecardData } from '../lib/wcif-parser';
-import { getStrings, splitLabelTotal } from '../lib/i18n';
+import { getStrings, splitLabelTotal, type ScorecardStrings } from '../lib/i18n';
 import type { Style } from '@react-pdf/types';
 import { EVENT_ICONS } from '../assets/events';
-import { logoState, resolveLogo } from '../lib/logo';
+import { logoState, resolveLogo, type LogoState } from '../lib/logo';
 import {
   SCORECARDS_PER_PAGE, ROW_HEIGHTS, showLiveIdLine,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
@@ -174,14 +174,18 @@ function LabelWithGreyTotal({ label, connector, style }: {
 }
 
 function ScorecardCard({
-  card, settings, cardW, cardH, pos,
+  card, settings, strings, logoMode, headerLogo, cardW, cardH, pos,
 }: {
   card: Extract<ScorecardData, { kind: 'scorecard' }>;
   settings: CompetitionSettings;
+  // Resolved once per document: these depend only on `settings`, and a WC-sized round is
+  // thousands of cards.
+  strings: ScorecardStrings;
+  logoMode: LogoState;
+  headerLogo: string | null;
   cardW: number; cardH: number;
   pos: { left: number; top: number };
 }) {
-  const strings = getStrings(settings.language, settings.secondaryLanguage);
   const rowH    = ROW_HEIGHTS[card.format];
   const isMBF   = card.eventId === '333mbf';
   const doubleCheck = card.scrambleDoubleCheck === true;
@@ -213,9 +217,6 @@ function ScorecardCard({
                  : [1];                                    // 'bo1-mo3': 1 pre-cutoff row
   const postRows = card.format === 'bo2-avg5' ? [3,4,5] : card.format === 'bo1-mo3' ? [2,3] : [];
   const hasCutoff = card.cutoff !== '';
-
-  const logoMode = logoState(settings);
-  const headerLogo = resolveLogo(settings);
 
   return (
     <View style={[styles.card, { position: 'absolute', left: pos.left, top: pos.top, width: cardW, height: cardH }]}>
@@ -296,15 +297,16 @@ function ScorecardCard({
 }
 
 function CoverCard({
-  card, settings, cardW, cardH, pos,
+  card, settings, strings, cardW, cardH, pos,
 }: {
   card: Extract<ScorecardData, { kind: 'cover' }>;
   settings: CompetitionSettings;
+  // Primary language only - a cover card is never bilingual.
+  strings: ScorecardStrings;
   cardW: number; cardH: number;
   pos: { left: number; top: number };
 }) {
   if (!card.eventId) return null;
-  const strings = getStrings(settings.language);
   const cover = strings.cover;
   const round = splitLabelTotal(card.roundLabel, strings.ofConnector);
   return (
@@ -360,6 +362,10 @@ interface Props {
 export function ScorecardDocument({ entries, settings }: Props) {
   const size   = settings.paperFormat;
   const config = CONFIGS[size];
+  const cardStrings  = getStrings(settings.language, settings.secondaryLanguage);
+  const coverStrings = getStrings(settings.language);
+  const logoMode     = logoState(settings);
+  const headerLogo   = resolveLogo(settings);
   const pages: ScorecardData[][] = [];
   for (let i = 0; i < entries.length; i += SCORECARDS_PER_PAGE) pages.push(entries.slice(i, i + SCORECARDS_PER_PAGE));
 
@@ -371,8 +377,9 @@ export function ScorecardDocument({ entries, settings }: Props) {
             const pos = config.positions[ei] ?? config.positions[0];
             return entry.kind === 'scorecard'
               ? <ScorecardCard key={ei} card={entry} settings={settings}
+                  strings={cardStrings} logoMode={logoMode} headerLogo={headerLogo}
                   cardW={config.cardW} cardH={config.cardH} pos={pos} />
-              : <CoverCard key={ei} card={entry} settings={settings}
+              : <CoverCard key={ei} card={entry} settings={settings} strings={coverStrings}
                   cardW={config.cardW} cardH={config.cardH} pos={pos} />;
           })}
         </Page>

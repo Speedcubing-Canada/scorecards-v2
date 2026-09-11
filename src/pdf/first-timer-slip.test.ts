@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildSlipLines } from './firstTimerSlipLines';
+import { buildSlipLines, packSlipPages } from './firstTimerSlipLines';
 import {
   SLIP_LINE_H, SLIP_INTRO_MARGIN_BOTTOM, SLIP_MARGIN_BOTTOM,
   SLIP_PAGE_PAD_TOP, SLIP_PAGE_PAD_BOTTOM,
@@ -143,5 +143,70 @@ describe('first-timer slip geometry', () => {
     const threeSlips = 3 * slipHeight(lines.length) + 2 * SLIP_GAP;
     const usable = PAGE_H.LETTER - PAD_TOP - PAD_BOTTOM;
     expect(threeSlips).toBeLessThanOrEqual(usable);
+  });
+});
+
+// Every branch of the two locale-dependent lines: a slip that silently loses a competitor's
+// citizenship or gender is a slip a delegate has to redo.
+describe('locale-dependent slip fields', () => {
+  const base = { name: 'A Newcomer', birthdate: '2015-01-01', countryIso2: 'CA', eventIds: ['333'] };
+  const genderLine = (gender: 'm' | 'f' | 'o') =>
+    buildSlipLines({ ...base, gender } as FirstTimerEntry, getFirstTimerSlipStrings('en'), 'en')
+      .find(l => l.text === getFirstTimerSlipStrings('en').genderPrefix)?.bold;
+
+  it('names every gender', () => {
+    const s = getFirstTimerSlipStrings('en');
+    expect(genderLine('m')).toBe(s.genderMale);
+    expect(genderLine('f')).toBe(s.genderFemale);
+    expect(genderLine('o')).toBe(s.genderOther);
+  });
+
+  it('falls back to the raw code when the country cannot be named', () => {
+    const s = getFirstTimerSlipStrings('en');
+    // Not a region subtag, so Intl.DisplayNames.of() throws; the code goes through as given.
+    const lines = buildSlipLines(
+      { ...base, gender: 'm', countryIso2: 'z!' } as FirstTimerEntry, s, 'en');
+    expect(lines).toContainEqual({ text: s.citizenshipPrefix, bold: 'z!', checkbox: true });
+  });
+});
+
+describe('packSlipPages', () => {
+  const s = getFirstTimerSlipStrings('en');
+  const CONTENT_H = 792 - SLIP_PAGE_PAD_TOP - SLIP_PAGE_PAD_BOTTOM;
+  const heightOf = (e: FirstTimerEntry) =>
+    buildSlipLines(e, s, 'en').length * SLIP_LINE_H + SLIP_INTRO_MARGIN_BOTTOM + SLIP_MARGIN_BOTTOM;
+  const pageH = (page: FirstTimerEntry[]) => page.reduce((h, e) => h + heightOf(e), 0);
+
+  const entry = (eventIds: string[]): FirstTimerEntry => ({
+    name: 'A Newcomer', gender: 'm', birthdate: '2015-01-01', countryIso2: 'CA',
+    eventIds: eventIds as FirstTimerEntry['eventIds'],
+  });
+
+  it('gives no pages for no newcomers', () => {
+    expect(packSlipPages([], s, 'en', 'LETTER')).toEqual([]);
+  });
+
+  it('never overfills a page and never leaves a slip behind', () => {
+    // A deliberate mix of short and tall slips, so pages end at different fill levels.
+    const entries = Array.from({ length: 60 }, (_, i) =>
+      entry(WCA_EVENT_ORDER.slice(0, 1 + (i % 5))));
+    const pages = packSlipPages(entries, s, 'en', 'LETTER');
+
+    expect(pages.flat()).toEqual(entries);          // order preserved, nothing dropped
+    for (const page of pages) {
+      expect(page.length).toBeGreaterThan(0);
+      // A lone slip taller than the page still gets its own page rather than none.
+      if (page.length > 1) expect(pageH(page)).toBeLessThanOrEqual(CONTENT_H);
+    }
+    // Greedy: the first slip of each page would not have fit on the one before it.
+    for (let i = 1; i < pages.length; i++) {
+      expect(pageH(pages[i - 1]) + heightOf(pages[i][0])).toBeGreaterThan(CONTENT_H);
+    }
+  });
+
+  it('fits more slips per page on A4 than on LETTER', () => {
+    const entries = Array.from({ length: 40 }, () => entry(['333']));
+    expect(packSlipPages(entries, s, 'en', 'A4').length)
+      .toBeLessThanOrEqual(packSlipPages(entries, s, 'en', 'LETTER').length);
   });
 });

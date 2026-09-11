@@ -18,6 +18,9 @@ export const TABLE_HEADER_BG = '#d8d8d8';
 // 2x2 grid.
 export const SCORECARDS_PER_PAGE = 4;
 
+// Past this, a bucket splits into one PDF per event. See "Generation performance" in the README.
+export const MAX_PAGES_PER_SCORECARD_PDF = 250;
+
 // Tuned so the flex spacers around the provisional label stay 6-8pt each; the budget
 // formula is in ScorecardDocument.tsx, the guard in scorecard-layout.test.ts.
 export const ROW_HEIGHTS = {
@@ -27,13 +30,16 @@ export const ROW_HEIGHTS = {
 // Four people per page, front + back panel each.
 export const NAMETAGS_PER_PAGE = 4;
 
+// Same ceiling, same reason.
+export const MAX_PAGES_PER_NAMETAG_PDF = 250;
+
 // The compact layout is tight enough that the QR side must stay uncluttered.
 export function eventIconsVisible({ isQrSide, compact }: { isQrSide: boolean; compact: boolean }): boolean {
   return !(isQrSide && compact);
 }
 
 // Flex units, not points: the table fills the page width. `event` carries the longest
-// text in the table (FR "3x3x3 a Une Main Manche 1", ~127pt) and has the least headroom.
+// text in the table (FR "3x3x3 à Une Main Tour 1", ~127pt) and has the least headroom.
 // checking-sheet-layout.test.ts asserts every cell fits in every locale on both paper
 // sizes: widen the column rather than truncating a translation.
 export const CHECKING_FLEX = {

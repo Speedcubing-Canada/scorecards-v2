@@ -19,9 +19,6 @@ function e<P extends object>(component: (props: P) => Element, props: P): Elemen
 }
 
 /**
- * The document each job kind renders. A new document type is one line here and one in
- * `buildPdfJobs`, and those two lists keep the worker and the generate page in agreement.
- *
  * Out of scorecardWorker.ts, which assigns `self.onmessage` at module scope and so cannot be
  * imported: this is what render.integration.test.ts exercises.
  */
@@ -29,7 +26,7 @@ export function jobElement(
   job: PdfJob, parsed: ParsedWCIF, settings: CompetitionSettings,
 ): Element {
   switch (job.kind) {
-    case 'nametags':     return e(NametTagDocument,        { nametags: parsed.nametags, settings });
+    case 'nametags':     return e(NametTagDocument,        { nametags: job.nametags, settings });
     case 'schedule':     return e(ScheduleTrackerDocument, { days: parsed.scheduleDays, settings });
     case 'checking':     return e(CheckingSheetDocument,   { days: parsed.checkingDays, settings });
     case 'first-timers': return e(FirstTimerSlipDocument,  { entries: parsed.firstTimers, settings });
