@@ -36,7 +36,12 @@ function mount() {
   return render(<AuthProvider><Probe /></AuthProvider>);
 }
 
-const token = { access_token: 'tok', token_type: 'Bearer', expires_in: 7200, scope: 'public', created_at: 0 };
+// created_at must be live: a stale one reads as expired, and mounting would start a renewal
+// these tests never asked for. The renewal describe below builds its own expired variants.
+const token = {
+  access_token: 'tok', token_type: 'Bearer', expires_in: 7200, scope: 'public',
+  created_at: Math.floor(Date.now() / 1000),
+};
 const user = { id: 7, name: 'Test Organizer', wca_id: '2018TEST01' };
 
 function stubExchange(...over: Partial<Response>[]) {
@@ -65,7 +70,12 @@ beforeEach(() => {
     },
   });
 });
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(async () => {
+  // Drain any redirect still in flight so it cannot land in the next test's location stub.
+  await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe('login', () => {
   it('sends the organizer to the WCA with an S256 challenge and a stored state', async () => {
