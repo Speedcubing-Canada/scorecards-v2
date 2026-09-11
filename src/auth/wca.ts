@@ -15,6 +15,50 @@ export interface WCAToken {
   expires_in: number;
   scope: string;
   created_at: number;
+  /** Absent on a token stored before renewal existed; those sessions fall back to the redirect. */
+  refresh_token?: string;
+}
+
+/** Carries the status so callers can tell an expired session from a server fault. */
+export class WcaApiError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'WcaApiError';
+    this.status = status;
+  }
+}
+
+/**
+ * The i18n key for a failed authed call: an expired session reads differently from a server
+ * fault, and anything that is not a WCA error is a data problem whose raw detail is the point.
+ */
+export function fetchErrorKey(e: unknown): 'errors.session_expired' | 'errors.wcif_failed' | null {
+  if (!(e instanceof WcaApiError)) return null;
+  return e.status === 401 ? 'errors.session_expired' : 'errors.wcif_failed';
+}
+
+/** WCA sends unix seconds. The skew stops a call started just before expiry from racing it. */
+export function isExpired(token: WCAToken, skewMs = 60_000): boolean {
+  return (token.created_at + token.expires_in) * 1000 - skewMs <= Date.now();
+}
+
+// Every authed call goes through authFetch, so the expired-session hook belongs here rather
+// than repeated in each page.
+let onAuthExpired: (() => void) | null = null;
+
+export function setOnAuthExpired(fn: (() => void) | null): void {
+  onAuthExpired = fn;
+}
+
+async function authFetch(url: string, token: string) {
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) {
+    if (res.status === 401) onAuthExpired?.();
+    throw new WcaApiError(res.status, `WCA request failed (${res.status}): ${url}`);
+  }
+  return res.json();
 }
 
 export interface WCAUser {
@@ -44,29 +88,38 @@ export async function exchangeCodeForToken(code: string, verifier: string): Prom
   return res.json();
 }
 
-export async function fetchMe(token: string): Promise<WCAUser> {
-  const res = await fetch(`${WCA_API_URL}/me`, {
-    headers: { Authorization: `Bearer ${token}` },
+/**
+ * Doorkeeper rotates: the response carries a new refresh token and invalidates the one spent
+ * here, so the caller must persist the whole token, not just the access half.
+ */
+export async function refreshAccessToken(refreshToken: string): Promise<WCAToken> {
+  const res = await fetch(WCA_TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      client_id: CLIENT_ID,
+      refresh_token: refreshToken,
+    }),
   });
-  if (!res.ok) throw new Error(`Failed to fetch user: ${res.statusText}`);
-  const data = await res.json();
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`Token refresh failed (${res.status}): ${body || res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function fetchMe(token: string): Promise<WCAUser> {
+  const data = await authFetch(`${WCA_API_URL}/me`, token);
   return data.me;
 }
 
 export async function fetchManagedCompetitions(token: string) {
-  const res = await fetch(`${WCA_API_URL}/competitions?managed_by_me=true&per_page=50`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) throw new Error(`Failed to fetch competitions: ${res.statusText}`);
-  return res.json();
+  return authFetch(`${WCA_API_URL}/competitions?managed_by_me=true&per_page=50`, token);
 }
 
 export async function fetchWcif(competitionId: string, token: string): Promise<WCIF> {
-  const res = await fetch(`${WCA_API_URL}/competitions/${competitionId}/wcif`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) throw new Error(`WCIF fetch failed (${res.status})`);
-  return res.json();
+  return authFetch(`${WCA_API_URL}/competitions/${competitionId}/wcif`, token);
 }
 
 /**

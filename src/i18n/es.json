@@ -25,10 +25,16 @@
     "heading": "Seleccionar una competencia",
     "hint": "Mostrando competencias próximas y en curso que usted gestiona o delega.",
     "loading": "Cargando competencias…",
-    "error": "Error: {{message}}",
     "empty": "No se encontraron competencias próximas. Asegúrese de ser delegado u organizador.",
     "create_custom_title": "Crear una competencia personalizada",
     "create_custom_desc": "Competencia no oficial - defina los eventos manualmente e imprima las hojas"
+  },
+  "errors": {
+    "session_expired": "Tu sesión expiró y no se pudo renovar. Vuelve a iniciar sesión.",
+    "sign_in_failed": "El inicio de sesión no se completó. Inténtalo de nuevo.",
+    "competitions_failed": "No se pudieron cargar tus competencias. Revisa tu conexión e inténtalo de nuevo.",
+    "wcif_failed": "No se pudieron cargar los datos de la competencia. Revisa tu conexión e inténtalo de nuevo.",
+    "retry": "Reintentar"
   },
   "settings": {
     "heading": "Configurar ajustes de impresión",

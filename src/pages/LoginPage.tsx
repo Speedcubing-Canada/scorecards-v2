@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router';
 import { useAuth } from '../auth/useAuth';
 import { CLIENT_ID } from '../auth/wca';
 import LanguageSelect from '../components/LanguageSelect';
@@ -9,9 +10,13 @@ import { useIsMobile } from '../lib/useIsMobile';
 
 export default function LoginPage() {
   const { t } = useTranslation();
-  const { login } = useAuth();
+  const { login, authError } = useAuth();
   const isMobile = useIsMobile();
+  const [params] = useSearchParams();
   const missingClientId = !CLIENT_ID;
+  // Raw OAuth codes mean nothing to an organizer, so only the distinction they can act on
+  // survives: renewal gave up, versus the sign-in itself did not finish.
+  const failure = authError ?? (params.get('error') ? 'sign_in_failed' : null);
 
   return (
     <div style={styles.container}>
@@ -25,6 +30,12 @@ export default function LoginPage() {
 
         <h1 style={styles.title}>{t('common.app_title')}</h1>
         <p style={styles.subtitle}>{t('login.subtitle')}</p>
+
+        {failure && (
+          <div role="alert" style={styles.error}>
+            {t(failure === 'session_expired' ? 'errors.session_expired' : 'errors.sign_in_failed')}
+          </div>
+        )}
 
         {missingClientId ? (
           <div style={styles.warning}>
@@ -107,6 +118,17 @@ const styles: Record<string, React.CSSProperties> = {
     width: '100%',
     fontFamily: 'inherit',
     letterSpacing: '-0.01em',
+  },
+  error: {
+    backgroundColor: 'var(--warning-bg)',
+    border: '1px solid var(--warning-border)',
+    borderRadius: 'var(--radius-md)',
+    padding: '12px 16px',
+    marginBottom: 24,
+    fontSize: 'var(--fs-label)',
+    textAlign: 'left',
+    lineHeight: 1.6,
+    color: 'var(--warning-text)',
   },
   warning: {
     backgroundColor: 'var(--warning-bg)',

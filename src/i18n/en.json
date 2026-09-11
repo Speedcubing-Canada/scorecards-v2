@@ -25,10 +25,16 @@
     "heading": "Select a Competition",
     "hint": "Showing upcoming and ongoing competitions you manage or delegate.",
     "loading": "Loading competitions…",
-    "error": "Error: {{message}}",
     "empty": "No upcoming competitions found. Make sure you are a delegate or organizer.",
     "create_custom_title": "Create a custom competition",
     "create_custom_desc": "Unofficial competition - define events manually and print scorecards"
+  },
+  "errors": {
+    "session_expired": "Your session expired and could not be renewed. Please sign in again.",
+    "sign_in_failed": "Sign-in did not complete. Please try again.",
+    "competitions_failed": "Could not load your competitions. Check your connection and try again.",
+    "wcif_failed": "Could not load the competition data. Check your connection and try again.",
+    "retry": "Try again"
   },
   "settings": {
     "heading": "Configure your print settings",

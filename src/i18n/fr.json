@@ -25,10 +25,16 @@
     "heading": "Sélectionner une compétition",
     "hint": "Affichage des compétitions à venir et en cours que vous gérez ou déléguez.",
     "loading": "Chargement des compétitions…",
-    "error": "Erreur : {{message}}",
     "empty": "Aucune compétition à venir trouvée. Assurez-vous d'être délégué ou organisateur.",
     "create_custom_title": "Créer une compétition personnalisée",
     "create_custom_desc": "Compétition non officielle - définissez les épreuves manuellement et imprimez les feuilles"
+  },
+  "errors": {
+    "session_expired": "Votre session a expiré et n'a pas pu être renouvelée. Veuillez vous reconnecter.",
+    "sign_in_failed": "La connexion ne s'est pas terminée. Veuillez réessayer.",
+    "competitions_failed": "Impossible de charger vos compétitions. Vérifiez votre connexion et réessayez.",
+    "wcif_failed": "Impossible de charger les données de la compétition. Vérifiez votre connexion et réessayez.",
+    "retry": "Réessayer"
   },
   "settings": {
     "heading": "Configurer vos paramètres d'impression",

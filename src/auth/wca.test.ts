@@ -2,7 +2,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   WCA_API_URL,
+  WcaApiError,
   exchangeCodeForToken,
+  fetchErrorKey,
+  isExpired,
+  refreshAccessToken,
+  setOnAuthExpired,
   fetchManagedCompetitions,
   fetchMe,
   fetchScoretakingSoftware,
@@ -11,7 +16,8 @@ import {
   fetchWcif,
 } from './wca';
 
-// The thrown messages carry the status because the pages render them back to the organizer.
+// Authed calls throw WcaApiError carrying the status: the pages pick a translated string off
+// it, so `statusText` (empty over HTTP/2) is never what the organizer reads.
 // The three WCA Live functions instead return null on every failure, by design.
 //
 // jsdom, not node: the module reads `window.location.origin` at import time for REDIRECT_URI.
@@ -91,7 +97,7 @@ describe('fetchMe', () => {
 
   it('throws with the status text', async () => {
     stubFetch(fail(403, 'Forbidden'));
-    await expect(fetchMe('tok')).rejects.toThrow('Failed to fetch user: Forbidden');
+    await expect(fetchMe('tok')).rejects.toThrow(WcaApiError);
   });
 });
 
@@ -108,7 +114,7 @@ describe('fetchManagedCompetitions', () => {
   it('throws with the status text', async () => {
     stubFetch(fail(500, 'Server Error'));
     await expect(fetchManagedCompetitions('tok'))
-      .rejects.toThrow('Failed to fetch competitions: Server Error');
+      .rejects.toThrow(WcaApiError);
   });
 });
 
@@ -124,7 +130,7 @@ describe('fetchWcif', () => {
 
   it('throws with the status code, which the generate page renders', async () => {
     stubFetch(fail(404, 'Not Found'));
-    await expect(fetchWcif('Nope2026', 'tok')).rejects.toThrow('WCIF fetch failed (404)');
+    await expect(fetchWcif('Nope2026', 'tok')).rejects.toMatchObject({ status: 404 });
   });
 });
 
@@ -229,5 +235,83 @@ describe('fetchWcaLivePersonIds', () => {
 
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
     expect(await fetchWcaLivePersonIds('42')).toBeNull();
+  });
+});
+
+
+describe('isExpired', () => {
+  const at = (secondsFromNow: number) => ({
+    access_token: 'tok', token_type: 'Bearer', scope: 'public',
+    expires_in: 7200, created_at: Math.floor(Date.now() / 1000) - 7200 + secondsFromNow,
+  });
+
+  it('is false for a token with time left', () => {
+    expect(isExpired(at(600))).toBe(false);
+  });
+
+  it('is true once the lifetime has run out', () => {
+    expect(isExpired(at(-1))).toBe(true);
+  });
+
+  // Without the skew a call starting here would race its own expiry and 401 mid-flight.
+  it('treats the last seconds before expiry as already gone', () => {
+    expect(isExpired(at(30))).toBe(true);
+    expect(isExpired(at(30), 0)).toBe(false);
+  });
+});
+
+describe('refreshAccessToken', () => {
+  it('posts the refresh grant to the same-origin proxy', async () => {
+    const fresh = { access_token: 'new', refresh_token: 'r2', expires_in: 7200, created_at: 1 };
+    const fn = stubFetch(ok(fresh));
+
+    expect(await refreshAccessToken('r1')).toEqual(fresh);
+
+    const [url, init] = callArgs(fn);
+    expect(url).toBe('/wca-token');
+    const body = new URLSearchParams(init!.body as string);
+    expect(body.get('grant_type')).toBe('refresh_token');
+    expect(body.get('refresh_token')).toBe('r1');
+    // The secret is appended server-side; it must never reach the bundle.
+    expect(body.get('client_secret')).toBeNull();
+  });
+
+  it('throws when the refresh token is spent', async () => {
+    stubFetch(fail(401, 'Unauthorized', 'invalid_grant'));
+    await expect(refreshAccessToken('r1')).rejects.toThrow('Token refresh failed (401): invalid_grant');
+  });
+});
+
+describe('the expired-session hook', () => {
+  afterEach(() => setOnAuthExpired(null));
+
+  it('fires once on a 401 from any authed call', async () => {
+    const onExpired = vi.fn();
+    setOnAuthExpired(onExpired);
+    stubFetch(fail(401));
+
+    await expect(fetchManagedCompetitions('tok')).rejects.toThrow(WcaApiError);
+    expect(onExpired).toHaveBeenCalledTimes(1);
+  });
+
+  it('stays quiet for a server fault, which renewing would not fix', async () => {
+    const onExpired = vi.fn();
+    setOnAuthExpired(onExpired);
+    stubFetch(fail(500));
+
+    await expect(fetchWcif('C2026', 'tok')).rejects.toThrow(WcaApiError);
+    expect(onExpired).not.toHaveBeenCalled();
+  });
+});
+
+describe('fetchErrorKey', () => {
+  it('separates an expired session from a server fault', () => {
+    expect(fetchErrorKey(new WcaApiError(401, 'x'))).toBe('errors.session_expired');
+    expect(fetchErrorKey(new WcaApiError(503, 'x'))).toBe('errors.wcif_failed');
+  });
+
+  // A parse fault has no sensible translation; the caller shows the raw detail instead.
+  it('declines to classify a non-WCA error', () => {
+    expect(fetchErrorKey(new Error('bad wcif'))).toBeNull();
   });
 });

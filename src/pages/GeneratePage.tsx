@@ -3,7 +3,7 @@ import { Download, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
-import { fetchWcif } from '../auth/wca';
+import { fetchErrorKey, fetchWcif } from '../auth/wca';
 import { getCachedWcif, setCachedWcif } from '../lib/wcifCache';
 import type { CompetitionSettings } from '../types/settings';
 import { parseWCIF, emptyParsedWcif, type ParsedWCIF } from '../lib/wcif-parser';
@@ -74,7 +74,9 @@ export default function GeneratePage() {
       } catch (e) {
         if (cancelled) return;
         analytics.send(analytics.buildErrorEvent(settings!.competitionId, stage, e));
-        setStatusMsg(String(e)); setStatus('error');
+        const key = fetchErrorKey(e);
+        setStatusMsg(key ? t(key) : String(e));
+        setStatus('error');
       }
     }
 
