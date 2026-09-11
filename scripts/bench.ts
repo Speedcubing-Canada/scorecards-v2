@@ -1,6 +1,4 @@
-// Generation benchmark: how long a competition takes to parse and render, and how much
-// heap it costs. Drives the shipping code (parseWCIF → filterParsedByScope → buildPdfJobs
-// → jobElement), never a copy of it, so a regression here is a real regression.
+// Generation benchmark. See "Generation performance" in the README.
 //
 //   npm run bench                 # WC2025-scale profile (~1800 competitors)
 //   npm run bench -- small        # small / medium / wc

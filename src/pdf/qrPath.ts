@@ -1,15 +1,10 @@
 import QRCode from 'qrcode';
 
-// A name tag draws its QR as one Path, not one Rect per dark run. A code is ~200 runs and a
-// tag carries two per panel, so at competition scale those Rects were the bulk of the whole
-// document - and @react-pdf's layout cost scales with node count. Runs never overlap, so a
-// single filled path draws exactly the same pixels.
-//
-// Its own module: NametTagDocument.tsx exports components, and mixing a plain function in
+// One Path instead of ~200 Rects per code: @react-pdf's layout cost scales with node count.
+// Its own module because NametTagDocument.tsx exports components, and a plain function in
 // there breaks fast refresh.
 
-// Under 'both-sides' the front and back panels ask for the same two codes, and a code is a
-// pure function of its URL.
+// Both panels ask for the same two codes.
 const QR_CACHE = new Map<string, ReturnType<typeof QRCode.create>>();
 
 function createQr(url: string) {

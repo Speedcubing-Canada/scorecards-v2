@@ -235,6 +235,9 @@ Non-obvious constraints that look arbitrary in the code but break real output if
   lucide-react icons only, CSS-variable tokens); `src/components/design-system.test.ts` enforces
   the hard rules.
 - **No em dash in on-screen copy**, in any locale. Use a comma, a colon, or two sentences.
+- **One word per concept per locale.** A scorecard is a *feuille de score* / *hoja de
+  puntuación* / *súmula* everywhere, including `src/changelog.ts`.
+  `src/i18n/terminology.test.ts` holds the banned variants and names the offending key.
 - **Adding a region** is a JSON file drop in `src/presets/` with no code changes, see
   [`src/presets/README.md`](src/presets/README.md).
 - **Adding a language** is two entries: a bundle in `LOCALES` (`src/lib/i18n.ts`, printed output)

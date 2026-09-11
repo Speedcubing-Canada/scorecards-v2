@@ -7,21 +7,18 @@ import { packSlipPages } from '../pdf/firstTimerSlipLines';
 import { SCORECARDS_PER_PAGE, NAMETAGS_PER_PAGE } from '../pdf/layoutConstants';
 
 /**
- * Printed page count, shown before the expensive render runs. Exact for scorecards and name
- * tags, which paginate at a fixed N-per-page; the schedule tracker and slips flow with
- * @react-pdf auto-pagination and are estimated.
- *
- * Takes the scope-filtered parse and the job list built from it, so the count matches the
- * ZIP. The jobs are what carries the scorecard count: a bucket split into one PDF per event
- * pads each file to a multiple of 4 separately, which the bucket lengths cannot show.
+ * Printed page count, shown before the render runs. Exact where pagination is fixed N-per-page,
+ * estimated for the flowing documents. Counts `jobs`, not `parsed`, so it matches the ZIP.
  */
 export function estimateTotalPages(
   parsed: ParsedWCIF, settings: CompetitionSettings, jobs: PdfJob[],
 ): number {
   let pages = 0;
 
+  // Per job, not per parse: a split bucket pads each file to a full sheet separately.
   for (const job of jobs) {
     if (job.kind === 'scorecards') pages += Math.ceil(job.entries.length / SCORECARDS_PER_PAGE);
+    if (job.kind === 'nametags')   pages += Math.ceil(job.nametags.length / NAMETAGS_PER_PAGE);
   }
 
   // Each custom event is its own PDF: a page of blanks, or ceil(n/4) with CSV competitors.
@@ -29,15 +26,10 @@ export function estimateTotalPages(
     .filter((c) => c.name.trim() !== '')
     .reduce((n, c) => n + customEventPageCount(c), 0);
 
-  // Per job, not per parse: a big field splits into parts that each pad to a full sheet.
-  for (const job of jobs) {
-    if (job.kind === 'nametags') pages += Math.ceil(job.nametags.length / NAMETAGS_PER_PAGE);
-  }
-
   // A single flowing page, estimated.
   if (parsed.scheduleDays.length > 0) pages += 1;
 
-  // Same approximation. `checkingDays` is already empty when the checklist wasn't selected.
+  // `checkingDays` is already empty when the checklist wasn't selected.
   if (parsed.checkingDays.length > 0) pages += 1;
 
   // Exact: the document renders this same packing.

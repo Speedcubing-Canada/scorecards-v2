@@ -9,9 +9,9 @@ import {
 } from '../pdf/layoutConstants';
 
 const CARDS_PER_PDF = MAX_PAGES_PER_SCORECARD_PDF * SCORECARDS_PER_PAGE;
+const TAGS_PER_PDF  = MAX_PAGES_PER_NAMETAG_PDF  * NAMETAGS_PER_PAGE;
 
 const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
-const TAGS_PER_PDF  = MAX_PAGES_PER_NAMETAG_PDF  * NAMETAGS_PER_PAGE;
 
 /**
  * One PDF to render. The worker builds the files and the UI counts and names them off this
@@ -28,15 +28,7 @@ export type PdfJob =
   | { kind: 'first-timers'; filename: string; label: string }
   | { kind: 'custom';       filename: string; label: string; custom: CustomEvent };
 
-/**
- * One PDF for a scorecard bucket, or one per event once the bucket is too big for
- * @react-pdf to lay out in a single document. A small competition is never split, so its
- * output is unchanged.
- *
- * Splitting happens on the pre-padding entries and re-finalizes each event: finalizeEntries
- * pads to a multiple of 4 and quadrant-reorders for 4-up printing, so a plain slice of its
- * output is not a printable pile.
- */
+/** One PDF, or one per event past the cap. Splits pre-padding: finalizeEntries re-pads and reorders each event. */
 function scorecardJobs(
   entries: ScorecardData[], competitionId: string, slug: string, label: string,
 ): PdfJob[] {
@@ -52,8 +44,6 @@ function scorecardJobs(
   }
 
   return [...byEvent]
-    // Earliest group first, then event id: the same order the entries were already in, so
-    // the files come out in the order the rounds run.
     .map(([eventId, list]) => ({
       eventId,
       eventName: list[0].eventName,
@@ -65,13 +55,7 @@ function scorecardJobs(
       splitToCap(finalizeEntries(list), `${competitionId}_${slug}_${eventId}`, `${label} (${eventName})`));
 }
 
-/**
- * One file, or equal parts of one when a single event is still too big - a championship-sized
- * field is thousands of cards for one event, and there is no smaller meaningful unit to cut on.
- *
- * Cuts on sheet boundaries. `finalizeEntries` has already quadrant-reordered the pile, so every
- * run of 4 is one printed 4-up sheet and slicing between them keeps each file a printable run.
- */
+/** Cuts on 4-card sheet boundaries, so no printed sheet straddles two files. */
 function splitToCap(entries: ScorecardData[], base: string, label: string): PdfJob[] {
   if (entries.length <= CARDS_PER_PDF)
     return [{ kind: 'scorecards', filename: `${base}.pdf`, entries, label }];
@@ -85,10 +69,7 @@ function splitToCap(entries: ScorecardData[], base: string, label: string): PdfJ
   }));
 }
 
-/**
- * Equal slices of at most `cap`, each a whole number of `unit`s (a printed sheet) except
- * the last. Even rather than greedy, so the parts of one pile are comparable in thickness.
- */
+/** Even slices of at most `cap`, each a whole number of `unit`s except the last. */
 function evenChunks<T>(items: T[], cap: number, unit: number): T[][] {
   const parts = Math.ceil(items.length / cap);
   const per = Math.ceil(items.length / parts / unit) * unit;
@@ -97,16 +78,12 @@ function evenChunks<T>(items: T[], cap: number, unit: number): T[][] {
   return out;
 }
 
-/**
- * One name tag PDF, or equal parts of one past the cap. Tags are cut apart per person, so a
- * part boundary costs nothing; a single unbounded document is what does.
- */
+/** One PDF, or equal parts of one past the cap. */
 function nametagJobs(nametags: NametTagEntry[], competitionId: string): PdfJob[] {
   if (nametags.length === 0) return [];
   if (nametags.length <= TAGS_PER_PDF)
     return [{ kind: 'nametags', filename: `${competitionId}_nametags.pdf`, label: 'Name Tags', nametags }];
 
-  // Whole sheets, so no page is half-empty in the middle of the run.
   const chunks = evenChunks(nametags, TAGS_PER_PDF, NAMETAGS_PER_PAGE);
   return chunks.map((slice, i) => ({
     kind: 'nametags',
@@ -133,8 +110,7 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
   jobs.push(...scorecardJobs(parsed.intermediate, id, 'round2', 'Round 2'));
   jobs.push(...scorecardJobs(parsed.semis,        id, 'semis',  'Semis'));
   jobs.push(...scorecardJobs(parsed.finals,       id, 'finals', 'Finals'));
-  // Never split: one card per round is a handful of pages, and extras are not produced by
-  // finalizeEntries, so they must not be run back through it.
+  // Never split: extras are not produced by finalizeEntries, so they must not go back through it.
   if (parsed.extras.length > 0)
     jobs.push({ kind: 'scorecards', filename: `${id}_extras.pdf`, entries: parsed.extras, label: 'Extras' });
   if (parsed.scheduleDays.length > 0)

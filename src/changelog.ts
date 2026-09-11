@@ -22,13 +22,13 @@ export const CHANGELOG: ChangelogEntry[] = [
         'Large competitions generate much faster, and their scorecards now come as one PDF per event.',
       ],
       fr: [
-        'Les grandes compétitions se génèrent beaucoup plus vite, et leurs feuilles de pointage arrivent maintenant en un PDF par épreuve.',
+        'Les grandes compétitions se génèrent beaucoup plus vite, et leurs feuilles de score arrivent maintenant en un PDF par épreuve.',
       ],
       es: [
-        'Las competencias grandes se generan mucho más rápido, y sus hojas de puntaje ahora vienen en un PDF por evento.',
+        'Las competencias grandes se generan mucho más rápido, y sus hojas de puntuación ahora vienen en un PDF por evento.',
       ],
       pt: [
-        'Competições grandes são geradas muito mais rápido, e suas folhas de pontuação agora vêm em um PDF por evento.',
+        'Competições grandes são geradas muito mais rápido, e suas súmulas agora vêm em um PDF por evento.',
       ],
     },
   },
@@ -77,8 +77,8 @@ export const CHANGELOG: ChangelogEntry[] = [
         'Ahora puedes desactivarlo: abre "¿Qué es esto?" y marca la casilla bajo "Tus datos". La elección se recuerda en este navegador.',
       ],
       pt: [
-        'A ferramenta agora envia um registro anônimo de cada geração: o identificador da competição, o seu tamanho e as configurações que escolheu. Ajuda-nos a ver onde ela é usada e o que melhorar. O seu nome, a sua conta da WCA e os dados dos competidores nunca são enviados, e os dados da sua competição continuam a não ser enviados. Veja "O que é isto?" para mais detalhes.',
-        'Agora pode desativar isto: abra "O que é isto?" e marque a caixa em "Seus dados". A escolha fica guardada neste navegador.',
+        'A ferramenta agora envia um registro anônimo de cada geração: o identificador da competição, o seu tamanho e as configurações que você escolheu. Ajuda a ver onde ela é usada e o que melhorar. Seu nome, sua conta da WCA e os dados dos competidores nunca são enviados, e os dados da sua competição continuam sem ser enviados. Veja "O que é isto?" para mais detalhes.',
+        'Agora você pode desativar isso: abra "O que é isto?" e marque a caixa em "Seus dados". A escolha fica salva neste navegador.',
       ],
     },
   },
@@ -95,7 +95,7 @@ export const CHANGELOG: ChangelogEntry[] = [
         'FTO ya es compatible: tiene su propio icono y nombre en todas partes, listo para el día en que la WCA lo haga oficial.',
       ],
       pt: [
-        'O FTO já é suportado: tem o seu próprio ícone e nome em todo o lado, pronto para o dia em que a WCA o tornar oficial.',
+        'O FTO já é suportado: tem seu próprio ícone e nome em todos os lugares, pronto para o dia em que a WCA o tornar oficial.',
       ],
     },
   },
@@ -108,7 +108,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       ],
       fr: [
         "Préréglages : partez des options habituelles d’une région, puis modifiez ce que vous voulez.",
-        "La page de téléchargement explique maintenant comment imprimer et découper chaque PDF, dont pourquoi les feuilles de pointage n'ont jamais besoin d'être triées.",
+        "La page de téléchargement explique maintenant comment imprimer et découper chaque PDF, dont pourquoi les feuilles de score n'ont jamais besoin d'être triées.",
       ],
       es: [
         'Preajustes: empiece con las opciones que suele usar una región y cambie lo que quiera.',
@@ -116,7 +116,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       ],
       pt: [
         'Predefinições: comece com as opções que uma região costuma imprimir e mude o que quiser.',
-        'A página de transferência agora explica como imprimir e recortar cada PDF, incluindo porque as folhas de pontuação nunca precisam de ser ordenadas.',
+        'A página de download agora explica como imprimir e recortar cada PDF, incluindo porque as súmulas nunca precisam ser ordenadas.',
       ],
     },
   },
@@ -129,7 +129,7 @@ export const CHANGELOG: ChangelogEntry[] = [
         'Stage names written in the room field of the schedule are now detected.',
       ],
       fr: [
-        'La liste de vérification des rondes est maintenant un document distinct, avec un tableau par journée.',
+        'La liste de vérification des tours est maintenant un document distinct, avec un tableau par journée.',
         "Les compétitions à une seule scène sautent le choix de scène et téléchargent le PDF directement.",
         "Les noms de scène inscrits dans le champ « salle » de l'horaire sont maintenant détectés.",
       ],
@@ -139,9 +139,9 @@ export const CHANGELOG: ChangelogEntry[] = [
         'Ahora se detectan los nombres de escenario escritos en el campo de sala del horario.',
       ],
       pt: [
-        'A lista de verificação das rondas é agora um documento separado, com uma tabela por dia.',
-        'Competições com um único palco saltam o seletor de palco e transferem o PDF diretamente.',
-        'Os nomes de palco escritos no campo de sala do horário são agora detetados.',
+        'A lista de verificação das rodadas agora é um documento separado, com uma tabela por dia.',
+        'Competições com um único palco pulam o seletor de palco e baixam o PDF diretamente.',
+        'Os nomes de palco escritos no campo de sala do horário agora são detectados.',
       ],
     },
   },
@@ -153,15 +153,15 @@ export const CHANGELOG: ChangelogEntry[] = [
         'Improved French, Spanish and Portuguese wording throughout the app and the PDFs.',
       ],
       fr: [
-        "Nouvelles options de vérification : choisissez comment les feuilles de pointage sont vérifiées et ce qui apparaît dessus.",
+        "Nouvelles options de vérification : choisissez comment les feuilles de score sont vérifiées et ce qui apparaît dessus.",
         "Formulations française, espagnole et portugaise améliorées dans l'application et les PDF.",
       ],
       es: [
-        'Nuevas opciones de verificación: elija cómo se revisan las hojas y qué aparece en ellas.',
+        'Nuevas opciones de verificación: elija cómo se revisan las hojas de puntuación y qué aparece en ellas.',
         'Mejores textos en francés, español y portugués en la aplicación y en los PDF.',
       ],
       pt: [
-        'Novas opções de verificação: escolha como as folhas são verificadas e o que aparece nelas.',
+        'Novas opções de verificação: escolha como as súmulas são verificadas e o que aparece nelas.',
         'Textos melhorados em francês, espanhol e português na aplicação e nos PDF.',
       ],
     },
@@ -174,16 +174,16 @@ export const CHANGELOG: ChangelogEntry[] = [
         'Scorecards can be generated for rounds without groups yet, using the advancement conditions.',
       ],
       fr: [
-        "Compétitions personnalisées : créez des feuilles de pointage pour un événement absent du site de la WCA.",
-        "Les feuilles peuvent être générées pour des rondes sans groupes, à partir des conditions d'avancement.",
+        "Compétitions personnalisées : créez des feuilles de score pour une épreuve absente du site de la WCA.",
+        "Les feuilles de score peuvent être générées pour des tours sans groupes, à partir des conditions d'avancement.",
       ],
       es: [
-        'Competencias personalizadas: cree hojas para un evento que no está en el sitio de la WCA.',
-        'Las hojas se pueden generar para rondas sin grupos, usando las condiciones de avance.',
+        'Competencias personalizadas: cree hojas de puntuación para un evento que no está en el sitio de la WCA.',
+        'Las hojas de puntuación se pueden generar para rondas sin grupos, usando las condiciones de avance.',
       ],
       pt: [
-        'Competições personalizadas: crie folhas para um evento que não está no site da WCA.',
-        'As folhas podem ser geradas para rondas sem grupos, usando as condições de avanço.',
+        'Competições personalizadas: crie súmulas para um evento que não está no site da WCA.',
+        'As súmulas podem ser geradas para rodadas sem grupos, usando as condições de avanço.',
       ],
     },
   },

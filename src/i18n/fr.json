@@ -52,39 +52,39 @@
       "letter_desc": "8,5 × 11 po - chaque feuille est 107,95 × 139,7 mm"
     },
     "subsequent_rounds": {
-      "title": "Rondes suivantes",
+      "title": "Tours suivants",
       "prefilled": "Préremplies avec les noms",
       "prefilled_desc": "Imprimer les feuilles pour tous les qualifiés (nécessite les résultats WCA Live)",
-      "blanks": "Épreuve + ronde remplie, nom vide",
+      "blanks": "Épreuve + tour rempli, nom vide",
       "blanks_desc": "Imprimer des cases de nom vides - à remplir à la main lors de la compétition"
     },
     "check_mode": {
       "title": "Feuilles de couverture",
-      "hint": "Où imprimer la fiche de vérification du délégué et du saisisseur de résultats.",
+      "hint": "Où imprimer la feuille de couverture du délégué et du saisisseur de résultats.",
       "per_group": "Feuille de couverture par groupe",
-      "per_group_desc": "Une fiche de vérification devant les feuilles de chaque groupe (par défaut).",
+      "per_group_desc": "Une feuille de couverture devant les feuilles de chaque groupe (par défaut).",
       "per_round": "Feuille de couverture par tour",
-      "per_round_desc": "Une fiche de vérification par tour d'épreuve plutôt que par groupe - moins de fiches à imprimer.",
+      "per_round_desc": "Une feuille de couverture par tour d'épreuve plutôt que par groupe - moins de feuilles à imprimer.",
       "none": "Aucune",
       "none_desc": "Aucune feuille de couverture."
     },
     "double_check": {
       "title": "Double vérification des mélanges",
       "hint": "Ajoute une deuxième colonne de signature du mélangeur pour vérifier les mélanges de façon indépendante.",
-      "rounds_title": "Appliquer aux rondes",
-      "round_first": "Ronde 1",
-      "round_second": "Ronde 2",
+      "rounds_title": "Appliquer aux tours",
+      "round_first": "Tour 1",
+      "round_second": "Tour 2",
       "round_semis": "Demi-finales",
       "round_finals": "Finales",
       "ranking_title": "Toujours revérifier les meilleurs compétiteurs au classement",
       "ranking_tooltip": "Le règlement 11i n'impose une tentative de remplacement en cas de mélange incorrect que si le résultat est un record régional, un record personnel dans le top 50 mondial, ou une finale de championnat mélangée par deux mélangeurs.",
-      "ranking_hint": "Comparé aux records personnels de chaque compétiteur, au simple ou à la moyenne. Leurs mélanges sont double-vérifiés à toutes les rondes.",
+      "ranking_hint": "Comparé aux records personnels de chaque compétiteur, au simple ou à la moyenne. Leurs mélanges sont double-vérifiés à tous les tours.",
       "ranking_world": "Classement mondial, top",
       "ranking_region": "Classement régional, top",
       "ranking_scope_national": "National",
       "ranking_scope_continental": "Continental",
       "overrides_title": "Toujours double-vérifier certains compétiteurs (optionnel)",
-      "overrides_hint": "Téléverser un fichier CSV - une ligne par compétiteur : WCAID,épreuve1,épreuve2 (ex. 2015FOOB01,333,444). Leurs mélanges pour ces épreuves sont double-vérifiés à toutes les rondes.",
+      "overrides_hint": "Téléverser un fichier CSV - une ligne par compétiteur : WCAID,épreuve1,épreuve2 (ex. 2015FOOB01,333,444). Leurs mélanges pour ces épreuves sont double-vérifiés à tous les tours.",
       "overrides_count": "{{count}} compétiteur(s) chargé(s)"
     },
     "wca_live": {
@@ -134,7 +134,7 @@
       "toggle": "Avancé",
       "custom_events_title": "Épreuves personnalisées",
       "custom_events_optional": "optionnel",
-      "custom_events_hint": "Imprimez 4 feuilles vides pour des épreuves annexes ou des puzzles bonus non listés dans le WCIF. Les champs groupe et ronde resteront vides.",
+      "custom_events_hint": "Imprimez 4 feuilles vides pour des épreuves annexes ou des puzzles bonus non listés dans le WCIF. Les champs groupe et tour resteront vides.",
       "event_name_placeholder": "Nom de l'épreuve (ex. Relais Clock)",
       "format_label": "Format",
       "avg5": "Moyenne de 5",
@@ -146,9 +146,9 @@
       "cutoff_optional": "optionnel, ex. 1:30",
       "time_limit_label": "Limite de temps",
       "time_limit_optional": "optionnel, ex. 10:00",
-      "round_label": "Libellé de ronde",
+      "round_label": "Libellé de tour",
       "round_label_optional": "optionnel, ex. Finale",
-      "round_label_placeholder": "ex. Ronde 1 ou Finale",
+      "round_label_placeholder": "ex. Tour 1 ou Finale",
       "icon_hint": "Icône - cliquez sur une icône WCA ou téléchargez la vôtre",
       "icon_selected": "Icône sélectionnée",
       "csv_label": "Compétiteurs (CSV)",
@@ -185,13 +185,13 @@
         "steps": {
           "print": "Imprimez le PDF des feuilles de score en recto seul, dans l'ordre des pages. Ne mélangez pas les pages.",
           "cut": "Découpez chaque feuille en 4 le long des lignes de coupe, et gardez les morceaux séparés par position : haut-gauche, haut-droite, bas-gauche, bas-droite. Chacune de ces quatre piles est déjà dans le bon ordre.",
-          "stack": "Posez la pile haut-gauche sur la pile haut-droite, puis la bas-gauche, puis la bas-droite. Ce paquet unique contient tous les groupes de toutes les rondes, dans l'ordre de l'horaire.",
-          "covers": "Une feuille de couverture marque le début de chaque groupe : vous prenez chaque groupe sur le dessus du paquet au fur et à mesure de la ronde."
+          "stack": "Posez la pile haut-gauche sur la pile haut-droite, puis la bas-gauche, puis la bas-droite. Ce paquet unique contient tous les groupes de tous les tours, dans l'ordre de l'horaire.",
+          "covers": "Une feuille de couverture marque le début de chaque groupe : vous prenez chaque groupe sur le dessus du paquet au fur et à mesure du tour."
         }
       },
       "schedule": "Suivi de l'horaire : s'imprime tel quel, une page par journée. Affichez-le à la scène ou remettez-le à l'équipe de plancher.",
-      "checking": "Liste de vérification des rondes : s'imprime telle quelle, un tableau par journée. Cochez chaque ronde à mesure que ses feuilles reviennent.",
-      "nametags": "Porte-noms : quatre personnes par page, recto et verso côte à côte. Découpez chaque paire et pliez-la au milieu avant de l'insérer dans un porte-badge.",
+      "checking": "Liste de vérification des tours : s'imprime telle quelle, un tableau par journée. Cochez chaque tour à mesure que ses feuilles reviennent.",
+      "nametags": "Badges : quatre personnes par page, recto et verso côte à côte. Découpez chaque paire et pliez-la au milieu avant de l'insérer dans un porte-badge.",
       "first_timers": "Fiches de première participation : les fiches se suivent sur la page. Découpez entre elles et remettez chacune au délégué, qui la signe après la première résolution du nouveau participant."
     }
   },
@@ -203,9 +203,9 @@
     "presets_hint": "Optionnel. Les préréglages présélectionnent les options habituelles d’une région - vous pouvez tout modifier ensuite.",
     "preset_default": "Par défaut",
     "preset_default_desc": "Les options standards.",
-    "rounds_heading": "Quelles rondes ?",
+    "rounds_heading": "Quels tours ?",
     "docs_title": "Types de documents",
-    "doc_scorecards": "Feuilles de compétition",
+    "doc_scorecards": "Feuilles de score",
     "doc_schedule": "Suivi de l'horaire",
     "doc_nametags": "Badges nominatifs",
     "doc_round_checklist": "Liste de vérification",
@@ -226,12 +226,12 @@
     }
   },
   "warnings": {
-    "no_groups": "Aucun groupe n'a encore été assigné pour cette compétition, donc le nombre de feuilles affiche 0. Assignez d'abord les groupes (dans Groupifier ou sur le site de la WCA), puis revenez ici. Vous pouvez tout de même générer le suivi d'horaire et les porte-noms entre-temps."
+    "no_groups": "Aucun groupe n'a encore été assigné pour cette compétition, donc le nombre de feuilles affiche 0. Assignez d'abord les groupes (dans Groupifier ou sur le site de la WCA), puis revenez ici. Vous pouvez tout de même générer le suivi d'horaire et les badges entre-temps."
   },
   "about": {
     "trigger": "Qu'est-ce que c'est ?",
     "title": "À propos de cet outil",
-    "intro": "Cet outil génère des PDF prêts à imprimer pour une compétition WCA : feuilles de score, porte-noms, suivi d'horaire et fiches pour nouveaux participants (optionnelles). Tout est mis en page pour l'impression et la découpe.",
+    "intro": "Cet outil génère des PDF prêts à imprimer pour une compétition WCA : feuilles de score, badges, suivi d'horaire et fiches pour nouveaux participants (optionnelles). Tout est mis en page pour l'impression et la découpe.",
     "wcif_title": "Qu'est-ce que le WCIF ?",
     "wcif_body": "Les données de chaque compétition WCA (épreuves, horaire et participants inscrits) se trouvent sur le site de la WCA dans un format appelé WCIF. Les assignations de groupes sont ajoutées en amont, généralement avec un outil comme Groupifier.",
     "workflow_title": "Où cela s'insère",

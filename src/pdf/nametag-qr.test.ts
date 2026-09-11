@@ -52,9 +52,8 @@ describe('liveQrTarget', () => {
   });
 });
 
-// The QR is drawn as one Path rather than ~200 Rects (node count is what @react-pdf's
-// layout cost scales with). A path is not eyeball-checkable the way a grid of rects is, so
-// this walks the emitted `d` back into a module grid and compares it to the code itself.
+// A path is not eyeball-checkable the way a grid of rects is, so this walks the emitted `d`
+// back into a module grid and compares it to the code itself.
 describe('qrPathData', () => {
   const url = 'https://www.competitiongroups.com/competitions/Soorsi2026/persons/5';
 

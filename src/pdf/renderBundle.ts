@@ -17,9 +17,7 @@ export type WorkerRequest = {
 
 export type WorkerResponse =
   | { type: 'progress'; percent: number; message: string }
-  // A ZIP or a bare PDF, depending on how many documents were built. `mimeType` says which,
-  // so the main thread never re-derives it. A Blob, not an ArrayBuffer: its bytes live
-  // outside the JS heap, which is the only way a WC-sized archive fits at all.
+  // A Blob, not an ArrayBuffer: its bytes live outside the JS heap.
   | { type: 'done'; blob: Blob; filename: string; mimeType: string }
   | { type: 'error'; message: string };
 
@@ -34,11 +32,7 @@ function renderJob(
 // Bytes held in the JS heap before the pending chunks are folded into a Blob part.
 const FOLD_BYTES = 4 * 1024 * 1024;
 
-/**
- * Accumulates the ZIP byte stream without ever holding the whole archive in the heap:
- * pending chunks are folded into a Blob every few MB, and a Blob of Blobs references its
- * parts rather than copying them.
- */
+/** Accumulates the ZIP stream, folding pending chunks into a Blob every few MB. */
 class BlobSink {
   private parts: BlobPart[] = [];
   private pending = 0;

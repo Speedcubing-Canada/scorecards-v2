@@ -178,7 +178,7 @@
       "scorecards": {
         "callout": "As súmulas já saem ordenadas. Recorte-as, mantenha as pilhas como ficaram e você nunca precisa ordenar nada à mão.",
         "diagram": {
-          "sheet": "4 por súmulas",
+          "sheet": "4 por folha",
           "piles": "Recortar → 4 pilhas",
           "deck": "Empilhar 1-2-3-4"
         },
@@ -233,7 +233,7 @@
     "title": "Sobre esta ferramenta",
     "intro": "Esta ferramenta gera PDFs prontos para impressão de uma competição WCA: súmulas, crachás, acompanhamento do horário e fichas para estreantes (opcionais). Tudo é formatado para imprimir e recortar.",
     "wcif_title": "O que é o WCIF?",
-    "wcif_body": "Os dados de cada competição WCA (provas, horário e competidores inscritos) estão no site da WCA num formato chamado WCIF. As atribuições de grupos são adicionadas antes, normalmente com uma ferramenta como o Groupifier.",
+    "wcif_body": "Os dados de cada competição WCA (eventos, horário e competidores inscritos) estão no site da WCA em um formato chamado WCIF. As atribuições de grupos são adicionadas antes, normalmente com uma ferramenta como o Groupifier.",
     "workflow_title": "Onde se encaixa",
     "workflow_body": "Este é o último passo antes de imprimir. Depois de atribuídos os grupos, lê o WCIF da competição e transforma-o nos documentos que imprime e recorta para o dia da competição.",
     "privacy_title": "Seus dados",

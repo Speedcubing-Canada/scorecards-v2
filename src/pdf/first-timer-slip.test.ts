@@ -146,11 +146,8 @@ describe('first-timer slip geometry', () => {
   });
 });
 
-// The document renders these pages explicitly instead of flowing one tall Page, because
-// @react-pdf's auto-pagination re-measures the overflow once per page it produces. The
-// fixture diff proves the packing reproduces what it used to emit; this pins the rule.
-// Every branch of the two locale-dependent lines, including the fallbacks: a slip that
-// silently loses a competitor's citizenship or gender is a slip a delegate has to redo.
+// Every branch of the two locale-dependent lines: a slip that silently loses a competitor's
+// citizenship or gender is a slip a delegate has to redo.
 describe('locale-dependent slip fields', () => {
   const base = { name: 'A Newcomer', birthdate: '2015-01-01', countryIso2: 'CA', eventIds: ['333'] };
   const genderLine = (gender: 'm' | 'f' | 'o') =>

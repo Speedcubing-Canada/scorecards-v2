@@ -94,10 +94,7 @@ export default function GeneratePage() {
     [parsed, scope],
   );
 
-  // The list the worker renders from, so the stat and the label cannot disagree with it.
-  // Memoised, and above the redirect so the hook order never changes: building it re-sorts
-  // every entry when a big round splits per event, and this component re-renders on every
-  // progress tick during a build.
+  // The list the worker renders from. Above the redirect so the hook order never changes.
   const jobs = useMemo(
     () => (effectiveParsed && settings ? buildPdfJobs(effectiveParsed, settings) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps

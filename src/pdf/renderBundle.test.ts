@@ -23,8 +23,7 @@ import { runJobs, type WorkerResponse } from './renderBundle';
 const settings = testSettings();
 const parsed = parseWCIF(sampleWcif(), settings);
 
-// Tagged so the zip entries can be told apart. A real Blob: runJobs streams it into the
-// archive rather than reading it into the heap.
+// Tagged so the zip entries can be told apart. A real Blob: runJobs streams it.
 const fakePdf = (tag: string) => new Blob([`%PDF-${tag}`], { type: 'application/pdf' });
 
 const bytesOf = async (blob: Blob) => new Uint8Array(await blob.arrayBuffer());
@@ -182,8 +181,7 @@ describe('a document that fails to render', () => {
 });
 
 describe('streaming the archive', () => {
-  // The whole point of the streaming path: the archive is assembled as Blob parts, whose
-  // bytes live outside the JS heap, instead of one heap allocation the size of every PDF.
+  // The streaming path: the archive is Blob parts, not one heap allocation the size of every PDF.
   it('folds the output into Blob parts once past the threshold, and still unzips', async () => {
     // 6 MB per document, so the 4 MB fold threshold is crossed inside a single file.
     const big = new Uint8Array(6 * 1024 * 1024).fill(65);

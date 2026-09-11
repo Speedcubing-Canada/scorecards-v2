@@ -274,13 +274,11 @@ describe('guideSections', () => {
   });
 });
 
-// @react-pdf lays out a whole document at once, so one WC-sized round in one PDF is where
-// the browser tab dies. Above the threshold a bucket becomes one PDF per event.
+// Past the cap, a bucket becomes one PDF per event.
 describe('splitting an oversized scorecard bucket', () => {
   const CAP = MAX_PAGES_PER_SCORECARD_PDF * 4;
 
-  // `finalizeEntries` is what the parser hands `buildPdfJobs`: sorted, padded to a multiple
-  // of 4, quadrant-reordered. The split has to undo all three per event.
+  // What the parser hands `buildPdfJobs`: sorted, padded to a multiple of 4, quadrant-reordered.
   function bucket(spec: { eventId: string; timeslot: string; count: number }[]) {
     return finalizeEntries(spec.flatMap(({ eventId, timeslot, count }) =>
       Array.from({ length: count }, (_, i) => ({
@@ -341,8 +339,7 @@ describe('splitting an oversized scorecard bucket', () => {
   });
 });
 
-// A championship field is thousands of cards for a single event, so per-event splitting
-// alone still leaves one document too big to lay out. Those get cut into sheet-aligned parts.
+// One event over the cap on its own gets cut into sheet-aligned parts.
 describe('splitting a single oversized event', () => {
   const CAP = MAX_PAGES_PER_SCORECARD_PDF * 4;
 
@@ -388,8 +385,6 @@ describe('splitting a single oversized event', () => {
   });
 });
 
-// Name tags are the other document with no natural bound: 1800 competitors is 450 pages in
-// one file, which was the peak heap of a whole championship generation.
 describe('splitting an oversized name tag document', () => {
   const CAP = MAX_PAGES_PER_NAMETAG_PDF * 4;
   const mkTags = (n: number) =>
@@ -418,13 +413,11 @@ describe('splitting an oversized name tag document', () => {
   });
 });
 
-// Which event's file comes first. The pile is chronological, so the files have to be too,
-// and two events starting in the same slot need a deterministic tie-break.
+// The pile is chronological, so the files are too; same slot tie-breaks on event id.
 describe('ordering the per-event files', () => {
   const CAP = MAX_PAGES_PER_SCORECARD_PDF * 4;
 
-  // Each event lands under the cap on its own but two of them put the bucket over it, so
-  // the split is per event with no _partN files to confuse the ordering assertions.
+  // Two events, each under the cap alone, together over it: splits per event, no _partN files.
   const PER_EVENT = Math.floor(CAP * 0.6 / 4) * 4;
 
   function bucketOf(spec: { eventId: string; timeslots: string[] }[]) {
