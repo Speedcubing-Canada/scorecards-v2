@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { XCircle } from 'lucide-react';
+import { Download, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
@@ -39,8 +39,7 @@ export default function GeneratePage() {
   const [parsed, setParsed] = useState<ParsedWCIF | null>(null);
   const workerRef = useRef<Worker | null>(null);
 
-  // The scope is chosen up front on the scope step; here we just apply it. Memoise on a
-  // stable string key since `settings` is re-parsed from sessionStorage every render.
+  // Memoised on a stable string key: `settings` is re-parsed from sessionStorage every render.
   const scopeKey = JSON.stringify(settings?.generationScope ?? { mode: 'everything' });
   const scope = useMemo<GenerationScope>(() => JSON.parse(scopeKey) as GenerationScope, [scopeKey]);
 
@@ -49,7 +48,7 @@ export default function GeneratePage() {
     let cancelled = false;
 
     async function run() {
-      // Custom competitions have no WCIF - only settings.customEvents drive the PDFs.
+      // Custom competitions have no WCIF; only settings.customEvents drive the PDFs.
       if (settings!.isCustomCompetition) {
         setParsed(emptyParsedWcif());
         setStatus('ready');
@@ -57,8 +56,7 @@ export default function GeneratePage() {
       }
 
       setStatus('fetching');
-      // React state is stale inside this closure, so track the step separately for the
-      // error event.
+      // React state is stale in this closure, so the error event needs its own step.
       let stage: analytics.ErrorStage = 'fetch';
       try {
         const wcif = getCachedWcif(settings!.competitionId)
@@ -100,18 +98,15 @@ export default function GeneratePage() {
   const allEntries = effectiveParsed
     ? [...effectiveParsed.firstRound, ...effectiveParsed.intermediate, ...effectiveParsed.semis, ...effectiveParsed.finals]
     : [];
-  // Custom-event cards (4 per page: blanks, or named + pads) ship in the bundle too.
   const customCardCount = (settings.customEvents ?? [])
     .filter(c => c.name.trim())
     .reduce((n, c) => n + customEventPageCount(c) * 4, 0);
   const scorecardCount = allEntries.filter(e => e.kind === 'scorecard').length + customCardCount;
   const coverCount     = allEntries.filter(e => e.kind === 'cover' && e.eventId).length;
-  // Same list the worker renders from, so the stat and the button label can
-  // never disagree with what actually comes out.
+  // The list the worker renders from, so the stat and the label cannot disagree with it.
   const jobs           = effectiveParsed ? buildPdfJobs(effectiveParsed, settings) : [];
   const pdfCount       = jobs.length;
   const totalPages     = effectiveParsed ? estimateTotalPages(effectiveParsed, settings) : 0;
-  // One document downloads as itself; two or more are zipped.
   const filename       = downloadTarget(jobs, settings.competitionId).filename;
 
   function handleDownload() {
@@ -143,7 +138,7 @@ export default function GeneratePage() {
         setBuildPercent(msg.percent);
         setStatusMsg(msg.message);
       } else if (msg.type === 'done') {
-        // The worker decided zip-vs-bare-PDF, so take its word for both.
+        // The worker decided zip-vs-bare-PDF.
         const blob = new Blob([msg.buffer], { type: msg.mimeType });
         const url  = URL.createObjectURL(blob);
         const a    = document.createElement('a');
@@ -154,9 +149,8 @@ export default function GeneratePage() {
         worker.terminate();
         workerRef.current = null;
         setStatus('ready');
-        // After the download, so a beacon failure can never cost anyone their PDFs.
-        // `parsed` (not `effectiveParsed`) sizes the competition; the counts below
-        // describe only what this download contains.
+        // After the download, so a beacon failure cannot cost anyone their PDFs. `parsed`
+        // sizes the competition; the counts below describe only this download.
         analytics.send(analytics.buildGenerateEvent({
           parsed: parsed!,
           wcif: getCachedWcif(settings!.competitionId) ?? null,
@@ -235,6 +229,7 @@ export default function GeneratePage() {
                   onClick={handleDownload}
                   disabled={disabled}
                 >
+                  {status !== 'building' && <Download size={18} aria-hidden />}
                   {buttonLabel}
                 </button>
               );
@@ -257,11 +252,7 @@ function StatusBox({ icon, text, isError = false }: { icon: React.ReactNode; tex
   );
 }
 
-/**
- * Loading placeholder shown while the WCIF is fetched and parsed. Mirrors the
- * five-card stats grid and the download button so the layout doesn't shift once
- * the real numbers arrive. The status label is announced for screen readers.
- */
+/** Mirrors the stats grid and download button, so the layout doesn't shift on arrival. */
 function StatsSkeleton({ isMobile, label }: { isMobile: boolean; label: string }) {
   return (
     <div role="status" aria-label={label}>
@@ -315,7 +306,8 @@ const s: Record<string, React.CSSProperties> = {
   statValueMobile: { fontSize: 'var(--fs-display)' },
   statLabel: { fontSize: 'var(--fs-caption)', color: 'var(--text-muted)' },
   downloadBtn: {
-    display: 'block', backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+    backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)',
     border: 'none', borderRadius: 'var(--radius-md)', padding: '16px', fontSize: 'var(--fs-heading)',
     fontWeight: 700, textAlign: 'center', cursor: 'pointer', width: '100%',
     fontFamily: 'inherit', letterSpacing: '-0.01em', overflowWrap: 'anywhere',

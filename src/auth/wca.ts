@@ -61,7 +61,6 @@ export async function fetchManagedCompetitions(token: string) {
   return res.json();
 }
 
-/** Fetch a competition's WCIF (events, persons, schedule). Requires a WCA access token. */
 export async function fetchWcif(competitionId: string, token: string): Promise<WCIF> {
   const res = await fetch(`${WCA_API_URL}/competitions/${competitionId}/wcif`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -71,10 +70,9 @@ export async function fetchWcif(competitionId: string, token: string): Promise<W
 }
 
 /**
- * The competition's scoretaking system, or null if it can't be read.
- * 'internal' is ILR (integrated live results, hosted on the WCA site itself); 'wca_live' is
- * live.worldcubeassociation.org. Only on the single-competition endpoint, not the index.
- * Public for announced competitions - the token is only needed for unannounced ones.
+ * The scoretaking system, or null if it can't be read. 'internal' is ILR, 'wca_live' the
+ * separate site. Only on the single-competition endpoint, and public once announced: the
+ * token is needed for unannounced competitions only.
  */
 export async function fetchScoretakingSoftware(
   competitionId: string,
@@ -95,12 +93,11 @@ export async function fetchScoretakingSoftware(
 const WCA_LIVE_API = 'https://live.worldcubeassociation.org/api';
 
 /**
- * Returns the numeric WCA Live competition ID, or null if not found / API error.
+ * The numeric WCA Live competition ID, or null on any failure.
  *
- * Fetches the whole list and matches client-side: WCA Live has no by-wcaId lookup, and its
- * `competitions(filter:)` matches on *name*, which can differ from the WCA's and resolve to
- * the wrong competition. The list is only currently-listed competitions (~550 rows, ~25 KB).
- * Revisit if WCA Live ever exposes wcaId as a query argument.
+ * Matched client-side over the whole list: WCA Live has no by-wcaId lookup, and its
+ * `competitions(filter:)` matches on name, which can resolve to the wrong competition. The
+ * list is currently-listed competitions only (~550 rows, ~25 KB).
  */
 export async function fetchWcaLiveId(wcaId: string): Promise<string | null> {
   try {
@@ -119,10 +116,7 @@ export async function fetchWcaLiveId(wcaId: string): Promise<string | null> {
   }
 }
 
-/**
- * Returns a map of registrantId → WCA Live person ID for all competitors in a competition.
- * The WCA Live person ID is the internal numeric ID used in live.worldcubeassociation.org URLs.
- */
+/** registrantId → the numeric person id in live.worldcubeassociation.org URLs. */
 export async function fetchWcaLivePersonIds(
   competitionLiveId: string,
 ): Promise<Record<number, string> | null> {

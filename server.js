@@ -11,9 +11,8 @@ const DIST_DIR = path.join(__dirname, 'dist');
 const INDEX_PATH = path.join(DIST_DIR, 'index.html');
 const PORT = Number(process.env.PORT || 8080);
 
-// On App Engine, fetch from Secret Manager (App Engine versions don't preserve
-// console-set env vars across deploys, and we don't want the secret in app.yaml
-// or in CI). Locally, fall back to .env via process.env.
+// Secret Manager on App Engine: versions don't preserve console-set env vars across
+// deploys, and the secret belongs in neither app.yaml nor CI. Locally, .env.
 async function loadClientSecret() {
   if (process.env.WCA_CLIENT_SECRET) return process.env.WCA_CLIENT_SECRET;
 
@@ -68,10 +67,8 @@ app.use(
   }),
 );
 
-// WCA OAuth token proxy.
-// WCA's /oauth/token has no CORS headers, so the browser cannot call it
-// directly. Requests arrive here, the client_secret is appended, then
-// the request is forwarded to WCA.
+// WCA's /oauth/token has no CORS headers, so the browser cannot call it directly. The
+// client_secret is appended here and the request forwarded.
 app.post('/wca-token', express.urlencoded({ extended: false }), async (req, res) => {
   try {
     const params = new URLSearchParams(req.body);
@@ -90,9 +87,8 @@ app.post('/wca-token', express.urlencoded({ extended: false }), async (req, res)
   }
 });
 
-// Anonymous usage events from the app (src/lib/analytics.ts). Nothing is stored here:
-// App Engine forwards stdout to Cloud Logging, and a log sink carries `component:
-// "analytics"` lines into BigQuery for the dashboard.
+// Anonymous usage events (src/lib/analytics.ts). Nothing is stored: App Engine forwards
+// stdout to Cloud Logging, and a sink carries `component: "analytics"` into BigQuery.
 //
 // ponytail: unauthenticated, guarded only by the body-size cap and the sanitiser. If it
 // ever gets spammed, add an App Engine dispatch rate limit or a build-time shared secret.
@@ -109,10 +105,9 @@ app.post(
   },
 );
 
-// Oversized and malformed bodies are what a prober or a spammer sends. Express would
-// otherwise answer 413/400 and print a stack trace, which leaks the shape of the endpoint
-// and lets anyone fill Cloud Logging with error-severity noise. Express only routes errors
-// to a four-argument handler mounted on the app, not to one inside the route's own stack.
+// Express would otherwise answer 413/400 with a stack trace, leaking the endpoint shape and
+// filling Cloud Logging with error-severity noise. It routes errors only to a four-argument
+// handler mounted on the app, never to one inside the route's own stack.
 // eslint-disable-next-line no-unused-vars
 app.use('/api/event', (err, req, res, next) => {
   res.status(204).end();
@@ -128,7 +123,6 @@ app.use(
   }),
 );
 
-// Other static files (favicons, manifest, etc.).
 app.use(express.static(DIST_DIR, { maxAge: 0, index: false }));
 
 // Unknown file extensions → 404 (don't fall through to SPA handler).
@@ -140,7 +134,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// SPA fallback - every non-file route serves index.html.
 app.use((req, res) => {
   fs.readFile(INDEX_PATH, 'utf8', (err, html) => {
     if (err) {
@@ -158,10 +151,15 @@ app.use((req, res) => {
   });
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`Scorecard server listening on port ${PORT}`);
-});
+export { app };
 
-process.on('SIGTERM', () =>
-  server.close(() => console.log('Process terminated')),
-);
+// Only bind a port when started directly; an import gets the configured app unbound.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const server = app.listen(PORT, () => {
+    console.log(`Scorecard server listening on port ${PORT}`);
+  });
+
+  process.on('SIGTERM', () =>
+    server.close(() => console.log('Process terminated')),
+  );
+}

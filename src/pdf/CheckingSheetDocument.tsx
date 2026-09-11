@@ -75,10 +75,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  // Pins a tick box to the right edge of a cell, leaving the flex to its left free for
-  // hand-written initials. Data entry and double-checking can take several passes (a
-  // scoretaker may enter half a round and leave), so the initials and the "this round is
-  // finished" tick are separate marks in the same cell.
+  // Tick box pinned right, initials in the flex to its left. Data entry can take several
+  // passes, so the initials and the "finished" tick are separate marks in one cell.
   initialsInner: {
     width: '100%',
     flexDirection: 'row',
@@ -92,7 +90,6 @@ const styles = StyleSheet.create({
     border: '0.75pt solid black',
     flexShrink: 0,
   },
-  // Only the groups cell puts the box beside text; elsewhere it stands alone.
   checkBoxSpaced: {
     marginLeft: 6,
   },
@@ -111,8 +108,7 @@ function CheckBox({ checked, spaced }: { checked: boolean; spaced?: boolean }) {
   );
 }
 
-// Cells are built from the flex map so a column can never get a width here and a
-// different one in the header.
+// Built from the flex map, so a column cannot get one width here and another in the header.
 function cellStyle(flex: number, last: boolean, header: boolean) {
   return {
     flex,
@@ -149,10 +145,9 @@ function TableHeader({ strings, fixed }: { strings: CheckingSheetStrings; fixed?
 function DataRow({ row, alt }: { row: CheckingRow; alt: boolean }) {
   const base = alt ? styles.dataRowOdd : styles.dataRowEven;
   return (
-    // A lunch break above this row draws a thick rule. The previous row's 0.5pt #bbb
-    // bottom border sits directly under it and vanishes beneath the heavier line.
-    // wrap={false}: a day's table may break across pages, but never through a row - split
-    // rows lose their cell borders and their start time.
+    // The thick lunch rule swallows the previous row's 0.5pt bottom border.
+    // wrap={false}: a day's table may break across pages, never through a row, which would
+    // lose its cell borders and its start time.
     <View style={row.breakBefore ? [base, { borderTop: CHECKING_BREAK_RULE }] : base} wrap={false}>
       <View style={cellStyle(CHECKING_FLEX.start, false, false)}>
         <Text style={styles.cellText}>{row.startTime}</Text>
@@ -198,9 +193,8 @@ export function CheckingSheetDocument({ days, settings }: Props) {
         <Text style={styles.title}>{settings.competitionName} {strings.title}</Text>
 
         {days.map((day, di) => (
-          // A day's table holds every round of that day, so it can outgrow a page and must
-          // be allowed to break - under wrap={false} @react-pdf squashes the rows until the
-          // tick boxes are unusable. The schedule tracker's per-room blocks stay atomic.
+          // A day's table can outgrow a page and must break: under wrap={false} @react-pdf
+          // squashes the rows until the tick boxes are unusable.
           <View key={di} style={styles.dayBlock}>
             {/* Heading + column header + first row are one atomic group, so a day is never
                 announced at the foot of a page with its table overleaf. minPresenceAhead
@@ -214,8 +208,7 @@ export function CheckingSheetDocument({ days, settings }: Props) {
               </View>
             </View>
             {day.rows.length > 1 && (
-              // Continues the same table: the head block owns the top border, this owns the
-              // bottom, and the rows' own 0.5pt rules hide the join.
+              // The head block owns the top border, this the bottom; the row rules hide the join.
               <View style={styles.tableRest}>
                 {day.rows.slice(1).map((row, ri) => (
                   <DataRow key={ri} row={row} alt={ri % 2 === 0} />

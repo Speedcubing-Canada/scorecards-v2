@@ -6,10 +6,9 @@ import fr from './fr.json';
 import es from './es.json';
 import pt from './pt.json';
 
-// `i18next.d.ts` types `t()` off en.json alone, so a key added to en.json and forgotten in
-// the other three compiles cleanly and silently falls back to English at runtime - and a
-// key *removed* from en.json leaves dead entries behind. Every feature touching the UI
-// strings has to edit all four files together; this is the guard that they stayed in step.
+// `i18next.d.ts` types `t()` off en.json alone, so a key forgotten in the other three
+// compiles cleanly and falls back to English at runtime, and one removed from en.json leaves
+// dead entries behind. This is the guard that all four files stayed in step.
 
 type Json = { [k: string]: string | Json };
 
@@ -52,16 +51,12 @@ describe('locale key parity', () => {
     }
   });
 
-  // Parity keeps the four bundles equal to each other, but says nothing about whether the
-  // code still uses a key. Keys outlive the feature that introduced them: three
-  // `first_timer_slips_*` entries survived that setting moving to the scope step, and
-  // `logo.use_default_label` survived its checkbox becoming a toggle - 16 dead strings
-  // across four locales that translators kept dutifully translating. This catches the next
-  // four.
+  // Parity says nothing about whether the code still uses a key, and keys outlive the feature
+  // that introduced them: 16 dead strings across four locales were being dutifully translated
+  // before this existed.
   //
-  // Deliberately a whole-source substring scan rather than an import graph: `t()` is called
-  // with string literals, so a literal search is both sufficient and immune to how the key
-  // is spelled at the call site.
+  // A whole-source substring scan rather than an import graph: `t()` takes string literals, so
+  // a literal search is sufficient and indifferent to how the call site spells the key.
   it('has no key that no source file references', () => {
     const srcDir = join(import.meta.dirname, '..');
     const sources: string[] = [];
@@ -88,9 +83,8 @@ describe('locale key parity', () => {
     expect(orphans).toEqual([]);
   });
 
-  // Em dashes read as machine-written and are awkward to type in three of the four
-  // languages. Use a comma, a colon, or two sentences instead. Applies to on-screen
-  // copy only - source comments and the README are free to use them.
+  // Em dashes read as machine-written and are awkward to type in three of the four languages.
+  // On-screen copy only: source comments and the README are exempt.
   it('uses no em dash in any on-screen string', () => {
     for (const [code, bundle] of [['en', en as Json], ...TRANSLATIONS] as [string, Json][]) {
       const offenders = paths(bundle).filter((p) => {

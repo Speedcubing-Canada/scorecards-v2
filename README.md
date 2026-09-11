@@ -61,12 +61,15 @@ WCA token endpoint (which sends no CORS headers, so the browser cannot call it d
 | `npm run test:coverage` | The same run, with coverage and its thresholds enforced |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc -b` (also the first half of `npm run build`) |
-| `npm run render:fixtures` | Render every PDF headlessly to `../current-output/` |
+| `npm run render:fixtures` | Render every PDF headlessly to `../current-output/` (override with `FIXTURE_OUT_DIR`) |
+| `scripts/checkFixtures.sh` | Re-render the fixtures and pixel-diff them against `tests/pdf-baseline/` |
+| `scripts/updateFixtureBaseline.sh` | Refresh that baseline, after an intentional PDF change |
 
 Lint, typecheck and `test:coverage` run in CI **once per commit**: on every PR, and on pushes
 to `main`. There is no staging environment, so that job is the only thing between a branch and
-production. The PR run tests the branch merged with `main` rather than the branch head, which
-is what actually lands. A branch with no PR open gets no CI - open the PR.
+production. A second job, `pdf-fixtures`, runs the pixel diff alongside it. The PR run tests the
+branch merged with `main` rather than the branch head, which is what actually lands. A branch
+with no PR open gets no CI - open the PR.
 
 `main` is protected: that job must be green and the branch must be up to date with `main`
 before a PR can merge, and force-pushes and deletion are blocked. Admins are not bound by it,
@@ -92,10 +95,40 @@ Tests run in Node. A test that mounts a page opts into a DOM per file with a
 complete `CompetitionSettings`) and `sampleWcif()` (a one-day competition that fills every
 bucket `parseWCIF` produces); `scripts/renderFixtures.ts` uses the same settings builder.
 
-`src/pdf/render.integration.test.ts` renders every job kind `buildPdfJobs` can emit through the
-real documents with `renderToBuffer`. It asserts only that a valid PDF comes out, never layout:
-the `*-layout.test.ts` files own the measurements, and `scripts/checkFixtures.sh` owns the
-pixels.
+Four files cover seams rather than single modules, because the halves either side of each are
+tested on their own and the joint is what breaks:
+
+- `src/pages/wizard.integration.test.tsx` drives the real routes (`AppRoutes`) through picker →
+  scope → settings → generate, using only the UI. The wizard's steps share no React state, so
+  this is what proves they agree about the same competition. `flowState.test.ts` still owns the
+  sessionStorage layer, and each page test still owns its own rendering.
+- `src/pdf/render.integration.test.ts` renders every job kind `buildPdfJobs` can emit through the
+  real documents with `renderToBuffer`. It asserts only that a valid PDF comes out, never layout:
+  the `*-layout.test.ts` files own the measurements, and `scripts/checkFixtures.sh` owns the pixels.
+- `src/pdf/renderBundle.test.ts` covers the orchestration around that - which jobs run, bare PDF
+  versus zip, progress, what happens when one document throws - with the renderer stubbed, so it
+  does not re-render what the file above already renders.
+- `server.test.js` starts the real express app on an ephemeral port and asserts the things that
+  live in headers and status codes: the CSP directives, and `/api/event` answering 204 to
+  everything so a prober learns nothing.
+
+### PDF output regression
+
+`scripts/checkFixtures.sh` re-renders the fixture PDFs and pixel-diffs each page against
+`tests/pdf-baseline/`, catching what the measurement tests cannot see: a changed colour, a
+shifted margin, a dropped glyph. It needs `poppler-utils` and `graphicsmagick`. Every input it
+uses lives in the repo (`tests/fixtures/`, `tests/pdf-baseline/`), so a fresh checkout can run
+it.
+
+It passes below a max page MAE of `0.002` (override with `FIXTURE_MAE_TOLERANCE`) rather than
+demanding pixel identity, because the CI runner's poppler and font stack are not the ones a
+baseline was rendered on. For scale, a 1pt padding change measures about `0.02`. The CI job runs
+`continue-on-error` until that tolerance has proved itself across a few PRs; promote it to a
+required check by dropping that line and adding it to `deploy.needs`.
+
+When it fails, look at the red-highlighted diff images it points at (CI uploads them as the
+`pdf-fixture-diff` artifact). If the change was intended, run `scripts/updateFixtureBaseline.sh`
+and commit the new baseline - never refresh it without opening the diffs first.
 
 ## How it works
 
@@ -179,9 +212,8 @@ Non-obvious constraints that look arbitrary in the code but break real output if
 - **User-visible changes** get a bullet in `src/changelog.ts` in all four locales, newest first.
   Returning organizers see it as a "What's new" dialog, so the bar is high: no refactors, bug
   fixes or small tweaks.
-- Run `npm run render:fixtures` (and `scripts/checkFixtures.sh <baseline>` to pixel-diff) after
-  touching anything under `src/pdf/`. These PDFs get printed and cut, so layout regressions are
-  expensive.
+- Run `scripts/checkFixtures.sh` after touching anything under `src/pdf/`. These PDFs get
+  printed and cut, so layout regressions are expensive.
 
 ## Deploying
 

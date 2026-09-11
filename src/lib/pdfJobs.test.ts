@@ -5,7 +5,6 @@ import { filterParsedByScope } from './generationScope';
 import type { ParsedWCIF, ScorecardEntry, CoverEntry } from './wcif-parser';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
 
-// ── Builders ──────────────────────────────────────────────────────────────────
 function sc(roundNum = 1, name = ''): ScorecardEntry {
   return {
     kind: 'scorecard', timeslot: 'a01', eventId: '333', eventName: '333',
@@ -225,7 +224,7 @@ describe('single-document scopes download as a bare PDF', () => {
   });
 });
 
-// ── Print-and-cut guide sections ─────────────────────────────────────────────
+// Print-and-cut guide sections
 // The download page's guide must only explain the PDFs actually in the download:
 // someone generating just the schedule tracker was being told how to cut and stack
 // scorecards they never asked for.

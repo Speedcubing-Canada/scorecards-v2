@@ -1,6 +1,5 @@
 import type { LocaleCode } from '../types/settings';
 
-// ── Cover card strings ────────────────────────────────────────────────────────
 export interface CoverCardStrings {
   forDelegate: string;
   bundledScorecards: (n: number | string) => string;
@@ -16,17 +15,13 @@ export interface CoverCardStrings {
   allGroups: (n: number) => string;
 }
 
-// ── Checking sheet strings ────────────────────────────────────────────────────
-// Standalone delegate/scoretaker tracking sheet: one row per round, grouped by day
-// and room. `groupsMade` and `scorecards` are tick-only (and come pre-ticked for round 1,
-// which is prepared before the competition); `dataEntry`/`doubleCheck` take initials plus
-// a tick box; `takenBy` takes a name.
+// One row per round, grouped by day and room. `groupsMade`/`scorecards` are tick-only and
+// pre-ticked for round 1; `dataEntry`/`doubleCheck` take initials plus a tick; `takenBy` a name.
 export interface CheckingSheetStrings {
   title: string;
   start: string;
   event: string;
-  // Groups *created* (on competitiongroups), not collected - done even for a single-group
-  // round so the round exists there at all.
+  // Created on competitiongroups, not collected. Done even for a single-group round.
   groupsMade: string;
   // Scorecards produced - printed or hand-written - not collected.
   scorecards: string;
@@ -35,7 +30,6 @@ export interface CheckingSheetStrings {
   takenBy: string;
 }
 
-// ── Schedule tracker strings ──────────────────────────────────────────────────
 export interface ScheduleStrings {
   title: string;
   estimatedStart: string;
@@ -49,7 +43,6 @@ export interface ScheduleStrings {
   finalLabel: string;
 }
 
-// ── Nametag duty strings ──────────────────────────────────────────────────────
 export interface NametTagStrings {
   compete: string;
   scramble: string;
@@ -58,10 +51,8 @@ export interface NametTagStrings {
   dutyGroup: (groupList: string) => string;
 }
 
-// ── First-timer slip strings ──────────────────────────────────────────────────
-// Confirmation checklist printed for each newcomer (no WCA ID). Bolded values
-// (name, gender, birthdate, country) always sit at the end of their line, so each
-// prefix is stored without the value and the value is appended bold in the document.
+// Bolded values always end their line, so each prefix is stored without its value and the
+// document appends it bold.
 export interface FirstTimerSlipStrings {
   confirmIntro1: string;
   confirmIntro2: string;
@@ -78,7 +69,6 @@ export interface FirstTimerSlipStrings {
   genderOther: string;
 }
 
-// ── Nametag title strings (role badge on each panel) ──────────────────────────
 export interface NametTagTitleStrings {
   delegate: (isFemale: boolean) => string;
   organizer: (isFemale: boolean) => string;
@@ -86,7 +76,6 @@ export interface NametTagTitleStrings {
   competitor: (isFemale: boolean) => string;
 }
 
-// ── Scorecard strings (used in PDF rendering) ─────────────────────────────────
 export interface ScorecardStrings {
   scrambler: string;
   scramblerCheck: string;
@@ -109,14 +98,12 @@ export interface ScorecardStrings {
   groupLabel: (gNum: string | number, total: number) => string;
   colorGroupLabel: (color: string, gNum: string | number, total: number) => string;
   blankGroupLabel: (total: number) => string;
-  // Connector word in "X of Y" / "X de Y" labels (e.g. 'of', 'de'). Used to grey
-  // the trailing "of Y" portion of round/group labels on the scorecard.
+  // Connector in "X of Y" labels, used to grey the trailing portion.
   ofConnector: string;
   stationLabel: (n: string) => string;
   cover: CoverCardStrings;
 }
 
-// ── English ───────────────────────────────────────────────────────────────────
 const EN: ScorecardStrings = {
   scrambler: 'Scrambler',
   scramblerCheck: 'Check',
@@ -158,7 +145,6 @@ const EN: ScorecardStrings = {
   },
 };
 
-// ── French ────────────────────────────────────────────────────────────────────
 const FR: ScorecardStrings = {
   scrambler: 'Mélangeur',
   scramblerCheck: 'Vérif.',
@@ -200,7 +186,6 @@ const FR: ScorecardStrings = {
   },
 };
 
-// ── Spanish ───────────────────────────────────────────────────────────────────
 const ES: ScorecardStrings = {
   scrambler: 'Mezclador',
   scramblerCheck: 'Verif.',
@@ -242,11 +227,9 @@ const ES: ScorecardStrings = {
   },
 };
 
-// ── Portuguese (Brazil) ─────────────────────────────────────────────────────────
 const PT: ScorecardStrings = {
-  // Abbreviated: the full "Embaralhador" is 34.5pt at 5.5pt Helvetica and the
-  // scrambler column only holds 31.1pt (scorecard-layout.test.ts). "Embaralha."
-  // is 27.8pt - the longest form Pedro accepts that still fits.
+  // The full "Embaralhador" is 34.5pt at 5.5pt Helvetica; the column holds 31.1pt. This is
+  // the longest form Pedro accepts that fits.
   scrambler: 'Embaralha.',
   scramblerCheck: 'Verif.',
   attempt: 'Tentativa',
@@ -288,11 +271,8 @@ const PT: ScorecardStrings = {
 };
 
 /**
- * Merge two languages' scorecard strings for a dual-language scorecard.
- * Column headers and the cut-off/provisional lines stack both languages
- * (`primary\nsecondary`); everything else (round/group/station labels, cover) uses
- * the primary language only. This is the single place that defines which fields
- * are bilingual - adding a language never touches it.
+ * Column headers and the cut-off/provisional lines stack both languages; everything else
+ * stays primary-only. The single place defining which fields are bilingual.
  */
 function mergeScorecardStrings(primary: ScorecardStrings, secondary: ScorecardStrings): ScorecardStrings {
   return {
@@ -322,10 +302,7 @@ function mergeScorecardStrings(primary: ScorecardStrings, secondary: ScorecardSt
   };
 }
 
-/**
- * Scorecard strings for a primary language, optionally merged with a secondary.
- * `secondary` of `null`/`undefined` (or equal to primary) ⇒ single language.
- */
+/** `secondary` null, undefined or equal to primary means single language. */
 export function getStrings(language: LocaleCode, secondary?: LocaleCode | null): ScorecardStrings {
   const primary = LOCALES[language].scorecard;
   if (!secondary || secondary === language) return primary;
@@ -333,11 +310,8 @@ export function getStrings(language: LocaleCode, secondary?: LocaleCode | null):
 }
 
 /**
- * Split a "X of Y" / "X de Y" label into the part that stays normal (`head`) and
- * the trailing connector + total (`tail`, e.g. " of 2") that should be greyed.
- * Splits on the LAST ` <connector> ` so colour/stage names (e.g. "Bleu 1 de 2")
- * are never affected. Returns `tail: null` when there is no connector (e.g.
- * "Final Round" / "Tour Final"), so the whole label renders in the normal colour.
+ * Splits "X of Y" into the normal `head` and the greyed trailing ` of Y`. Splits on the LAST
+ * connector, so stage names ("Bleu 1 de 2") survive. `tail: null` when there is none.
  */
 export function splitLabelTotal(
   label: string,
@@ -349,7 +323,6 @@ export function splitLabelTotal(
   return { head: label.slice(0, idx), tail: label.slice(idx) };
 }
 
-// ── Schedule tracker strings ───────────────────────────────────────────────────
 const SCHEDULE_EN: ScheduleStrings = {
   title: '- Schedule Tracker',
   estimatedStart: 'Estimated\nStart Time',
@@ -406,7 +379,6 @@ export function getScheduleStrings(language: LocaleCode): ScheduleStrings {
   return LOCALES[language].schedule;
 }
 
-// ── Checking sheet strings ─────────────────────────────────────────────────────
 const CHECKING_EN: CheckingSheetStrings = {
   title: '- Round Checklist',
   start: 'Start\nTime',
@@ -455,7 +427,6 @@ export function getCheckingSheetStrings(language: LocaleCode): CheckingSheetStri
   return LOCALES[language].checking;
 }
 
-// ── Nametag duty strings ───────────────────────────────────────────────────────
 const NAMETAG_EN: NametTagStrings = {
   compete: 'Compete:',
   scramble: 'Scramble:',
@@ -492,7 +463,6 @@ export function getNametTagStrings(language: LocaleCode): NametTagStrings {
   return LOCALES[language].nametag;
 }
 
-// ── First-timer slip strings ───────────────────────────────────────────────────
 const FIRST_TIMER_EN: FirstTimerSlipStrings = {
   confirmIntro1: 'Please check off the boxes to confirm everything is correct.',
   confirmIntro2: 'If anything is incorrect, please let us know.',
@@ -561,7 +531,6 @@ export function getFirstTimerSlipStrings(language: LocaleCode): FirstTimerSlipSt
   return LOCALES[language].firstTimer;
 }
 
-// ── Nametag title strings ──────────────────────────────────────────────────────
 const NAMETAG_TITLE_EN: NametTagTitleStrings = {
   delegate:     () => 'DELEGATE',
   organizer:    () => 'ORGANIZER',
@@ -590,11 +559,7 @@ const NAMETAG_TITLE_PT: NametTagTitleStrings = {
   competitor:   (f) => f ? 'COMPETIDORA' : 'COMPETIDOR',
 };
 
-/**
- * Role-badge titles for the two name-tag panels. The front panel uses the
- * primary language; the back panel uses the secondary language when set,
- * otherwise the primary (single-language ⇒ both panels match).
- */
+/** Front panel primary, back panel secondary when set: single-language means both match. */
 export function getNametTagTitleStrings(
   language: LocaleCode,
   secondary?: LocaleCode | null,
@@ -605,11 +570,8 @@ export function getNametTagTitleStrings(
   };
 }
 
-// ── Short event names for nametag duty labels ──────────────────────────────────
-// Puzzle names are brand names, so 16 of these 18 entries are the same in every
-// language; only 3x3x3 One-Handed and FTO (Octaminx in French) are actually translated.
-// The table is therefore a shared base plus a per-locale override, rather than four
-// near-copies that have to be edited in lockstep whenever an event is added.
+// Short event names for nametag duty labels. Puzzle names are brand names, so only 3x3x3
+// One-Handed and FTO differ: a shared base plus per-locale overrides, not four near-copies.
 const SHORT_NAMETAG_NAMES_BASE: Record<string, string> = {
   '333': '3x3x3', '222': '2x2x2', '444': '4x4x4', '555': '5x5x5',
   '666': '6x6x6', '777': '7x7x7', '333bf': '3x3x3 BLD', '333fm': 'FMC',
@@ -630,7 +592,6 @@ export function getShortNametTagNames(language: LocaleCode): Record<string, stri
   return LOCALES[language].shortNames;
 }
 
-// ── Event names ────────────────────────────────────────────────────────────────
 export const EVENT_NAMES_EN: Record<string, string> = {
   '333': '3x3x3 Cube', '222': '2x2x2 Cube', '444': '4x4x4 Cube',
   '555': '5x5x5 Cube', '666': '6x6x6 Cube', '777': '7x7x7 Cube',
@@ -671,10 +632,8 @@ export function getEventName(eventId: string, language: LocaleCode): string {
   return LOCALES[language].eventNames[eventId] ?? eventId;
 }
 
-// ── PDF worker progress strings ────────────────────────────────────────────────
-// Shown on the generate page's progress bar while the worker renders. They live in the
-// registry below so i18n.test.ts's parity loop covers them - a locale missing an entry
-// would otherwise fall back to English at runtime with nothing to catch it.
+// The generate page's progress bar. In the registry below so i18n.test.ts's parity loop
+// covers them; otherwise a missing locale silently falls back to English at runtime.
 export interface WorkerStrings {
   starting: string;
   rendering: (label: string) => string;
@@ -724,10 +683,8 @@ export function getWorkerStrings(language: LocaleCode): WorkerStrings {
   return LOCALES[language].worker;
 }
 
-// ── Locale registry ────────────────────────────────────────────────────────────
-// Single source of truth tying every per-language string set to its code. Adding
-// a language = add its string objects above and one entry here (plus a UI JSON +
-// registry entry in src/i18n/index.ts). No getter or merge logic needs touching.
+// Adding a language: its string objects above, one entry here, and a UI JSON plus registry
+// entry in src/i18n/index.ts. No getter or merge logic needs touching.
 interface LocaleBundle {
   scorecard: ScorecardStrings;
   schedule: ScheduleStrings;

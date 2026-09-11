@@ -12,7 +12,6 @@ import {
 import './fontSetup';
 
 
-// ── Page/card geometry (points) ───────────────────────────────────────────
 // Dimensions measured from the original Sarah-scorecard LETTER PDF output:
 //   Cards: 257×345pt  |  L/R margins: ~22pt  |  T/B margins: ~24-26pt
 //   H gap: ~53pt  |  V gap: ~52pt  (gap ≈ 2× margin on both axes)
@@ -46,16 +45,14 @@ const BORDER_THIN = '1pt solid black';
 
 // Column widths: match HTML original proportions 75/55/290/70/70 out of 560px
 const COL = { scrambler: '13%', attempt: '10%', result: '52%', judge: '12%', competitor: '13%' };
-// Scramble double-checking: a second scrambler-signature column is inserted after the
-// first one. Its 13% is taken entirely from `result` (52% → 39%) so every other column
-// - and the card's outer geometry - stays unchanged. Both variants sum to 100%.
+// The second scrambler column's 13% comes entirely out of `result` (52% → 39%), so every
+// other column and the card's outer geometry stay put. Both variants sum to 100%.
 const COL_DC = { scrambler: '13%', scramblerCheck: '12%', attempt: '10%', result: '40%', judge: '12%', competitor: '13%' };
 // Column key order for the header/rows, with and without the double-check column.
 const COLS_5 = ['scrambler', 'attempt', 'result', 'judge', 'competitor'] as const;
 const COLS_6 = ['scrambler', 'scramblerCheck', 'attempt', 'result', 'judge', 'competitor'] as const;
 
-// Row heights (ROW_HEIGHTS, in layoutConstants.ts) are tuned so the two flex spacers
-// around the provisional label are ~6–8pt each.
+// ROW_HEIGHTS is tuned so the flex spacers around the provisional label are 6-8pt each.
 // Formula: spacer = (inner(335) - header(56) - eventRow(25) - tableHeader(19)
 //                   - [cutoff(13)] - rows×rowH - provLine(19) - extraRow) / 2
 
@@ -140,7 +137,6 @@ const styles = StyleSheet.create({
   coverInitials:     { fontSize: 10, textAlign: 'center', fontFamily: FONT_BOLD, marginBottom: 12 },
 });
 
-// ── Attempt row ───────────────────────────────────────────────────────────
 function AttemptRow({ num, rowH, isMBF, doubleCheck }: { num: number | ''; rowH: number; isMBF: boolean; doubleCheck: boolean }) {
   const cols = doubleCheck ? COL_DC : COL;
   return (
@@ -163,10 +159,8 @@ function AttemptRow({ num, rowH, isMBF, doubleCheck }: { num: number | ''; rowH:
   );
 }
 
-// Render a round/group label with the trailing "of Y" (connector + total) greyed
-// (#808080) to de-emphasise it. Labels without a connector (e.g. "Final Round")
-// render entirely in the base style. `extra` lets the caller append text (e.g. a
-// trailing space + group) that stays in the base colour.
+// Greys the trailing "of Y" to de-emphasise it; a label with no connector renders whole in
+// the base style. `extra` appends text that stays in the base colour.
 const GREY = '#808080';
 function LabelWithGreyTotal({ label, connector, style }: {
   label: string; connector: string; style: Style | Style[];
@@ -179,7 +173,6 @@ function LabelWithGreyTotal({ label, connector, style }: {
   );
 }
 
-// ── Scorecard ─────────────────────────────────────────────────────────────
 function ScorecardCard({
   card, settings, cardW, cardH, pos,
 }: {
@@ -194,8 +187,8 @@ function ScorecardCard({
   const doubleCheck = card.scrambleDoubleCheck === true;
   const icon    = card.iconDataUrl ?? EVENT_ICONS[card.eventId];
 
-  // In the 6-column (double-check) layout the result column is narrower (40% vs 52%),
-  // so use compact suffixes to prevent the bilingual header from wrapping to 4 lines.
+  // The 6-column layout's result column is narrower, so compact suffixes keep the bilingual
+  // header off a fourth line.
   const resultSuffix = doubleCheck
     ? (card.isCumulative ? strings.shortCumulativeSuffix(card.limit)
        : isMBF           ? strings.mbfSuffix
@@ -204,8 +197,7 @@ function ScorecardCard({
        : isMBF           ? strings.mbfSuffix
        :                   strings.dnfSuffix(card.limit));
 
-  // For bilingual languages the prefix and suffix each have 2 lines (EN + FR).
-  // Merge them per-language so each language occupies exactly one line.
+  // Prefix and suffix each hold two lines; merge per language so each takes exactly one.
   const prefLines = strings.resultPrefix.split('\n');
   const sufLines  = resultSuffix.split('\n');
   const resultHeader = (prefLines.length === sufLines.length && prefLines.length > 1)
@@ -303,7 +295,6 @@ function ScorecardCard({
   );
 }
 
-// ── Cover card ────────────────────────────────────────────────────────────
 function CoverCard({
   card, settings, cardW, cardH, pos,
 }: {
@@ -361,7 +352,6 @@ function CoverCard({
   );
 }
 
-// ── Document ──────────────────────────────────────────────────────────────
 interface Props {
   entries: ScorecardData[];
   settings: CompetitionSettings;

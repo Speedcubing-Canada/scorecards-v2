@@ -15,7 +15,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return token ? <>{children}</> : <Navigate to="/" replace />;
 }
 
-function AppRoutes() {
+export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LoginPage />} />

@@ -10,7 +10,7 @@ import {
 import { WCA_EVENT_ORDER } from '../lib/wcif-parser';
 import type { LocaleCode, PaperFormat } from '../types/settings';
 
-// ── Header text fit ──────────────────────────────────────────────────────────
+// Header text fit
 // Standard Helvetica AFM glyph widths (1/1000 em units), same table as
 // scorecard-layout.test.ts. Accented variants share the width of their base glyph.
 const HW: Record<string, number> = {
@@ -31,13 +31,11 @@ const HW: Record<string, number> = {
   '0':556,'1':556,'2':556,'3':556,'4':556,'5':556,'6':556,'7':556,'8':556,'9':556,
 };
 
-// An untabulated glyph is measured at the widest Helvetica glyph (W, 944) rather than an
-// average. A translation that introduces a character nobody listed above must then err
-// towards failing the fit checks below, never towards silently passing.
+// An untabulated glyph measures as the widest Helvetica glyph (W, 944), so a translation
+// introducing an unlisted character errs towards failing rather than silently passing.
 const UNKNOWN_GLYPH_W = 944;
 
-// Headers render in Helvetica-BOLD, whose glyphs run a few percent wider than the
-// regular widths tabulated above. The factor keeps the estimate on the safe side.
+// Headers render in Helvetica-Bold, a few percent wider than the regular widths above.
 const BOLD_FACTOR = 1.08;
 
 function helveticaBoldWidth(text: string, fontSize: number): number {
@@ -58,7 +56,7 @@ function maxLineWidth(text: string, fontSize: number): number {
   return Math.max(...text.split('\n').map(l => helveticaBoldWidth(l, fontSize)));
 }
 
-// ── Layout constants (must stay in sync with CheckingSheetDocument.tsx) ──────
+// Layout constants (must stay in sync with CheckingSheetDocument.tsx)
 const PAGE_W: Record<PaperFormat, number> = { LETTER: 612, A4: 595.28 };
 const PAGE_H: Record<PaperFormat, number> = { LETTER: 792, A4: 842 };
 const PAGE_PAD_H  = 30;    // styles.page paddingHorizontal
@@ -121,10 +119,8 @@ describe('Checking sheet column widths', () => {
 });
 
 describe('Checking sheet event column fits its row text', () => {
-  // The event column carries the longest text in the table by far, and its header
-  // ("Event") says nothing about how wide it needs to be - so the header-fit sweep
-  // below cannot protect it. This is the column with the least headroom; anything
-  // that steals flex from it must fail here first.
+  // The event column carries the longest text by far and its header says nothing about how
+  // wide it needs to be, so the header sweep below cannot protect it.
   function widest(lc: LocaleCode): { text: string; w: number } {
     const s = getScheduleStrings(lc);
     let best = { text: '', w: 0 };
@@ -165,8 +161,7 @@ describe('Checking sheet header labels fit within their columns', () => {
 });
 
 describe('Checking sheet groups cell', () => {
-  // The cell holds "<count><gap><box>" on one line; a 3-digit count is far beyond
-  // any real competition, so it is a safe upper bound.
+  // "<count><gap><box>" on one line; a 3-digit count is a safe upper bound.
   const widest = helveticaBoldWidth('999', CELL_FONT) + CHECKBOX_ML + CHECKBOX_W;
 
   for (const format of FORMATS) {
@@ -176,15 +171,13 @@ describe('Checking sheet groups cell', () => {
   }
 
   it('keeps the checkbox the same size as the cover card checkbox', () => {
-    // ScorecardDocument styles.coverCheckBox is 9×9 at 0.75pt - the two documents
-    // must agree so a delegate sees the same tick box in either mode.
+    // Must match ScorecardDocument styles.coverCheckBox: the same tick box in either mode.
     expect(CHECKBOX_W).toBe(9);
   });
 });
 
 describe('Checking sheet tick-only column', () => {
-  // "Scorecards ready" holds no text, only a box - so the column is sized by its
-  // header alone, and the box must still sit comfortably under it.
+  // No text, only a box, so the header sizes the column and the box must sit under it.
   for (const format of FORMATS) {
     it(`the box fits under the widest scorecards header (${format})`, () => {
       const avail = colContentW(CHECKING_FLEX.scorecards, format);
@@ -198,11 +191,9 @@ describe('Checking sheet tick-only column', () => {
 });
 
 describe('Checking sheet initials columns', () => {
-  // Data entry and double-checking can take several passes - a scoretaker may enter half
-  // a round and leave - so the cell holds multiple sets of initials AND a right-edge tick
-  // box marking "every competitor entered or quit". The box eats into the writing space,
-  // so what remains has to stay usable: 40pt at the 10pt cell font is roughly four
-  // hand-written characters, i.e. two sets of initials side by side.
+  // Several passes of initials plus a right-edge tick box. The box eats into the writing
+  // space, and what remains must stay usable: 40pt at the 10pt cell font is about four
+  // hand-written characters, two sets of initials side by side.
   const MIN_WRITING_W = 40;
   const BOX_GUTTER = 2;  // breathing room between ink and the box
 
@@ -223,15 +214,13 @@ describe('Checking sheet initials columns', () => {
 
 describe('Checking sheet lunch rule', () => {
   it('is thicker than the line between ordinary rows', () => {
-    // The whole point is that it reads as a divider at a glance; if it ever matched
-    // CELL_BORDER the day would look unbroken.
+    // Matching CELL_BORDER would make the day look unbroken.
     expect(CHECKING_BREAK_RULE_W).toBeGreaterThan(CELL_BORDER);
     expect(CHECKING_BREAK_RULE_W).toBeGreaterThan(TABLE_BORDER);
   });
 
   it('declares a width matching the rule it renders', () => {
-    // The style string and the numeric width are used by different consumers
-    // (renderer vs. this budget) and must not drift apart.
+    // Different consumers read the style string and the numeric width; they must not drift.
     expect(CHECKING_BREAK_RULE).toBe(`${CHECKING_BREAK_RULE_W}pt solid #444`);
   });
 });
@@ -254,12 +243,10 @@ describe('Checking sheet vertical budget', () => {
     });
 
     it(`a busy day outgrows a page, which is why the block must wrap (${format})`, () => {
-      // The checklist merges every room into one table per day, so a day's block is no
-      // longer bounded by a room's slice of the schedule: a large competition can schedule
-      // enough rounds in a day to overflow. CheckingSheetDocument therefore lets the day
-      // block break, and keeps only [heading + column header + first row] atomic. Do not
-      // "fix" that by restoring wrap={false} on the block - @react-pdf then squashes the
-      // rows to fit one page and the tick boxes collapse into unusable slivers.
+      // A day's block is not bounded by one room's schedule, so a large competition can
+      // overflow the page. The block therefore breaks, keeping only heading + column header
+      // + first row atomic. Do not restore wrap={false}: @react-pdf then squashes the rows
+      // until the tick boxes are unusable slivers.
       const contentH = PAGE_H[format] - 2 * PAGE_PAD_V;
       const used = TITLE_BLOCK + DAY_LABEL_H + headerH + rowH(26) + DAY_GAP;
       expect(used).toBeGreaterThan(contentH);

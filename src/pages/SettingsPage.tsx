@@ -28,10 +28,8 @@ const DC_WORLD_TOP_DEFAULT = 50;
 const DC_REGION_TOP_DEFAULT = 1;
 
 /**
- * The settings this page owns: `CompetitionSettings` minus the four values that come from
- * the flow rather than from the form. Deriving it with Omit means a field added to
- * CompetitionSettings is a type error here until it is given an initial value, instead of
- * silently missing from the saved payload.
+ * `CompetitionSettings` minus the four values the flow owns. Derived with Omit so a new
+ * field is a type error here until it is given an initial value.
  */
 type SettingsDraft = Omit<
   CompetitionSettings,
@@ -39,9 +37,8 @@ type SettingsDraft = Omit<
 >;
 
 /**
- * The part of a stored `CompetitionSettings` that seeds this page's form: everything except the
- * four values the flow owns. `wcaLiveId` is normalised back to `''` because `handleSubmit`
- * writes `null` for an empty one, and `null` would make its input uncontrolled.
+ * Seeds the form from a stored blob. `wcaLiveId` normalises back to `''`: `handleSubmit`
+ * writes `null` for an empty one, and `null` would make the input uncontrolled.
  */
 function restorableSettings(previous: CompetitionSettings | null): Partial<SettingsDraft> {
   if (!previous) return {};
@@ -50,8 +47,7 @@ function restorableSettings(previous: CompetitionSettings | null): Partial<Setti
   delete rest.competitionName;
   delete rest.generationScope;
   delete rest.isCustomCompetition;
-  // Blobs written before the double-check switch was removed carry `false`, and no control
-  // is left to undo that.
+  // Older blobs carry `false` and no control is left to undo that.
   delete rest.scrambleDoubleCheck;
   return { ...rest, wcaLiveId: rest.wcaLiveId ?? '' };
 }
@@ -65,12 +61,10 @@ export default function SettingsPage() {
   const { id: competitionId, name: competitionName } = readCompetition();
   // Custom (non-WCA) competition: no WCIF, no WCA Live, events defined on /custom.
   const isCustom = readIsCustom();
-  // Set on the scope step from the parsed WCIF. When groups haven't been generated yet,
-  // scorecard counts will read 0 - warn so organizers aren't confused.
+  // Set on the scope step. No groups yet means scorecard counts read 0, so warn.
   const noGroups = !readHasGroups();
 
-  // Decided on the scope step. When generating scorecards only (scope ≠ everything), the
-  // Settings page shows just what's relevant to scorecards.
+  // Scorecards-only (scope ≠ everything) hides everything not about scorecards.
   const generationScope: GenerationScope = readScope();
   const everything = generationScope.mode === 'everything';
   const docs = (generationScope as { documents?: DocumentSelection }).documents;
@@ -78,27 +72,22 @@ export default function SettingsPage() {
   const showNametags   = docs?.nametags   !== false;
   const { showSecondRoundMode } = readDetection();
 
-  // Default the primary scorecard language to whatever interface language the
-  // user is already using (saves a click for most people); secondary starts as
-  // None so single-language users don't have to clear anything.
+  // Primary follows the interface language; secondary starts at None so single-language
+  // users have nothing to clear.
   const defaultPrimary = resolveDefaultPrimaryLanguage(
     i18n.resolvedLanguage ?? i18n.language,
     LANGUAGES,
   );
 
-  // Regional preset chosen on the scope step, if any. It only seeds the initial value
-  // of each option below - nothing here is locked, and `{}` means plain defaults.
+  // A preset seeds initial values only; nothing is locked, and `{}` means plain defaults.
   const preset = readPresetSettings();
 
-  // What was submitted last time, when the organizer came back from /generate. Spread over the
-  // defaults rather than replacing them, so a field added since the blob was written still gets
-  // its initial value. /scope drops the blob when the preset changes, so the two never fight.
+  // Spread over the defaults rather than replacing them, so a field added since the blob was
+  // written still gets its initial value. /scope drops the blob when the preset changes.
   const previous = readSettings();
 
-  // Every field the user can change on this page, in one object: exactly the mutable half of
-  // CompetitionSettings, so `handleSubmit` is a spread plus the four values derived from the
-  // flow (id, name, scope, custom flag) - a new setting can't be forgotten there.
-  // A preset seeds the initial values and nothing more; every field stays editable.
+  // Exactly the mutable half of CompetitionSettings, so `handleSubmit` is a spread plus the
+  // four flow-owned values and a new setting cannot be forgotten there.
   const [draft, setDraft] = useState<SettingsDraft>(() => ({
     language: preset.language ?? defaultPrimary,
     secondaryLanguage: preset.secondaryLanguage ?? null,
@@ -106,8 +95,7 @@ export default function SettingsPage() {
     secondRoundMode: preset.secondRoundMode ?? 'prefilled',
     logoDataUrl: null,
     useDefaultLogo: preset.useDefaultLogo ?? isCanadianLanguage(i18n.resolvedLanguage ?? i18n.language),
-    // Overwritten on mount by the competition's own scoretaking setting, unless the
-    // organizer already picked one (see modeTouched).
+    // Overwritten on mount by the competition's own setting, unless modeTouched.
     liveResultsMode: 'wca-live',
     wcaLiveId: '',
     wcaLivePersonIds: null,
@@ -116,10 +104,9 @@ export default function SettingsPage() {
     nametagQrMode: preset.nametagQrMode ?? 'back-only',
     nametagLayout: preset.nametagLayout ?? 'vertical',
     scorecardCheckMode: preset.scorecardCheckMode ?? 'per-group-card',
-    // Regulation 11i binds every competition, so there is no switch for it - "off" is
-    // untick both ranking rules and leave the round and CSV rules empty. The ranking rules
-    // cover 11i on their own; a whole round is only worth double-checking at a
-    // championship, whose finals 11i1f singles out.
+    // Regulation 11i binds every competition, so there is no switch: "off" is both ranking
+    // rules unticked with no round or CSV rule. A whole round is only worth double-checking
+    // at a championship, whose finals 11i1f singles out.
     scrambleDoubleCheck: true,
     scrambleDoubleCheckRounds: isChampionship(competitionName) ? ['finals'] : [],
     scrambleDoubleCheckOverrides: {},
@@ -128,8 +115,8 @@ export default function SettingsPage() {
     scrambleDoubleCheckRegionScope: 'national',
     customEvents: [],
     ...restorableSettings(previous),
-    // A custom competition's events live in their own key, which /custom may have changed since
-    // this blob was written. A WCA competition's live only in the blob - leave those restored.
+    // A custom competition's events live in their own key, which /custom may have changed
+    // since this blob was written. A WCA competition's live only in the blob.
     ...(isCustom ? { customEvents: readCustomEvents() } : {}),
   }));
 
@@ -143,14 +130,12 @@ export default function SettingsPage() {
     scrambleDoubleCheckRegionScope,
   } = draft;
 
-  // Purely presentational - not part of the draft, but stored so a restored upload isn't nameless.
+  // Not part of the draft, but stored so a restored upload isn't nameless.
   const [logoName, setLogoName] = useState<string | null>(() => readFileName('logo'));
   const [wcaLiveFetchStatus, setWcaLiveFetchStatus] = useState<'loading' | 'found' | 'not-found'>('loading');
-  // A restored or hand-picked choice beats the competition's own setting: the organizer may
-  // know something the WCA record doesn't yet.
+  // A restored or hand-picked choice beats the WCA record, which may not be updated yet.
   const [modeTouched, setModeTouched] = useState(previous?.liveResultsMode !== undefined);
-  // Open when it already holds something: a restored custom event behind a collapsed section
-  // reads as lost, which is the whole complaint this restore exists to answer.
+  // A restored custom event behind a collapsed section reads as lost.
   const [advancedOpen, setAdvancedOpen] = useState(
     customEvents.length > 0 || Object.keys(scrambleDoubleCheckOverrides).length > 0,
   );
@@ -163,8 +148,7 @@ export default function SettingsPage() {
     if (!competitionId || isCustom) return;
     (async () => {
       const scoretaking = await fetchScoretakingSoftware(competitionId, token?.access_token);
-      // ILR builds its URLs from the WCA competition id and each competitor's registration
-      // id, both already in hand - there is nothing to look up on WCA Live.
+      // ILR builds its URLs from ids already in hand; nothing to look up on WCA Live.
       if (scoretaking === 'internal' && !modeTouched) {
         patch({ liveResultsMode: 'ilr' });
         return;
@@ -188,18 +172,15 @@ export default function SettingsPage() {
     return null;
   }
 
-  // Language pickers are driven by the shared LANGUAGES registry (native labels),
-  // so adding a language needs no per-language settings strings here. Primary and
-  // secondary rows share the same fixed columns (one language each); the column
-  // under the selected primary becomes the "None" tile so nothing ever shifts.
+  // Driven by the shared LANGUAGES registry, so adding a language needs no strings here.
+  // Both rows share fixed columns; the column under the primary becomes the "None" tile,
+  // so nothing ever shifts.
   function handlePrimaryLanguageChange(code: LocaleCode) {
-    // Selecting the current secondary as primary clears the secondary - one language
-    // must never appear on both sides.
+    // One language must never appear on both sides.
     patch({ language: code, ...(secondaryLanguage === code ? { secondaryLanguage: null } : {}) });
   }
 
-  // A compact, tappable language tile (monogram badge + native label) in the
-  // spirit of an event-icon selector - far less form-like than a radio list.
+  // Monogram badge + native label, in the spirit of an event-icon selector.
   const renderLangTile = (o: { key: string; badge: string; label: string; selected: boolean; onClick: () => void }) => (
     <button
       key={o.key}
@@ -261,15 +242,14 @@ export default function SettingsPage() {
     }));
   }
 
-  // A ranking rule is off when its threshold is null. Ticking it restores the default rather
-  // than the last value: the box is a rule switch, the number beside it is the rule.
+  // Off when the threshold is null. Ticking restores the default, not the last value.
   function toggleDcRankingRule(key: 'scrambleDoubleCheckWorldTop' | 'scrambleDoubleCheckRegionTop') {
     const fallback = key === 'scrambleDoubleCheckWorldTop' ? DC_WORLD_TOP_DEFAULT : DC_REGION_TOP_DEFAULT;
     setDraft(d => ({ ...d, [key]: d[key] === null ? fallback : null }));
   }
 
-  // Digits only, like the WCA Live ID field. An emptied box holds 0 (which matches nobody)
-  // while typing and snaps back to the rule's default on blur, so it can never be saved blank.
+  // Digits only. An emptied box holds 0 (matching nobody) while typing and snaps back to the
+  // default on blur, so it can never be saved blank.
   function setDcRankingTop(
     key: 'scrambleDoubleCheckWorldTop' | 'scrambleDoubleCheckRegionTop',
     raw: string,
@@ -300,7 +280,7 @@ export default function SettingsPage() {
   function handleSubmit() {
     writeFileName('logo', logoName);
     writeFileName('dcOverrides', dcOverridesName);
-    // Events are editable here too; write them back so /custom and the restore above see them.
+    // Write them back so /custom and the restore above see them.
     if (isCustom) writeCustom(draft.customEvents.filter(e => e.name.trim()));
     writeSettings({
       ...draft,
@@ -309,8 +289,7 @@ export default function SettingsPage() {
       generationScope,
       isCustomCompetition: isCustom,
       customEvents: draft.customEvents.filter(e => e.name.trim()),
-      // Custom competitions are unofficial: no live results, no double-checking, and the
-      // card's "WCA Live:" line forced off (it prints whenever hideWcaLiveId is false).
+      // Unofficial: no live results, no double-checking, no "WCA Live:" line.
       liveResultsMode: isCustom ? 'wca-live' : draft.liveResultsMode,
       wcaLiveId: isCustom ? null : (draft.wcaLiveId?.trim() || null),
       wcaLivePersonIds: isCustom ? null : draft.wcaLivePersonIds,
@@ -370,8 +349,7 @@ export default function SettingsPage() {
           <p style={{ ...s.langCaption, marginTop: 18 }}>{t('settings.language.secondary_title')}</p>
           <div style={s.langRow}>
             {secondaryLanguageRow(LANGUAGES, language, secondaryLanguage).map((tile, i) => {
-              // Columns mirror the primary row; the column under the selected
-              // primary is the "None" tile (tile.value === null).
+              // The column under the selected primary is the "None" tile.
               const lang = LANGUAGES[i];
               return renderLangTile(tile.value === null
                 ? {
@@ -841,8 +819,7 @@ const s: Record<string, React.CSSProperties> = {
   hint: { margin: '0 0 12px', fontSize: 'var(--fs-label)', color: 'var(--text-muted)' },
   subheading: { fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: '16px 0 8px' },
   infoIcon: { display: 'inline-flex', color: 'var(--text-muted)', cursor: 'help' },
-  // The checkbox half of a ranking rule card; the threshold input is its sibling, so that
-  // each label owns exactly one control.
+  // The threshold input is its sibling, so each label owns exactly one control.
   rankingRule: { display: 'flex', alignItems: 'center', gap: 12, flex: 1, cursor: 'pointer' },
   rankingInput: {
     width: 72, boxSizing: 'border-box',

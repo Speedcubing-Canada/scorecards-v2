@@ -1,24 +1,20 @@
 import type { CompetitionSettings } from '../types/settings';
 import type { DocumentSelection } from '../lib/generationScope';
 
-// A regional preset: a starting point for the options on /scope and /settings, so
-// organizers in a region that always uses the same setup don't re-pick it every time.
-// Adding one is a JSON file drop in this folder - no app code changes. See README.md.
-//
-// A preset only moves *defaults*; every option stays editable afterwards.
+// A starting point for the options on /scope and /settings, for regions that always use the
+// same setup. Adding one is a JSON file drop in this folder; see README.md.
+// A preset moves defaults only: every option stays editable.
 export interface Preset {
   id: string;
-  // Plain display strings, deliberately not i18n keys: these are place names (which
-  // don't translate), and a contributor dropping a JSON file can't add keys to the
-  // four locale files.
+  // Place names, so not i18n keys: they don't translate, and a contributor dropping a JSON
+  // file cannot add keys to the four locale bundles.
   name: string;
   region?: string;
   documents: Partial<DocumentSelection>;
   settings: PresetSettings;
 }
 
-// The CompetitionSettings fields a preset is allowed to seed. Excludes anything
-// competition-specific (ids, logos, custom events, generationScope).
+// Excludes anything competition-specific: ids, logos, custom events, generationScope.
 export type PresetSettings = Partial<Pick<CompetitionSettings,
   | 'language' | 'secondaryLanguage' | 'paperFormat' | 'secondRoundMode'
   | 'useDefaultLogo' | 'hideWcaLiveId'
@@ -48,10 +44,9 @@ const SETTING_VALUES: Record<keyof PresetSettings, readonly string[] | 'boolean'
 const SETTING_KEYS = Object.keys(SETTING_VALUES) as (keyof PresetSettings)[];
 
 /**
- * Validate one preset payload. Whitelists keys and values so a contributor's typo
- * or a stale sessionStorage blob can never push an unknown value into
- * CompetitionSettings. Unknown/invalid entries are dropped; a preset without a
- * usable id and name is rejected outright (null).
+ * Whitelists keys and values, so a contributor's typo or a stale blob cannot push an unknown
+ * value into CompetitionSettings. Invalid entries are dropped; a preset with no usable id and
+ * name is rejected outright.
  */
 export function parsePreset(raw: unknown): Preset | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
@@ -98,8 +93,7 @@ export function parsePresetSettings(raw: unknown): PresetSettings {
   return out as PresetSettings;
 }
 
-// Every JSON file in this folder is a preset. Build-time glob, so a new region is a
-// file drop + PR - nothing here needs editing.
+// Build-time glob, so a new region is a file drop and nothing here needs editing.
 const modules = import.meta.glob('./*.json', { eager: true, import: 'default' });
 
 /** All shipped presets, sorted by name so file order doesn't drive the UI order. */
@@ -109,8 +103,8 @@ export const PRESETS: Preset[] = Object.values(modules)
   .sort((a, b) => a.name.localeCompare(b.name));
 
 const PRESET_SETTINGS_KEY = 'preset_settings';
-// Kept apart from the settings half: those are merged into the draft and lose their origin,
-// but which region an organizer picked is worth knowing on its own (src/lib/analytics.ts).
+// Apart from the settings half, which merges into the draft and loses its origin. Which
+// region was picked is worth knowing on its own (src/lib/analytics.ts).
 const PRESET_ID_KEY = 'preset_id';
 
 /** Stash the settings half of a preset for the /settings step. `null` clears it. */

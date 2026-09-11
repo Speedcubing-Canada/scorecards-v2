@@ -13,39 +13,33 @@ import {
 const PAGE_HEIGHT_PT: Record<PaperFormat, number> = { LETTER: 792, A4: 842 };
 
 /**
- * Estimate how many printed pages the current selection will produce, so the Generate
- * page can show a realistic volume before the (expensive) render runs.
+ * Printed page count, shown before the expensive render runs. Exact for scorecards and name
+ * tags, which paginate at a fixed N-per-page; the schedule tracker and slips flow with
+ * @react-pdf auto-pagination and are estimated.
  *
- * Exact for scorecards and name tags, which paginate at a fixed N-per-page. The schedule
- * tracker and first-timer slips flow with @react-pdf auto-pagination, so those are close
- * estimates: the schedule counts as one page, and slips are greedily packed by height.
- *
- * Pass the scope-filtered parsed result (effectiveParsed) so the count matches the ZIP.
+ * Takes the scope-filtered parse, so the count matches the ZIP.
  */
 export function estimateTotalPages(parsed: ParsedWCIF, settings: CompetitionSettings): number {
   let pages = 0;
 
-  // Scorecards - one PDF per non-empty round, four cards per page (exact).
   for (const round of [parsed.firstRound, parsed.intermediate, parsed.semis, parsed.finals, parsed.extras]) {
     if (round.length > 0) pages += Math.ceil(round.length / SCORECARDS_PER_PAGE);
   }
 
-  // Custom events - each is its own PDF: one page of blanks, or ceil(n/4) with CSV competitors.
+  // Each custom event is its own PDF: a page of blanks, or ceil(n/4) with CSV competitors.
   pages += (settings.customEvents ?? [])
     .filter((c) => c.name.trim() !== '')
     .reduce((n, c) => n + customEventPageCount(c), 0);
 
-  // Name tags - four people per page (exact).
   if (parsed.nametags.length > 0) pages += Math.ceil(parsed.nametags.length / NAMETAGS_PER_PAGE);
 
-  // Schedule tracker - a single flowing page today (estimate).
+  // A single flowing page, estimated.
   if (parsed.scheduleDays.length > 0) pages += 1;
 
-  // Round Checklist - same single-flowing-page approximation as the schedule tracker.
-  // `checkingDays` is already emptied by filterParsedByScope when it is not selected.
+  // Same approximation. `checkingDays` is already empty when the checklist wasn't selected.
   if (parsed.checkingDays.length > 0) pages += 1;
 
-  // First-timer slips - greedily pack whole slips (wrap={false}) by height (estimate).
+  // Whole slips greedily packed by height, estimated.
   if (parsed.firstTimers.length > 0) {
     pages += estimateSlipPages(parsed, settings);
   }

@@ -6,10 +6,8 @@ export interface LanguageOption {
 }
 
 /**
- * Resolve the default primary scorecard language from the interface locale.
- * The UI locale may be region-tagged (e.g. "en-US"), so we match on the base
- * subtag. Falls back to the first supported language when the UI locale isn't
- * one we generate scorecards in.
+ * The default scorecard language, from the interface locale. Matched on the base subtag, since
+ * the UI locale may be region-tagged. Falls back to the first supported language.
  */
 export function resolveDefaultPrimaryLanguage(
   uiLanguage: string | undefined | null,
@@ -28,10 +26,8 @@ export interface SecondaryTile {
 const CANADIAN_LANGUAGE_CODES = ['en', 'fr'] as const;
 
 /**
- * Returns true when the UI language is one of the Canadian-native languages
- * (English or French). Used to decide whether the SCC logo is on by default -
- * any language not in this allowlist defaults to no logo, so future additions
- * don't accidentally show a Canadian org logo to non-Canadian users.
+ * Whether the SCC logo defaults on. An allowlist, so a language added later never shows a
+ * Canadian org logo to non-Canadian users by accident.
  */
 export function isCanadianLanguage(uiLanguage: string | null | undefined): boolean {
   const base = (uiLanguage ?? '').split('-')[0];
@@ -39,9 +35,8 @@ export function isCanadianLanguage(uiLanguage: string | null | undefined): boole
 }
 
 /**
- * Build the column-aligned secondary-language row. Columns mirror the primary
- * row (one language each); the column matching the selected `primary` becomes
- * the "None" tile, so columns never shift when the primary changes.
+ * Columns mirror the primary row; the one matching `primary` becomes the "None" tile, so
+ * nothing shifts when the primary changes.
  */
 export function secondaryLanguageRow(
   languages: readonly LanguageOption[],

@@ -7,6 +7,10 @@ export default defineConfig({
     // inherits the developer's .env and passes locally while failing in CI,
     // where no .env exists (src/auth/wca.ts reads CLIENT_ID at import time).
     env: { VITE_WCA_CLIENT_ID: 'test-client-id' },
+    // The jsdom page tests render whole wizard steps, and v8 instrumentation roughly doubles
+    // that. Under --coverage they cross the 5s default on a loaded machine while passing on
+    // their own, so the default fails CI on contention rather than on anything real.
+    testTimeout: 20000,
     coverage: {
       provider: 'v8',
       // Files no test imports are listed on purpose: the baseline has to be the
@@ -25,7 +29,7 @@ export default defineConfig({
       // coverage, so CI only ever fails on a drop. Never lower them by hand.
       // Exception, 2026-09-10: coverage-v8 5.x stopped counting two lines 4.x
       // counted as coverable. Denominator shrank, nothing lost coverage.
-      thresholds: { autoUpdate: true, lines: 77.28, functions: 73.16, branches: 74.03, statements: 76.09 },
+      thresholds: { autoUpdate: true, lines: 89.04, functions: 84.57, branches: 80.18, statements: 87.35 },
     },
   },
 });

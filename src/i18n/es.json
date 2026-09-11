@@ -165,7 +165,7 @@
       "paper": "Papel",
       "total_pages": "Páginas"
     },
-    "download_button": "⬇ Descargar {{filename}}",
+    "download_button": "Descargar {{filename}}",
     "building_button": "Creando ZIP…",
     "guide": {
       "title": "Cómo imprimir y recortar",

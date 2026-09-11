@@ -13,7 +13,6 @@ import {
 import './fontSetup';
 
 
-// ── Page geometry ─────────────────────────────────────────────────────────────
 // Vertical layout: landscape page, 4 slots wide × 2 tall = 8 slots = 4 pairs.
 //   Layout per page (persons A, B, C, D):
 //     row 0: [Front_A] [Back_A] [Front_B] [Back_B]
@@ -25,17 +24,15 @@ import './fontSetup';
 //     row 1: [Front_B] [Back_B]
 //     row 2: [Front_C] [Back_C]
 //     row 3: [Front_D] [Back_D]
-//   Cards are landscape (244×147pt LETTER = 86×52mm) and slot directly into the
-//   portrait slots - no rotation needed. Sized to fit 90×55mm badge holders
-//   (same holder as vertical, rotated sideways) with ~2mm clearance per edge.
+//   Cards are landscape (244x147pt LETTER = 86x52mm) and slot straight in, no rotation.
+//   Sized for 90x55mm badge holders with ~2mm clearance per edge.
 
 const CONFIGS = {
   LETTER: { panelW: 189, panelH: 292, margin: 12, gapH: 4, gapV: 4 },
   A4:     { panelW: 201, panelH: 283, margin: 12, gapH: 4, gapV: 4 },
 } as const;
 
-// Horizontal-specific configs: landscape slots sized for 90×55mm badge holders.
-// Both paper formats use the same card size (holder-dictated, not paper-dictated).
+// Both paper formats use the same card size: the badge holder dictates it, not the paper.
 const H_CONFIGS = {
   LETTER: { panelW: 244, panelH: 147, margin: 15, gapH: 10, gapV: 10 },
   A4:     { panelW: 244, panelH: 147, margin: 15, gapH: 10, gapV: 10 },
@@ -52,7 +49,6 @@ function panelPositions(cfg: { panelW: number; panelH: number; margin: number; g
   return pos;
 }
 
-// ── QR code (react-pdf native SVG) ────────────────────────────────────────────
 function QrSvg({ url, size }: { url: string; size: number }) {
   const qr   = QRCode.create(url, { errorCorrectionLevel: 'M' });
   const n    = qr.modules.size;
@@ -75,7 +71,6 @@ function QrSvg({ url, size }: { url: string; size: number }) {
   );
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 const NBSP = ' ';
 
 function nameFontSize(name: string, panelW: number) {
@@ -91,7 +86,7 @@ function badgeColors(role: NametTagRole) {
   return { bg: '#DCDCDC', fg: 'black' };
 }
 
-// ── Duty lines - flex-wrap row, each item is its own Text so no dash artifacts ─
+// Each item is its own Text, so no dash artifacts.
 function DutyLines({ duties, fontSize }: { duties: string[]; fontSize: number }) {
   const sorted = [...duties].sort();
   return (
@@ -112,7 +107,7 @@ function DutyLines({ duties, fontSize }: { duties: string[]; fontSize: number })
   );
 }
 
-// ── Shared top section ────────────────────────────────────────────────────────
+// Shared top section
 // logoMode:
 //   'hidden'    → comp name text only
 //   'with-name' → small logo + comp name text side-by-side
@@ -126,12 +121,9 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
   const maxNameFs = compact ? 14 : 20;
   const nameFs = Math.min(maxNameFs, nameFontSize(entry.name, panelW));
   const iconSz = compact ? 9 : 12;
-  // Compact (horizontal) tags: top-pack competition name / name / role with EQUAL
-  // gaps on BOTH sides. Because the layout is top-packed, the role badge lands at
-  // the same Y on the front (icons + duties below) and the back (QR below), so the
-  // two "ROLE" badges align across the pair (unless a very dense duty list pushes
-  // the front's section over). Event icons follow the badge, so hiding them on the
-  // QR side does not move the badge.
+  // Compact tags top-pack with equal gaps on both sides, so the role badge lands at the same
+  // Y on front and back and the two align across the pair. Event icons follow the badge, so
+  // hiding them on the QR side does not move it.
   const compNameStyle = compact ? [s.compName, { fontSize: 7, marginBottom: 4 }] : s.compName;
   const nameStyle = compact ? [s.name, { fontSize: nameFs, marginBottom: 4 }] : [s.name, { fontSize: nameFs }];
   const badgeStyle = compact
@@ -169,9 +161,7 @@ function PanelTop({ entry, panelW, compName, titleText, logoMode, logoDataUrl, c
   );
 }
 
-// ── QR code section ───────────────────────────────────────────────────────────
-// Everything the two QR codes need. Bundled because it threads through both panels
-// untouched, and only QrSection ever reads any of it.
+// Threads through both panels untouched; only QrSection reads any of it.
 interface QrConfig {
   mode: LiveResultsMode;
   competitionId: string;
@@ -199,17 +189,14 @@ function QrSection({ entry, qr, qrSize, compact = false }: {
   );
 }
 
-// ── Empirical top-section height used for duty font-size estimation ────────────
-// 'logo-only' makes the header row taller (~28pt logo vs ~8.5pt text), adding ~19pt.
-// compact (horizontal layout) compresses the section to fit the shorter card (147pt).
+// Empirical top-section height, for the duty font-size estimate. 'logo-only' adds ~19pt of
+// header (28pt logo vs 8.5pt text); compact compresses it to fit the 147pt card.
 function topSectionH(logoMode: NametTagLogoMode, compact = false) {
   if (compact) return logoMode === 'logo-only' ? 75 : 65;
   return logoMode === 'logo-only' ? 146 : 127;
 }
 
-// ── Panel frame ───────────────────────────────────────────────────────────────
-// Positions one card inside its grid slot. The card's own border/padding/content
-// live on the inner View, sized to the content dimensions (panelW × panelH).
+// Positions one card in its grid slot; border, padding and content live on the inner View.
 //   vertical   → content fills the slot upright (slotW===panelW, slotH===panelH).
 //   horizontal → content is a landscape frame (panelW > panelH) rotated 90° about
 //                its centre so its bounding box equals the portrait slot.
@@ -231,10 +218,9 @@ function PanelFrame({ pos, slotW, slotH, panelW, panelH, rotate, children }: {
         left: (slotW - panelW) / 2,
         top: (slotH - panelH) / 2,
         width: panelW, height: panelH,
-        // react-pdf clips overflow against the UN-rotated layout box (clip is
-        // applied before the transform), which would erase the rotated card.
-        // Content is font-scaled to fit, so we render without clipping.
-        // ('visible' is the runtime default but missing from react-pdf's types.)
+        // react-pdf clips against the UN-rotated layout box, which would erase the rotated
+        // card. Content is font-scaled to fit, so it renders unclipped. ('visible' is the
+        // runtime default, just missing from react-pdf's types.)
         overflow: 'visible' as 'hidden',
         transform: 'rotate(90deg)',
       }]}>
@@ -244,7 +230,6 @@ function PanelFrame({ pos, slotW, slotH, panelW, panelH, rotate, children }: {
   );
 }
 
-// ── Front panel ───────────────────────────────────────────────────────────────
 function FrontPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName, qr, logoMode, logoDataUrl, qrBothSides, qrSize, nametTagStrings, compact = false }: {
   entry: NametTagEntry; panelW: number; panelH: number; slotW: number; slotH: number; rotate: boolean;
   pos: { left: number; top: number }; compName: string;
@@ -272,7 +257,6 @@ function FrontPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName
     { label: nametTagStrings.run,      duties: entry.run      },
   ].filter(r => r.duties.length > 0);
 
-  // Scale font down for dense assignment lists to prevent overflow.
   const totalItems = rows.reduce((sum, r) => sum + r.duties.length, 0);
   const dutyFs = Math.max(5, Math.min(7.5, 7.5 - Math.max(0, totalItems - 8) * 0.12));
 
@@ -295,7 +279,6 @@ function FrontPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName
   </>);
 }
 
-// ── Back panel ────────────────────────────────────────────────────────────────
 function BackPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName, qr, logoMode, logoDataUrl, qrSize, compact = false }: {
   entry: NametTagEntry; panelW: number; panelH: number; slotW: number; slotH: number; rotate: boolean;
   pos: { left: number; top: number }; compName: string;
@@ -312,7 +295,6 @@ function BackPanel({ entry, panelW, panelH, slotW, slotH, rotate, pos, compName,
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
   panel: {
     border: '1.5pt solid black', borderRadius: 6,
@@ -337,7 +319,6 @@ const s = StyleSheet.create({
   qrLabel:    { fontSize: 6, textAlign: 'center', color: '#444', marginTop: 4, maxWidth: 80 },
 });
 
-// ── Document ──────────────────────────────────────────────────────────────────
 interface Props {
   nametags: NametTagEntry[];
   settings: CompetitionSettings;
@@ -354,7 +335,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
     wcaLivePersonIds: settings.wcaLivePersonIds,
   };
 
-  // Custom logo (if any) wins; otherwise fall back to the bundled SCC logo when enabled.
+  // A custom logo wins; otherwise the bundled SCC one, when enabled.
   const logoDataUrl = resolveLogo(settings);
   const logoMode: NametTagLogoMode = logoDataUrl ? nametagLogoMode : 'hidden';
   const qrBothSides = nametagQrMode === 'both-sides';
@@ -363,8 +344,7 @@ export function NametTagDocument({ nametags, settings }: Props) {
   const personsPerPage = NAMETAGS_PER_PAGE;
 
   if (horizontal) {
-    // Portrait page, 2 cols × 4 rows. Each landscape slot (244×147pt) fits directly -
-    // no rotation needed. Cards are sized for 90×55mm badge holders (~2mm clearance).
+    // Portrait page, 2 cols x 4 rows. Each landscape slot fits directly, no rotation.
     const hcfg = H_CONFIGS[settings.paperFormat as PF] ?? H_CONFIGS.LETTER;
     const pos = panelPositions(hcfg, 2, 4);
     const { panelW, panelH } = hcfg;

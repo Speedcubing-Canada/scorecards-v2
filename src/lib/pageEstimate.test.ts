@@ -3,7 +3,6 @@ import { estimateTotalPages } from './pageEstimate';
 import type { ParsedWCIF, ScorecardData, ScorecardEntry, FirstTimerEntry, NametTagEntry, ScheduleDay } from './wcif-parser';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
 
-// ── Builders ──────────────────────────────────────────────────────────────────
 function sc(): ScorecardEntry {
   return {
     kind: 'scorecard', timeslot: 'a01', eventId: '333', eventName: '333',

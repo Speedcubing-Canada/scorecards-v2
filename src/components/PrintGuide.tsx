@@ -19,10 +19,9 @@ const NOTES = {
 } as const satisfies Record<NoteSection, { icon: React.ReactNode; key: string }>;
 
 /**
- * "How to print and cut" card under the download button. The scorecard half exists
- * because organisers have re-sorted a whole competition by hand after cutting: the deck
- * comes out of `reorderQuadrants` already ordered, and cutting it apart preserves that
- * order as long as the four quadrant piles are kept separate and stacked 1-2-3-4.
+ * The deck leaves `reorderQuadrants` already ordered, and cutting preserves that order only
+ * if the four quadrant piles stay separate and are stacked 1-2-3-4. Organisers have re-sorted
+ * a whole competition by hand for want of this card.
  */
 export default function PrintGuide({ jobs }: { jobs: PdfJob[] }) {
   const { t } = useTranslation();
@@ -62,11 +61,7 @@ export default function PrintGuide({ jobs }: { jobs: PdfJob[] }) {
   );
 }
 
-/**
- * Sheet -> four piles -> one deck, drawn with plain divs: the design-system guard forbids
- * hand-rolled inline vector markup in the on-screen UI. Flows left-to-right, and
- * top-to-bottom on mobile.
- */
+/** Sheet -> four piles -> one deck, in plain divs: the design-system guard forbids inline SVG. */
 function CutDiagram({ isMobile }: { isMobile: boolean }) {
   const { t } = useTranslation();
   const Arrow = isMobile ? ArrowDown : ArrowRight;
@@ -126,7 +121,6 @@ const s: Record<string, React.CSSProperties> = {
   stage: { margin: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-2)' },
   caption: { fontSize: 'var(--fs-caption)', color: 'var(--text-muted)', textAlign: 'center' },
 
-  // One sheet split into its four scorecard quadrants, numbered in print order.
   sheet: {
     display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, width: 72, height: 92,
     padding: 3, borderRadius: 'var(--radius-sm)',
@@ -138,19 +132,17 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 'var(--fs-caption)', fontWeight: 700, color: 'var(--primary)',
   },
 
-  // The four cut piles, side by side and each already in order.
   piles: { display: 'flex', alignItems: 'flex-end', gap: 12, height: 92 },
   pile: {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     width: 20, height: 42, borderRadius: 3,
     backgroundColor: 'var(--surface)', border: '1px solid var(--border-strong)',
-    // Two offset outlines behind each pile, so it reads as a stack of cut cards.
+    // Offset outlines, so a pile reads as a stack of cut cards.
     boxShadow: '3px -3px 0 -1px var(--surface), 3px -3px 0 var(--border-strong),'
              + '6px -6px 0 -1px var(--surface), 6px -6px 0 var(--border-strong)',
     fontSize: 'var(--fs-caption)', fontWeight: 700, color: 'var(--primary)',
   },
 
-  // The piles stacked into a single ordered deck.
   deck: {
     display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 2,
     height: 92, width: 40,
@@ -167,7 +159,6 @@ const s: Record<string, React.CSSProperties> = {
   },
   step: { fontSize: 'var(--fs-label)', lineHeight: 1.6, color: 'var(--text-muted)' },
   notes: { display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' },
-  // Only when the scorecard steps are above it, to keep the two halves apart.
   notesDivided: {
     marginTop: 'var(--space-5)', paddingTop: 'var(--space-5)', borderTop: '1px solid var(--border)',
   },

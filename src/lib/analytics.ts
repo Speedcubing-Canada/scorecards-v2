@@ -4,15 +4,13 @@ import type { CompetitionSettings, LocaleCode } from '../types/settings';
 import type { PdfJob } from './pdfJobs';
 
 /**
- * Anonymous usage events, so we can see which competitions the tool is used on and which
- * settings organizers actually pick. Posted to /api/event, which logs them and stores
- * nothing else - see analytics.js and server.js.
+ * Anonymous usage events, posted to /api/event, which logs them and stores nothing else.
  *
  * Never send anything that identifies a person: no WCA user id, no competitor names, no
  * WCIF content, no uploaded logo. Competition ids are public WCA data.
  *
- * The builders are pure so they can be tested without a DOM; `send` is the only part that
- * touches the network, and it can never throw into the caller.
+ * The builders are pure; `send` is the only part touching the network, and it can never
+ * throw into the caller.
  */
 
 const ENDPOINT = '/api/event';
@@ -59,9 +57,8 @@ function selectedDocuments(settings: CompetitionSettings): string[] {
 }
 
 /**
- * How big the competition is. Read from the UNFILTERED parse: this describes the event
- * itself, not the subset someone chose to print, so it must not shrink when the generation
- * scope narrows. `wcif` is null for custom (non-WCA) competitions, which have no WCIF.
+ * From the UNFILTERED parse: this describes the competition, not the subset someone chose
+ * to print, so it must not shrink when the scope narrows. `wcif` is null for custom ones.
  */
 function competitionSize(parsed: ParsedWCIF, wcif: WCIF | null) {
   const stages = new Set<string>();
@@ -171,10 +168,8 @@ export function buildOutput(
 }
 
 /**
- * Fire and forget. Silent in dev and in the fixture renderer, so only real use is counted.
- * Analytics must never be able to break generation, so every failure is swallowed.
- *
- * The opt-out is checked here and nowhere else, so it covers every event and call site.
+ * Fire and forget, silent in dev and in the fixture renderer. Every failure is swallowed:
+ * analytics must never break generation. The opt-out is checked here and nowhere else.
  */
 export function send(event: AnalyticsEvent): void {
   if (!import.meta.env.PROD || isOptedOut()) return;
