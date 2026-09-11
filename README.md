@@ -55,6 +55,14 @@ Only the client ID is bundled. The secret stays server-side: both the Vite dev s
 `server.js` expose one endpoint, `POST /wca-token`, that appends the secret and forwards to the
 WCA token endpoint (which sends no CORS headers, so the browser cannot call it directly anyway).
 
+WCA access tokens last two hours, so a tab left open outruns them. The session renews itself
+rather than dead-ending: `src/auth/AuthContext.tsx` checks expiry on mount and on tab refocus,
+and spends the refresh token through the same `POST /wca-token` proxy. A session with no usable
+refresh token falls back to the authorize redirect, which needs no interaction because the WCA
+still holds the sign-in cookie and the earlier consent, and returns the organizer to the step
+they were on. Any 401 from an authed call triggers the same path, registered once in
+`src/auth/wca.ts` so it covers every call rather than the pages that remember to check.
+
 | Command | |
 |---|---|
 | `npm test` | Vitest, no network |
@@ -138,6 +146,7 @@ LoginPage → CompetitionPickerPage → RoundScopePage → SettingsPage → Gene
 ```
 
 - Auth and settings live in `sessionStorage` only, cleared when the tab closes, never sent anywhere.
+  A renewal redirect stays within the tab, so the wizard survives it.
 - Going back re-opens a step with the choices already made on it (`src/lib/flowState.ts`), so
   nothing is retyped; picking a different competition resets them. `/settings` goes back to
   `/scope`, or to `/custom` for a custom competition.

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../auth/useAuth';
+import { STORAGE_RETURN, useAuth } from '../auth/useAuth';
 
 export default function AuthCallbackPage() {
   const { t } = useTranslation();
@@ -28,8 +28,12 @@ export default function AuthCallbackPage() {
       return;
     }
 
+    // A renewal stashes where the organizer was, so the wizard resumes instead of restarting.
+    const back = sessionStorage.getItem(STORAGE_RETURN);
+    sessionStorage.removeItem(STORAGE_RETURN);
+
     handleCallback(code, state)
-      .then(() => navigate('/competitions', { replace: true }))
+      .then(() => navigate(back || '/competitions', { replace: true }))
       .catch((err) => navigate(`/?error=${encodeURIComponent(err.message)}`, { replace: true }));
   }, [handleCallback, navigate]);
 

@@ -11,6 +11,7 @@ vi.mock('../lib/analytics', async (importOriginal) => ({
 
 import { send } from '../lib/analytics';
 import { AuthProvider } from './AuthContext';
+import { fetchManagedCompetitions } from './wca';
 import { useAuth, type AuthState } from './useAuth';
 
 // The state check and the missing-verifier check are the app's only CSRF and PKCE defences,
@@ -49,12 +50,19 @@ function stubExchange(...over: Partial<Response>[]) {
 beforeEach(() => {
   sessionStorage.clear();
   vi.clearAllMocks();
-  hrefs = [];
   if (!globalThis.crypto?.subtle) vi.stubGlobal('crypto', webcrypto);
   // jsdom refuses to navigate; capture the assignment instead of letting it warn.
+  //
+  // The setter closes over its own array rather than the live `hrefs` binding: a redirect
+  // that settles after its own test ends then lands in that test's array, not the next one's.
+  const mine: string[] = [];
+  hrefs = mine;
   Object.defineProperty(window, 'location', {
     configurable: true,
-    value: { origin: 'http://localhost:3000', set href(v: string) { hrefs.push(v); } },
+    value: {
+      origin: 'http://localhost:3000', pathname: '/', search: '',
+      set href(v: string) { mine.push(v); },
+    },
   });
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
@@ -181,5 +189,180 @@ describe('session restore and logout', () => {
     expect(auth.token).toBeNull();
     expect(sessionStorage.getItem('wca_token')).toBeNull();
     expect(sessionStorage.getItem('wca_user')).toBeNull();
+  });
+});
+
+
+const settle = () => act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+
+describe('renewal', () => {
+  const expired = { ...token, created_at: Math.floor(Date.now() / 1000) - 10_800, refresh_token: 'r1' };
+  const fresh = { ...token, access_token: 'tok2', created_at: Math.floor(Date.now() / 1000), refresh_token: 'r2' };
+
+  const stored = () => JSON.parse(sessionStorage.getItem('wca_token')!);
+
+  function signedInWith(t: object) {
+    sessionStorage.setItem('wca_token', JSON.stringify(t));
+    sessionStorage.setItem('wca_user', JSON.stringify(user));
+  }
+
+  it('refreshes a token that expired while the tab sat open, without redirecting', async () => {
+    signedInWith(expired);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => fresh }));
+
+    await act(async () => { mount(); });
+    await settle();
+
+    expect(auth.token?.access_token).toBe('tok2');
+    expect(hrefs).toEqual([]);
+  });
+
+  // Doorkeeper rotates: keeping the spent one would break the next renewal.
+  it('persists the rotated refresh token', async () => {
+    signedInWith(expired);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => fresh }));
+
+    await act(async () => { mount(); });
+    await settle();
+
+    expect(stored().refresh_token).toBe('r2');
+  });
+
+  it('leaves a token with time left alone', async () => {
+    const live = { ...token, created_at: Math.floor(Date.now() / 1000), refresh_token: 'r1' };
+    signedInWith(live);
+    const fn = vi.fn();
+    vi.stubGlobal('fetch', fn);
+
+    await act(async () => { mount(); });
+    await settle();
+
+    expect(fn).not.toHaveBeenCalled();
+    expect(hrefs).toEqual([]);
+  });
+
+  it('falls back to the WCA redirect when the refresh token is spent', async () => {
+    signedInWith(expired);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 401, text: async () => 'invalid_grant' }));
+
+    await act(async () => { mount(); });
+    await settle();
+
+    await vi.waitFor(() => expect(hrefs).toHaveLength(1));
+    expect(hrefs[0].startsWith('https://www.worldcubeassociation.org/oauth/authorize')).toBe(true);
+  });
+
+  it('redirects straight away for a session stored before refresh tokens existed', async () => {
+    const noRefresh = { ...expired, refresh_token: undefined };
+    signedInWith(noRefresh);
+    vi.stubGlobal('fetch', vi.fn());
+
+    await act(async () => { mount(); });
+    await settle();
+
+    await vi.waitFor(() => expect(hrefs).toHaveLength(1));
+  });
+
+  it('stashes the current page so the wizard resumes where it was', async () => {
+    signedInWith(expired);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 401, text: async () => '' }));
+    const mine = hrefs;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        origin: 'http://localhost:3000', pathname: '/settings', search: '?x=1',
+        set href(v: string) { mine.push(v); },
+      },
+    });
+
+    await act(async () => { mount(); });
+    await settle();
+
+    expect(sessionStorage.getItem('post_login_return')).toBe('/settings?x=1');
+    await vi.waitFor(() => expect(hrefs).toHaveLength(1));
+  });
+
+  // Without the cooldown a token that keeps 401ing would bounce through WCA forever.
+  it('signs out instead of redirecting twice in a row', async () => {
+    signedInWith(expired);
+    sessionStorage.setItem('renew_attempt', String(Date.now()));
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 401, text: async () => '' }));
+
+    await act(async () => { mount(); });
+    await settle();
+
+    expect(hrefs).toEqual([]);
+    expect(auth.token).toBeNull();
+    expect(auth.authError).toBe('session_expired');
+  });
+
+  it('renews when a 401 comes back despite the expiry looking fine', async () => {
+    signedInWith({ ...token, created_at: Math.floor(Date.now() / 1000), refresh_token: 'r1' });
+    const fn = vi.fn()
+      .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}), text: async () => '' })
+      .mockResolvedValue({ ok: true, status: 200, json: async () => fresh });
+    vi.stubGlobal('fetch', fn);
+    mount();
+
+    // A revoked token passes the clock check, so only the server can report it.
+    await act(async () => { await fetchManagedCompetitions('tok').catch(() => {}); });
+    await settle();
+
+    expect(auth.token?.access_token).toBe('tok2');
+  });
+
+  // The reported case: the tab sat open past the 2h token life and was switched back to.
+  it('renews on tab refocus, before anything can render a fetch error', async () => {
+    signedInWith({ ...token, created_at: Math.floor(Date.now() / 1000), refresh_token: 'r1' });
+    const fn = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => fresh });
+    vi.stubGlobal('fetch', fn);
+    await act(async () => { mount(); });
+    expect(fn).not.toHaveBeenCalled();
+
+    // Time passes while the tab is in the background.
+    sessionStorage.setItem('wca_token', JSON.stringify(expired));
+    await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
+    await settle();
+
+    expect(auth.token?.access_token).toBe('tok2');
+  });
+
+  it('ignores a visibility change that is not a refocus', async () => {
+    signedInWith(expired);
+    const fn = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => fresh });
+    vi.stubGlobal('fetch', fn);
+    const hidden = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+
+    await act(async () => { mount(); });
+    await settle();
+
+    expect(fn).not.toHaveBeenCalled();
+    // clearAllMocks leaves a getter spy in place, and the next test needs a visible tab.
+    hidden.mockRestore();
+  });
+
+  // Refocus and a 401 from the page's own request can land together; two refresh grants would
+  // spend the rotated token twice and strand the organizer.
+  it('renews once when a second trigger lands mid-flight', async () => {
+    signedInWith(expired);
+    let release!: (v: unknown) => void;
+    const fn = vi.fn().mockReturnValue(new Promise((r) => { release = r; }));
+    vi.stubGlobal('fetch', fn);
+
+    await act(async () => { mount(); });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await act(async () => { release({ ok: true, status: 200, json: async () => fresh }); });
+    await settle();
+
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(auth.token?.access_token).toBe('tok2');
+  });
+
+  it('comes up signed out when the stored token is corrupt, rather than white-screening', () => {
+    sessionStorage.setItem('wca_token', '{not json');
+    vi.stubGlobal('fetch', vi.fn());
+
+    expect(() => mount()).not.toThrow();
+    expect(auth.token).toBeNull();
   });
 });

@@ -13,7 +13,8 @@ vi.mock('../auth/wca', async (importOriginal) => ({
 }));
 
 import i18n from '../i18n/index';
-import { renderWithProviders, useEnglish } from '../test/render';
+import { anonymousAuth, renderWithProviders, useEnglish } from '../test/render';
+import type { AuthState } from '../auth/useAuth';
 import LoginPage from './LoginPage';
 
 // Mount smoke test: the sign-in screen is the one page every organizer sees, and
@@ -40,5 +41,30 @@ describe('LoginPage', () => {
     renderWithProviders(<LoginPage />);
     expect(screen.getByText(i18n.t('login.setup_required'))).toBeTruthy();
     expect(signIn()).toBeNull();
+  });
+});
+
+
+// Landing back here used to say nothing at all: the callback's ?error= was dropped on the
+// floor, so a failed renewal looked like an ordinary sign-out.
+describe('why the organizer is back here', () => {
+  const withError = (authError: string | null) =>
+    ({ ...anonymousAuth, authError }) as unknown as AuthState;
+
+  it('says the session could not be renewed', () => {
+    renderWithProviders(<LoginPage />, { auth: withError('session_expired') });
+    expect(screen.getByRole('alert').textContent).toBe(i18n.t('errors.session_expired'));
+  });
+
+  it('reports a sign-in that never finished, without echoing the OAuth code', () => {
+    renderWithProviders(<LoginPage />, { auth: withError(null), route: '/?error=access_denied' });
+
+    expect(screen.getByRole('alert').textContent).toBe(i18n.t('errors.sign_in_failed'));
+    expect(screen.queryByText(/access_denied/)).toBeNull();
+  });
+
+  it('stays quiet on a plain first visit', () => {
+    renderWithProviders(<LoginPage />, { auth: withError(null) });
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 });

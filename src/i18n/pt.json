@@ -25,10 +25,16 @@
     "heading": "Selecionar uma competição",
     "hint": "Exibindo competições futuras e em andamento que você gerencia ou delega.",
     "loading": "Carregando competições…",
-    "error": "Erro: {{message}}",
     "empty": "Nenhuma competição futura encontrada. Verifique se você é delegado ou organizador.",
     "create_custom_title": "Criar uma competição personalizada",
     "create_custom_desc": "Competição não oficial - defina os eventos manualmente e imprima as súmulas"
+  },
+  "errors": {
+    "session_expired": "Sua sessão expirou e não pôde ser renovada. Entre novamente.",
+    "sign_in_failed": "O login não foi concluído. Tente novamente.",
+    "competitions_failed": "Não foi possível carregar suas competições. Verifique sua conexão e tente novamente.",
+    "wcif_failed": "Não foi possível carregar os dados da competição. Verifique sua conexão e tente novamente.",
+    "retry": "Tentar novamente"
   },
   "settings": {
     "heading": "Configurar opções de impressão",

@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
-import { fetchManagedCompetitions } from '../auth/wca';
+import { fetchErrorKey, fetchManagedCompetitions, isExpired } from '../auth/wca';
 import type { WCACompetition } from '../types/wcif';
 import Header from '../components/Header';
 import AboutDialog from '../components/AboutDialog';
@@ -20,21 +20,36 @@ export default function CompetitionPickerPage() {
   const isMobile = useIsMobile();
   const [competitions, setCompetitions] = useState<WCACompetition[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
+  const [attempt, setAttempt] = useState(0);
+
+  function retry() {
+    setError(null);
+    setIsLoading(true);
+    setAttempt((n) => n + 1);
+  }
 
   useEffect(() => {
-    if (!token) return;
-    // isLoading starts true, so no setState here - the skeleton is already showing.
+    // An expired token is already being renewed: hold the skeleton rather than spend the
+    // request on a guaranteed 401. The fresh token re-runs this effect.
+    if (!token || isExpired(token)) return;
+    let cancelled = false;
+
     fetchManagedCompetitions(token.access_token)
       .then((data) => {
+        if (cancelled) return;
         // Past competitions are kept in dev: off-season they are the only real WCIF to test with.
         setCompetitions(
           visibleCompetitions(data, new Date().toLocaleDateString('en-CA'), import.meta.env.DEV)
         );
+        // A renewal re-runs this with a fresh token: drop the error the dead one produced.
+        setError(null);
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setIsLoading(false));
-  }, [token]);
+      .catch((err) => { if (!cancelled) setError(err); })
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [token, attempt]);
 
   function selectCompetition(comp: WCACompetition) {
     // Drop any stale custom-competition state so it never leaks into a WCA flow.
@@ -70,9 +85,20 @@ export default function CompetitionPickerPage() {
             ))}
           </div>
         )}
-        {error && <p style={{ ...styles.status, color: 'var(--danger)' }}>{t('picker.error', { message: error })}</p>}
+        {error != null && (
+          <div style={styles.errorBox}>
+            <p style={{ ...styles.status, color: 'var(--danger)', padding: 0 }}>
+              {t(fetchErrorKey(error) === 'errors.session_expired'
+                ? 'errors.session_expired'
+                : 'errors.competitions_failed')}
+            </p>
+            <button style={styles.retryButton} onClick={retry}>
+              {t('errors.retry')}
+            </button>
+          </div>
+        )}
 
-        {!isLoading && !error && competitions.length === 0 && (
+        {!isLoading && error == null && competitions.length === 0 && (
           <p style={styles.status}>{t('picker.empty')}</p>
         )}
 
@@ -93,7 +119,7 @@ export default function CompetitionPickerPage() {
 
         {/* Niche flow: keep it discoverable but secondary, below the WCA list. It skips
             /scope, where a preset is otherwise re-written, so clear the seed on the way in. */}
-        {!isLoading && !error && (
+        {!isLoading && (
           <button style={styles.customCard} onClick={() => { clearPresetSettings(); navigate('/custom'); }}>
             <span style={styles.customCardTitle}>
               <Plus size={16} strokeWidth={2.5} aria-hidden="true" />
@@ -129,6 +155,20 @@ const styles: Record<string, React.CSSProperties> = {
   headingRow: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 },
   heading: { margin: 0, fontSize: 'var(--fs-display)', fontWeight: 700, color: 'var(--text)' },
   hint: { margin: '0 0 28px', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' },
+  errorBox: {
+    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '32px 0',
+  },
+  retryButton: {
+    backgroundColor: 'var(--surface)',
+    color: 'var(--text)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 'var(--radius-md)',
+    padding: '8px 20px',
+    fontSize: 'var(--fs-label)',
+    fontWeight: 500,
+    fontFamily: 'inherit',
+    cursor: 'pointer',
+  },
   status: { fontSize: 'var(--fs-heading)', color: 'var(--text-muted)', textAlign: 'center', padding: '32px 0' },
   grid: {
     display: 'grid',
