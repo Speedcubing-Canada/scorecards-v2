@@ -72,6 +72,7 @@ they were on. Any 401 from an authed call triggers the same path, registered onc
 | `npm run render:fixtures` | Render every PDF headlessly to `../current-output/` (override with `FIXTURE_OUT_DIR`) |
 | `scripts/checkFixtures.sh` | Re-render the fixtures and pixel-diff them against `tests/pdf-baseline/` |
 | `scripts/updateFixtureBaseline.sh` | Refresh that baseline, after an intentional PDF change |
+| `npm run bench` | Time and heap for a whole generation, on a synthetic competition (`small`/`medium`/`wc`) |
 
 Lint, typecheck and `test:coverage` run in CI **once per commit**: on every PR, and on pushes
 to `main`. There is no staging environment, so that job is the only thing between a branch and
@@ -137,6 +138,35 @@ required check by dropping that line and adding it to `deploy.needs`.
 When it fails, look at the red-highlighted diff images it points at (CI uploads them as the
 `pdf-fixture-diff` artifact). If the change was intended, run `scripts/updateFixtureBaseline.sh`
 and commit the new baseline - never refresh it without opening the diffs first.
+
+### Generation performance
+
+`npm run bench` builds a synthetic WCIF, parses it and renders every document, reporting wall
+time, peak heap and output size per PDF. It drives the shipping code (`parseWCIF` →
+`filterParsedByScope` → `buildPdfJobs` → `jobElement`), so a regression it catches is a real one.
+
+```
+npm run bench              # wc: ~1800 competitors, the upper bound we support
+npm run bench -- small     # small / medium / wc
+npm run bench -- wc --only=nametags
+```
+
+@react-pdf lays out a whole document in one pass and rebuilds the node tree at each stage, so
+cost scales with node count and the scaling is superlinear once the heap gets large. Three
+things follow from that, and each has a test guarding it:
+
+- A scorecard bucket over `MAX_PAGES_PER_SCORECARD_PDF` pages is emitted as **one PDF per
+  event** (`competitionId_round1_333.pdf`, …) instead of one enormous file, and a single event
+  still over the cap is cut into sheet-aligned `_part1`/`_part2` files. Smaller competitions
+  are untouched and still get a single `_round1.pdf`. Peak heap is roughly 3 MB per page of
+  the largest single document, which is what the cap exists to bound.
+- Name tag QR codes are drawn as a single `Path`, not ~200 `Rect`s each (`src/pdf/qrPath.ts`).
+  The name tag document is capped the same way, at `MAX_PAGES_PER_NAMETAG_PDF`.
+- First-timer slips are packed into explicit pages by `packSlipPages` rather than flowed into
+  one tall `Page`, because @react-pdf re-measures the overflow once per page it produces.
+
+The worker also never materialises a PDF or the ZIP in the JS heap: documents stay `Blob`s and
+the archive is streamed through fflate's `Zip`, so peak memory is one document, not all of them.
 
 ## How it works
 

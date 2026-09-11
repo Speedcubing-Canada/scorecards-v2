@@ -284,6 +284,18 @@ function reorderQuadrants<T>(items: T[]): T[] {
   return result;
 }
 
+// Competitor names are the only sort key that needs collation; timeslots, event ids, stage
+// keys and group labels are ASCII and compare faster as plain strings. One shared Collator,
+// because `localeCompare` rebuilds one per call and these comparators run n log n times.
+const nameCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
+const byName = (a: string, b: string) => nameCollator.compare(a, b);
+
+// Padding covers (added to round a bucket up to a multiple of 4) carry an empty eventId.
+// Strip them before re-filtering or re-splitting, so finalizeEntries can re-pad cleanly.
+export function realEntries(entries: ScorecardData[]): ScorecardData[] {
+  return entries.filter((e) => e.kind === 'scorecard' || e.eventId !== '');
+}
+
 // Sort by timeslot → eventId → stage → group → cover-before-scorecard → name.
 // The stage key keeps each stage's cards together on stationary rounds, where `group` is a
 // station number that omits the stage; on rotation rounds it is a no-op.
@@ -292,19 +304,15 @@ function reorderQuadrants<T>(items: T[]): T[] {
 export function finalizeEntries(entries: ScorecardData[]): ScorecardData[] {
   if (entries.length === 0) return [];
   entries.sort((a, b) => {
-    const ts = a.timeslot.localeCompare(b.timeslot);
-    if (ts !== 0) return ts;
-    const ev = a.eventId.localeCompare(b.eventId);
-    if (ev !== 0) return ev;
-    const st = (a.stage ?? '').localeCompare(b.stage ?? '');
-    if (st !== 0) return st;
-    const gr = a.group.localeCompare(b.group);
-    if (gr !== 0) return gr;
-    const kd = a.kind.localeCompare(b.kind);
-    if (kd !== 0) return kd;
+    if (a.timeslot !== b.timeslot) return a.timeslot < b.timeslot ? -1 : 1;
+    if (a.eventId !== b.eventId) return a.eventId < b.eventId ? -1 : 1;
+    const as = a.stage ?? '', bs = b.stage ?? '';
+    if (as !== bs) return as < bs ? -1 : 1;
+    if (a.group !== b.group) return a.group < b.group ? -1 : 1;
+    if (a.kind !== b.kind) return a.kind < b.kind ? -1 : 1;
     const an = a.kind === 'scorecard' ? a.name : '';
     const bn = b.kind === 'scorecard' ? b.name : '';
-    return an.localeCompare(bn, undefined, { sensitivity: 'base' });
+    return byName(an, bn);
   });
   padToMultipleOfFour(entries);
   return reorderQuadrants(entries);
@@ -315,15 +323,12 @@ export function finalizeEntries(entries: ScorecardData[]): ScorecardData[] {
 function finalizeEntriesIntermediate(entries: ScorecardData[]): ScorecardData[] {
   if (entries.length === 0) return [];
   entries.sort((a, b) => {
-    const ts = a.timeslot.localeCompare(b.timeslot);
-    if (ts !== 0) return ts;
-    const ev = a.eventId.localeCompare(b.eventId);
-    if (ev !== 0) return ev;
-    const kd = a.kind.localeCompare(b.kind);
-    if (kd !== 0) return kd;
+    if (a.timeslot !== b.timeslot) return a.timeslot < b.timeslot ? -1 : 1;
+    if (a.eventId !== b.eventId) return a.eventId < b.eventId ? -1 : 1;
+    if (a.kind !== b.kind) return a.kind < b.kind ? -1 : 1;
     const an = a.kind === 'scorecard' ? a.name : '';
     const bn = b.kind === 'scorecard' ? b.name : '';
-    return an.localeCompare(bn, undefined, { sensitivity: 'base' });
+    return byName(an, bn);
   });
   padToMultipleOfFour(entries);
   return reorderQuadrants(entries);
@@ -1055,11 +1060,11 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     r === 'delegate' ? 0 : r === 'organizer' ? 1 : r === 'competitor' ? 2 : 3;
   nametags.sort((a, b) => {
     const p = rolePriority(a.role) - rolePriority(b.role);
-    return p !== 0 ? p : a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+    return p !== 0 ? p : byName(a.name, b.name);
   });
 
   // First-timer slips: alphabetical by name.
-  firstTimers.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+  firstTimers.sort((a, b) => byName(a.name, b.name));
 
   // Extra scorecards
   // Build minimum timeslot for each round (eventId-rN) from its child activities.

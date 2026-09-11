@@ -10,4 +10,4 @@ export type { WorkerRequest, WorkerResponse } from './renderBundle';
 const workerSelf = self as any;
 
 workerSelf.onmessage = (e: MessageEvent<WorkerRequest>) =>
-  runJobs(e.data, (msg, transfer) => workerSelf.postMessage(msg, transfer ?? []));
+  runJobs(e.data, (msg) => workerSelf.postMessage(msg));

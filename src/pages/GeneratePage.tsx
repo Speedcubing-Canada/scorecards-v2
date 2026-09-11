@@ -39,7 +39,9 @@ export default function GeneratePage() {
   const [parsed, setParsed] = useState<ParsedWCIF | null>(null);
   const workerRef = useRef<Worker | null>(null);
 
-  // Memoised on a stable string key: `settings` is re-parsed from sessionStorage every render.
+  // Memoised on stable string keys: `settings` is re-parsed from sessionStorage every
+  // render, so it is never referentially equal to itself.
+  const settingsKey = JSON.stringify(settings);
   const scopeKey = JSON.stringify(settings?.generationScope ?? { mode: 'everything' });
   const scope = useMemo<GenerationScope>(() => JSON.parse(scopeKey) as GenerationScope, [scopeKey]);
 
@@ -92,6 +94,21 @@ export default function GeneratePage() {
     [parsed, scope],
   );
 
+  // The list the worker renders from, so the stat and the label cannot disagree with it.
+  // Memoised, and above the redirect so the hook order never changes: building it re-sorts
+  // every entry when a big round splits per event, and this component re-renders on every
+  // progress tick during a build.
+  const jobs = useMemo(
+    () => (effectiveParsed && settings ? buildPdfJobs(effectiveParsed, settings) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [effectiveParsed, settingsKey],
+  );
+  const totalPages = useMemo(
+    () => (effectiveParsed && settings ? estimateTotalPages(effectiveParsed, settings, jobs) : 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [effectiveParsed, jobs, settingsKey],
+  );
+
   if (!settings) {
     navigate('/competitions', { replace: true });
     return null;
@@ -105,10 +122,7 @@ export default function GeneratePage() {
     .reduce((n, c) => n + customEventPageCount(c) * 4, 0);
   const scorecardCount = allEntries.filter(e => e.kind === 'scorecard').length + customCardCount;
   const coverCount     = allEntries.filter(e => e.kind === 'cover' && e.eventId).length;
-  // The list the worker renders from, so the stat and the label cannot disagree with it.
-  const jobs           = effectiveParsed ? buildPdfJobs(effectiveParsed, settings) : [];
   const pdfCount       = jobs.length;
-  const totalPages     = effectiveParsed ? estimateTotalPages(effectiveParsed, settings) : 0;
   const filename       = downloadTarget(jobs, settings.competitionId).filename;
 
   function handleDownload() {
@@ -140,14 +154,15 @@ export default function GeneratePage() {
         setBuildPercent(msg.percent);
         setStatusMsg(msg.message);
       } else if (msg.type === 'done') {
-        // The worker decided zip-vs-bare-PDF.
-        const blob = new Blob([msg.buffer], { type: msg.mimeType });
-        const url  = URL.createObjectURL(blob);
+        // The worker decided zip-vs-bare-PDF, and hands over a Blob: a WC-sized archive
+        // must never be copied through the heap on this side either.
+        const url  = URL.createObjectURL(msg.blob);
         const a    = document.createElement('a');
         a.href     = url;
         a.download = msg.filename;
         a.click();
-        URL.revokeObjectURL(url);
+        // Revoked on the next tick: a synchronous revoke can cancel a large download.
+        setTimeout(() => URL.revokeObjectURL(url), 0);
         worker.terminate();
         workerRef.current = null;
         setStatus('ready');

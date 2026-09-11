@@ -23,10 +23,11 @@ import { runJobs, type WorkerResponse } from './renderBundle';
 const settings = testSettings();
 const parsed = parseWCIF(sampleWcif(), settings);
 
-// Tagged so the zip entries can be told apart.
-const fakePdf = (tag: string) => ({
-  arrayBuffer: async () => new TextEncoder().encode(`%PDF-${tag}`).buffer,
-});
+// Tagged so the zip entries can be told apart. A real Blob: runJobs streams it into the
+// archive rather than reading it into the heap.
+const fakePdf = (tag: string) => new Blob([`%PDF-${tag}`], { type: 'application/pdf' });
+
+const bytesOf = async (blob: Blob) => new Uint8Array(await blob.arrayBuffer());
 
 function collect() {
   const msgs: WorkerResponse[] = [];
@@ -85,7 +86,7 @@ describe('a single document', () => {
     expect(d.mimeType).toBe('application/pdf');
     expect(d.filename).toBe(jobs[0].filename);
     // The PDF bytes themselves, unwrapped.
-    expect(new TextDecoder().decode(d.buffer)).toBe('%PDF-0');
+    expect(await d.blob.text()).toBe('%PDF-0');
   });
 });
 
@@ -102,7 +103,7 @@ describe('a bundle', () => {
     expect(d.filename).toBe(`${settings.competitionId}_pdfs.zip`);
 
     // Catches a document dropped between the count shown and the bytes downloaded.
-    const entries = Object.keys(unzipSync(new Uint8Array(d.buffer)));
+    const entries = Object.keys(unzipSync(await bytesOf(d.blob)));
     expect(entries.sort()).toEqual(jobs.map(j => j.filename).sort());
   });
 
@@ -120,7 +121,7 @@ describe('a bundle', () => {
     const { msgs, post } = collect();
     await runJobs({ parsed: p, settings: withCustom, uiLanguage: 'en' }, post);
 
-    const entries = Object.keys(unzipSync(new Uint8Array(done(msgs)!.buffer)));
+    const entries = Object.keys(unzipSync(await bytesOf(done(msgs)!.blob)));
     expect(entries).toContain(`${withCustom.competitionId}_custom_Team_BLD.pdf`);
   });
 });
@@ -136,7 +137,7 @@ describe('progress', () => {
     for (let i = 1; i < percents.length; i++) {
       expect(percents[i]).toBeGreaterThanOrEqual(percents[i - 1]);
     }
-    // The done message is last; nothing is posted after the buffer goes out.
+    // The done message is last; nothing is posted after the bundle goes out.
     expect(msgs.at(-1)!.type).toBe('done');
   });
 
@@ -177,5 +178,24 @@ describe('a document that fails to render', () => {
     // A timer left running would keep posting progress into a closed worker.
     await vi.advanceTimersByTimeAsync(1000);
     expect(msgs).toHaveLength(after);
+  });
+});
+
+describe('streaming the archive', () => {
+  // The whole point of the streaming path: the archive is assembled as Blob parts, whose
+  // bytes live outside the JS heap, instead of one heap allocation the size of every PDF.
+  it('folds the output into Blob parts once past the threshold, and still unzips', async () => {
+    // 6 MB per document, so the 4 MB fold threshold is crossed inside a single file.
+    const big = new Uint8Array(6 * 1024 * 1024).fill(65);
+    toBlob.mockImplementation(async () => new Blob([big], { type: 'application/pdf' }));
+
+    const { msgs, post } = collect();
+    await runJobs({ parsed, settings, uiLanguage: 'en' }, post);
+
+    const d = done(msgs)!;
+    const files = unzipSync(await bytesOf(d.blob));
+    expect(Object.keys(files).sort()).toEqual(buildPdfJobs(parsed, settings).map(j => j.filename).sort());
+    // Stored, not deflated, and byte-exact after the fold.
+    expect(Object.values(files)[0]).toHaveLength(big.length);
   });
 });

@@ -18,6 +18,12 @@ export const TABLE_HEADER_BG = '#d8d8d8';
 // 2x2 grid.
 export const SCORECARDS_PER_PAGE = 4;
 
+// Above this, a scorecard bucket is emitted as one PDF per event instead of one PDF.
+// @react-pdf lays out a whole document at once, so a single WC-sized round (~1700 pages)
+// is the point where the browser tab runs out of memory rather than merely being slow.
+// One file per event also matches how a pile that big gets printed and cut.
+export const MAX_PAGES_PER_SCORECARD_PDF = 250;
+
 // Tuned so the flex spacers around the provisional label stay 6-8pt each; the budget
 // formula is in ScorecardDocument.tsx, the guard in scorecard-layout.test.ts.
 export const ROW_HEIGHTS = {
@@ -26,6 +32,11 @@ export const ROW_HEIGHTS = {
 
 // Four people per page, front + back panel each.
 export const NAMETAGS_PER_PAGE = 4;
+
+// Same ceiling as scorecards, for the same reason: peak heap runs about 3 MB per page of
+// whichever single document is largest, and name tags are the other document that has no
+// natural bound. Tags are cut apart per person, so a part boundary costs nothing.
+export const MAX_PAGES_PER_NAMETAG_PDF = 250;
 
 // The compact layout is tight enough that the QR side must stay uncluttered.
 export function eventIconsVisible({ isQrSide, compact }: { isQrSide: boolean; compact: boolean }): boolean {

@@ -16,6 +16,23 @@ export interface ChangelogEntry {
 /** Newest first. See "Contributing" in the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-09-11',
+    items: {
+      en: [
+        'Large competitions generate much faster, and their scorecards now come as one PDF per event.',
+      ],
+      fr: [
+        'Les grandes compétitions se génèrent beaucoup plus vite, et leurs feuilles de pointage arrivent maintenant en un PDF par épreuve.',
+      ],
+      es: [
+        'Las competencias grandes se generan mucho más rápido, y sus hojas de puntaje ahora vienen en un PDF por evento.',
+      ],
+      pt: [
+        'Competições grandes são geradas muito mais rápido, e suas folhas de pontuação agora vêm em um PDF por evento.',
+      ],
+    },
+  },
+  {
     id: '2026-09-09',
     items: {
       en: [

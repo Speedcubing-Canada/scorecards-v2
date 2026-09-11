@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { estimateTotalPages } from './pageEstimate';
+import { buildPdfJobs } from './pdfJobs';
 import type { ParsedWCIF, ScorecardData, ScorecardEntry, FirstTimerEntry, NametTagEntry, ScheduleDay } from './wcif-parser';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
 
@@ -12,6 +13,10 @@ function sc(): ScorecardEntry {
   };
 }
 const scards = (n: number): ScorecardData[] => Array.from({ length: n }, sc);
+
+// The page count is derived from the job list, which the generate page builds anyway.
+const est = (parsed: ParsedWCIF, settings: CompetitionSettings) =>
+  estimateTotalPages(parsed, settings, buildPdfJobs(parsed, settings));
 // Only the array length matters for these two.
 const tags = (n: number) => Array.from({ length: n }, () => ({})) as unknown as NametTagEntry[];
 const days = (n: number) => Array.from({ length: n }, () => ({})) as unknown as ScheduleDay[];
@@ -48,31 +53,31 @@ const customEvent = (name: string): CustomEvent =>
 
 describe('estimateTotalPages', () => {
   it('returns 0 for an empty selection', () => {
-    expect(estimateTotalPages(mkParsed(), mkSettings())).toBe(0);
+    expect(est(mkParsed(), mkSettings())).toBe(0);
   });
 
   it('paginates scorecards at four per page (rounds up)', () => {
-    expect(estimateTotalPages(mkParsed({ firstRound: scards(5) }), mkSettings())).toBe(2);
-    expect(estimateTotalPages(mkParsed({ firstRound: scards(8) }), mkSettings())).toBe(2);
-    expect(estimateTotalPages(mkParsed({ firstRound: scards(1) }), mkSettings())).toBe(1);
+    expect(est(mkParsed({ firstRound: scards(5) }), mkSettings())).toBe(2);
+    expect(est(mkParsed({ firstRound: scards(8) }), mkSettings())).toBe(2);
+    expect(est(mkParsed({ firstRound: scards(1) }), mkSettings())).toBe(1);
   });
 
   it('sums each scorecard round independently', () => {
     // firstRound 4 → 1 page, finals 8 → 2 pages
-    expect(estimateTotalPages(mkParsed({ firstRound: scards(4), finals: scards(8) }), mkSettings())).toBe(3);
+    expect(est(mkParsed({ firstRound: scards(4), finals: scards(8) }), mkSettings())).toBe(3);
   });
 
   it('paginates name tags at four per page', () => {
-    expect(estimateTotalPages(mkParsed({ nametags: tags(9) }), mkSettings())).toBe(3);
+    expect(est(mkParsed({ nametags: tags(9) }), mkSettings())).toBe(3);
   });
 
   it('counts the schedule tracker as one page', () => {
-    expect(estimateTotalPages(mkParsed({ scheduleDays: days(2) }), mkSettings())).toBe(1);
+    expect(est(mkParsed({ scheduleDays: days(2) }), mkSettings())).toBe(1);
   });
 
   it('counts the Round Checklist as one page', () => {
     const parsed = mkParsed({ checkingDays: [{ dayLabel: 'Day 1', rows: [] }] });
-    expect(estimateTotalPages(parsed, mkSettings())).toBe(1);
+    expect(est(parsed, mkSettings())).toBe(1);
   });
 
   // Selection happens upstream: filterParsedByScope empties checkingDays when the
@@ -80,20 +85,20 @@ describe('estimateTotalPages', () => {
   it('counts no page when checkingDays is empty, whatever the cover-card mode', () => {
     const parsed = mkParsed({ checkingDays: [] });
     for (const mode of ['per-group-card', 'per-round-card', 'none'] as const) {
-      expect(estimateTotalPages(parsed, mkSettings({ scorecardCheckMode: mode }))).toBe(0);
+      expect(est(parsed, mkSettings({ scorecardCheckMode: mode }))).toBe(0);
     }
   });
 
   it('counts the page independently of the cover-card mode', () => {
     const parsed = mkParsed({ checkingDays: [{ dayLabel: 'Day 1', rows: [] }] });
     for (const mode of ['per-group-card', 'per-round-card', 'none'] as const) {
-      expect(estimateTotalPages(parsed, mkSettings({ scorecardCheckMode: mode }))).toBe(1);
+      expect(est(parsed, mkSettings({ scorecardCheckMode: mode }))).toBe(1);
     }
   });
 
   it('counts one page per named custom event', () => {
     const settings = mkSettings({ customEvents: [customEvent('Mirror'), customEvent('Skewb Relay'), customEvent('  ')] });
-    expect(estimateTotalPages(mkParsed(), settings)).toBe(2);
+    expect(est(mkParsed(), settings)).toBe(2);
   });
 
   it('counts ceil(n/4) pages for a custom event with CSV competitors', () => {
@@ -103,19 +108,19 @@ describe('estimateTotalPages', () => {
     };
     // Kilominx 5 competitors → 2 pages, Mirror blank → 1 page
     const settings = mkSettings({ customEvents: [withCompetitors, customEvent('Mirror')] });
-    expect(estimateTotalPages(mkParsed(), settings)).toBe(3);
+    expect(est(mkParsed(), settings)).toBe(3);
   });
 
   it('greedily packs first-timer slips by height', () => {
     // A single-event slip is 7 lines (7×13) + intro (20) + inter-slip gap (31) = 142pt;
     // five fit a LETTER page (718pt content), the sixth spills to a second page.
-    expect(estimateTotalPages(mkParsed({ firstTimers: Array.from({ length: 5 }, () => ft()) }), mkSettings())).toBe(1);
-    expect(estimateTotalPages(mkParsed({ firstTimers: Array.from({ length: 6 }, () => ft()) }), mkSettings())).toBe(2);
+    expect(est(mkParsed({ firstTimers: Array.from({ length: 5 }, () => ft()) }), mkSettings())).toBe(1);
+    expect(est(mkParsed({ firstTimers: Array.from({ length: 6 }, () => ft()) }), mkSettings())).toBe(2);
   });
 
   it('adds page counts across document types', () => {
     const parsed = mkParsed({ firstRound: scards(8), nametags: tags(4), scheduleDays: days(1) });
     // scorecards 2 + nametags 1 + schedule 1
-    expect(estimateTotalPages(parsed, mkSettings())).toBe(4);
+    expect(est(parsed, mkSettings())).toBe(4);
   });
 });

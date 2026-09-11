@@ -29,7 +29,7 @@ export function jobElement(
   job: PdfJob, parsed: ParsedWCIF, settings: CompetitionSettings,
 ): Element {
   switch (job.kind) {
-    case 'nametags':     return e(NametTagDocument,        { nametags: parsed.nametags, settings });
+    case 'nametags':     return e(NametTagDocument,        { nametags: job.nametags, settings });
     case 'schedule':     return e(ScheduleTrackerDocument, { days: parsed.scheduleDays, settings });
     case 'checking':     return e(CheckingSheetDocument,   { days: parsed.checkingDays, settings });
     case 'first-timers': return e(FirstTimerSlipDocument,  { entries: parsed.firstTimers, settings });
