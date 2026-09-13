@@ -9,7 +9,7 @@ import Header from '../components/Header';
 import AboutDialog from '../components/AboutDialog';
 import Skeleton from '../components/Skeleton';
 import { useIsMobile } from '../lib/useIsMobile';
-import { visibleCompetitions } from '../lib/competitionList';
+import { formatCompetitionDate, visibleCompetitions } from '../lib/competitionList';
 import { clearCustom, clearDownstream, readCompetition, writeCompetition } from '../lib/flowState';
 import { clearPresetSettings } from '../presets';
 
@@ -111,7 +111,7 @@ export default function CompetitionPickerPage() {
             >
               <span style={styles.compName}>{comp.name}</span>
               <span style={styles.compMeta}>
-                {comp.city} · {formatDate(comp.start_date)}
+                {comp.city} · {formatCompetitionDate(comp.start_date)}
               </span>
             </button>
           ))}
@@ -131,14 +131,6 @@ export default function CompetitionPickerPage() {
       </main>
     </div>
   );
-}
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
 }
 
 const styles: Record<string, React.CSSProperties> = {

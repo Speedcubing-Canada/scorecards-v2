@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { visibleCompetitions } from './competitionList';
+import { formatCompetitionDate, visibleCompetitions } from './competitionList';
 import type { WCACompetition } from '../types/wcif';
+
+// The reporter's zone. formatCompetitionDate is only ever wrong away from UTC, so a
+// UTC-default runner would pass on a broken build. Set at module scope rather than in a
+// hook because Node re-reads TZ per Date, and nothing here builds one at import time.
+process.env.TZ = 'America/Edmonton';
 
 const TODAY = '2026-09-09';
 
@@ -30,5 +35,12 @@ describe('visibleCompetitions', () => {
   it('appends finished competitions in dev, most recent first', () => {
     expect(ids(visibleCompetitions(all, TODAY, true)))
       .toEqual(['Ongoing', 'Soon', 'Later', 'Yesterday', 'Past2024', 'Past2023']);
+  });
+});
+
+describe('formatCompetitionDate', () => {
+  it('shows the WCA date, not the day before, west of GMT', () => {
+    // Bare `new Date('2026-09-13')` is UTC midnight, which renders as the 12th here.
+    expect(formatCompetitionDate('2026-09-13')).toContain('13');
   });
 });

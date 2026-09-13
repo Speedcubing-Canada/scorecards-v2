@@ -18,3 +18,11 @@ export function visibleCompetitions(
   if (!includePast) return current;
   return [...current, ...comps.filter(c => c.end_date < today).sort((a, b) => byStart(b, a))];
 }
+
+// `T00:00:00` forces local midnight. The bare string parses as UTC midnight and renders
+// the previous day west of GMT, same trap as above.
+export function formatCompetitionDate(dateStr: string): string {
+  return new Date(`${dateStr}T00:00:00`).toLocaleDateString(undefined, {
+    year: 'numeric', month: 'long', day: 'numeric',
+  });
+}
