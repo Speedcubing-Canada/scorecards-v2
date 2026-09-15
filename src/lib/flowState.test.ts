@@ -64,9 +64,9 @@ describe('generation scope', () => {
   };
 
   it('round-trips scope and detection together', () => {
-    writeScope(scope, { showSecondRoundMode: false });
+    writeScope(scope, { showSecondRoundMode: false, multiStage: false });
     expect(readScope()).toEqual(scope);
-    expect(readDetection()).toEqual({ showSecondRoundMode: false });
+    expect(readDetection()).toEqual({ showSecondRoundMode: false, multiStage: false });
   });
 
   it('falls back to the everything-scope when unset', () => {
@@ -81,7 +81,7 @@ describe('generation scope', () => {
   // The scope step has to tell "nothing stored yet" from a real scope, which readScope cannot.
   it('readStoredScope reads null when unset and the scope when set', () => {
     expect(readStoredScope()).toBeNull();
-    writeScope(scope, { showSecondRoundMode: false });
+    writeScope(scope, { showSecondRoundMode: false, multiStage: false });
     expect(readStoredScope()).toEqual(scope);
   });
 
@@ -92,13 +92,24 @@ describe('generation scope', () => {
     expect(readStoredScope()).toBeNull();
   });
 
+  // Opposite default to showSecondRoundMode: without the scope parse the stage count is
+  // unknown, and offering a per-stage split we cannot honour is worse than not offering it.
+  it('reports multiStage only when the scope step actually detected it', () => {
+    writeScope(DEFAULT_SCOPE, { showSecondRoundMode: false, multiStage: true });
+    expect(readDetection().multiStage).toBe(true);
+    writeScope(DEFAULT_SCOPE, { showSecondRoundMode: false, multiStage: false });
+    expect(readDetection().multiStage).toBe(false);
+    sessionStorage.setItem('generation_detection', JSON.stringify({ showSecondRoundMode: true }));
+    expect(readDetection().multiStage).toBe(false);
+  });
+
   // Absent detection means the scope step was bypassed, so the Round 2 mode shows.
   it('shows the second-round mode when detection is absent or corrupt', () => {
-    expect(readDetection()).toEqual({ showSecondRoundMode: true });
+    expect(readDetection()).toEqual({ showSecondRoundMode: true, multiStage: false });
     sessionStorage.setItem('generation_detection', 'null');
-    expect(readDetection()).toEqual({ showSecondRoundMode: true });
+    expect(readDetection()).toEqual({ showSecondRoundMode: true, multiStage: false });
     sessionStorage.setItem('generation_detection', '{');
-    expect(readDetection()).toEqual({ showSecondRoundMode: true });
+    expect(readDetection()).toEqual({ showSecondRoundMode: true, multiStage: false });
   });
 });
 
@@ -198,6 +209,7 @@ describe('settings restore', () => {
       secondaryLanguage: null,
       generationScope: { mode: 'everything', documents: DEFAULT_SCOPE.documents },
       hideWcaLiveId: false,
+      splitPdfsByStage: false,
       liveResultsMode: 'wca-live',
       isCustomCompetition: false,
       scorecardCheckMode: 'per-group-card',
@@ -243,7 +255,7 @@ describe('clearing', () => {
   function fillFlow() {
     writeCompetition('WC2026', 'World Championship 2026');
     writeHasGroups(false);
-    writeScope(DEFAULT_SCOPE, { showSecondRoundMode: false });
+    writeScope(DEFAULT_SCOPE, { showSecondRoundMode: false, multiStage: false });
     writeSettings({ competitionId: 'WC2026' } as CompetitionSettings);
     writeFileName('logo', 'club-logo.png');
     writeFileName('dcOverrides', 'double-checks.csv');
@@ -254,7 +266,7 @@ describe('clearing', () => {
     fillFlow();
     clearDownstream();
     expect(readStoredScope()).toBeNull();
-    expect(readDetection()).toEqual({ showSecondRoundMode: true });
+    expect(readDetection()).toEqual({ showSecondRoundMode: true, multiStage: false });
     expect(readHasGroups()).toBe(true);
     expect(readSettings()).toBeNull();
     expect(readFileName('logo')).toBeNull();

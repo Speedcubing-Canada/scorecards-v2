@@ -120,6 +120,7 @@ export function buildGenerateEvent(args: {
       logo: logoChoice(settings),
       liveResultsMode: settings.liveResultsMode,
       hideWcaLiveId: settings.hideWcaLiveId,
+      splitPdfsByStage: settings.splitPdfsByStage,
       secondRoundMode: settings.secondRoundMode,
       scorecardCheckMode: settings.scorecardCheckMode,
       scrambleDoubleCheck: settings.scrambleDoubleCheck,

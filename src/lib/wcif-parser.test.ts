@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { parseWCIF } from './wcif-parser';
+import { subStageLabel, parseWCIF } from './wcif-parser';
 import { hasUnassignedIntermediate } from './generationScope';
 import type { ScorecardEntry, CoverEntry, ScorecardData, NametTagEntry } from './wcif-parser';
 import type {
@@ -18,6 +18,7 @@ const BASE: CompetitionSettings = {
   logoDataUrl: null, useDefaultLogo: false, liveResultsMode: 'wca-live',
   wcaLiveId: null, wcaLivePersonIds: null,
   hideWcaLiveId: false, nametagLogoMode: 'hidden', nametagQrMode: 'back-only', nametagLayout: 'vertical',
+  splitPdfsByStage: false,
   customEvents: [], scorecardCheckMode: 'per-group-card',
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
   scrambleDoubleCheckWorldTop: 50, scrambleDoubleCheckRegionTop: null, scrambleDoubleCheckRegionScope: 'national',
@@ -400,19 +401,20 @@ describe('group labels - multi-stage (event across multiple rooms)', () => {
     expect(groups).toContain('Bleu 3 sur 4');
   });
 
-  it('unique group count: g1 in rouge + g1 in bleu = 1 group (not 2)', () => {
-    // Same group code g1 in both rooms → simultaneous → numGroups = 1
+  it('unique group count: g1 in rouge + g1 in bleu = 1 group (not 2), still named per stage', () => {
+    // Same group code g1 in both rooms → simultaneous → numGroups = 1. The count stays 1, but
+    // the card must still say which stage to go to, so it is "Rouge 1", not "Group 1 of 1".
     const rRouge = room('Scène Rouge', [act('333', 1, [ch(100, '333', 1, 1)])]);
     const rBleu  = room('Scène Bleu',  [act('333', 1, [ch(101, '333', 1, 1)])]);
     const e = evt('333', [rSpec('a')]);
     const p1 = per(1, [{ aid: 100 }]);
     const p2 = per(2, [{ aid: 101 }]);
     const result = parseWCIF(mkWCIF([e], [rRouge, rBleu], [p1, p2]), cfg());
-    // total = 1 → simpleGroupLabel → "Group 1 of 1"
     const groups = new Set(scs(result.firstRound).map(s => s.group));
-    expect(groups).toContain('Group 1 of 1');
+    expect(groups).toEqual(new Set(['Rouge 1', 'Bleu 1']));
+    // One group per stage, so there is no "of N" to print.
     expect(groups).not.toContain('Rouge 1 of 1');
-    expect(groups).not.toContain('Bleu 1 of 1');
+    expect(groups).not.toContain('Group 1 of 1');
   });
 });
 
@@ -2487,5 +2489,241 @@ describe('cut-and-stack imposition (what PrintGuide promises)', () => {
       expect(next?.kind).toBe('scorecard');
       expect(next?.group).toBe(stacked[i].group);
     }
+  });
+});
+
+// `splitPdfsByStage` is the only thing that tags blank rounds with a stage. It has to stay that
+// way: the tag splits the collapsed per-round cover and reorders the piles, so turning it on for
+// everyone would change output for people who never asked for the per-stage split.
+describe('stage tagging on blank rounds (splitPdfsByStage)', () => {
+  // 2-round event, simultaneous blank finals across rouge and bleu.
+  function blankFinals(splitPdfsByStage: boolean, over: Partial<CompetitionSettings> = {}) {
+    const e = evt('333', [rSpec('a'), rSpec('a')]);
+    const rRouge = room('Scène Rouge', [
+      act('333', 1, [ch(100, '333', 1, 1)]),
+      act('333', 2, [ch(110, '333', 2, 1, '2024-01-01T14:00:00Z')]),
+    ]);
+    const rBleu = room('Scène Bleu', [
+      act('333', 1, [ch(101, '333', 1, 1)]),
+      act('333', 2, [ch(111, '333', 2, 1, '2024-01-01T14:00:00Z')]),
+    ]);
+    return parseWCIF(
+      mkWCIF([e], [rRouge, rBleu], [per(1, [{ aid: 100 }])]),
+      cfg({ splitPdfsByStage, ...over }),
+    );
+  }
+
+  it('leaves blank finals cards and covers untagged when off', () => {
+    const result = blankFinals(false);
+    expect(scs(result.finals).every(c => c.stage === undefined)).toBe(true);
+    expect(cvs(result.finals).every(c => c.stage === undefined)).toBe(true);
+  });
+
+  it('tags blank finals cards and covers when on', () => {
+    const result = blankFinals(true);
+    const cards = scs(result.finals).filter(c => c.eventId === '333');
+    expect(new Set(cards.map(c => c.stage))).toEqual(new Set(['bleu', 'rouge']));
+    expect(new Set(cvs(result.finals).map(c => c.stage))).toEqual(new Set(['bleu', 'rouge']));
+  });
+
+  it('still collapses to one cover per blank round in per-round-card mode when off', () => {
+    const result = blankFinals(false, { scorecardCheckMode: 'per-round-card' });
+    expect(cvs(result.finals).filter(c => c.eventId === '333')).toHaveLength(1);
+  });
+
+  it('collapses per stage in per-round-card mode when on, so each stage file has a cover', () => {
+    const result = blankFinals(true, { scorecardCheckMode: 'per-round-card' });
+    const covers = cvs(result.finals).filter(c => c.eventId === '333');
+    expect(covers).toHaveLength(2);
+    expect(new Set(covers.map(c => c.stage))).toEqual(new Set(['bleu', 'rouge']));
+  });
+
+  it('tags blank semis too', () => {
+    // 4-round event: round 3 of 4 lands in the semis bucket.
+    const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a'), rSpec('a')]);
+    const mk = (name: string, a: number, b: number) => room(name, [
+      act('333', 1, [ch(a, '333', 1, 1)]),
+      act('333', 3, [ch(b, '333', 3, 1, '2024-01-01T14:00:00Z')]),
+    ]);
+    const result = parseWCIF(
+      mkWCIF([e], [mk('Scène Rouge', 100, 110), mk('Scène Bleu', 101, 111)], [per(1, [{ aid: 100 }])]),
+      cfg({ splitPdfsByStage: true }),
+    );
+    expect(new Set(scs(result.semis).filter(c => c.eventId === '333').map(c => c.stage)))
+      .toEqual(new Set(['bleu', 'rouge']));
+  });
+
+  it('never tags the prefilled round-2 competitor cards, which have no stage to know', () => {
+    // 3-round event: round 2 is prefilled from the round-1 field, before stages are known.
+    const e = evt('333', [rSpec('a'), rSpec('a'), rSpec('a')]);
+    const mk = (name: string, a: number, b: number) => room(name, [
+      act('333', 1, [ch(a, '333', 1, 1)]),
+      act('333', 2, [ch(b, '333', 2, 1, '2024-01-01T14:00:00Z')]),
+    ]);
+    const result = parseWCIF(
+      mkWCIF([e], [mk('Scène Rouge', 100, 110), mk('Scène Bleu', 101, 111)],
+        [per(1, [{ aid: 100 }]), per(2, [{ aid: 101 }])]),
+      cfg({ splitPdfsByStage: true, secondRoundMode: 'prefilled' }),
+    );
+    const named = scs(result.intermediate).filter(c => c.name !== '');
+    expect(named.length).toBeGreaterThan(0);
+    expect(named.every(c => c.stage === undefined)).toBe(true);
+  });
+});
+
+describe('stageCount', () => {
+  const oneRoom = () => parseWCIF(
+    mkWCIF([evt('333', [rSpec('a')])], [room('Main Stage', [act('333', 1, [ch(100, '333', 1, 1)])])],
+      [per(1, [{ aid: 100 }])]),
+    cfg(),
+  );
+
+  it('is 1 for a single-room competition', () => {
+    expect(oneRoom().stageCount).toBe(1);
+  });
+
+  it('counts the stages one round runs across', () => {
+    const rA = room('Blue Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const rB = room('Red Stage', [act('333', 1, [ch(101, '333', 1, 2)])]);
+    const result = parseWCIF(
+      mkWCIF([evt('333', [rSpec('a')])], [rA, rB], [per(1, [{ aid: 100 }]), per(2, [{ aid: 101 }])]),
+      cfg(),
+    );
+    expect(result.stageCount).toBe(2);
+  });
+});
+
+// The second way competitions model stages: one room holding every stage, with the stage named
+// in each group activity and the SAME activity code reused across stages. NAC 2026 is shaped
+// this way (one "Hall B" running Red/Blue/Green/Orange), and reading only room names collapsed
+// all four into one interleaved pile labelled "Group N of 3".
+describe('stages packed into one room (stage named in the group activity)', () => {
+  // A group activity whose name carries the stage, as Groupifier writes it.
+  function namedCh(id: number, eventId: string, r: number, g: number, label: string, t: string) {
+    return {
+      id, name: `${roundName(eventId, r)} ${label}`,
+      activityCode: `${eventId}-r${r}-g${g}`,
+      startTime: t, endTime: t, childActivities: [], scrambleSets: [],
+    };
+  }
+  const roundName = (eventId: string, r: number) => `${eventId} Round ${r}`;
+
+  function namedAct(eventId: string, r: number, children: ChildActivity[]): Activity {
+    return {
+      id: uid(), name: roundName(eventId, r),
+      activityCode: `${eventId}-r${r}`,
+      startTime: children[0]?.startTime ?? '2024-01-01T09:00:00Z',
+      endTime: '2024-01-01T10:00:00Z',
+      childActivities: children, scrambleSets: [],
+    };
+  }
+
+  // One hall, two stages, two groups each. Red 1/Blue 1 share the code "333-r1-g1".
+  function packedHall(settings: Partial<CompetitionSettings> = {}) {
+    const hall = room('Hall B', [namedAct('333', 1, [
+      namedCh(100, '333', 1, 1, 'Red 1', '2024-01-01T09:00:00Z'),
+      namedCh(101, '333', 1, 2, 'Red 2', '2024-01-01T10:00:00Z'),
+      namedCh(102, '333', 1, 1, 'Blue 1', '2024-01-01T09:00:00Z'),
+      namedCh(103, '333', 1, 2, 'Blue 2', '2024-01-01T10:00:00Z'),
+    ])]);
+    const persons = [
+      per(1, [{ aid: 100 }]), per(2, [{ aid: 101 }]),
+      per(3, [{ aid: 102 }]), per(4, [{ aid: 103 }]),
+    ];
+    return parseWCIF(mkWCIF([evt('333', [rSpec('a')])], [hall], persons), cfg(settings));
+  }
+
+  it('reads the stage from the group name, not the room name', () => {
+    expect([...new Set(scs(packedHall().firstRound).map(s => s.stage))].sort())
+      .toEqual(['blue', 'red']);
+  });
+
+  it('reports the stage count so the per-stage split is offered', () => {
+    expect(packedHall().stageCount).toBe(2);
+  });
+
+  it('labels the groups by stage instead of "Group N of 2"', () => {
+    const groups = new Set(scs(packedHall().firstRound).map(s => s.group));
+    expect(groups).toContain('Red 1 of 2');
+    expect(groups).toContain('Blue 2 of 2');
+    expect(groups).not.toContain('Group 1 of 2');
+  });
+
+  it('keeps the two stages as separate piles (distinct timeslot prefixes)', () => {
+    const prefixes = new Set(scs(packedHall().firstRound).map(c => c.timeslot[0]));
+    expect(prefixes).toEqual(new Set(['b', 'r']));
+  });
+
+  it('splits into one PDF per stage, even though both stages share a group code', () => {
+    const result = packedHall({ splitPdfsByStage: true });
+    const cards = scs(result.firstRound).filter(c => c.eventId !== '');
+    expect(new Set(cards.map(c => c.stage))).toEqual(new Set(['blue', 'red']));
+  });
+
+  // Room 302 at NAC: FMC/MBLD groups named "... Group 1", no stage token.
+  it('names the stage even when each stage runs a single group', () => {
+    // NAC 2026 round 2: one group per stage, four stages, all sharing the code g1. Printing
+    // "Group 1 of 1" on all four leaves the competitor no way to know where to go.
+    const hall = room('Hall B', [namedAct('333', 1, [
+      namedCh(100, '333', 1, 1, 'Red 1', '2024-01-01T09:00:00Z'),
+      namedCh(101, '333', 1, 1, 'Blue 1', '2024-01-01T09:00:00Z'),
+    ])]);
+    const result = parseWCIF(
+      mkWCIF([evt('333', [rSpec('a')])], [hall], [per(1, [{ aid: 100 }]), per(2, [{ aid: 101 }])]),
+      cfg(),
+    );
+    expect(new Set(scs(result.firstRound).map(s => s.group))).toEqual(new Set(['Red 1', 'Blue 1']));
+  });
+
+  it('falls back to the room name for groups with no stage token', () => {
+    const hall = room('Hall B', [namedAct('333', 1, [
+      namedCh(100, '333', 1, 1, 'Red 1', '2024-01-01T09:00:00Z'),
+      namedCh(101, '333', 1, 1, 'Blue 1', '2024-01-01T09:00:00Z'),
+    ])]);
+    const side = room('Room 302', [namedAct('222', 1, [
+      namedCh(200, '222', 1, 1, 'Group 1', '2024-01-01T11:00:00Z'),
+    ])]);
+    const result = parseWCIF(
+      mkWCIF([evt('333', [rSpec('a')]), evt('222', [rSpec('a')])], [hall, side],
+        [per(1, [{ aid: 100 }]), per(2, [{ aid: 101 }]), per(3, [{ aid: 200 }])]),
+      cfg(),
+    );
+    const stageOf = (eventId: string) =>
+      [...new Set(scs(result.firstRound).filter(c => c.eventId === eventId).map(c => c.stage))];
+    expect(stageOf('333').sort()).toEqual(['blue', 'red']);
+    expect(stageOf('222')).toEqual(['room 302']);
+  });
+
+  it('leaves the room-per-stage shape alone', () => {
+    // Unnamed activities (the classic shape) must still key off the room name.
+    const rA = room('Blue Stage', [act('333', 1, [ch(100, '333', 1, 1)])]);
+    const rB = room('Red Stage', [act('333', 1, [ch(101, '333', 1, 2)])]);
+    const result = parseWCIF(
+      mkWCIF([evt('333', [rSpec('a')])], [rA, rB], [per(1, [{ aid: 100 }]), per(2, [{ aid: 101 }])]),
+      cfg(),
+    );
+    expect([...new Set(scs(result.firstRound).map(s => s.stage))].sort()).toEqual(['blue', 'red']);
+  });
+});
+
+describe('subStageLabel', () => {
+  it('extracts the stage token after the round name', () => {
+    expect(subStageLabel('3x3x3 Cube Round 1', '3x3x3 Cube Round 1 Red 2')).toBe('Red');
+    expect(subStageLabel('5x5x5 Cube Round 1', '5x5x5 Cube Round 1 Orange 10')).toBe('Orange');
+  });
+
+  it('returns nothing for a plain "Group N" name, across separators and locales', () => {
+    expect(subStageLabel('3x3x3 Cube Round 1', '3x3x3 Cube Round 1 Group 1')).toBe('');
+    expect(subStageLabel('3x3x3 Cube, Round 1', '3x3x3 Cube, Round 1, Group 2')).toBe('');
+    expect(subStageLabel('3x3x3 Cube Round 1', '3x3x3 Cube Round 1 Grupo 2')).toBe('');
+    expect(subStageLabel('R', 'R g1')).toBe('');
+  });
+
+  it('returns nothing when the group name does not start with the round name', () => {
+    expect(subStageLabel('3x3x3 Cube Round 1', 'Totally Different Name')).toBe('');
+  });
+
+  it('returns nothing for the unnamed activities the room-per-stage shape uses', () => {
+    expect(subStageLabel('', '')).toBe('');
   });
 });

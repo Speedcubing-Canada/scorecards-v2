@@ -228,6 +228,8 @@ export interface ParsedWCIF {
   // Rounds >= 2 whose groups were generated mid-competition. Empty for a pre-competition
   // WCIF. Drives the scope prompt, sorted by event order then round number.
   laterRoundsWithAssignments: { eventId: string; roundNum: number }[];
+  // Most stages any one round runs across. 1 when the competition uses a single room.
+  stageCount: number;
 }
 
 // A ParsedWCIF with nothing in it - used by custom (non-WCA) competitions, which
@@ -245,6 +247,7 @@ export function emptyParsedWcif(): ParsedWCIF {
     checkingDays: [],
     hasGroups: true,
     laterRoundsWithAssignments: [],
+    stageCount: 1,
   };
 }
 
@@ -334,6 +337,29 @@ function finalizeEntriesIntermediate(entries: ScorecardData[]): ScorecardData[] 
   return reorderQuadrants(entries);
 }
 
+// Group words that precede a group number in a group activity name, across locales.
+const GROUP_WORDS = new Set(['group', 'groupe', 'grupo', 'gruppe', 'gr']);
+
+/**
+ * The stage named inside a group activity's own name, relative to its parent round's name.
+ *
+ * Competitions model stages two ways. Most give each stage its own WCIF room ("Blue Stage",
+ * "Red Stage"), which `distinguishingNames` handles. The rest pack every stage into one room
+ * and name the stage in each group instead, reusing the same activity code across stages
+ * (NAC 2026: one "Hall B" holding Red/Blue/Green/Orange, all as `555-r1-g1`..`g3`).
+ *
+ * Takes what follows the round-name prefix and drops the group-number tokens: a bare number,
+ * a "g1" token, or a group word. What is left is the stage. Returns '' when the name does not
+ * start with the round name, so an unexpected format never invents a stage.
+ */
+export function subStageLabel(roundName: string, groupName: string): string {
+  if (!groupName.startsWith(roundName)) return '';
+  return groupName.slice(roundName.length)
+    .split(/[\s,]+/)
+    .filter(t => t !== '' && !/^\d+$/.test(t) && !/^g\d+$/i.test(t) && !GROUP_WORDS.has(t.toLowerCase()))
+    .join(' ');
+}
+
 export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF {
   const { language, secondaryLanguage, secondRoundMode } = settings;
   // Station labels are primary-only, so the secondary language is irrelevant here.
@@ -414,11 +440,11 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   // scorecards still generate; round 1 and rounds with real groups never are.
   // Synthetic ids are deterministic negatives (-(activity.id*100+g)): the two call sites agree,
   // they cannot collide with real WCA ids, and the assignment-driven loops skip them.
-  interface GroupUnit { id: number; activityCode: string; startTime: string; synthetic: boolean; }
+  interface GroupUnit { id: number; name: string; activityCode: string; startTime: string; synthetic: boolean; }
   function groupUnitsOf(activity: { id: number; activityCode: string; startTime: string; childActivities: ChildActivity[] }): GroupUnit[] {
     if (activity.childActivities.length > 0)
       return activity.childActivities.map(c => ({
-        id: c.id, activityCode: c.activityCode, startTime: c.startTime, synthetic: false,
+        id: c.id, name: c.name, activityCode: c.activityCode, startTime: c.startTime, synthetic: false,
       }));
     const p = activity.activityCode.split('-');
     if (p.length === 2 && p[1].startsWith('r')) {
@@ -429,6 +455,8 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         for (let g = 1; g <= n; g++)
           units.push({
             id: -(activity.id * 100 + g),
+            // Synthesized, so there is no name to read a stage from.
+            name: '',
             activityCode: `${activity.activityCode}-g${g}`,
             startTime: activity.startTime,
             synthetic: true,
@@ -485,13 +513,16 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       const parts = activity.activityCode.split('-');
       const roundKey = parts.length >= 2 ? `${parts[0]}-${parts[1]}` : '';
       const color = stageKey.get(`${roundKey}|${roomIdx}`) ?? room.name.trim().toLowerCase();
-      let groupCount = 0;
+      // A room that packs several stages names them in its groups instead. Prefixed with the
+      // room key only when the round also spans rooms, so two rooms' "Red" stay distinct.
+      const sharesRound = (roundRoomIdx.get(roundKey)?.length ?? 1) > 1;
       for (const child of groupUnitsOf(activity)) {
+        const token = subStageLabel(activity.name, child.name).trim().toLowerCase();
+        const stage = !token ? color : sharesRound ? `${color} ${token}` : token;
         activityCode[child.id] = child.activityCode;
-        activityStage[child.id] = color;
+        activityStage[child.id] = stage;
         if (!startTimes[child.startTime]) startTimes[child.startTime] = [];
         startTimes[child.startTime].push(child.id);
-        groupCount++;
         // Unique codes, so one group split across rooms still counts once.
         const cParts = child.activityCode.split('-');
         if (cParts.length >= 3) {
@@ -499,10 +530,10 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
           if (!roundGroupCodes[rk]) roundGroupCodes[rk] = new Set();
           roundGroupCodes[rk].add(cParts[2]);
         }
-      }
-      if (roundKey && groupCount > 0) {
-        if (!roundStages[roundKey]) roundStages[roundKey] = new Set();
-        roundStages[roundKey].add(color);
+        if (roundKey) {
+          if (!roundStages[roundKey]) roundStages[roundKey] = new Set();
+          roundStages[roundKey].add(stage);
+        }
       }
     }
   });
@@ -589,12 +620,16 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     return strings.groupLabel(gNum, total);
   }
 
+  // One group per stage: "Red 1". There is no "of N" to add, and the competitor still has to
+  // be told which stage to go to.
+  function stageGroupLabel(colour: string, gNum: string): string {
+    return `${colour.charAt(0).toUpperCase() + colour.slice(1)} ${gNum}`;
+  }
+
   function resolveGroupLabel(rid: string, gNum: string, colour: string, total: number): string {
-    // Stage-colour labels only for genuinely multiple logical groups: one group running on
-    // two stages simultaneously is still one group.
-    return (roundStages[rid]?.size ?? 1) > 1 && total > 1
-      ? buildGroupLabel(gNum, colour, total)
-      : simpleGroupLabel(gNum, total);
+    // A round confined to one stage has nothing to name.
+    if ((roundStages[rid]?.size ?? 1) <= 1) return simpleGroupLabel(gNum, total);
+    return total > 1 ? buildGroupLabel(gNum, colour, total) : stageGroupLabel(colour, gNum);
   }
 
   function buildBlankGroupLabel(totalGroups: number): string {
@@ -626,8 +661,13 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   const checkMode = settings.scorecardCheckMode ?? 'per-group-card';
   // Keyed bucket → partition, the same partition the sort uses, so a collapsed cover still
   // lands at the head of its pile. Named rounds carry `stage` and get one cover per stage;
-  // blank buckets have none and get one per round.
+  // blank buckets have none and get one per round, unless `blankStage` turns it on.
   const roundCovers = new Map<ScorecardData[], Map<string, CoverEntry>>();
+
+  // Blank rounds deliberately carry no stage: tagging them would split their collapsed
+  // per-round cover (see the key below) and reorder their piles (finalizeEntries sorts on
+  // stage). Only the per-stage PDF split, which needs both, turns it on.
+  const blankStage = (stage: string) => (settings.splitPdfsByStage ? stage : undefined);
 
   function pushCover(target: ScorecardData[], cover: Omit<CoverEntry, 'numGroups'>): void {
     if (checkMode === 'none') return;
@@ -859,10 +899,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     const field = roundFieldSize[rid];
 
     for (const { gNum, stage, timeslot } of sortGroups(groups)) {
-      const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
-      const coverLabel = isMultiStageSingleGroup
-        ? `${stageName} ${gNum}`
-        : resolveGroupLabel(rid, gNum, stage, totalGroups);
+      const coverLabel = resolveGroupLabel(rid, gNum, stage, totalGroups);
       const blankCount = field != null ? Math.ceil(field / stageCount) + 2 : 16;
 
       for (let i = 0; i < blankCount; i++) {
@@ -873,7 +910,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
           kind: 'scorecard', timeslot, eventId,
           eventName: getEventName(eventId, language),
           roundLabel: getRoundLabel(eventId, roundNum), roundNum,
-          group: cardGroup, name: '', wcaId: '', liveId: '', gender: 'm',
+          group: cardGroup, stage: blankStage(stage), name: '', wcaId: '', liveId: '', gender: 'm',
           cutoff: roundCutoff[rid], limit: roundLimit[rid],
           format: roundFormat[rid], isCumulative: roundCumulative[rid],
           scrambleDoubleCheck: wantsDoubleCheck(['finals'], '', eventId),
@@ -883,7 +920,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         kind: 'cover', timeslot, eventId: eventId as EventId,
         eventName: getEventName(eventId, language),
         roundLabel: getRoundLabel(eventId, roundNum), roundNum,
-        group: coverLabel, numScorecards: blankCount,
+        group: coverLabel, stage: blankStage(stage), numScorecards: blankCount,
       });
     }
   }
@@ -897,10 +934,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     const field = roundFieldSize[rid];
 
     for (const { gNum, stage, timeslot } of sortGroups(groups)) {
-      const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
-      const groupLabel = isMultiStageSingleGroup
-        ? `${stageName} ${gNum}`
-        : resolveGroupLabel(rid, gNum, stage, totalGroups);
+      const groupLabel = resolveGroupLabel(rid, gNum, stage, totalGroups);
       const blankCount = field != null ? Math.ceil(field / stageCount) + 2 : 16;
 
       for (let i = 0; i < blankCount; i++) {
@@ -908,7 +942,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
           kind: 'scorecard', timeslot, eventId,
           eventName: getEventName(eventId, language),
           roundLabel: getRoundLabel(eventId, roundNum), roundNum,
-          group: groupLabel, name: '', wcaId: '', liveId: '', gender: 'm',
+          group: groupLabel, stage: blankStage(stage), name: '', wcaId: '', liveId: '', gender: 'm',
           cutoff: roundCutoff[rid], limit: roundLimit[rid],
           format: roundFormat[rid], isCumulative: roundCumulative[rid],
           scrambleDoubleCheck: wantsDoubleCheck(['semis'], '', eventId),
@@ -918,7 +952,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         kind: 'cover', timeslot, eventId: eventId as EventId,
         eventName: getEventName(eventId, language),
         roundLabel: getRoundLabel(eventId, roundNum), roundNum,
-        group: groupLabel, numScorecards: blankCount,
+        group: groupLabel, stage: blankStage(stage), numScorecards: blankCount,
       });
     }
   }
@@ -939,15 +973,12 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
 
       for (const [i, { gNum, stage }] of sortGroups(groups).entries()) {
         const numScorecards = baseCount + (i < extraGroups ? 1 : 0);
-        const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
-        const coverLabel = isMultiStageSingleGroup
-          ? `${stageName} ${gNum}`
-          : resolveGroupLabel(rid, gNum, stage, totalGroups);
+        const coverLabel = resolveGroupLabel(rid, gNum, stage, totalGroups);
         pushCover(intermediateEntries, {
           kind: 'cover', timeslot: minTs, eventId: eventId as EventId,
           eventName: getEventName(eventId, language),
           roundLabel: getRoundLabel(eventId, roundNum), roundNum,
-          group: coverLabel,
+          group: coverLabel, stage: blankStage(stage),
           numScorecards,
         });
       }
@@ -969,16 +1000,13 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
       const blankCount = field != null ? Math.ceil(field / stageCount) + 2 : 16;
 
       for (const { gNum, stage, timeslot } of sortGroups(groups)) {
-        const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
-        const groupLabel = isMultiStageSingleGroup
-          ? `${stageName} ${gNum}`
-          : resolveGroupLabel(rid, gNum, stage, totalGroups);
+        const groupLabel = resolveGroupLabel(rid, gNum, stage, totalGroups);
         for (let i = 0; i < blankCount; i++) {
           intermediateEntries.push({
             kind: 'scorecard', timeslot, eventId,
             eventName: getEventName(eventId, language),
             roundLabel: getRoundLabel(eventId, roundNum), roundNum,
-            group: groupLabel, name: '', wcaId: '', liveId: '', gender: 'm',
+            group: groupLabel, stage: blankStage(stage), name: '', wcaId: '', liveId: '', gender: 'm',
             cutoff: roundCutoff[rid], limit: roundLimit[rid],
             format: roundFormat[rid], isCumulative: roundCumulative[rid],
             scrambleDoubleCheck: wantsDoubleCheck(['intermediate'], '', eventId),
@@ -988,7 +1016,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
           kind: 'cover', timeslot, eventId: eventId as EventId,
           eventName: getEventName(eventId, language),
           roundLabel: getRoundLabel(eventId, roundNum), roundNum,
-          group: groupLabel, numScorecards: blankCount,
+          group: groupLabel, stage: blankStage(stage), numScorecards: blankCount,
         });
       }
     }
@@ -1308,5 +1336,6 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     laterRoundsWithAssignments,
     // Real groups only, so a fresh WCIF with synthesized ones still reports "no groups yet".
     hasGroups: roundsWithRealGroups.size > 0,
+    stageCount: Object.values(roundStages).reduce((m, set) => Math.max(m, set.size), 1),
   };
 }

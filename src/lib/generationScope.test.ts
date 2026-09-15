@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { availableRounds, filterParsedByScope, latestAssignedRound, hasUnassignedIntermediate } from './generationScope';
+import { availableRounds, filterParsedByScope, latestAssignedRound, hasUnassignedIntermediate, stageSplitSkipsRound2 } from './generationScope';
 import type { ParsedWCIF, ScorecardData, ScorecardEntry, CoverEntry } from './wcif-parser';
 
 function sc(eventId: string, roundNum: number, name = ''): ScorecardEntry {
@@ -21,7 +21,7 @@ function mkParsed(over: Partial<ParsedWCIF> = {}): ParsedWCIF {
   return {
     firstRound: [], intermediate: [], semis: [], finals: [],
     nametags: [], firstTimers: [], extras: [], scheduleDays: [], checkingDays: [],
-    laterRoundsWithAssignments: [], hasGroups: true,
+    laterRoundsWithAssignments: [], hasGroups: true, stageCount: 1,
     ...over,
   };
 }
@@ -241,5 +241,28 @@ describe('filterParsedByScope', () => {
     });
     expect(out.firstRound.length % 4).toBe(0);
     expect(out.firstRound.length).toBeGreaterThan(0);
+  });
+});
+
+// Prefilled round 2 deals the round-1 qualifiers before stages are known, so it alone cannot be
+// cut by stage. The organizer is told, because one unsplit file in a per-stage set looks wrong.
+describe('stageSplitSkipsRound2', () => {
+  const s = (splitPdfsByStage: boolean, secondRoundMode: 'prefilled' | 'blanks') =>
+    ({ splitPdfsByStage, secondRoundMode });
+
+  it('warns only when the split is on, round 2 is prefilled, and one exists', () => {
+    expect(stageSplitSkipsRound2(s(true, 'prefilled'), true)).toBe(true);
+  });
+
+  it('stays quiet without the split', () => {
+    expect(stageSplitSkipsRound2(s(false, 'prefilled'), true)).toBe(false);
+  });
+
+  it('stays quiet when round 2 prints blanks, which do carry a stage', () => {
+    expect(stageSplitSkipsRound2(s(true, 'blanks'), true)).toBe(false);
+  });
+
+  it('stays quiet when there is no prefillable round 2 to skip', () => {
+    expect(stageSplitSkipsRound2(s(true, 'prefilled'), false)).toBe(false);
   });
 });

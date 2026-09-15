@@ -36,6 +36,29 @@ we can see which competitions the tool is used on and which settings people pick
 Empty documents are omitted. Two or more files download as `{id}_pdfs.zip`; a single file
 downloads on its own so it can be printed straight away.
 
+### Stages
+
+Competitions model stages two ways, and both are recognised. Most give each stage its own WCIF
+room (`Blue Stage`, `Red Stage`), and the stage name is whatever distinguishes those room names.
+The rest pack every stage into one room and name the stage in each group activity instead
+(NAC 2026: one `Hall B` holding Red/Blue/Green/Orange, all reusing the codes `555-r1-g1..g3`);
+there the stage is read from the group name. A round that runs on several stages always names
+its stage on the card, `Red 2 of 3`, or `Red 1` when each stage runs a single group.
+
+### Splitting scorecards per stage
+
+"One PDF per stage" (Settings > Advanced) turns each round into one file per stage,
+`{id}_round1_blue.pdf` / `{id}_round1_red.pdf`, so every stage can be printed on its own paper
+colour. The checkbox only appears when the competition actually runs across several stages, and
+only rounds that span stages are split; a round confined to one stage keeps its single file.
+Each stage file pads to a full 4-up sheet on its own, so no printed sheet ever straddles two
+stages. Per-event and size-cap splitting still apply inside a stage file
+(`{id}_round1_blue_333.pdf`).
+
+One exception: a round 2 set to "prefilled" is filled with the round 1 qualifiers, who are not
+on a stage until round 1 is over, so it stays a single PDF. The settings and generate pages both
+say so when the combination is selected.
+
 ## Quick start
 
 ```bash

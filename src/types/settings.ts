@@ -84,6 +84,9 @@ export interface CompetitionSettings {
   scrambleDoubleCheckWorldTop: number | null;
   scrambleDoubleCheckRegionTop: number | null;
   scrambleDoubleCheckRegionScope: DoubleCheckRegionScope;
+  // One scorecard PDF per stage instead of one per round, for printing each stage on its own
+  // paper colour. Only splits rounds where every card knows its stage and 2+ stages ran.
+  splitPdfsByStage: boolean;
   generationScope: GenerationScope;
   // No WCIF is fetched, only customEvents render, and every WCA Live field is forced off.
   isCustomCompetition: boolean;

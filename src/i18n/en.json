@@ -132,6 +132,9 @@
     },
     "advanced": {
       "toggle": "Advanced",
+      "stage_split_title": "Stage separation",
+      "stage_split_label": "One PDF per stage",
+      "stage_split_desc": "Splits each round into its own PDF per stage, so every stage can be printed on a different paper colour. Only rounds that actually run across several stages are split.",
       "custom_events_title": "Custom events",
       "custom_events_optional": "optional",
       "custom_events_hint": "Print 4 blank scorecards for side events or bonus puzzles not listed in the WCIF. Group and round fields will be left blank.",
@@ -226,7 +229,8 @@
     }
   },
   "warnings": {
-    "no_groups": "No groups have been assigned for this competition yet, so scorecard counts show 0. Assign groups first (in Groupifier or on the WCA website), then come back here. You can still generate the schedule tracker and name tags in the meantime."
+    "no_groups": "No groups have been assigned for this competition yet, so scorecard counts show 0. Assign groups first (in Groupifier or on the WCA website), then come back here. You can still generate the schedule tracker and name tags in the meantime.",
+    "stage_split_prefilled": "Round 2 is prefilled with the competitors from Round 1, who are not on a stage yet, so it stays one PDF. The other rounds are still split per stage."
   },
   "about": {
     "trigger": "What is this?",

@@ -13,6 +13,7 @@ import {
   readCompetition, readCustomEvents, readDetection, readHasGroups, readIsCustom,
   readFileName, readScope, readSettings, writeCustom, writeFileName, writeSettings,
 } from '../lib/flowState';
+import { stageSplitSkipsRound2 } from '../lib/generationScope';
 import { readPresetSettings } from '../presets';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 import Header from '../components/Header';
@@ -70,7 +71,7 @@ export default function SettingsPage() {
   const docs = (generationScope as { documents?: DocumentSelection }).documents;
   const showScorecards = docs?.scorecards !== false;
   const showNametags   = docs?.nametags   !== false;
-  const { showSecondRoundMode } = readDetection();
+  const { showSecondRoundMode, multiStage } = readDetection();
 
   // Primary follows the interface language; secondary starts at None so single-language
   // users have nothing to clear.
@@ -104,6 +105,7 @@ export default function SettingsPage() {
     nametagQrMode: preset.nametagQrMode ?? 'back-only',
     nametagLayout: preset.nametagLayout ?? 'vertical',
     scorecardCheckMode: preset.scorecardCheckMode ?? 'per-group-card',
+    splitPdfsByStage: false,
     // Regulation 11i binds every competition, so there is no switch: "off" is both ranking
     // rules unticked with no round or CSV rule. A whole round is only worth double-checking
     // at a championship, whose finals 11i1f singles out.
@@ -125,7 +127,7 @@ export default function SettingsPage() {
   const {
     language, secondaryLanguage, paperFormat, secondRoundMode, logoDataUrl, useDefaultLogo,
     liveResultsMode, wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,
-    scorecardCheckMode, customEvents, scrambleDoubleCheckRounds,
+    scorecardCheckMode, customEvents, splitPdfsByStage, scrambleDoubleCheckRounds,
     scrambleDoubleCheckOverrides, scrambleDoubleCheckWorldTop, scrambleDoubleCheckRegionTop,
     scrambleDoubleCheckRegionScope,
   } = draft;
@@ -772,6 +774,31 @@ export default function SettingsPage() {
                 style={{ display: 'none' }}
                 onChange={handleDcOverridesChange}
               />
+
+              {multiStage && (
+                <>
+                  <h3 style={{ ...s.sectionTitle, marginTop: 28 }}>
+                    {t('settings.advanced.stage_split_title')}
+                  </h3>
+                  <label style={{ ...s.optionCard, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={splitPdfsByStage}
+                      onChange={e => patch({ splitPdfsByStage: e.target.checked })}
+                      style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
+                    />
+                    <div>
+                      <div style={s.optionLabel}>{t('settings.advanced.stage_split_label')}</div>
+                      <div style={s.optionDesc}>{t('settings.advanced.stage_split_desc')}</div>
+                    </div>
+                  </label>
+                  {stageSplitSkipsRound2(draft, showSecondRoundMode) && (
+                    <div style={{ marginTop: 12 }}>
+                      <WarningBanner>{t('warnings.stage_split_prefilled')}</WarningBanner>
+                    </div>
+                  )}
+                </>
+              )}
 
               {everything && (
                 <>

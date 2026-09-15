@@ -132,6 +132,9 @@
     },
     "advanced": {
       "toggle": "Avançado",
+      "stage_split_title": "Separação por palco",
+      "stage_split_label": "Um PDF por palco",
+      "stage_split_desc": "Divide cada rodada em um PDF separado por palco, para imprimir cada palco em uma cor de papel diferente. Apenas as rodadas que acontecem em vários palcos são divididas.",
       "custom_events_title": "Eventos personalizados",
       "custom_events_optional": "opcional",
       "custom_events_hint": "Imprima 4 súmulas em branco para eventos secundários ou quebra-cabeças bônus não listados no WCIF. Os campos de grupo e rodada ficarão em branco.",
@@ -226,7 +229,8 @@
     }
   },
   "warnings": {
-    "no_groups": "Ainda não foram atribuídos grupos para esta competição, por isso as contagens de súmulas mostram 0. Atribua primeiro os grupos (no Groupifier ou no site da WCA) e depois volte aqui. Entretanto, pode gerar o acompanhamento do horário e os crachás."
+    "no_groups": "Ainda não foram atribuídos grupos para esta competição, por isso as contagens de súmulas mostram 0. Atribua primeiro os grupos (no Groupifier ou no site da WCA) e depois volte aqui. Entretanto, pode gerar o acompanhamento do horário e os crachás.",
+    "stage_split_prefilled": "A rodada 2 é preenchida com as pessoas da rodada 1, que ainda não têm palco definido, então ela continua em um único PDF. As outras rodadas continuam divididas por palco."
   },
   "about": {
     "trigger": "O que é isto?",

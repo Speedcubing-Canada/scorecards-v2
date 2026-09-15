@@ -132,6 +132,9 @@
     },
     "advanced": {
       "toggle": "Avanzado",
+      "stage_split_title": "Separación por escenario",
+      "stage_split_label": "Un PDF por escenario",
+      "stage_split_desc": "Divide cada ronda en un PDF distinto por escenario, para poder imprimir cada escenario en un color de papel diferente. Solo se dividen las rondas que se reparten entre varios escenarios.",
       "custom_events_title": "Eventos personalizados",
       "custom_events_optional": "opcional",
       "custom_events_hint": "Imprima 4 hojas en blanco para eventos secundarios o puzzles bonus no listados en el WCIF. Los campos de grupo y ronda quedarán en blanco.",
@@ -226,7 +229,8 @@
     }
   },
   "warnings": {
-    "no_groups": "Todavía no se han asignado grupos para esta competición, por lo que los recuentos de hojas muestran 0. Asigna primero los grupos (en Groupifier o en el sitio web de la WCA) y luego vuelve aquí. Mientras tanto, puedes generar el seguimiento del horario y las acreditaciones."
+    "no_groups": "Todavía no se han asignado grupos para esta competición, por lo que los recuentos de hojas muestran 0. Asigna primero los grupos (en Groupifier o en el sitio web de la WCA) y luego vuelve aquí. Mientras tanto, puedes generar el seguimiento del horario y las acreditaciones.",
+    "stage_split_prefilled": "La ronda 2 se rellena con las personas de la ronda 1, que todavía no tienen escenario asignado, así que se queda en un solo PDF. Las demás rondas sí se dividen por escenario."
   },
   "about": {
     "trigger": "¿Qué es esto?",

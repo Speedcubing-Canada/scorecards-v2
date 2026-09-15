@@ -31,8 +31,8 @@ const baseDocuments = (isMidComp: boolean): DocumentSelection => ({
   firstTimerSlips: false,
 });
 
-function persistScope(scope: GenerationScope, showSecondRoundMode: boolean) {
-  writeScope(scope, { showSecondRoundMode });
+function persistScope(scope: GenerationScope, showSecondRoundMode: boolean, multiStage: boolean) {
+  writeScope(scope, { showSecondRoundMode, multiStage });
 }
 
 export default function RoundScopePage() {
@@ -94,7 +94,7 @@ export default function RoundScopePage() {
           nametagLogoMode: 'with-name', nametagQrMode: 'back-only', nametagLayout: 'vertical',
           customEvents: [],
           // Detection-only parse; the real mode is chosen later on /settings.
-          scorecardCheckMode: 'per-group-card',
+          scorecardCheckMode: 'per-group-card', splitPdfsByStage: false,
           scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
           scrambleDoubleCheckWorldTop: null, scrambleDoubleCheckRegionTop: null,
           scrambleDoubleCheckRegionScope: 'national',
@@ -205,7 +205,7 @@ export default function RoundScopePage() {
       : { mode: 'everything', documents };
 
     const showSecondRoundMode = hasUnassignedIntermediate(filterParsedByScope(parsed, scope));
-    persistScope(scope, showSecondRoundMode);
+    persistScope(scope, showSecondRoundMode, parsed.stageCount > 1);
     // /settings prefers a previous submission to any seed, so the old one has to go.
     if (presetId !== readPresetId()) clearSettings();
     // Always write or clear, so switching presets leaves nothing of the previous one.

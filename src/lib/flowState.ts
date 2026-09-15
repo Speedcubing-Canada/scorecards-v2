@@ -30,6 +30,9 @@ export type UploadKind = keyof typeof FILE_NAME_KEYS;
 
 export interface ScopeDetection {
   showSecondRoundMode: boolean;
+  // Whether any round runs across 2+ stages. Gates the per-stage PDF split on /settings,
+  // which has no WCIF of its own.
+  multiStage: boolean;
 }
 
 function readJson<T>(key: string, fallback: T): T {
@@ -92,7 +95,12 @@ export function writeScope(scope: GenerationScope, detection: ScopeDetection): v
 /** Absent detection means the scope step was bypassed: show the Round 2 choice. */
 export function readDetection(): ScopeDetection {
   const raw = readJson<Partial<ScopeDetection> | null>(KEYS.detection, null);
-  return { showSecondRoundMode: raw?.showSecondRoundMode !== false };
+  return {
+    showSecondRoundMode: raw?.showSecondRoundMode !== false,
+    // Opposite default: without the scope parse the stage count is unknown, and offering a
+    // per-stage split we cannot honour is worse than not offering it.
+    multiStage: raw?.multiStage === true,
+  };
 }
 
 export function readIsCustom(): boolean {
@@ -138,6 +146,7 @@ export function readSettings(): CompetitionSettings | null {
   const gsDocs = gs.documents as Record<string, unknown>;
   if (gsDocs.roundChecklist === undefined) gsDocs.roundChecklist = false;
   if (s.hideWcaLiveId === undefined) s.hideWcaLiveId = false;
+  if (s.splitPdfsByStage === undefined) s.splitPdfsByStage = false;
   if (s.liveResultsMode === undefined) s.liveResultsMode = 'wca-live';
   if (s.isCustomCompetition === undefined) s.isCustomCompetition = false;
   if (s.scorecardCheckMode === undefined) s.scorecardCheckMode = 'per-group-card';

@@ -62,7 +62,7 @@ beforeEach(async () => {
   mockScoretaking.mockResolvedValue('wca_live');
   mockWcaLiveId.mockResolvedValue(null);
   writeCompetition('WC2026', 'World Championship 2026');
-  writeScope(DEFAULT_SCOPE, { showSecondRoundMode: false });
+  writeScope(DEFAULT_SCOPE, { showSecondRoundMode: false, multiStage: false });
 });
 
 afterEach(cleanup);
@@ -165,7 +165,7 @@ describe('scramble double-check ranking rules', () => {
     writeScope({
       mode: 'latest',
       documents: { scorecards: true, scheduleTracker: false, nametags: false, roundChecklist: false, firstTimerSlips: false },
-    }, { showSecondRoundMode: false });
+    }, { showSecondRoundMode: false, multiStage: false });
     await openDoubleCheck();
 
     expect(box('World rankings, top')).toBeTruthy();
@@ -305,7 +305,7 @@ describe('live results mode', () => {
     writeScope({
       mode: 'latest',
       documents: { scorecards: false, scheduleTracker: false, nametags: true, roundChecklist: false, firstTimerSlips: false },
-    }, { showSecondRoundMode: false });
+    }, { showSecondRoundMode: false, multiStage: false });
     await renderSettings();
 
     expect(screen.getByRole('radio', { name: /Integrated live results/ })).toBeTruthy();
@@ -319,5 +319,59 @@ describe('live results mode', () => {
     generate();
 
     expect(readSettings()?.liveResultsMode).toBe('ilr');
+  });
+});
+
+// Colour-coded paper per stage. The checkbox is hidden unless the scope step actually saw more
+// than one stage, because the split cannot do anything for a single-room competition.
+describe('per-stage PDF split', () => {
+  // The accessible name is the whole label, description included.
+  const box = () => screen.queryByRole('checkbox', { name: /One PDF per stage/ });
+
+  it('is hidden when the competition runs on one stage', async () => {
+    writeSettings(stored());
+    await renderSettings();
+    fireEvent.click(advancedToggle());
+    expect(box()).toBeNull();
+  });
+
+  it('is offered and saved when the competition runs on several stages', async () => {
+    writeScope(DEFAULT_SCOPE, { showSecondRoundMode: false, multiStage: true });
+    writeSettings(stored());
+    await renderSettings();
+    fireEvent.click(advancedToggle());
+
+    fireEvent.click(box()!);
+    generate();
+    expect(readSettings()?.splitPdfsByStage).toBe(true);
+  });
+
+  it('restores as ticked on the way back from /generate', async () => {
+    writeScope(DEFAULT_SCOPE, { showSecondRoundMode: false, multiStage: true });
+    writeSettings(stored({ splitPdfsByStage: true }));
+    await renderSettings();
+    fireEvent.click(advancedToggle());
+    expect((box() as HTMLInputElement).checked).toBe(true);
+  });
+
+  // Prefilled round 2 has no stage to split on. Not an error, but the one unsplit file in an
+  // otherwise per-stage set needs saying out loud.
+  it('warns once ticked that a prefilled round 2 stays in one PDF', async () => {
+    writeScope(DEFAULT_SCOPE, { showSecondRoundMode: true, multiStage: true });
+    writeSettings(stored({ secondRoundMode: 'prefilled' }));
+    await renderSettings();
+    fireEvent.click(advancedToggle());
+
+    expect(screen.queryByText(/stays one PDF/i)).toBeNull();
+    fireEvent.click(box()!);
+    expect(screen.getByText(/stays one PDF/i)).toBeTruthy();
+  });
+
+  it('does not warn when round 2 prints blanks, which do carry a stage', async () => {
+    writeScope(DEFAULT_SCOPE, { showSecondRoundMode: true, multiStage: true });
+    writeSettings(stored({ secondRoundMode: 'blanks', splitPdfsByStage: true }));
+    await renderSettings();
+    fireEvent.click(advancedToggle());
+    expect(screen.queryByText(/stays one PDF/i)).toBeNull();
   });
 });

@@ -26,6 +26,7 @@ export function testSettings(over: Partial<CompetitionSettings> = {}): Competiti
     nametagLayout: 'vertical',
     customEvents: [],
     scorecardCheckMode: 'per-group-card',
+    splitPdfsByStage: false,
     scrambleDoubleCheck: false,
     scrambleDoubleCheckRounds: ['finals'],
     scrambleDoubleCheckOverrides: {},

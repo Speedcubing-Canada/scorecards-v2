@@ -16,6 +16,23 @@ export interface ChangelogEntry {
 /** Newest first. See "Contributing" in the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-09-14',
+    items: {
+      en: [
+        'Scorecards can now be split into one PDF per stage, to print each stage on its own paper colour.',
+      ],
+      fr: [
+        'Les feuilles de score peuvent maintenant être séparées en un PDF par scène, pour imprimer chaque scène sur une couleur de papier différente.',
+      ],
+      es: [
+        'Las hojas de puntuación ahora se pueden separar en un PDF por escenario, para imprimir cada escenario en un color de papel diferente.',
+      ],
+      pt: [
+        'As súmulas agora podem ser separadas em um PDF por palco, para imprimir cada palco em uma cor de papel diferente.',
+      ],
+    },
+  },
+  {
     id: '2026-09-11',
     items: {
       en: [

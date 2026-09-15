@@ -28,11 +28,42 @@ export type PdfJob =
   | { kind: 'first-timers'; filename: string; label: string }
   | { kind: 'custom';       filename: string; label: string; custom: CustomEvent };
 
+/**
+ * Splits a bucket into one PDF per stage, or null when it cannot be cut that way: a real entry
+ * with no stage (prefilled round 2 deals round-1 qualifiers before stages are known), or a
+ * single stage, where the split would just rename the file.
+ */
+function byStage(entries: ScorecardData[]): Map<string, ScorecardData[]> | null {
+  const out = new Map<string, ScorecardData[]>();
+  for (const entry of realEntries(entries)) {
+    if (!entry.stage) return null;
+    const list = out.get(entry.stage);
+    if (list) list.push(entry);
+    else out.set(entry.stage, [entry]);
+  }
+  return out.size > 1 ? out : null;
+}
+
 /** One PDF, or one per event past the cap. Splits pre-padding: finalizeEntries re-pads and reorders each event. */
 function scorecardJobs(
   entries: ScorecardData[], competitionId: string, slug: string, label: string,
+  splitStages = false,
 ): PdfJob[] {
   if (entries.length === 0) return [];
+
+  const stages = splitStages ? byStage(entries) : null;
+  if (stages) {
+    const keys = [...stages.keys()].sort(cmp);
+    const slugs = uniqueSlugs(keys);
+    return keys.flatMap((stage, i) =>
+      // finalizeEntries per stage: each file pads and quadrant-reorders on its own, so no
+      // printed sheet ever straddles two stages.
+      scorecardJobs(
+        finalizeEntries(stages.get(stage)!), competitionId,
+        `${slug}_${slugs[i]}`, `${label} (${titleCase(stage)})`,
+      ));
+  }
+
   if (entries.length <= CARDS_PER_PDF)
     return [{ kind: 'scorecards', filename: `${competitionId}_${slug}.pdf`, entries, label }];
 
@@ -93,10 +124,26 @@ function nametagJobs(nametags: NametTagEntry[], competitionId: string): PdfJob[]
   }));
 }
 
-/** Custom-event names become filenames, so strip anything a filesystem dislikes. */
-function safeCustomName(name: string): string {
+/** Custom-event and stage names become filenames, so strip anything a filesystem dislikes. */
+function safeName(name: string): string {
   return name.trim().replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').slice(0, 40);
 }
+
+/**
+ * Sanitised names, deduplicated. Stage keys come from room names, so two of them can reduce to
+ * the same slug; without this the zip would hold two entries under one name and lose a PDF.
+ */
+function uniqueSlugs(names: string[]): string[] {
+  const seen = new Map<string, number>();
+  return names.map((name) => {
+    const base = safeName(name) || 'stage';
+    const n = (seen.get(base) ?? 0) + 1;
+    seen.set(base, n);
+    return n === 1 ? base : `${base}_${n}`;
+  });
+}
+
+const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /**
  * The PDFs a parse produces, in render order. An emptied bucket produces no job, which is how
@@ -106,10 +153,11 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
   const id = settings.competitionId;
   const jobs: PdfJob[] = [];
 
-  jobs.push(...scorecardJobs(parsed.firstRound,   id, 'round1', 'Round 1'));
-  jobs.push(...scorecardJobs(parsed.intermediate, id, 'round2', 'Round 2'));
-  jobs.push(...scorecardJobs(parsed.semis,        id, 'semis',  'Semis'));
-  jobs.push(...scorecardJobs(parsed.finals,       id, 'finals', 'Finals'));
+  const stages = settings.splitPdfsByStage === true;
+  jobs.push(...scorecardJobs(parsed.firstRound,   id, 'round1', 'Round 1', stages));
+  jobs.push(...scorecardJobs(parsed.intermediate, id, 'round2', 'Round 2', stages));
+  jobs.push(...scorecardJobs(parsed.semis,        id, 'semis',  'Semis',  stages));
+  jobs.push(...scorecardJobs(parsed.finals,       id, 'finals', 'Finals', stages));
   // Never split: extras are not produced by finalizeEntries, so they must not go back through it.
   if (parsed.extras.length > 0)
     jobs.push({ kind: 'scorecards', filename: `${id}_extras.pdf`, entries: parsed.extras, label: 'Extras' });
@@ -126,7 +174,7 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
     if (!custom.name.trim()) continue;
     jobs.push({
       kind: 'custom',
-      filename: `${id}_custom_${safeCustomName(custom.name)}.pdf`,
+      filename: `${id}_custom_${safeName(custom.name)}.pdf`,
       label: custom.name,
       custom,
     });

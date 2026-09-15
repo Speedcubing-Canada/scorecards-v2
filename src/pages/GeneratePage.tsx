@@ -7,7 +7,7 @@ import { fetchErrorKey, fetchWcif } from '../auth/wca';
 import { getCachedWcif, setCachedWcif } from '../lib/wcifCache';
 import type { CompetitionSettings } from '../types/settings';
 import { parseWCIF, emptyParsedWcif, type ParsedWCIF } from '../lib/wcif-parser';
-import { filterParsedByScope, type GenerationScope } from '../lib/generationScope';
+import { filterParsedByScope, hasUnassignedIntermediate, stageSplitSkipsRound2, type GenerationScope } from '../lib/generationScope';
 import { estimateTotalPages } from '../lib/pageEstimate';
 import { customEventPageCount } from '../lib/customScorecards';
 import { buildPdfJobs, downloadTarget } from '../lib/pdfJobs';
@@ -216,6 +216,11 @@ export default function GeneratePage() {
           <>
             {status === 'ready' && parsed?.hasGroups === false && (
               <WarningBanner>{t('warnings.no_groups')}</WarningBanner>
+            )}
+
+            {status === 'ready' && settings && effectiveParsed
+              && stageSplitSkipsRound2(settings, hasUnassignedIntermediate(effectiveParsed)) && (
+              <WarningBanner>{t('warnings.stage_split_prefilled')}</WarningBanner>
             )}
 
             {status === 'ready' && (

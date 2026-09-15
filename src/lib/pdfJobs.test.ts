@@ -6,10 +6,10 @@ import { finalizeEntries, type ParsedWCIF, type ScorecardEntry, type CoverEntry,
 import { MAX_PAGES_PER_SCORECARD_PDF, MAX_PAGES_PER_NAMETAG_PDF } from '../pdf/layoutConstants';
 import type { CompetitionSettings, CustomEvent } from '../types/settings';
 
-function sc(roundNum = 1, name = ''): ScorecardEntry {
+function sc(roundNum = 1, name = '', stage?: string): ScorecardEntry {
   return {
     kind: 'scorecard', timeslot: 'a01', eventId: '333', eventName: '333',
-    roundLabel: `Round ${roundNum}`, roundNum, group: 'Group 1 of 1',
+    roundLabel: `Round ${roundNum}`, roundNum, group: 'Group 1 of 1', stage,
     name, wcaId: '', liveId: '', gender: 'm', cutoff: '', limit: '',
     format: 'avg5', isCumulative: false,
   };
@@ -25,7 +25,7 @@ function mkParsed(over: Partial<ParsedWCIF> = {}): ParsedWCIF {
   return {
     firstRound: [], intermediate: [], semis: [], finals: [],
     nametags: [], firstTimers: [], extras: [], scheduleDays: [], checkingDays: [],
-    laterRoundsWithAssignments: [], hasGroups: true,
+    laterRoundsWithAssignments: [], hasGroups: true, stageCount: 1,
     ...over,
   };
 }
@@ -450,5 +450,107 @@ describe('ordering the per-event files', () => {
     }));
     expect(tied('333', '222')).toEqual(['Test2026_round1_222.pdf', 'Test2026_round1_333.pdf']);
     expect(tied('222', '333')).toEqual(['Test2026_round1_222.pdf', 'Test2026_round1_333.pdf']);
+  });
+});
+
+// Colour-coded paper per stage: each stage becomes its own PDF so it is one pile at the printer.
+describe('splitting a scorecard bucket by stage', () => {
+  const CAP = MAX_PAGES_PER_SCORECARD_PDF * 4;
+
+  /** What the parser hands `buildPdfJobs`: sorted, padded, quadrant-reordered. */
+  function staged(spec: { stage?: string; count: number; eventId?: string; timeslot?: string }[]) {
+    return finalizeEntries(spec.flatMap(({ stage, count, eventId = '333', timeslot = 'a01' }) =>
+      Array.from({ length: count }, (_, i) => ({
+        ...sc(1, `Name ${stage ?? 'x'} ${String(i).padStart(4, '0')}`, stage),
+        eventId, eventName: `Event ${eventId}`, timeslot,
+      })),
+    ));
+  }
+
+  const split = (parsed: Partial<ParsedWCIF>) =>
+    buildPdfJobs(mkParsed(parsed), mkSettings({ splitPdfsByStage: true }));
+
+  it('writes one PDF per stage', () => {
+    const jobs = split({ firstRound: staged([{ stage: 'blue', count: 6 }, { stage: 'red', count: 6 }]) });
+
+    expect(jobs.map(j => j.filename))
+      .toEqual(['Test2026_round1_blue.pdf', 'Test2026_round1_red.pdf']);
+    expect(jobs.map(j => j.label)).toEqual(['Round 1 (Blue)', 'Round 1 (Red)']);
+  });
+
+  it('puts every card in its own stage file and loses none', () => {
+    const jobs = split({
+      firstRound: staged([{ stage: 'blue', count: 6 }, { stage: 'red', count: 9 }]),
+    }) as Extract<PdfJob, { kind: 'scorecards' }>[];
+
+    const real = (j: PdfJob & { kind: 'scorecards' }) =>
+      j.entries.filter(e => e.kind === 'scorecard' || e.eventId !== '');
+    expect(real(jobs[0])).toHaveLength(6);
+    expect(real(jobs[1])).toHaveLength(9);
+    for (const job of jobs) {
+      // Each file pads on its own, so no printed sheet straddles two stages.
+      expect(job.entries.length % 4).toBe(0);
+      expect(new Set(real(job).map(e => e.stage))).toHaveLength(1);
+    }
+  });
+
+  it('splits every round bucket, not just round 1', () => {
+    const jobs = split({
+      firstRound: staged([{ stage: 'blue', count: 4 }, { stage: 'red', count: 4 }]),
+      finals: staged([{ stage: 'blue', count: 4 }, { stage: 'red', count: 4 }]),
+    });
+    expect(jobs.map(j => j.filename)).toEqual([
+      'Test2026_round1_blue.pdf', 'Test2026_round1_red.pdf',
+      'Test2026_finals_blue.pdf', 'Test2026_finals_red.pdf',
+    ]);
+  });
+
+  it('leaves the bucket alone when the setting is off', () => {
+    const firstRound = staged([{ stage: 'blue', count: 6 }, { stage: 'red', count: 6 }]);
+    expect(buildPdfJobs(mkParsed({ firstRound }), mkSettings()).map(j => j.filename))
+      .toEqual(['Test2026_round1.pdf']);
+  });
+
+  it('leaves a single-stage competition alone', () => {
+    const jobs = split({ firstRound: staged([{ stage: 'main', count: 8 }]) });
+    expect(jobs.map(j => j.filename)).toEqual(['Test2026_round1.pdf']);
+  });
+
+  // Prefilled round 2 deals the round-1 qualifiers before stages are known, so those cards
+  // carry no stage and the whole bucket has to stay in one file.
+  it('leaves the bucket alone when any real card has no stage', () => {
+    const jobs = split({
+      intermediate: staged([{ stage: 'blue', count: 4 }, { stage: undefined, count: 4 }]),
+    });
+    expect(jobs.map(j => j.filename)).toEqual(['Test2026_round2.pdf']);
+  });
+
+  it('still splits per event and per cap inside a stage', () => {
+    const jobs = split({
+      firstRound: staged([
+        { stage: 'blue', count: CAP, eventId: '333', timeslot: 'b01' },
+        { stage: 'blue', count: 40, eventId: '222', timeslot: 'b02' },
+        { stage: 'red', count: 8, eventId: '333', timeslot: 'r01' },
+      ]),
+    });
+    expect(jobs.map(j => j.filename)).toEqual([
+      'Test2026_round1_blue_333.pdf',
+      'Test2026_round1_blue_222.pdf',
+      'Test2026_round1_red.pdf',
+    ]);
+  });
+
+  it('gives stage names that sanitise alike distinct filenames', () => {
+    const jobs = split({
+      firstRound: staged([{ stage: 'salle rouge', count: 4 }, { stage: 'salle/rouge', count: 4 }]),
+    });
+    expect(new Set(jobs.map(j => j.filename)).size).toBe(jobs.length);
+    expect(jobs.map(j => j.filename))
+      .toEqual(['Test2026_round1_salle_rouge.pdf', 'Test2026_round1_salle_rouge_2.pdf']);
+  });
+
+  it('zips the stage files rather than shipping a bare PDF', () => {
+    const jobs = split({ firstRound: staged([{ stage: 'blue', count: 4 }, { stage: 'red', count: 4 }]) });
+    expect(downloadTarget(jobs, 'Test2026').filename).toBe('Test2026_pdfs.zip');
   });
 });

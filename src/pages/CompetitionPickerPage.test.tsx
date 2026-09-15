@@ -77,7 +77,7 @@ describe('CompetitionPickerPage', () => {
   it('clears a competition\'s downstream answers when a different one is picked', async () => {
     // Otherwise competition A's scope and settings generate the wrong documents under B's name.
     writeCompetition('Older2026', 'Older 2026');
-    writeScope(DEFAULT_SCOPE, { showSecondRoundMode: true });
+    writeScope(DEFAULT_SCOPE, { showSecondRoundMode: true, multiStage: false });
     mockFetch.mockResolvedValue([comp()]);
 
     renderWithProviders(<CompetitionPickerPage />, { auth: signedInAuth });
@@ -88,7 +88,7 @@ describe('CompetitionPickerPage', () => {
 
   it('keeps them when the same competition is picked again', async () => {
     writeCompetition('GrosJouetsaMontreal2026', 'Gros Jouets à Montréal 2026');
-    writeScope(DEFAULT_SCOPE, { showSecondRoundMode: true });
+    writeScope(DEFAULT_SCOPE, { showSecondRoundMode: true, multiStage: false });
     mockFetch.mockResolvedValue([comp()]);
 
     renderWithProviders(<CompetitionPickerPage />, { auth: signedInAuth });

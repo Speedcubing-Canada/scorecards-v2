@@ -1,5 +1,6 @@
 import type { ParsedWCIF, ScorecardData } from './wcif-parser';
 import { finalizeEntries, realEntries } from './wcif-parser';
+import type { CompetitionSettings } from '../types/settings';
 
 export interface DocumentSelection {
   scorecards: boolean;
@@ -56,6 +57,24 @@ export function hasUnassignedIntermediate(parsed: ParsedWCIF): boolean {
   return parsed.intermediate.some(
     e => e.eventId !== '' && !assigned.has(`${e.eventId}-${e.roundNum}`),
   );
+}
+
+/**
+ * True when the per-stage split is on but Round 2 will still ship as one PDF. Prefilled Round 2
+ * deals the Round 1 qualifiers onto a generic group label, and who ends up on which stage is not
+ * known until Round 1 is over, so those cards carry no stage to split on. Not a mistake, but the
+ * one unsplit file in an otherwise per-stage set needs explaining.
+ *
+ * `hasPrefillableRound2` is `hasUnassignedIntermediate` on the generate page and the stored
+ * `showSecondRoundMode` detection on the settings page, which has no parse of its own.
+ */
+export function stageSplitSkipsRound2(
+  settings: Pick<CompetitionSettings, 'splitPdfsByStage' | 'secondRoundMode'>,
+  hasPrefillableRound2: boolean,
+): boolean {
+  return settings.splitPdfsByStage
+    && settings.secondRoundMode === 'prefilled'
+    && hasPrefillableRound2;
 }
 
 // Produce a ParsedWCIF restricted to the chosen scope.
