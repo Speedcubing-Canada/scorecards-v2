@@ -25,6 +25,7 @@ function mkParsed(over: Partial<ParsedWCIF> = {}): ParsedWCIF {
   return {
     firstRound: [], intermediate: [], semis: [], finals: [],
     nametags: [], firstTimers: [], extras: [], scheduleDays: [], checkingDays: [],
+    groupOverview: [],
     laterRoundsWithAssignments: [], hasGroups: true, stageCount: 1,
     ...over,
   };
@@ -48,11 +49,11 @@ const customEvent = (name: string): CustomEvent =>
 
 const allDocs = {
   scorecards: true, scheduleTracker: true, nametags: true,
-  roundChecklist: true, firstTimerSlips: true,
+  roundChecklist: true, firstTimerSlips: true, groupOverview: false,
 };
 const noDocs = {
   scorecards: false, scheduleTracker: false, nametags: false,
-  roundChecklist: false, firstTimerSlips: false,
+  roundChecklist: false, firstTimerSlips: false, groupOverview: false,
 };
 
 /** A parse with every bucket populated - the full pre-competition case. */

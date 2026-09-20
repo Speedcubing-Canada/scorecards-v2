@@ -1,4 +1,4 @@
-import type { LiveResultsMode } from '../types/settings';
+import type { LiveResultsMode, PaperFormat } from '../types/settings';
 
 // Shared by the PDF documents (worker) and the page-count estimator (main thread).
 // Must stay free of any @react-pdf import, or the estimator drags the PDF engine into
@@ -102,4 +102,71 @@ export function liveQrTarget(
       : 'https://live.worldcubeassociation.org',
     label: 'live.worldcubeassociation.org',
   };
+}
+
+// Group Overview. Flex units, not points: the table fills the page width. Competitor
+// names carry an ordinal prefix and judge lists are the longest, so those two are wider.
+// group-overview-layout.test.ts asserts every header fits in every locale on both sizes.
+export const GROUP_OVERVIEW_FLEX = {
+  competitors: 1.45,
+  scramblers: 1,
+  runners: 1,
+  judges: 1.45,
+};
+
+export const GROUP_OVERVIEW = {
+  pagePadH: 30,
+  pagePadV: 36,
+  fontSize: 9,
+  lineH: 12,
+  headerH: 18,
+  headingH: 17,   // "3x3x3 Cube Round 1 - Group 2"
+  subHeadH: 14,   // "09:00 - 09:25   Room: Salon"
+  dayLabelH: 19,
+  cellPadV: 4,
+  blockGap: 14,
+  titleH: 40,
+};
+
+const PAGE_H: Record<PaperFormat, number> = { LETTER: 792, A4: 842 };
+
+/** One group's block, including the gap below it. Shared so the estimator cannot drift. */
+export function groupBlockHeight(maxColumnRows: number, withDayLabel: boolean): number {
+  const G = GROUP_OVERVIEW;
+  return (withDayLabel ? G.dayLabelH : 0)
+    + G.headingH + G.subHeadH
+    + G.headerH + maxColumnRows * G.lineH + 2 * G.cellPadV
+    + G.blockGap;
+}
+
+/**
+ * True when a block is short enough to be worth pinning with wrap={false}. react-pdf squashes
+ * an oversized non-breaking block instead of paginating it (see the Round Checklist note in
+ * the README), so a freakishly large group has to be allowed to break across pages.
+ */
+export function groupBlockFitsPage(
+  maxColumnRows: number, withDayLabel: boolean, paperFormat: PaperFormat,
+): boolean {
+  const usable = (PAGE_H[paperFormat] ?? PAGE_H.LETTER) - 2 * GROUP_OVERVIEW.pagePadV;
+  return groupBlockHeight(maxColumnRows, withDayLabel) <= usable;
+}
+
+/**
+ * Blocks are wrap={false}, so one that does not fit the remaining height starts a new page.
+ * A block taller than a whole page still gets its own, which is what @react-pdf does with it.
+ */
+export function estimateGroupOverviewPages(
+  blocks: { rows: number; withDayLabel: boolean }[],
+  paperFormat: PaperFormat,
+): number {
+  if (blocks.length === 0) return 0;
+  const usable = (PAGE_H[paperFormat] ?? PAGE_H.LETTER) - 2 * GROUP_OVERVIEW.pagePadV;
+  let pages = 1;
+  let used = GROUP_OVERVIEW.titleH;
+  for (const b of blocks) {
+    const h = groupBlockHeight(b.rows, b.withDayLabel);
+    if (used > 0 && used + h > usable) { pages++; used = 0; }
+    used += h;
+  }
+  return pages;
 }

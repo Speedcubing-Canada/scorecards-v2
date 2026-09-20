@@ -40,7 +40,7 @@ function settings(over: Partial<CompetitionSettings> = {}): CompetitionSettings 
       mode: 'everything',
       documents: {
         scorecards: true, scheduleTracker: true, nametags: true,
-        roundChecklist: false, firstTimerSlips: false,
+        roundChecklist: false, firstTimerSlips: false, groupOverview: false,
       },
     },
     isCustomCompetition: false,

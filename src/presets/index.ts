@@ -24,6 +24,7 @@ export type PresetSettings = Partial<Pick<CompetitionSettings,
 
 const DOCUMENT_KEYS: (keyof DocumentSelection)[] = [
   'scorecards', 'scheduleTracker', 'nametags', 'roundChecklist', 'firstTimerSlips',
+  'groupOverview',
 ];
 
 // Whitelist of seedable settings keys -> allowed values. `true` means "any boolean";

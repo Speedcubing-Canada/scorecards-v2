@@ -4,7 +4,7 @@ import { hasUnassignedIntermediate } from './generationScope';
 import type { ScorecardEntry, CoverEntry, ScorecardData, NametTagEntry } from './wcif-parser';
 import type {
   WCIF, Event, Round, RoundFormat, Activity, ChildActivity,
-  Room, Person, EventId, AdvancementCondition, PersonalBest,
+  Room, Person, EventId, AdvancementCondition, PersonalBest, Assignment,
 } from '../types/wcif';
 import type { CompetitionSettings } from '../types/settings';
 
@@ -22,7 +22,7 @@ const BASE: CompetitionSettings = {
   customEvents: [], scorecardCheckMode: 'per-group-card',
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
   scrambleDoubleCheckWorldTop: 50, scrambleDoubleCheckRegionTop: null, scrambleDoubleCheckRegionScope: 'national',
-  generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false } },
+  generationScope: { mode: 'everything', documents: { scorecards: true, scheduleTracker: true, nametags: true, roundChecklist: false, firstTimerSlips: false, groupOverview: false } },
   isCustomCompetition: false,
 };
 const cfg = (o: Partial<CompetitionSettings> = {}): CompetitionSettings => ({ ...BASE, ...o });
@@ -82,6 +82,8 @@ type PersonOpts = {
   gender?: 'm' | 'f' | 'o';
   status?: 'accepted' | 'pending' | 'deleted';
   personalBests?: PersonalBest[];
+  // Non-competitor assignments, by activity id. Only the Group Overview reads these.
+  staff?: Partial<Record<'staff-scrambler' | 'staff-runner' | 'staff-judge', number[]>>;
 };
 function per(
   registrantId: number,
@@ -90,7 +92,7 @@ function per(
 ): Person {
   const {
     name = `P${registrantId}`, wcaId = `2024T${registrantId}`, gender = 'm',
-    status = 'accepted', personalBests = [],
+    status = 'accepted', personalBests = [], staff = {},
   } = opts;
   return {
     registrantId, name,
@@ -98,9 +100,15 @@ function per(
     countryIso2: 'FR', gender,
     registration: { wcaRegistrationId: registrantId, eventIds: ['333' as EventId], status, isCompeting: true },
     avatar: null, roles: [], personalBests,
-    assignments: assignments.map(a => ({
-      activityId: a.aid, assignmentCode: 'competitor', stationNumber: a.station ?? null,
-    })),
+    assignments: [
+      ...assignments.map(a => ({
+        activityId: a.aid, assignmentCode: 'competitor' as const, stationNumber: a.station ?? null,
+      })),
+      ...Object.entries(staff).flatMap(([code, aids]) =>
+        aids.map(aid => ({
+          activityId: aid, assignmentCode: code as Assignment['assignmentCode'], stationNumber: null,
+        }))),
+    ],
   };
 }
 
@@ -1295,6 +1303,139 @@ describe('schedule tracker', () => {
 });
 
 // Spanish language support
+describe('group overview', () => {
+  // Two rooms so the multi-stage heading and the room column both get exercised.
+  function mkOverview() {
+    const events = [evt('333' as EventId, [rSpec('a'), rSpec('a')]), evt('222' as EventId, [rSpec('a')])];
+    const g1 = ch(101, '333', 1, 1, '2024-01-01T09:00:00Z');
+    const g2 = ch(102, '333', 1, 2, '2024-01-01T10:00:00Z');
+    const g3 = ch(103, '222', 1, 1, '2024-01-01T11:00:00Z');
+    const rooms = [
+      room('Main Stage', [act('333', 1, [g1, g2])]),
+      room('Side Stage', [act('222', 1, [g3])]),
+    ];
+    const persons = [
+      per(1, [{ aid: 101, station: 3 }], { name: 'Carol', staff: { 'staff-judge': [102] } }),
+      per(2, [{ aid: 101, station: 1 }], { name: 'Alice', staff: { 'staff-scrambler': [102], 'staff-runner': [103] } }),
+      per(3, [{ aid: 101, station: 2 }], { name: 'Bob',   staff: { 'staff-judge': [102] } }),
+    ];
+    return parseWCIF(mkWCIF(events, rooms, persons), cfg());
+  }
+
+  it('lists one entry per scheduled group, chronologically', () => {
+    const go = mkOverview().groupOverview;
+    expect(go.map(e => e.heading)).toEqual([
+      '3x3x3 Cube Round 1 - Group 1',
+      '3x3x3 Cube Round 1 - Group 2',
+      '2x2x2 Cube Final - Group 1',
+    ]);
+  });
+
+  it('puts each assignment in its own column', () => {
+    const g2 = mkOverview().groupOverview[1];
+    expect(g2.competitors).toEqual([]);
+    expect(g2.scramblers).toEqual(['Alice']);
+    expect(g2.judges).toEqual(['Bob', 'Carol']);
+    expect(g2.runners).toEqual([]);
+  });
+
+  it('orders competitors by station number, not alphabetically', () => {
+    // Alice/Bob/Carol sit at stations 1/2/3, so alphabetical order would hide the bug.
+    expect(mkOverview().groupOverview[0].competitors).toEqual(['Alice', 'Bob', 'Carol']);
+  });
+
+  it('sorts staff alphabetically', () => {
+    expect(mkOverview().groupOverview[1].judges).toEqual(['Bob', 'Carol']);
+  });
+
+  it('carries each group\'s own room name', () => {
+    const go = mkOverview().groupOverview;
+    expect(go.map(e => e.room)).toEqual(['Main Stage', 'Main Stage', 'Side Stage']);
+  });
+
+  it('keeps a group with no staff, so the competitor list still prints', () => {
+    const go = mkOverview().groupOverview;
+    expect(go[2].competitors).toEqual([]);
+    expect(go[2].runners).toEqual(['Alice']);
+  });
+
+  it('qualifies the group label with the stage when a round spans rooms', () => {
+    const events = [evt('333' as EventId, [rSpec('a')])];
+    const red  = ch(201, '333', 1, 1, '2024-01-01T09:00:00Z');
+    const blue = ch(202, '333', 1, 1, '2024-01-01T09:00:00Z');
+    const rooms = [room('Red Stage', [act('333', 1, [red])]), room('Blue Stage', [act('333', 1, [blue])])];
+    const persons = [per(1, [{ aid: 201 }], { name: 'Alice' }), per(2, [{ aid: 202 }], { name: 'Bob' })];
+    const go = parseWCIF(mkWCIF(events, rooms, persons), cfg()).groupOverview;
+    expect(go.map(e => e.heading)).toEqual([
+      '3x3x3 Cube Final - Group 1 (Red)',
+      '3x3x3 Cube Final - Group 1 (Blue)',
+    ]);
+  });
+
+  it('drops a scheduled final nobody is assigned to yet', () => {
+    // Regression: finals are scheduled with REAL group child activities from day one, so
+    // the synthetic-unit check never saw them and they printed as four empty columns.
+    const events = [evt('333' as EventId, [rSpec('a'), rSpec('a')])];
+    const r1 = ch(401, '333', 1, 1, '2024-01-01T09:00:00Z');
+    const fin = ch(402, '333', 2, 1, '2024-01-01T13:00:00Z');
+    const rooms = [room('Main Stage', [act('333', 1, [r1]), act('333', 2, [fin])])];
+    const go = parseWCIF(mkWCIF(events, rooms, [per(1, [{ aid: 401 }])]), cfg()).groupOverview;
+    expect(go.map(e => e.heading)).toEqual(['3x3x3 Cube Round 1 - Group 1']);
+  });
+
+  it('keeps a final once its groups are assigned', () => {
+    const events = [evt('333' as EventId, [rSpec('a'), rSpec('a')])];
+    const r1 = ch(501, '333', 1, 1, '2024-01-01T09:00:00Z');
+    const fin = ch(502, '333', 2, 1, '2024-01-01T13:00:00Z');
+    const rooms = [room('Main Stage', [act('333', 1, [r1]), act('333', 2, [fin])])];
+    const persons = [per(1, [{ aid: 501 }, { aid: 502 }], { name: 'Alice' })];
+    const go = parseWCIF(mkWCIF(events, rooms, persons), cfg()).groupOverview;
+    expect(go.map(e => e.heading)).toEqual([
+      '3x3x3 Cube Round 1 - Group 1',
+      '3x3x3 Cube Final - Group 1',
+    ]);
+  });
+
+  // Staff are sometimes assigned to a round before its competitors are, so "empty" means
+  // nobody at all, not "no competitors".
+  it('keeps a group that has staff but no competitors', () => {
+    const events = [evt('333' as EventId, [rSpec('a')])];
+    const g1 = ch(601, '333', 1, 1, '2024-01-01T09:00:00Z');
+    const rooms = [room('Main Stage', [act('333', 1, [g1])])];
+    const persons = [per(1, [], { name: 'Alice', staff: { 'staff-judge': [601] } })];
+    const go = parseWCIF(mkWCIF(events, rooms, persons), cfg()).groupOverview;
+    expect(go).toHaveLength(1);
+    expect(go[0].competitors).toEqual([]);
+    expect(go[0].judges).toEqual(['Alice']);
+  });
+
+  it('skips synthesized later-round groups - they carry no assignments', () => {
+    // Round 2 scheduled as a bare time block: groupUnitsOf synthesizes groups for the
+    // scorecards, but a block of four empty columns is not worth a page.
+    const events = [evt('333' as EventId, [rSpec('a', { adv: { type: 'ranking', level: 2 } }), rSpec('a', { sets: 2 })])];
+    const g1 = ch(301, '333', 1, 1, '2024-01-01T09:00:00Z');
+    const bare: Activity = {
+      id: 999, name: '', activityCode: '333-r2',
+      startTime: '2024-01-01T13:00:00Z', endTime: '2024-01-01T14:00:00Z',
+      childActivities: [], scrambleSets: [],
+    };
+    const rooms = [room('Main Stage', [act('333', 1, [g1]), bare])];
+    const go = parseWCIF(mkWCIF(events, rooms, [per(1, [{ aid: 301 }])]), cfg()).groupOverview;
+    expect(go.map(e => e.roundNum)).toEqual([1]);
+  });
+
+  it('is empty when the schedule has no groups yet', () => {
+    const events = [evt('333' as EventId, [rSpec('a')])];
+    const bare: Activity = {
+      id: 998, name: '', activityCode: '333-r1',
+      startTime: '2024-01-01T09:00:00Z', endTime: '2024-01-01T10:00:00Z',
+      childActivities: [], scrambleSets: [],
+    };
+    expect(parseWCIF(mkWCIF(events, [room('Main Stage', [bare])], []), cfg()).groupOverview)
+      .toEqual([]);
+  });
+});
+
 describe('Spanish language', () => {
   it('no wcaId male → "Nuevo Competidor" in Spanish', () => {
     const c = ch(100, '333', 1, 1);

@@ -10,6 +10,9 @@ export interface DocumentSelection {
   // competition's data flow rather than a pile of scorecards, so most users don't want it.
   roundChecklist: boolean;
   firstTimerSlips: boolean;
+  // Who competes, scrambles, runs and judges in each group. Opt-in: only useful once the
+  // WCIF has groups, and most organizers print it separately from the scorecard pile.
+  groupOverview: boolean;
 }
 
 // What the user chose to generate.
@@ -83,7 +86,8 @@ export function stageSplitSkipsRound2(
 export function filterParsedByScope(parsed: ParsedWCIF, scope: GenerationScope): ParsedWCIF {
   let result = parsed;
   if (scope.mode !== 'everything') {
-    let keep: (e: ScorecardData) => boolean;
+    // Structural, not ScorecardData: the same predicate filters group-overview entries.
+    let keep: (e: { eventId: string; roundNum: number }) => boolean;
     if (scope.mode === 'latest') {
       const latest = latestAssignedRound(parsed);
       keep = (e) => e.roundNum === latest;
@@ -100,6 +104,7 @@ export function filterParsedByScope(parsed: ParsedWCIF, scope: GenerationScope):
       semis: filterBucket(parsed.semis),
       finals: filterBucket(parsed.finals),
       extras: [],
+      groupOverview: parsed.groupOverview.filter(keep),
     };
   }
 
@@ -117,5 +122,6 @@ export function filterParsedByScope(parsed: ParsedWCIF, scope: GenerationScope):
     // selected independently of the scorecards.
     checkingDays: documents.roundChecklist ? result.checkingDays : [],
     firstTimers:  documents.firstTimerSlips ? result.firstTimers  : [],
+    groupOverview: documents.groupOverview  ? result.groupOverview : [],
   };
 }

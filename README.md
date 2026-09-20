@@ -29,6 +29,7 @@ we can see which competitions the tool is used on and which settings people pick
 | `{id}_extras.pdf` | One blank spare scorecard per round per event |
 | `{id}_checklist.pdf` | Round Checklist: one table per day tracking each round's data flow |
 | `{id}_schedule.pdf` | Schedule tracker: estimated times, blank columns for actuals |
+| `{id}_group_overview.pdf` | Group Overview: one table per group, listing everyone assigned to it |
 | `{id}_nametags.pdf` | Competitor name tags with duty assignments and QR codes |
 | `{id}_first_timers.pdf` | Confirmation slips for competitors with no WCA ID |
 | `{id}_custom_{name}.pdf` | One file per custom/bonus event |
@@ -44,6 +45,22 @@ The rest pack every stage into one room and name the stage in each group activit
 (NAC 2026: one `Hall B` holding Red/Blue/Green/Orange, all reusing the codes `555-r1-g1..g3`);
 there the stage is read from the group name. A round that runs on several stages always names
 its stage on the card, `Red 2 of 3`, or `Red 1` when each stage runs a single group.
+
+### Group Overview
+
+One table per scheduled group, chronologically, listing who competes, scrambles, runs and judges
+in it, with the group's time and room above it. Competitors print in station order when the WCIF
+assigns stations, so the printed ordinal is the station number; staff print alphabetically. It is
+meant to be posted at the stage, and it is unchecked by default.
+
+A staff column that is empty for *every* group is dropped rather than printed blank, so a run made
+before staff are assigned still produces a usable competitor-per-group sheet. The check is
+document-wide on purpose: per-group would make the columns shift between blocks on one page.
+
+A group nobody is assigned to produces no entry. Finals are scheduled with real group activities
+long before anyone qualifies for them, and a round scheduled as a bare time block has its groups
+synthesized so its scorecards still generate; either would otherwise print four empty columns. A
+final that *has* been assigned is kept, and so is a group with staff but no competitors yet.
 
 ### Splitting scorecards per stage
 
@@ -238,7 +255,9 @@ Non-obvious constraints that look arbitrary in the code but break real output if
   `window` and `document` at module load, and the polyfill also forces PNG decoding synchronous
   (the async path spawns a nested worker that never reports back, hanging the render).
 - **Never `wrap={false}` on the Round Checklist day block.** react-pdf squashes an oversized
-  non-breaking block instead of paginating it, collapsing every tick box into a sliver.
+  non-breaking block instead of paginating it, collapsing every tick box into a sliver. The Group
+  Overview pins its blocks for the same "never split a group" reason, but only after
+  `groupBlockFitsPage` says the block fits a page at all.
 - **Horizontal name tags are sized to 90×55 mm badge holders**, so A4 and LETTER use the same
   card. Not a per-paper-size number, do not "optimise" it.
 - **Never filter scorecard entries after `finalizeEntries`.** It sorts, pads to a multiple of 4

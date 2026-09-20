@@ -43,6 +43,15 @@ export interface ScheduleStrings {
   finalLabel: string;
 }
 
+export interface GroupOverviewStrings {
+  title: string;
+  competitors: string;
+  scramblers: string;
+  runners: string;
+  judges: string;
+  room: string;
+}
+
 export interface NametTagStrings {
   compete: string;
   scramble: string;
@@ -427,6 +436,47 @@ export function getCheckingSheetStrings(language: LocaleCode): CheckingSheetStri
   return LOCALES[language].checking;
 }
 
+// Column headings print with their count appended ("Competitors (14)"), so they stay nouns.
+const GROUP_OVERVIEW_EN: GroupOverviewStrings = {
+  title: '- Group Overview',
+  competitors: 'Competitors',
+  scramblers: 'Scramblers',
+  runners: 'Runners',
+  judges: 'Judges',
+  room: 'Room',
+};
+
+const GROUP_OVERVIEW_FR: GroupOverviewStrings = {
+  title: '- Aperçu des groupes',
+  competitors: 'Compétiteurs',
+  scramblers: 'Mélangeurs',
+  runners: 'Coureurs',
+  judges: 'Juges',
+  room: 'Salle',
+};
+
+const GROUP_OVERVIEW_ES: GroupOverviewStrings = {
+  title: '- Resumen de grupos',
+  competitors: 'Competidores',
+  scramblers: 'Mezcladores',
+  runners: 'Corredores',
+  judges: 'Jueces',
+  room: 'Sala',
+};
+
+const GROUP_OVERVIEW_PT: GroupOverviewStrings = {
+  title: '- Visão geral dos grupos',
+  competitors: 'Competidores',
+  scramblers: 'Misturadores',
+  runners: 'Corredores',
+  judges: 'Juízes',
+  room: 'Sala',
+};
+
+export function getGroupOverviewStrings(language: LocaleCode): GroupOverviewStrings {
+  return LOCALES[language].groupOverview;
+}
+
 const NAMETAG_EN: NametTagStrings = {
   compete: 'Compete:',
   scramble: 'Scramble:',
@@ -689,6 +739,7 @@ interface LocaleBundle {
   scorecard: ScorecardStrings;
   schedule: ScheduleStrings;
   checking: CheckingSheetStrings;
+  groupOverview: GroupOverviewStrings;
   nametag: NametTagStrings;
   firstTimer: FirstTimerSlipStrings;
   title: NametTagTitleStrings;
@@ -698,8 +749,8 @@ interface LocaleBundle {
 }
 
 const LOCALES: Record<LocaleCode, LocaleBundle> = {
-  en: { scorecard: EN, schedule: SCHEDULE_EN, checking: CHECKING_EN, nametag: NAMETAG_EN, firstTimer: FIRST_TIMER_EN, title: NAMETAG_TITLE_EN, shortNames: SHORT_NAMETAG_NAMES_EN, eventNames: EVENT_NAMES_EN, worker: WORKER_EN },
-  fr: { scorecard: FR, schedule: SCHEDULE_FR, checking: CHECKING_FR, nametag: NAMETAG_FR, firstTimer: FIRST_TIMER_FR, title: NAMETAG_TITLE_FR, shortNames: SHORT_NAMETAG_NAMES_FR, eventNames: EVENT_NAMES_FR, worker: WORKER_FR },
-  es: { scorecard: ES, schedule: SCHEDULE_ES, checking: CHECKING_ES, nametag: NAMETAG_ES, firstTimer: FIRST_TIMER_ES, title: NAMETAG_TITLE_ES, shortNames: SHORT_NAMETAG_NAMES_ES, eventNames: EVENT_NAMES_ES, worker: WORKER_ES },
-  pt: { scorecard: PT, schedule: SCHEDULE_PT, checking: CHECKING_PT, nametag: NAMETAG_PT, firstTimer: FIRST_TIMER_PT, title: NAMETAG_TITLE_PT, shortNames: SHORT_NAMETAG_NAMES_PT, eventNames: EVENT_NAMES_PT, worker: WORKER_PT },
+  en: { scorecard: EN, schedule: SCHEDULE_EN, checking: CHECKING_EN, groupOverview: GROUP_OVERVIEW_EN, nametag: NAMETAG_EN, firstTimer: FIRST_TIMER_EN, title: NAMETAG_TITLE_EN, shortNames: SHORT_NAMETAG_NAMES_EN, eventNames: EVENT_NAMES_EN, worker: WORKER_EN },
+  fr: { scorecard: FR, schedule: SCHEDULE_FR, checking: CHECKING_FR, groupOverview: GROUP_OVERVIEW_FR, nametag: NAMETAG_FR, firstTimer: FIRST_TIMER_FR, title: NAMETAG_TITLE_FR, shortNames: SHORT_NAMETAG_NAMES_FR, eventNames: EVENT_NAMES_FR, worker: WORKER_FR },
+  es: { scorecard: ES, schedule: SCHEDULE_ES, checking: CHECKING_ES, groupOverview: GROUP_OVERVIEW_ES, nametag: NAMETAG_ES, firstTimer: FIRST_TIMER_ES, title: NAMETAG_TITLE_ES, shortNames: SHORT_NAMETAG_NAMES_ES, eventNames: EVENT_NAMES_ES, worker: WORKER_ES },
+  pt: { scorecard: PT, schedule: SCHEDULE_PT, checking: CHECKING_PT, groupOverview: GROUP_OVERVIEW_PT, nametag: NAMETAG_PT, firstTimer: FIRST_TIMER_PT, title: NAMETAG_TITLE_PT, shortNames: SHORT_NAMETAG_NAMES_PT, eventNames: EVENT_NAMES_PT, worker: WORKER_PT },
 };

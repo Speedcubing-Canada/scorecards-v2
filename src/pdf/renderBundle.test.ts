@@ -67,7 +67,7 @@ describe('a single document', () => {
     mode: 'everything' as const,
     documents: {
       scorecards: false, scheduleTracker: true, nametags: false,
-      roundChecklist: false, firstTimerSlips: false,
+      roundChecklist: false, firstTimerSlips: false, groupOverview: false,
     },
   };
   const soloSettings = testSettings({ generationScope: scope });

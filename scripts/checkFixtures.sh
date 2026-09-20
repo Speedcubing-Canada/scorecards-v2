@@ -63,6 +63,7 @@ check first_timers      GrosJouetsaMontreal2026_first_timers.pdf first_timers.pd
 check scorecards        scorecard-layout-test.pdf                scorecards.pdf
 check schedule          schedule-layout-test.pdf                 schedule.pdf
 check checklist         checklist-layout-test.pdf                checklist.pdf
+check group_overview    group-overview-layout-test.pdf           group_overview.pdf
 
 FIXTURE_OUT_DIR="$RENDERED" npm run --silent render:fixtures -- --horizontal >/dev/null
 check nametags_horizontal GrosJouetsaMontreal2026_nametags.pdf nametags_horizontal.pdf

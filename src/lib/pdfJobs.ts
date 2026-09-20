@@ -26,6 +26,7 @@ export type PdfJob =
   | { kind: 'schedule';     filename: string; label: string }
   | { kind: 'checking';     filename: string; label: string }
   | { kind: 'first-timers'; filename: string; label: string }
+  | { kind: 'group-overview'; filename: string; label: string }
   | { kind: 'custom';       filename: string; label: string; custom: CustomEvent };
 
 /**
@@ -166,6 +167,9 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
   // Already emptied by filterParsedByScope unless the Round Checklist was selected.
   if (parsed.checkingDays.length > 0)
     jobs.push({ kind: 'checking', filename: `${id}_checklist.pdf`, label: 'Round Checklist' });
+  // Already emptied by filterParsedByScope unless the Group Overview was selected.
+  if (parsed.groupOverview.length > 0)
+    jobs.push({ kind: 'group-overview', filename: `${id}_group_overview.pdf`, label: 'Group Overview' });
   jobs.push(...nametagJobs(parsed.nametags, id));
   if (parsed.firstTimers.length > 0)
     jobs.push({ kind: 'first-timers', filename: `${id}_first_timers.pdf`, label: 'First-Timer Slips' });
@@ -187,7 +191,8 @@ export function buildPdfJobs(parsed: ParsedWCIF, settings: CompetitionSettings):
  * Driven by the jobs, not the settings, so a schedule-only download is never told how to cut
  * scorecards. Custom-event cards print 4-up alongside ordinary ones, so they fold in.
  */
-export type GuideSection = 'scorecards' | 'schedule' | 'checking' | 'nametags' | 'first-timers';
+export type GuideSection =
+  | 'scorecards' | 'schedule' | 'checking' | 'group-overview' | 'nametags' | 'first-timers';
 
 export function guideSections(jobs: PdfJob[]): GuideSection[] {
   const kinds = new Set(jobs.map(j => j.kind));
@@ -195,6 +200,7 @@ export function guideSections(jobs: PdfJob[]): GuideSection[] {
   if (kinds.has('scorecards') || kinds.has('custom')) out.push('scorecards');
   if (kinds.has('schedule')) out.push('schedule');
   if (kinds.has('checking')) out.push('checking');
+  if (kinds.has('group-overview')) out.push('group-overview');
   if (kinds.has('nametags')) out.push('nametags');
   if (kinds.has('first-timers')) out.push('first-timers');
   return out;

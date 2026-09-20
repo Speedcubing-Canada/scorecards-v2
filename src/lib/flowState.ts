@@ -72,6 +72,7 @@ export const DEFAULT_SCOPE: GenerationScope = {
     scheduleTracker: true,
     nametags: true,
     roundChecklist: false,
+    groupOverview: false,
     firstTimerSlips: false,
   },
 };
@@ -141,10 +142,11 @@ export function readSettings(): CompetitionSettings | null {
   const gs = s.generationScope as Record<string, unknown>;
   if (gs.documents === undefined) gs.documents = {
     scorecards: true, scheduleTracker: true, nametags: true,
-    roundChecklist: false, firstTimerSlips: false,
+    roundChecklist: false, firstTimerSlips: false, groupOverview: false,
   };
   const gsDocs = gs.documents as Record<string, unknown>;
   if (gsDocs.roundChecklist === undefined) gsDocs.roundChecklist = false;
+  if (gsDocs.groupOverview === undefined) gsDocs.groupOverview = false;
   if (s.hideWcaLiveId === undefined) s.hideWcaLiveId = false;
   if (s.splitPdfsByStage === undefined) s.splitPdfsByStage = false;
   if (s.liveResultsMode === undefined) s.liveResultsMode = 'wca-live';

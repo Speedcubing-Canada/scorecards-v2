@@ -203,6 +203,25 @@ export interface ScheduleDay {
   stages: ScheduleStage[];
 }
 
+// One scheduled group, with everyone assigned to it. The inverse of the per-person duty
+// lines on a nametag: this is what gets posted at the stage.
+export interface GroupOverviewEntry {
+  // Chronological sort key, also used to group blocks under a day heading.
+  dayLabel: string;
+  heading: string;    // "3x3x3 Cube Round 1 - Group 2"
+  startTime: string;  // local "09:00"
+  endTime: string;
+  room: string;
+  eventId: string;
+  roundNum: number;
+  // Station order when the WCIF assigns stations, alphabetical otherwise. The document
+  // prints the 1..N ordinal, which is the station number in the former case.
+  competitors: string[];
+  scramblers: string[];
+  runners: string[];
+  judges: string[];
+}
+
 export interface ParsedWCIF {
   firstRound: ScorecardData[];
   // Round 2 of events with 3+ rounds. Prefilled means N covers plus every round-1
@@ -222,6 +241,9 @@ export interface ParsedWCIF {
   // One row per round, always built. filterParsedByScope empties it unless the Round
   // Checklist was selected, which is what gates rendering.
   checkingDays: CheckingDay[];
+  // One entry per scheduled group, chronological. Emptied by filterParsedByScope unless the
+  // Group Overview was selected.
+  groupOverview: GroupOverviewEntry[];
   // True once the schedule has group child-activities. False for a fresh pre-competition
   // WCIF, which is why scorecard counts read 0.
   hasGroups: boolean;
@@ -245,6 +267,7 @@ export function emptyParsedWcif(): ParsedWCIF {
     extras: [],
     scheduleDays: [],
     checkingDays: [],
+    groupOverview: [],
     hasGroups: true,
     laterRoundsWithAssignments: [],
     stageCount: 1,
@@ -440,11 +463,12 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   // scorecards still generate; round 1 and rounds with real groups never are.
   // Synthetic ids are deterministic negatives (-(activity.id*100+g)): the two call sites agree,
   // they cannot collide with real WCA ids, and the assignment-driven loops skip them.
-  interface GroupUnit { id: number; name: string; activityCode: string; startTime: string; synthetic: boolean; }
-  function groupUnitsOf(activity: { id: number; activityCode: string; startTime: string; childActivities: ChildActivity[] }): GroupUnit[] {
+  interface GroupUnit { id: number; name: string; activityCode: string; startTime: string; endTime: string; synthetic: boolean; }
+  function groupUnitsOf(activity: { id: number; activityCode: string; startTime: string; endTime: string; childActivities: ChildActivity[] }): GroupUnit[] {
     if (activity.childActivities.length > 0)
       return activity.childActivities.map(c => ({
-        id: c.id, name: c.name, activityCode: c.activityCode, startTime: c.startTime, synthetic: false,
+        id: c.id, name: c.name, activityCode: c.activityCode,
+        startTime: c.startTime, endTime: c.endTime, synthetic: false,
       }));
     const p = activity.activityCode.split('-');
     if (p.length === 2 && p[1].startsWith('r')) {
@@ -459,6 +483,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
             name: '',
             activityCode: `${activity.activityCode}-g${g}`,
             startTime: activity.startTime,
+            endTime: activity.endTime,
             synthetic: true,
           });
         return units;
@@ -470,6 +495,11 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   // Activity maps
   const activityCode: Record<number, string> = {};
   const activityStage: Record<number, string> = {};
+  // Full room name per group activity - the Group Overview prints it verbatim, where
+  // activityStage carries only the trimmed distinguishing token.
+  const activityRoom: Record<number, string> = {};
+  // WCIF room order per group activity, the Group Overview's tiebreak within a start time.
+  const activityRoomIdx: Record<number, number> = {};
   const startTimes: Record<string, number[]> = {};
   // Unique group codes (e.g. "g1", "g2") per round key - avoids double-counting when
   // one logical group runs simultaneously across multiple rooms/stages.
@@ -521,6 +551,8 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
         const stage = !token ? color : sharesRound ? `${color} ${token}` : token;
         activityCode[child.id] = child.activityCode;
         activityStage[child.id] = stage;
+        activityRoom[child.id] = room.name;
+        activityRoomIdx[child.id] = roomIdx;
         if (!startTimes[child.startTime]) startTimes[child.startTime] = [];
         startTimes[child.startTime].push(child.id);
         // Unique codes, so one group split across rooms still counts once.
@@ -1309,6 +1341,97 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     if (checking.length > 0) checkingDays.push({ dayLabel, rows: checking });
   }
 
+  // Group Overview
+  // Everyone assigned to each scheduled group, the inverse of the nametag duty lines.
+  // A group nobody is assigned to produces no block: a final is scheduled with real group
+  // activities long before anyone qualifies for it, and a bare later round has its groups
+  // synthesized for the scorecards. Both would otherwise print four empty columns.
+  interface OverviewBucket {
+    competitors: { name: string; station: number | null }[];
+    scramblers: string[];
+    runners: string[];
+    judges: string[];
+  }
+  const overviewBuckets = new Map<number, OverviewBucket>();
+  const overviewUnits: { unit: GroupUnit; roundNum: number; eventId: string }[] = [];
+
+  for (const room of allRooms) {
+    for (const activity of room.activities) {
+      for (const unit of groupUnitsOf(activity)) {
+        const parts = unit.activityCode.split('-');
+        if (parts.length < 3) continue;
+        const roundNum = parseInt(parts[1].slice(1), 10);
+        if (!isFinite(roundNum)) continue;
+        overviewBuckets.set(unit.id, { competitors: [], scramblers: [], runners: [], judges: [] });
+        overviewUnits.push({ unit, roundNum, eventId: parts[0] });
+      }
+    }
+  }
+
+  for (const person of wcif.persons) {
+    if (!person.registration || person.registration.status !== 'accepted') continue;
+    const name = person.name.replace(/ \(.*\)$/, '');
+    for (const a of person.assignments) {
+      const bucket = overviewBuckets.get(a.activityId);
+      if (!bucket) continue;
+      if (a.assignmentCode === 'competitor') bucket.competitors.push({ name, station: a.stationNumber ?? null });
+      else if (a.assignmentCode === 'staff-scrambler') bucket.scramblers.push(name);
+      else if (a.assignmentCode === 'staff-runner') bucket.runners.push(name);
+      else if (a.assignmentCode === 'staff-judge') bucket.judges.push(name);
+    }
+  }
+
+  const groupNumOf = (code: string) => parseInt(code.split('-')[2].slice(1), 10);
+  overviewUnits.sort((a, b) =>
+    Date.parse(a.unit.startTime) - Date.parse(b.unit.startTime)
+    || (activityRoomIdx[a.unit.id] ?? 0) - (activityRoomIdx[b.unit.id] ?? 0)
+    || groupNumOf(a.unit.activityCode) - groupNumOf(b.unit.activityCode));
+
+  const capitalize = (v: string) => v.charAt(0).toUpperCase() + v.slice(1);
+
+  const isEmptyGroup = (b: OverviewBucket) =>
+    b.competitors.length === 0 && b.scramblers.length === 0
+    && b.runners.length === 0 && b.judges.length === 0;
+
+  const groupOverview: GroupOverviewEntry[] = overviewUnits.filter(
+    ({ unit }) => !isEmptyGroup(overviewBuckets.get(unit.id)!),
+  ).map(({ unit, roundNum, eventId }) => {
+    const bucket = overviewBuckets.get(unit.id)!;
+    const rid = `${eventId}-r${roundNum}`;
+    const totalRounds = allEventRoundCount[eventId] ?? 1;
+    const roundLabel = totalRounds === 1 || roundNum === totalRounds
+      ? schedStrings.finalLabel
+      : schedStrings.roundLabel(roundNum);
+    const groupNum = groupNumOf(unit.activityCode);
+    // Two stages number their groups from 1 each, so the stage has to qualify the label.
+    const stage = (roundStages[rid]?.size ?? 1) > 1 ? activityStage[unit.id] : '';
+    // Same "Group N" wording as the nametag duty lines, so the two documents agree.
+    const base = nametTagDutyStrings.dutyGroup(String(groupNum));
+    const groupLabel = stage ? `${base} (${capitalize(stage)})` : base;
+
+    // Station order when stations are assigned, so the printed ordinal IS the station
+    // number; alphabetical otherwise.
+    const competitors = [...bucket.competitors]
+      .sort((a, b) => (a.station != null && b.station != null
+        ? a.station - b.station
+        : byName(a.name, b.name)))
+      .map(c => c.name);
+
+    return {
+      dayLabel: formatDayLabel(getLocalDate(unit.startTime)),
+      heading: `${getEventName(eventId, settings.language)} ${roundLabel} - ${groupLabel}`,
+      startTime: formatLocalTime(unit.startTime),
+      endTime: formatLocalTime(unit.endTime),
+      room: activityRoom[unit.id] ?? '',
+      eventId,
+      roundNum,
+      competitors,
+      scramblers: [...bucket.scramblers].sort(byName),
+      runners: [...bucket.runners].sort(byName),
+      judges: [...bucket.judges].sort(byName),
+    };
+  });
+
   // Named round-2 cards carry real groups and covers, so they need the group-sorted finalize.
   // The prefilled layout's own finalize applies only when no real assignments exist.
   const laterRoundsWithAssignments = [...liveRounds]
@@ -1332,6 +1455,7 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
     firstTimers,
     extras: extrasEntries,
     scheduleDays,
+    groupOverview,
     checkingDays,
     laterRoundsWithAssignments,
     // Real groups only, so a fresh WCIF with synthesized ones still reports "no groups yet".

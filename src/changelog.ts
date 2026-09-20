@@ -16,6 +16,23 @@ export interface ChangelogEntry {
 /** Newest first. See "Contributing" in the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-09-20',
+    items: {
+      en: [
+        'New Group Overview document listing who competes, scrambles, runs and judges in each group.',
+      ],
+      fr: [
+        'Nouveau document Aperçu des groupes indiquant qui concourt, mélange, court et juge dans chaque groupe.',
+      ],
+      es: [
+        'Nuevo documento Resumen de grupos que indica quién compite, mezcla, corre y juzga en cada grupo.',
+      ],
+      pt: [
+        'Novo documento Visão geral dos grupos, mostrando quem compete, mistura, corre e julga em cada grupo.',
+      ],
+    },
+  },
+  {
     id: '2026-09-14',
     items: {
       en: [

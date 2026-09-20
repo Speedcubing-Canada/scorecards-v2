@@ -2,7 +2,7 @@
 // has one place to be added rather than three.
 
 import type {
-  Activity, ChildActivity, Event, EventId, Person, Room, RoundFormat, WCIF,
+  Activity, Assignment, ChildActivity, Event, EventId, Person, Room, RoundFormat, WCIF,
 } from '../types/wcif';
 import type { CompetitionSettings } from '../types/settings';
 
@@ -37,7 +37,7 @@ export function testSettings(over: Partial<CompetitionSettings> = {}): Competiti
       mode: 'everything',
       documents: {
         scorecards: true, scheduleTracker: true, nametags: true,
-        roundChecklist: true, firstTimerSlips: true,
+        roundChecklist: true, firstTimerSlips: true, groupOverview: true,
       },
     },
     isCustomCompetition: false,
@@ -70,15 +70,22 @@ function activity(id: number, code: string, start: string, end: string, children
 function person(
   registrantId: number, name: string, wcaId: string | null,
   eventIds: EventId[], activityIds: number[],
+  staff: Partial<Record<'staff-scrambler' | 'staff-runner' | 'staff-judge', number[]>> = {},
 ): Person {
   return {
     registrantId, name, wcaUserId: registrantId, wcaId,
     countryIso2: 'CA', gender: registrantId % 2 ? 'm' : 'f',
     registration: { wcaRegistrationId: registrantId, eventIds, status: 'accepted', isCompeting: true },
     avatar: null, roles: [], personalBests: [],
-    assignments: activityIds.map((activityId, i) => ({
-      activityId, assignmentCode: 'competitor' as const, stationNumber: i + 1,
-    })),
+    assignments: [
+      ...activityIds.map((activityId, i) => ({
+        activityId, assignmentCode: 'competitor' as const, stationNumber: i + 1,
+      })),
+      ...Object.entries(staff).flatMap(([code, ids]) =>
+        ids.map((activityId) => ({
+          activityId, assignmentCode: code as Assignment['assignmentCode'], stationNumber: null,
+        }))),
+    ],
   };
 }
 
@@ -107,10 +114,10 @@ export function sampleWcif(): WCIF {
   };
 
   const persons: Person[] = [
-    person(1, 'Ada Lovelace',   '2018LOVE01', ['333', '222'], [101, 201, 301]),
-    person(2, 'Grace Hopper',   '2019HOPP01', ['333'],        [101, 301]),
-    person(3, 'Alan Turing',    '2020TURI01', ['333', '222'], [102, 201]),
-    person(4, 'Nouvelle Venue', null,         ['333', '222'], [102, 201]),
+    person(1, 'Ada Lovelace',   '2018LOVE01', ['333', '222'], [101, 201, 301], { 'staff-judge': [102] }),
+    person(2, 'Grace Hopper',   '2019HOPP01', ['333'],        [101, 301],      { 'staff-scrambler': [102], 'staff-runner': [201] }),
+    person(3, 'Alan Turing',    '2020TURI01', ['333', '222'], [102, 201],      { 'staff-judge': [101, 301] }),
+    person(4, 'Nouvelle Venue', null,         ['333', '222'], [102, 201],      { 'staff-scrambler': [101] }),
   ];
 
   return {

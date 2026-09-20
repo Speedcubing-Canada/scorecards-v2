@@ -19,6 +19,7 @@ cp "$TMP/GrosJouetsaMontreal2026_first_timers.pdf" "$OUT/first_timers.pdf"
 cp "$TMP/scorecard-layout-test.pdf"                "$OUT/scorecards.pdf"
 cp "$TMP/schedule-layout-test.pdf"                 "$OUT/schedule.pdf"
 cp "$TMP/checklist-layout-test.pdf"                "$OUT/checklist.pdf"
+cp "$TMP/group-overview-layout-test.pdf"           "$OUT/group_overview.pdf"
 
 FIXTURE_OUT_DIR="$TMP" npm run --silent render:fixtures -- --horizontal >/dev/null
 cp "$TMP/GrosJouetsaMontreal2026_nametags.pdf" "$OUT/nametags_horizontal.pdf"

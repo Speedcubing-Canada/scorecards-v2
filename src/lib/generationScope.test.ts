@@ -21,6 +21,7 @@ function mkParsed(over: Partial<ParsedWCIF> = {}): ParsedWCIF {
   return {
     firstRound: [], intermediate: [], semis: [], finals: [],
     nametags: [], firstTimers: [], extras: [], scheduleDays: [], checkingDays: [],
+    groupOverview: [],
     laterRoundsWithAssignments: [], hasGroups: true, stageCount: 1,
     ...over,
   };
@@ -95,7 +96,7 @@ describe('hasUnassignedIntermediate', () => {
 describe('filterParsedByScope', () => {
   const allDocs = {
     scorecards: true, scheduleTracker: true, nametags: true,
-    roundChecklist: true, firstTimerSlips: true,
+    roundChecklist: true, firstTimerSlips: true, groupOverview: true,
   };
   const base = mkParsed({
     firstRound: [sc('333', 1, 'A'), sc('333', 1, 'B')],
@@ -106,6 +107,10 @@ describe('filterParsedByScope', () => {
     extras: [sc('333', 1)],
     scheduleDays: [{ dayLabel: 'Day 1', stages: [] }],
     checkingDays: [{ dayLabel: 'Day 1', rows: [] }],
+    groupOverview: [
+      { eventId: '333', roundNum: 1 },
+      { eventId: '333', roundNum: 2 },
+    ] as never,
     laterRoundsWithAssignments: [{ eventId: '333', roundNum: 2 }],
   });
 
@@ -160,7 +165,7 @@ describe('filterParsedByScope', () => {
       mode: 'everything',
       documents: {
         scorecards: false, scheduleTracker: false, nametags: false,
-        roundChecklist: true, firstTimerSlips: false,
+        roundChecklist: true, firstTimerSlips: false, groupOverview: false,
       },
     });
     expect(out.checkingDays).toHaveLength(1);
@@ -211,10 +216,35 @@ describe('filterParsedByScope', () => {
     expect(out.scheduleDays).toHaveLength(1);
   });
 
+  it('groupOverview:false → clears the group overview, keeps everything else', () => {
+    const out = filterParsedByScope(base, {
+      mode: 'everything',
+      documents: { ...allDocs, groupOverview: false },
+    });
+    expect(out.groupOverview).toHaveLength(0);
+    expect(out.checkingDays).toHaveLength(1);
+  });
+
+  // The round filter reaches the overview too: a mid-competition "round 2 only" run should
+  // not reprint day one's groups alongside the round it was asked for.
+  it('latest → the group overview keeps only the latest assigned round', () => {
+    const out = filterParsedByScope(base, { mode: 'latest', documents: allDocs });
+    expect(out.groupOverview.map(e => e.roundNum)).toEqual([2]);
+  });
+
+  it('selected → the group overview keeps only the chosen rounds', () => {
+    const out = filterParsedByScope(base, {
+      mode: 'selected',
+      rounds: [{ eventId: '333', roundNum: 1 }],
+      documents: allDocs,
+    });
+    expect(out.groupOverview.map(e => e.roundNum)).toEqual([1]);
+  });
+
   it('latest + only schedule → clears scorecards but keeps schedule', () => {
     const out = filterParsedByScope(base, {
       mode: 'latest',
-      documents: { scorecards: false, scheduleTracker: true, nametags: false, roundChecklist: false, firstTimerSlips: false },
+      documents: { scorecards: false, scheduleTracker: true, nametags: false, roundChecklist: false, firstTimerSlips: false, groupOverview: false },
     });
     expect(out.firstRound).toHaveLength(0);
     expect(out.intermediate).toHaveLength(0);

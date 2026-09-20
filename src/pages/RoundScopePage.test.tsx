@@ -42,6 +42,16 @@ describe('RoundScopePage', () => {
     expect(readStoredScope()).toBeNull();
   });
 
+  // Opt-in by request: it is only useful once groups exist, and most organizers print it
+  // separately from the scorecard pile.
+  it('offers the Group Overview unchecked', async () => {
+    renderWithProviders(<RoundScopePage />, { auth: signedInAuth });
+
+    const label = await screen.findByText(i18n.t('scope.doc_group_overview'));
+    const box = label.closest('label')!.querySelector('input[type=checkbox]') as HTMLInputElement;
+    expect(box.checked).toBe(false);
+  });
+
   it('writes the document selection Continue was pressed with', async () => {
     renderWithProviders(<RoundScopePage />, { auth: signedInAuth });
     await screen.findByText(i18n.t('scope.docs_title'));

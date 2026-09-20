@@ -20,8 +20,9 @@ import { FirstTimerSlipDocument } from '../src/pdf/FirstTimerSlipDocument';
 import { ScorecardDocument } from '../src/pdf/ScorecardDocument';
 import { ScheduleTrackerDocument } from '../src/pdf/ScheduleTrackerDocument';
 import { CheckingSheetDocument } from '../src/pdf/CheckingSheetDocument';
+import { GroupOverviewDocument } from '../src/pdf/GroupOverviewDocument';
 import type {
-  NametTagEntry, FirstTimerEntry, ScorecardData, ScheduleDay, CheckingDay,
+  NametTagEntry, FirstTimerEntry, ScorecardData, ScheduleDay, CheckingDay, GroupOverviewEntry,
 } from '../src/lib/wcif-parser';
 import { finalizeEntries } from '../src/lib/wcif-parser';
 import type { CompetitionSettings } from '../src/types/settings';
@@ -217,6 +218,45 @@ const CHECKING_DAYS: CheckingDay[] = [
   },
 ];
 
+// Worst case on purpose: a long event+stage heading, a full 14-competitor group next to a
+// 12-judge one, and a group with no staff at all (the pre-assignment state).
+const NAMES = [
+  'Ada Lovelace', 'Grace Hopper', 'Alan Turing', 'Katherine Johnson', 'Edsger Dijkstra',
+  'Barbara Liskov', 'Donald Knuth', 'Margaret Hamilton', 'Alonzo Church', 'Radia Perlman',
+  'John von Neumann', 'Frances Allen', 'Claude Shannon', 'Jean Bartik',
+];
+
+const GROUP_OVERVIEW: GroupOverviewEntry[] = [
+  {
+    dayLabel: 'Day 1 - Saturday',
+    heading: '3x3x3 One-Handed Round 1 - Group 1 (Red)',
+    startTime: '09:00', endTime: '09:25', room: 'Salon des Congrès',
+    eventId: '333oh', roundNum: 1,
+    competitors: NAMES,
+    scramblers: NAMES.slice(0, 2),
+    runners: NAMES.slice(2, 4),
+    judges: NAMES.slice(1, 13),
+  },
+  {
+    dayLabel: 'Day 1 - Saturday',
+    heading: '3x3x3 One-Handed Round 1 - Group 2 (Blue)',
+    startTime: '09:25', endTime: '09:50', room: 'Salon des Congrès',
+    eventId: '333oh', roundNum: 1,
+    competitors: NAMES.slice(0, 6),
+    scramblers: NAMES.slice(4, 5),
+    runners: NAMES.slice(5, 6),
+    judges: NAMES.slice(6, 11),
+  },
+  {
+    dayLabel: 'Day 2 - Sunday',
+    heading: '3x3x3 Cube Final - Group 1',
+    startTime: '12:30', endTime: '13:30', room: 'Main Stage',
+    eventId: '333', roundNum: 3,
+    competitors: NAMES.slice(0, 8),
+    scramblers: [], runners: [], judges: [],
+  },
+];
+
 async function write(name: string, element: React.ReactElement): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const buffer = await renderToBuffer(element as any);
@@ -274,6 +314,12 @@ async function main() {
   await write(
     'checklist-layout-test.pdf',
     e(CheckingSheetDocument, { days: CHECKING_DAYS, settings: settings() }),
+  );
+
+  console.log(`Rendering Group Overview (${GROUP_OVERVIEW.length} groups)…`);
+  await write(
+    'group-overview-layout-test.pdf',
+    e(GroupOverviewDocument, { entries: GROUP_OVERVIEW, settings: settings() }),
   );
 
   console.log('Done.');
