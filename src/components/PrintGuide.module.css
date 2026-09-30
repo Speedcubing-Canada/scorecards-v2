@@ -86,7 +86,7 @@
   border: 1px solid var(--border-strong);
   font-size: var(--fs-caption);
   font-weight: var(--fw-bold);
-  color: var(--primary);
+  color: var(--primary-soft-text);
 }
 
 .piles {

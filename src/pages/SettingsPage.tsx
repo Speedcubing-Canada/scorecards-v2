@@ -337,7 +337,7 @@ export default function SettingsPage() {
         <section className={s.section}>
           <h3 className={ui.sectionHeading}>{t('settings.language.title')}</h3>
 
-          <p className={ui.groupLabel}>{t('settings.language.primary_title')}</p>
+          <div className={ui.groupLabel}>{t('settings.language.primary_title')}</div>
           <div className={s.langRow}>
             {LANGUAGES.map((opt) => renderLangTile({
               key: opt.code,
@@ -348,7 +348,7 @@ export default function SettingsPage() {
             }))}
           </div>
 
-          <p className={s.langCaptionSpaced}>{t('settings.language.secondary_title')}</p>
+          <div className={s.langCaptionSpaced}>{t('settings.language.secondary_title')}</div>
           <div className={s.langRow}>
             {secondaryLanguageRow(LANGUAGES, language, secondaryLanguage).map((tile, i) => {
               // The column under the selected primary is the "None" tile.
@@ -810,8 +810,8 @@ export default function SettingsPage() {
         </section>
         )}
 
-        <div className={s.footer}>
-          <button className={ui.btnPrimary} onClick={handleSubmit}>
+        <div className={ui.stickyFooter}>
+          <button className={ui.btnCta} onClick={handleSubmit}>
             {t('settings.generate_button')}
           </button>
         </div>

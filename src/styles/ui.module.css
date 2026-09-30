@@ -71,7 +71,8 @@
  * below, rather than competing with either on size.
  */
 .groupLabel {
-  margin: 0 0 var(--space-2);
+  /* margin-bottom only: a page adds its own top spacing without a specificity contest. */
+  margin-bottom: var(--space-2);
   padding: 0;
   font-size: var(--fs-caption);
   font-weight: var(--fw-bold);
@@ -107,11 +108,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  /* It is a <fieldset>: drop the native chrome. */
-  margin: 0;
-  padding: 0;
-  border: none;
-  min-width: 0;
 }
 
 .optionCard {
@@ -138,8 +134,8 @@
 }
 
 .optionCardActive:hover {
-  border-color: var(--primary-dark);
-  box-shadow: inset 3px 0 0 0 var(--primary-dark);
+  border-color: var(--primary-hover);
+  box-shadow: inset 3px 0 0 0 var(--primary-hover);
 }
 
 /*
@@ -208,7 +204,7 @@
 }
 
 .btnPrimary:hover:not(:disabled) {
-  background-color: var(--primary-dark);
+  background-color: var(--primary-hover);
 }
 
 .btnPrimary:active:not(:disabled) {
@@ -218,6 +214,36 @@
 .btnPrimary:disabled {
   background-color: var(--primary-disabled);
   cursor: not-allowed;
+}
+
+/*
+ * A wizard's forward button. Full width on a phone, but capped and right-aligned on a
+ * desktop: a 1000px-wide button reads as a banner, not a control.
+ */
+.btnCta {
+  composes: btnPrimary;
+  max-width: 380px;
+  margin-left: auto;
+}
+
+@media (max-width: 600px) {
+  .btnCta {
+    max-width: none;
+  }
+}
+
+/*
+ * Keeps the primary action in reach on a form that scrolls for thousands of pixels,
+ * instead of making the organizer hunt for the bottom of the page.
+ */
+.stickyFooter {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  margin-top: var(--space-8);
+  padding: var(--space-4) 0 calc(var(--space-4) + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--bg) 60%, transparent);
 }
 
 .btnSecondary {

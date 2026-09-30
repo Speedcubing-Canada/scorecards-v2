@@ -269,77 +269,79 @@ export default function RoundScopePage() {
           <>
             <p className={s.intro}>{isMidComp ? t('scope.intro') : t('scope.intro_pre')}</p>
 
+            {PRESETS.length > 0 && (
+              <section className={s.presetSection}>
+                <h3 className={ui.sectionHeading}>{t('scope.presets_title')}</h3>
+                <p className={ui.sectionHint}>{t('scope.presets_hint')}</p>
+                <fieldset className={s.presetGrid}>
+                  {[null, ...PRESETS].map(preset => (
+                    <label
+                      key={preset?.id ?? 'default'}
+                      className={`${ui.optionCard} ${presetId === (preset?.id ?? null) ? ui.optionCardActive : ''}`}
+                    >
+                      <input
+                        type="radio"
+                        name="preset"
+                        checked={presetId === (preset?.id ?? null)}
+                        onChange={() => applyPreset(preset)}
+                        className={ui.radio}
+                      />
+                      <div>
+                        <div className={ui.optionLabel}>{preset?.name ?? t('scope.preset_default')}</div>
+                        {(preset ? preset.region : t('scope.preset_default_desc')) && (
+                          <div className={ui.optionDesc}>{preset ? preset.region : t('scope.preset_default_desc')}</div>
+                        )}
+                      </div>
+                    </label>
+                  ))}
+                </fieldset>
+              </section>
+            )}
+
+            {/* Two grid children, so rounds and documents sit side by side rather than
+                stacking; the rounds column only exists mid-competition. */}
             <div className={s.columns}>
-              {PRESETS.length > 0 && (
+              {isMidComp && (
                 <section>
-                  <h3 className={ui.sectionHeading}>{t('scope.presets_title')}</h3>
-                  <p className={ui.sectionHint}>{t('scope.presets_hint')}</p>
                   <fieldset className={ui.optionGroup}>
-                    {[null, ...PRESETS].map(preset => (
-                      <label
-                        key={preset?.id ?? 'default'}
-                        className={`${ui.optionCard} ${presetId === (preset?.id ?? null) ? ui.optionCardActive : ''}`}
-                      >
+                    <legend className={ui.groupLegend}>{t('scope.rounds_heading')}</legend>
+                    {(['latest', 'everything', 'selected'] as const).map(mode => (
+                      <label key={mode} className={`${ui.optionCard} ${scopeMode === mode ? ui.optionCardActive : ''}`}>
                         <input
                           type="radio"
-                          name="preset"
-                          checked={presetId === (preset?.id ?? null)}
-                          onChange={() => applyPreset(preset)}
+                          name="scope"
+                          checked={scopeMode === mode}
+                          onChange={() => setScopeMode(mode)}
                           className={ui.radio}
                         />
                         <div>
-                          <div className={ui.optionLabel}>{preset?.name ?? t('scope.preset_default')}</div>
-                          {(preset ? preset.region : t('scope.preset_default_desc')) && (
-                            <div className={ui.optionDesc}>{preset ? preset.region : t('scope.preset_default_desc')}</div>
-                          )}
+                          <div className={ui.optionLabel}>{t(`scope.${mode}.label`)}</div>
+                          <div className={ui.optionDesc}>{t(`scope.${mode}.desc`)}</div>
                         </div>
                       </label>
                     ))}
                   </fieldset>
+
+                  {scopeMode === 'selected' && (
+                    <div className={`${ui.optionGroup} ${s.roundList}`}>
+                      {roundOptions.map(o => (
+                        <label key={o.key} className={`${ui.optionCard} ${effectiveSelected.has(o.key) ? ui.optionCardActive : ''}`}>
+                          <input
+                            type="checkbox"
+                            checked={effectiveSelected.has(o.key)}
+                            onChange={() => toggleRound(o.key)}
+                            className={ui.radio}
+                          />
+                          <div className={ui.optionLabel}>{o.label}</div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </section>
               )}
 
               <section>
-                {isMidComp && (
-                  <>
-                    <fieldset className={ui.optionGroup}>
-                      <legend className={ui.groupLegend}>{t('scope.rounds_heading')}</legend>
-                      {(['latest', 'everything', 'selected'] as const).map(mode => (
-                        <label key={mode} className={`${ui.optionCard} ${scopeMode === mode ? ui.optionCardActive : ''}`}>
-                          <input
-                            type="radio"
-                            name="scope"
-                            checked={scopeMode === mode}
-                            onChange={() => setScopeMode(mode)}
-                            className={ui.radio}
-                          />
-                          <div>
-                            <div className={ui.optionLabel}>{t(`scope.${mode}.label`)}</div>
-                            <div className={ui.optionDesc}>{t(`scope.${mode}.desc`)}</div>
-                          </div>
-                        </label>
-                      ))}
-                    </fieldset>
-
-                    {scopeMode === 'selected' && (
-                      <div className={`${ui.optionGroup} ${s.roundList}`}>
-                        {roundOptions.map(o => (
-                          <label key={o.key} className={`${ui.optionCard} ${effectiveSelected.has(o.key) ? ui.optionCardActive : ''}`}>
-                            <input
-                              type="checkbox"
-                              checked={effectiveSelected.has(o.key)}
-                              onChange={() => toggleRound(o.key)}
-                              className={ui.radio}
-                            />
-                            <div className={ui.optionLabel}>{o.label}</div>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-
-                <fieldset className={`${ui.optionGroup} ${isMidComp ? s.docsGroup : ''}`}>
+                <fieldset className={ui.optionGroup}>
                   <legend className={ui.groupLegend}>{t('scope.docs_title')}</legend>
                   {docOptions.map(o => (
                     <label key={o.key} className={`${ui.optionCard} ${o.checked ? ui.optionCardActive : ''}`}>
@@ -357,7 +359,7 @@ export default function RoundScopePage() {
             </div>
 
             <button
-              className={`${ui.btnPrimary} ${s.continueBtn}`}
+              className={`${ui.btnCta} ${s.continueBtn}`}
               onClick={handleContinue}
               disabled={continueDisabled}
             >

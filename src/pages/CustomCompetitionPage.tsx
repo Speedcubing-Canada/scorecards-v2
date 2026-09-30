@@ -76,9 +76,9 @@ export default function CustomCompetitionPage() {
           <CustomEventEditor events={events} onChange={setEvents} />
         </section>
 
-        <div className={s.footer}>
+        <div className={ui.stickyFooter}>
           <button
-            className={ui.btnPrimary}
+            className={ui.btnCta}
             disabled={!canContinue}
             onClick={handleContinue}
           >

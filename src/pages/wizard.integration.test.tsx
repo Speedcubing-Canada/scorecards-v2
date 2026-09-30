@@ -98,8 +98,10 @@ describe('the wizard carries one competition through all four steps', () => {
     const { filename } = downloadTarget(jobs, settings.competitionId);
 
     expect(await screen.findByRole('button', {
-      name: i18n.t('generate.download_button', { filename }),
+      name: i18n.t('generate.download_button'),
     })).toBeTruthy();
+    // The filename is its own caption line now, so assert it survived the flow separately.
+    expect(screen.getByText(filename)).toBeTruthy();
     expect(statValue(i18n.t('generate.stats.pdfs'))).toBe(String(jobs.length));
   });
 
@@ -125,7 +127,7 @@ describe('switching competitions', () => {
     enter('/competitions');
     await walkToSettings();
     await click(i18n.t('settings.generate_button'));
-    await screen.findByRole('button', { name: /Gros/ });
+    await screen.findByRole('button', { name: i18n.t('generate.download_button') });
 
     expect(readSettings()).not.toBeNull();
     expect(readStoredScope()).not.toBeNull();
@@ -143,7 +145,7 @@ describe('switching competitions', () => {
     enter('/competitions');
     await walkToSettings();
     await click(i18n.t('settings.generate_button'));
-    await screen.findByRole('button', { name: /Gros/ });
+    await screen.findByRole('button', { name: i18n.t('generate.download_button') });
 
     cleanup();
     enter('/competitions');

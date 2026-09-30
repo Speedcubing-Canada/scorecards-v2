@@ -1,6 +1,5 @@
 .main {
   max-width: 640px;
-  padding-bottom: 80px;
 }
 
 .heading {
@@ -279,7 +278,7 @@
 }
 
 .advancedToggle:hover {
-  color: var(--primary);
+  color: var(--primary-soft-text);
 }
 
 .advancedToggleArrow {
@@ -288,6 +287,3 @@
   color: var(--text-muted);
 }
 
-.footer {
-  margin-top: 40px;
-}

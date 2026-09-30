@@ -16,14 +16,17 @@
   --border: #e0e0e0;
   --border-strong: #cccccc;
 
-  /* Brand */
-  --color-primary: #d32f2f;
-  --color-primary-dark: #b71c1c;
+  /*
+   * Brand. `--primary` is a FILL (buttons, badges, the progress bar) and always pairs with
+   * `--primary-contrast`. `--primary-soft-text` is the brand as TEXT or an icon - it has to
+   * clear 4.5:1 on a surface, which the fill colour does not in either theme.
+   * `--primary-hover` is the more prominent state: darker in light, brighter in dark.
+   */
   --primary: #d32f2f;
-  --primary-dark: #b71c1c;
+  --primary-hover: #b71c1c;
   --primary-contrast: #ffffff;
   --primary-soft-bg: #ffebee;
-  --primary-soft-text: #d32f2f;
+  --primary-soft-text: #c62828;
   --primary-disabled: #ef9a9a;
 
   /* Status */
@@ -92,29 +95,32 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  /* Surfaces */
-  --bg: #121212;
-  --surface: #1e1e1e;
-  --surface-2: #2a2a2a;
+  /*
+   * Surfaces. A card cannot be pulled far off the page in the near-black range - the
+   * contrast formula's +0.05 floor caps #0a-vs-#1e at about 1.26:1 - so the card EDGE
+   * carries the separation. That is why --border here is much lighter than it looks it
+   * should be; it is doing the job the fill cannot.
+   */
+  --bg: #0a0a0b;
+  --surface: #1e1e21;
+  --surface-2: #2a2a2e;
 
   /* Text */
   --text: #f2f2f2;
   --text-muted: #b8b8b8;
-  --text-subtle: #8a8a8a;
-  --text-faint: #6a6a6a;
+  --text-subtle: #9a9a9a;
+  --text-faint: #888888;
 
   /* Borders */
-  --border: #3a3a3a;
-  --border-strong: #4a4a4a;
+  --border: #454549;
+  --border-strong: #6b6b73;
 
-  /* Brand */
-  --color-primary: #f06a6a;
-  --color-primary-dark: #e05252;
-  --primary: #f06a6a;
-  --primary-dark: #e05252;
-  --primary-contrast: #1a1a1a;
-  --primary-soft-bg: #3a2424;
-  --primary-soft-text: #f8a0a0;
+  /* Brand: the real brand red, with white on it, instead of a pastel salmon. */
+  --primary: #d32f2f;
+  --primary-hover: #e5423f;
+  --primary-contrast: #ffffff;
+  --primary-soft-bg: #33201f;
+  --primary-soft-text: #ff9b9b;
   --primary-disabled: #6e4040;
 
   /* Status */
@@ -131,6 +137,14 @@
 
 *, *::before, *::after {
   box-sizing: border-box;
+}
+
+/* Used purely to group form controls; the native chrome and spacing are never wanted. */
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
 }
 
 body {

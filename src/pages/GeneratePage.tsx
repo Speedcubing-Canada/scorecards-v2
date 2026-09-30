@@ -19,7 +19,6 @@ import WarningBanner from '../components/WarningBanner';
 import Skeleton from '../components/Skeleton';
 import PrintGuide from '../components/PrintGuide';
 import { readSettings } from '../lib/flowState';
-import { downloadButtonFontSize } from '../lib/downloadButtonFontSize';
 import i18n from '../i18n/index';
 import ui from '../styles/ui.module.css';
 import s from './GeneratePage.module.css';
@@ -240,23 +239,19 @@ export default function GeneratePage() {
               </div>
             )}
 
-            {(() => {
-              const buttonLabel = status === 'building'
-                ? t('generate.building_button')
-                : t('generate.download_button', { filename });
-              const disabled = status === 'building' || pdfCount === 0;
-              return (
-                <button
-                  className={`${ui.btnPrimary} ${s.downloadBtn}`}
-                  style={{ fontSize: downloadButtonFontSize(buttonLabel) }}
-                  onClick={handleDownload}
-                  disabled={disabled}
-                >
-                  {status !== 'building' && <Download size={18} aria-hidden />}
-                  {buttonLabel}
-                </button>
-              );
-            })()}
+            {/* The filename sits under the button, not inside it: a long competition id used
+                to force the label down to 12px to fit. */}
+            <button
+              className={ui.btnPrimary}
+              onClick={handleDownload}
+              disabled={status === 'building' || pdfCount === 0}
+            >
+              {status !== 'building' && <Download size={18} aria-hidden />}
+              {status === 'building' ? t('generate.building_button') : t('generate.download_button')}
+            </button>
+            {status === 'ready' && pdfCount > 0 && (
+              <p className={s.downloadFilename}>{filename}</p>
+            )}
 
             <PrintGuide jobs={jobs} />
           </>

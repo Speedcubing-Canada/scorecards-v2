@@ -1,6 +1,5 @@
 .main {
   max-width: 640px;
-  padding-bottom: 80px;
 }
 
 .heading {
@@ -21,6 +20,3 @@
   margin-bottom: var(--space-8);
 }
 
-.footer {
-  margin-top: 40px;
-}

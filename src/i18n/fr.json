@@ -177,7 +177,7 @@
       "paper": "Papier",
       "total_pages": "Pages"
     },
-    "download_button": "Télécharger {{filename}}",
+    "download_button": "Télécharger",
     "building_button": "Création du ZIP…",
     "guide": {
       "title": "Comment imprimer et découper",

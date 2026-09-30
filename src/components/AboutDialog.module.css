@@ -42,6 +42,6 @@
   font-size: var(--fs-body);
   font-weight: var(--fw-medium);
   line-height: 1.6;
-  color: var(--primary);
+  color: var(--primary-soft-text);
   word-break: break-word;
 }

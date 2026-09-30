@@ -10,12 +10,23 @@
   align-items: start;
 }
 
-.pageTitle {
-  margin-bottom: var(--space-2);
+/*
+ * Presets are the optional "start here" step, so they lead the page full width rather
+ * than sharing a column with the choices they pre-fill. Four across uses the room that
+ * a vertical stack left empty.
+ */
+.presetSection {
+  margin-bottom: var(--space-8);
 }
 
-.docsGroup {
-  margin-top: var(--space-8);
+.presetGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: var(--space-2);
+}
+
+.pageTitle {
+  margin-bottom: var(--space-2);
 }
 
 /* Capped: full width would be a hard-to-track line length. */
