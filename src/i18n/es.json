@@ -8,6 +8,7 @@
     "upload": "Subir",
     "choose_file": "Elegir archivo",
     "menu": "Menú",
+    "skip_to_content": "Ir al contenido",
     "language": "Idioma",
     "theme_light": "Cambiar al modo claro",
     "theme_dark": "Cambiar al modo oscuro"
@@ -219,6 +220,8 @@
     "doc_group_overview": "Resumen de grupos",
     "doc_first_timers": "Fichas de primera vez",
     "checking": "Comprobando la competición…",
+    "needs_document": "Elige al menos un documento para imprimir.",
+    "needs_round": "Elige al menos una ronda.",
     "continue": "Continuar →",
     "latest": {
       "label": "Solo la última ronda",

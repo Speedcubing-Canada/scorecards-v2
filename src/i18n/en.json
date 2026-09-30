@@ -8,6 +8,7 @@
     "upload": "Upload",
     "choose_file": "Choose file",
     "menu": "Menu",
+    "skip_to_content": "Skip to content",
     "language": "Language",
     "theme_light": "Switch to light mode",
     "theme_dark": "Switch to dark mode"
@@ -219,6 +220,8 @@
     "doc_group_overview": "Group Overview",
     "doc_first_timers": "First-Timer Slips",
     "checking": "Checking the competition…",
+    "needs_document": "Pick at least one document to print.",
+    "needs_round": "Pick at least one round.",
     "continue": "Continue →",
     "latest": {
       "label": "Latest round only",

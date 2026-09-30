@@ -55,6 +55,7 @@ export default function Header({ showBack, onBack, showUser, showSignOut = true 
 
   return (
     <header ref={headerRef} className={s.header}>
+      <a href="#main" className="skip-link">{t('common.skip_to_content')}</a>
       <div className={s.left}>
         <Logo className={s.logo} />
         <div className={s.divider} />

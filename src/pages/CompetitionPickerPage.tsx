@@ -68,9 +68,9 @@ export default function CompetitionPickerPage() {
     <div className={ui.page}>
       <Header showUser showSignOut />
 
-      <main className={`${ui.main} ${s.main}`}>
+      <main id="main" className={`${ui.main} ${s.main}`}>
         <div className={s.headingRow}>
-          <h2 className={ui.pageTitle}>{t('picker.heading')}</h2>
+          <h1 className={ui.pageTitle}>{t('picker.heading')}</h1>
           <AboutDialog />
         </div>
         <p className={s.hint}>{t('picker.hint')}</p>

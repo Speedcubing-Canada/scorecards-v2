@@ -12,13 +12,6 @@
   background-color: var(--primary);
 }
 
-.title {
-  margin: 0 0 var(--space-1);
-  font-size: var(--fs-title);
-  font-weight: var(--fw-bold);
-  color: var(--text);
-}
-
 .subtitle {
   margin: 0;
   font-size: var(--fs-label);

@@ -56,8 +56,8 @@ export default function CustomCompetitionPage() {
     <div className={ui.page}>
       <Header showBack onBack={() => navigate('/competitions')} showSignOut />
 
-      <main className={`${ui.main} ${s.main}`}>
-        <h2 className={s.heading}>{t('custom.heading')}</h2>
+      <main id="main" className={`${ui.main} ${s.main}`}>
+        <h1 className={s.heading}>{t('custom.heading')}</h1>
         <p className={s.hint}>{t('custom.hint')}</p>
 
         <section className={s.section}>
@@ -68,6 +68,8 @@ export default function CustomCompetitionPage() {
             onChange={e => setName(e.target.value)}
             placeholder={t('custom.name_placeholder')}
             className={ui.textInput}
+            autoComplete="off"
+            aria-label={t('custom.name_label')}
           />
         </section>
 

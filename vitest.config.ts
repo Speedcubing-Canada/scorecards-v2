@@ -3,6 +3,8 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     environment: 'node',
+    // Loaded for every file; the shim inside guards on the DOM existing.
+    setupFiles: ['./src/test/setup.ts'],
     // Pin the one VITE_ var the app reads at module scope. Without this a test
     // inherits the developer's .env and passes locally while failing in CI,
     // where no .env exists (src/auth/wca.ts reads CLIENT_ID at import time).

@@ -328,9 +328,9 @@ export default function SettingsPage() {
     <div className={ui.page}>
       <Header showBack onBack={() => navigate(isCustom ? '/custom' : '/scope')} showSignOut />
 
-      <main className={`${ui.main} ${s.main}`}>
+      <main id="main" className={`${ui.main} ${s.main}`}>
         <div className={ui.compBadge}>{competitionName}</div>
-        <h2 className={`${ui.pageTitle} ${s.heading}`}>{t('settings.heading')}</h2>
+        <h1 className={`${ui.pageTitle} ${s.heading}`}>{t('settings.heading')}</h1>
 
         {noGroups && <WarningBanner>{t('warnings.no_groups')}</WarningBanner>}
 
@@ -490,12 +490,16 @@ export default function SettingsPage() {
             <p className={ui.hint}>{t('settings.wca_live.hint')}</p>
           )}
           <input
+            id="wca-live-id"
             type="text"
             inputMode="numeric"
+            autoComplete="off"
+            spellCheck={false}
             value={wcaLiveId ?? ''}
             onChange={e => patch({ wcaLiveId: e.target.value.replace(/\D/g, '') })}
             placeholder={t('settings.wca_live.placeholder')}
             className={ui.textInput}
+            aria-label={t('settings.wca_live.title')}
           />
           </>)}
           </>)}
@@ -685,6 +689,8 @@ export default function SettingsPage() {
                     onChange={e => setDcRankingTop('scrambleDoubleCheckWorldTop', e.target.value)}
                     onBlur={() => normalizeDcRankingTop('scrambleDoubleCheckWorldTop')}
                     className={`${ui.textInput} ${s.rankingInput}`}
+                    autoComplete="off"
+                    spellCheck={false}
                   />
                 </div>
 
@@ -707,6 +713,8 @@ export default function SettingsPage() {
                     onChange={e => setDcRankingTop('scrambleDoubleCheckRegionTop', e.target.value)}
                     onBlur={() => normalizeDcRankingTop('scrambleDoubleCheckRegionTop')}
                     className={`${ui.textInput} ${s.rankingInput}`}
+                    autoComplete="off"
+                    spellCheck={false}
                   />
                 </div>
               </div>

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CHANGELOG, isStale, markAllSeen, readSeen, unseenEntries } from '../changelog';
 import type { LocaleCode } from '../types/settings';
+import Modal from './Modal';
 import Tooltip from './Tooltip';
 import ui from '../styles/ui.module.css';
 import s from './WhatsNewDialog.module.css';
@@ -21,15 +22,6 @@ export default function WhatsNewDialog() {
   const { t, i18n } = useTranslation();
   const [unseen, setUnseen] = useState(() => unseenEntries(readSeen()));
   const [open, setOpen] = useState(() => unseen.length > 0);
-
-  useEffect(() => {
-    if (!open) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') close();
-    }
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open]);
 
   function close() {
     markAllSeen();
@@ -52,38 +44,28 @@ export default function WhatsNewDialog() {
         </button>
       </Tooltip>
 
-      {open && (
-        <div className={ui.overlay} onMouseDown={close}>
-          <div
-            className={ui.dialogCard}
-            onMouseDown={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-          >
-            <h2 className={s.title}>{t('whats_new.title')}</h2>
-            <p className={s.subtitle}>{t('whats_new.subtitle')}</p>
+      <Modal open={open} onClose={close} title={t('whats_new.title')}>
+        <p className={s.subtitle}>{t('whats_new.subtitle')}</p>
 
-            {entries.map((entry) => (
-              <div key={entry.id}>
-                <h3 className={s.date}>
-                  {new Date(`${entry.id.slice(0, 10)}T00:00:00`).toLocaleDateString(i18n.language, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </h3>
-                <ul className={s.list}>
-                  {(entry.items[locale] ?? entry.items.en).map((item) => (
-                    <li key={item} className={s.item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-
-            <button className={ui.dialogClose} onClick={close}>{t('whats_new.close')}</button>
+        {entries.map((entry) => (
+          <div key={entry.id}>
+            <h3 className={s.date}>
+              {new Date(`${entry.id.slice(0, 10)}T00:00:00`).toLocaleDateString(i18n.language, {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </h3>
+            <ul className={s.list}>
+              {(entry.items[locale] ?? entry.items.en).map((item) => (
+                <li key={item} className={s.item}>{item}</li>
+              ))}
+            </ul>
           </div>
-        </div>
-      )}
+        ))}
+
+        <button className={ui.dialogClose} onClick={close}>{t('whats_new.close')}</button>
+      </Modal>
     </>
   );
 }

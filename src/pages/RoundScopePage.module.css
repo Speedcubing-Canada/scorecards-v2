@@ -43,6 +43,30 @@
 }
 
 
-.continueBtn {
+.continueRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-4);
   margin-top: var(--space-6);
+}
+
+@media (max-width: 600px) {
+  .continueRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.blockedReason {
+  margin: 0;
+  font-size: var(--fs-label);
+  color: var(--text-muted);
+  text-align: right;
+}
+
+@media (max-width: 600px) {
+  .blockedReason {
+    text-align: left;
+  }
 }

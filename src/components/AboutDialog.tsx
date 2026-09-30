@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import Modal from './Modal';
 import Tooltip from './Tooltip';
 import { REPO_URL, SUPPORT_EMAIL } from './ContactLinks';
 import { isOptedOut, setOptedOut } from '../lib/analytics';
@@ -17,15 +18,6 @@ export default function AboutDialog({ as = 'icon' }: { as?: 'icon' | 'text' }) {
   const [open, setOpen] = useState(false);
   const [optedOut, setOptOut] = useState(isOptedOut);
 
-  useEffect(() => {
-    if (!open) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
-    }
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open]);
-
   return (
     <>
       {as === 'text' ? (
@@ -40,51 +32,41 @@ export default function AboutDialog({ as = 'icon' }: { as?: 'icon' | 'text' }) {
         </Tooltip>
       )}
 
-      {open && (
-        <div className={ui.overlay} onMouseDown={() => setOpen(false)}>
-          <div
-            className={ui.dialogCard}
-            onMouseDown={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-          >
-            <h2 className={ui.dialogTitle}>{t('about.title')}</h2>
-            <p className={ui.dialogBody}>{t('about.intro')}</p>
+      <Modal open={open} onClose={() => setOpen(false)} title={t('about.title')}>
+        <p className={ui.dialogBody}>{t('about.intro')}</p>
 
-            <h3 className={s.section}>{t('about.wcif_title')}</h3>
-            <p className={ui.dialogBody}>{t('about.wcif_body')}</p>
+        <h3 className={s.section}>{t('about.wcif_title')}</h3>
+        <p className={ui.dialogBody}>{t('about.wcif_body')}</p>
 
-            <h3 className={s.section}>{t('about.workflow_title')}</h3>
-            <p className={ui.dialogBody}>{t('about.workflow_body')}</p>
+        <h3 className={s.section}>{t('about.workflow_title')}</h3>
+        <p className={ui.dialogBody}>{t('about.workflow_body')}</p>
 
-            <h3 className={s.section}>{t('about.privacy_title')}</h3>
-            <p className={ui.dialogBody}>{t('about.privacy_body')}</p>
+        <h3 className={s.section}>{t('about.privacy_title')}</h3>
+        <p className={ui.dialogBody}>{t('about.privacy_body')}</p>
 
-            <label className={`${ui.toggleCard} ${optedOut ? ui.toggleCardActive : ''} ${s.optOut}`}>
-              <input
-                type="checkbox"
-                checked={optedOut}
-                onChange={e => { setOptOut(e.target.checked); setOptedOut(e.target.checked); }}
-                className={ui.radio}
-              />
-              <div className={s.optOutLabel}>{t('about.privacy_optout')}</div>
-            </label>
+        <label className={`${ui.toggleCard} ${optedOut ? ui.toggleCardActive : ''} ${s.optOut}`}>
+          <input
+            type="checkbox"
+            checked={optedOut}
+            onChange={e => { setOptOut(e.target.checked); setOptedOut(e.target.checked); }}
+            className={ui.radio}
+          />
+          <div className={s.optOutLabel}>{t('about.privacy_optout')}</div>
+        </label>
 
-            {/* The login page has no Header, so this is the only place a signed-out
-                organizer can find where to send a bug report. */}
-            <h3 className={s.section}>{t('about.feedback_title')}</h3>
-            <p className={ui.dialogBody}>{t('about.feedback_body')}</p>
-            <p className={s.links}>
-              <a className={s.link} href={REPO_URL} target="_blank" rel="noopener noreferrer">
-                {REPO_URL.replace('https://', '')}
-              </a>
-              <a className={s.link} href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
-            </p>
+        {/* The login page has no Header, so this is the only place a signed-out
+            organizer can find where to send a bug report. */}
+        <h3 className={s.section}>{t('about.feedback_title')}</h3>
+        <p className={ui.dialogBody}>{t('about.feedback_body')}</p>
+        <p className={s.links}>
+          <a className={s.link} href={REPO_URL} target="_blank" rel="noopener noreferrer">
+            {REPO_URL.replace('https://', '')}
+          </a>
+          <a className={s.link} href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
+        </p>
 
-            <button className={ui.dialogClose} onClick={() => setOpen(false)}>{t('about.close')}</button>
-          </div>
-        </div>
-      )}
+        <button className={ui.dialogClose} onClick={() => setOpen(false)}>{t('about.close')}</button>
+      </Modal>
     </>
   );
 }

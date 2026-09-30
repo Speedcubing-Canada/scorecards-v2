@@ -8,6 +8,7 @@
     "upload": "Télécharger",
     "choose_file": "Choisir un fichier",
     "menu": "Menu",
+    "skip_to_content": "Aller au contenu",
     "language": "Langue",
     "theme_light": "Passer en mode clair",
     "theme_dark": "Passer en mode sombre"
@@ -219,6 +220,8 @@
     "doc_group_overview": "Aperçu des groupes",
     "doc_first_timers": "Fiches pour les nouveaux participants",
     "checking": "Vérification de la compétition…",
+    "needs_document": "Choisissez au moins un document à imprimer.",
+    "needs_round": "Choisissez au moins un tour.",
     "continue": "Continuer →",
     "latest": {
       "label": "Dernier tour uniquement",

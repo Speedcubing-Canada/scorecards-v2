@@ -63,6 +63,14 @@ Three variants in `ui.module.css`, so the shape says what a control does before 
 Selection is a primary border plus an inset left rule, **never a background fill**. Three
 filled red blocks on a page leave no room for the primary button to be the loudest thing.
 
+## Modals
+
+Use `src/components/Modal.tsx`. It is a native `<dialog>` opened with `showModal()`, so the
+focus trap, Escape, the inert background and restoring focus on close are the **browser's**
+and do not need writing. Never hand-roll an overlay `<div>`, and never set `aria-modal`
+yourself on a `showModal()` dialog. `jsdom` has no `showModal`, so `src/test/setup.ts`
+shims it for tests.
+
 ## Icons
 
 - **Use `lucide-react` only.** No hand-rolled inline `<svg>` and no emoji as icons.
@@ -98,6 +106,13 @@ filled red blocks on a page leave no room for the primary button to be the loude
   separate a card from the page by fill alone - the contrast formula caps near-black pairs
   around 1.26:1 - so the card **edge** carries it there.
 - A form that scrolls a long way keeps its primary action reachable (`ui.stickyFooter`).
+- **A disabled button says why.** A greyed-out CTA with nothing beside it is a dead end;
+  see `blockedReason` on the scope page.
+- One `<h1>` per page (the page title). The Header's app name is a `<span>`, and section
+  headings are `<h2>`/`<h3>` under it. The Header also carries the skip link, and every
+  page's `<main>` needs `id="main"` for it to land on.
+- Text inputs that hold ids or names get `autoComplete="off"` (and `spellCheck={false}` for
+  ids), so a password manager or a spell checker does not attach itself to them.
 - A wizard's forward button is `ui.btnCta`, not `ui.btnPrimary`: capped and right-aligned on
   a desktop, full width on a phone. A 1000px-wide button reads as a banner.
 

@@ -106,6 +106,7 @@ export default function CustomEventEditor({
               value={custom.name}
               onChange={e => update(i, { name: e.target.value })}
               className={ui.textInput}
+              autoComplete="off"
               aria-label={t('settings.advanced.event_name_placeholder')}
             />
             <button className={s.removeBtn} onClick={() => removeEvent(i)}>{t('common.remove')}</button>
@@ -138,6 +139,7 @@ export default function CustomEventEditor({
                   value={custom.cutoff}
                   onChange={e => update(i, { cutoff: e.target.value })}
                   className={`${ui.textInput} ${s.smallInput}`}
+                  autoComplete="off"
                   aria-label={t('settings.advanced.cutoff_label')}
                 />
               </div>
@@ -153,6 +155,7 @@ export default function CustomEventEditor({
                 value={custom.limit}
                 onChange={e => update(i, { limit: e.target.value })}
                 className={`${ui.textInput} ${s.smallInput}`}
+                  autoComplete="off"
                 aria-label={t('settings.advanced.time_limit_label')}
               />
             </div>
@@ -167,6 +170,7 @@ export default function CustomEventEditor({
                 value={custom.roundLabel ?? ''}
                 onChange={e => update(i, { roundLabel: e.target.value })}
                 className={`${ui.textInput} ${s.smallInput}`}
+                  autoComplete="off"
                 aria-label={t('settings.advanced.round_label')}
               />
             </div>

@@ -221,8 +221,11 @@ export default function RoundScopePage() {
   const noDocsSelected =
     !docScorecards && !docSchedule && !docNametags && !docRoundChecklist && !docFirstTimers
     && !docGroupOverview;
-  const continueDisabled =
-    (isMidComp && scopeMode === 'selected' && effectiveSelected.size === 0) || noDocsSelected;
+  const noRoundsSelected = isMidComp && scopeMode === 'selected' && effectiveSelected.size === 0;
+  // A greyed-out button with nothing saying why is a dead end; the reason is shown next to it.
+  const blockedReason = noDocsSelected
+    ? t('scope.needs_document')
+    : noRoundsSelected ? t('scope.needs_round') : null;
 
   const docOptions: { key: keyof DocumentSelection; label: string; checked: boolean; set: (v: boolean) => void }[] = [
     { key: 'scorecards',      label: t('scope.doc_scorecards'),  checked: docScorecards,  set: setDocScorecards },
@@ -237,9 +240,9 @@ export default function RoundScopePage() {
     <div className={ui.page}>
       <Header showBack onBack={() => navigate('/competitions')} showSignOut />
 
-      <main className={`${ui.main} ${s.main}`}>
+      <main id="main" className={`${ui.main} ${s.main}`}>
         <div className={ui.compBadge}>{competitionName}</div>
-        <h2 className={`${ui.pageTitle} ${s.pageTitle}`}>{t('scope.heading')}</h2>
+        <h1 className={`${ui.pageTitle} ${s.pageTitle}`}>{t('scope.heading')}</h1>
 
         {status === 'loading' && (
           <div role="status" aria-label={t('scope.checking')}>
@@ -358,13 +361,18 @@ export default function RoundScopePage() {
               </section>
             </div>
 
-            <button
-              className={`${ui.btnCta} ${s.continueBtn}`}
-              onClick={handleContinue}
-              disabled={continueDisabled}
-            >
-              {t('scope.continue')}
-            </button>
+            <div className={s.continueRow}>
+              {blockedReason && (
+                <p className={s.blockedReason} role="status">{blockedReason}</p>
+              )}
+              <button
+                className={ui.btnCta}
+                onClick={handleContinue}
+                disabled={blockedReason !== null}
+              >
+                {t('scope.continue')}
+              </button>
+            </div>
           </>
         )}
       </main>

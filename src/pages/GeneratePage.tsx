@@ -189,9 +189,9 @@ export default function GeneratePage() {
     <div className={ui.page}>
       <Header showBack onBack={() => navigate('/settings')} showSignOut />
 
-      <main className={`${ui.main} ${s.main}`}>
+      <main id="main" className={`${ui.main} ${s.main}`}>
         <div className={ui.compBadge}>{settings.competitionName}</div>
-        <h2 className={`${ui.pageTitle} ${s.pageTitle}`}>{t('generate.title')}</h2>
+        <h1 className={`${ui.pageTitle} ${s.pageTitle}`}>{t('generate.title')}</h1>
 
         {(status === 'fetching' || status === 'parsing') && (
           <StatsSkeleton label={status === 'fetching' ? t('generate.fetching') : t('generate.parsing')} />

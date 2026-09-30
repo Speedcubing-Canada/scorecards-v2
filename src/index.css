@@ -157,6 +157,32 @@ body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.2s ease, color 0.2s ease;
+  /* Drops the 300ms double-tap-to-zoom delay on every tap on a phone. */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(211, 47, 47, 0.15);
+}
+
+/*
+ * Skip link: the header carries seven controls before the page content, which is a lot of
+ * tabbing on every page. Off-screen until focused.
+ */
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: var(--space-2);
+  z-index: 200;
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-medium);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
 }
 
 #root {
