@@ -9,10 +9,7 @@
   margin-bottom: var(--space-2);
 }
 
-/* The row owns the spacing below the title, so the title itself drops its margin. */
-.headingRow > h2 {
-  margin: 0;
-}
+/* The row owns the spacing below the title. */
 
 .hint {
   margin: 0 0 28px;

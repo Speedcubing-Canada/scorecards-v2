@@ -373,8 +373,8 @@ export default function SettingsPage() {
         </section>
 
         <section className={s.section}>
-          <h3 className={ui.sectionHeading}>{t('settings.paper.title')}</h3>
-          <div className={ui.optionGroup}>
+          <fieldset className={ui.optionGroup}>
+            <legend className={ui.groupLegend}>{t('settings.paper.title')}</legend>
             {PAPER_OPTIONS.map((opt) => (
               <label key={opt.value} className={`${ui.optionCard} ${paperFormat === opt.value ? ui.optionCardActive : ''}`}>
                 <input
@@ -391,13 +391,13 @@ export default function SettingsPage() {
                 </div>
               </label>
             ))}
-          </div>
+          </fieldset>
         </section>
 
         {showScorecards && showSecondRoundMode && (
         <section className={s.section}>
-          <h3 className={ui.sectionHeading}>{t('settings.subsequent_rounds.title')}</h3>
-          <div className={ui.optionGroup}>
+          <fieldset className={ui.optionGroup}>
+            <legend className={ui.groupLegend}>{t('settings.subsequent_rounds.title')}</legend>
             {ROUND_MODE_OPTIONS.map((opt) => (
               <label key={opt.value} className={`${ui.optionCard} ${secondRoundMode === opt.value ? ui.optionCardActive : ''}`}>
                 <input
@@ -414,15 +414,15 @@ export default function SettingsPage() {
                 </div>
               </label>
             ))}
-          </div>
+          </fieldset>
         </section>
         )}
 
         {showScorecards && !isCustom && (
         <section className={s.section}>
-          <h3 className={ui.sectionHeading}>{t('settings.check_mode.title')}</h3>
-          <p className={ui.hint}>{t('settings.check_mode.hint')}</p>
-          <div className={ui.optionGroup}>
+          <fieldset className={ui.optionGroup}>
+            <legend className={ui.groupLegend}>{t('settings.check_mode.title')}</legend>
+            <p className={ui.hint}>{t('settings.check_mode.hint')}</p>
             {checkModeOptions.map(opt => (
               <label key={opt.value} className={`${ui.optionCard} ${scorecardCheckMode === opt.value ? ui.optionCardActive : ''}`}>
                 <input
@@ -439,7 +439,7 @@ export default function SettingsPage() {
                 </div>
               </label>
             ))}
-          </div>
+          </fieldset>
         </section>
         )}
 
@@ -450,7 +450,7 @@ export default function SettingsPage() {
               below is about the printed "WCA Live:" line, which exists in either system. */}
           {showNametags && (<>
           <p className={ui.hint}>{t('settings.wca_live.system_hint')}</p>
-          <div className={ui.optionGroup}>
+          <fieldset className={ui.optionGroup} aria-label={t('settings.wca_live.system_title')}>
             {liveModeOptions.map(opt => (
               <label key={opt.value} className={`${ui.optionCard} ${liveResultsMode === opt.value ? ui.optionCardActive : ''}`}>
                 <input
@@ -467,7 +467,7 @@ export default function SettingsPage() {
                 </div>
               </label>
             ))}
-          </div>
+          </fieldset>
 
           {/* ILR needs no id: its URLs are built from the WCA competition id we already have. */}
           {liveResultsMode === 'wca-live' && (<>
@@ -500,7 +500,7 @@ export default function SettingsPage() {
           </>)}
           </>)}
           {showScorecards && (
-          <label className={`${ui.optionCard} ${s.checkboxCard}`}>
+          <label className={`${ui.toggleCard} ${s.checkboxCard} ${hideWcaLiveId ? ui.toggleCardActive : ''}`}>
             <input
               type="checkbox"
               checked={hideWcaLiveId}
@@ -537,7 +537,7 @@ export default function SettingsPage() {
                 {t('common.choose_file')}
               </button>
 
-              <label className={s.logoPreviewChoice}>
+              <label className={`${s.logoPreviewChoice} ${useDefaultLogo ? ui.toggleCardActive : ''}`}>
                 <input
                   type="checkbox"
                   checked={useDefaultLogo}
@@ -569,10 +569,8 @@ export default function SettingsPage() {
 
           {(logoDataUrl || useDefaultLogo) && (
             <div className={s.nametagGroup}>
-              <div className={s.subheading}>
-                {t('settings.nametag.logo_on_nametags')}
-              </div>
-              <div className={ui.optionGroup}>
+              <fieldset className={ui.optionGroup}>
+                <legend className={s.subheadingLegend}>{t('settings.nametag.logo_on_nametags')}</legend>
                 {logoModeOptions.map(opt => (
                   <label key={opt.value} className={`${ui.optionCard} ${nametagLogoMode === opt.value ? ui.optionCardActive : ''}`}>
                     <input
@@ -589,14 +587,12 @@ export default function SettingsPage() {
                     </div>
                   </label>
                 ))}
-              </div>
+              </fieldset>
             </div>
           )}
 
-          <div className={s.subheading}>
-            {t('settings.nametag.qr_codes')}
-          </div>
-          <div className={ui.optionGroup}>
+          <fieldset className={ui.optionGroup}>
+            <legend className={s.subheadingLegend}>{t('settings.nametag.qr_codes')}</legend>
             {qrModeOptions.map(opt => (
               <label key={opt.value} className={`${ui.optionCard} ${nametagQrMode === opt.value ? ui.optionCardActive : ''}`}>
                 <input
@@ -613,12 +609,12 @@ export default function SettingsPage() {
                 </div>
               </label>
             ))}
-          </div>
+          </fieldset>
 
           <div className={s.subheading}>
             {t('settings.nametag.layout')}
           </div>
-          <div className={ui.segmentedControl}>
+          <div className={ui.segmentedControl} role="group" aria-label={t('settings.nametag.layout')}>
             <button
               type="button"
               onClick={() => patch({ nametagLayout: 'vertical' })}
@@ -670,7 +666,7 @@ export default function SettingsPage() {
               <p className={ui.hint}>{t('settings.double_check.ranking_hint')}</p>
 
               <div className={ui.optionGroup}>
-                <div className={`${ui.optionCard} ${s.rankingCard} ${scrambleDoubleCheckWorldTop !== null ? ui.optionCardActive : ''}`}>
+                <div className={`${ui.toggleCard} ${s.rankingCard} ${scrambleDoubleCheckWorldTop !== null ? ui.toggleCardActive : ''}`}>
                   <label className={s.rankingRule}>
                     <input
                       type="checkbox"
@@ -692,7 +688,7 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                <div className={`${ui.optionCard} ${s.rankingCard} ${scrambleDoubleCheckRegionTop !== null ? ui.optionCardActive : ''}`}>
+                <div className={`${ui.toggleCard} ${s.rankingCard} ${scrambleDoubleCheckRegionTop !== null ? ui.toggleCardActive : ''}`}>
                   <label className={s.rankingRule}>
                     <input
                       type="checkbox"
@@ -716,7 +712,7 @@ export default function SettingsPage() {
               </div>
 
               {scrambleDoubleCheckRegionTop !== null && (
-                <div className={`${ui.segmentedControl} ${s.segmentedSpaced}`}>
+                <div className={`${ui.segmentedControl} ${s.segmentedSpaced}`} role="group" aria-label={t('settings.double_check.ranking_region')}>
                   {DOUBLE_CHECK_REGION_OPTIONS.map(opt => (
                     <button
                       key={opt.value}
@@ -731,10 +727,8 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              <div className={s.subheading}>
-                {t('settings.double_check.rounds_title')}
-              </div>
-              <div className={ui.optionGroup}>
+              <fieldset className={`${ui.optionGroup} ${s.roundsGroup}`}>
+                <legend className={s.subheadingLegend}>{t('settings.double_check.rounds_title')}</legend>
                 {DOUBLE_CHECK_ROUND_OPTIONS.map(opt => (
                   <label key={opt.value} className={`${ui.optionCard} ${scrambleDoubleCheckRounds.includes(opt.value) ? ui.optionCardActive : ''}`}>
                     <input
@@ -748,7 +742,7 @@ export default function SettingsPage() {
                     </div>
                   </label>
                 ))}
-              </div>
+              </fieldset>
 
               <div className={s.subheading}>
                 {t('settings.double_check.overrides_title')}
@@ -780,7 +774,7 @@ export default function SettingsPage() {
                   <h3 className={`${ui.sectionHeading} ${s.sectionTitleGapped}`}>
                     {t('settings.advanced.stage_split_title')}
                   </h3>
-                  <label className={ui.optionCard}>
+                  <label className={`${ui.toggleCard} ${splitPdfsByStage ? ui.toggleCardActive : ''}`}>
                     <input
                       type="checkbox"
                       checked={splitPdfsByStage}

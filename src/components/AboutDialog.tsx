@@ -60,7 +60,7 @@ export default function AboutDialog({ as = 'icon' }: { as?: 'icon' | 'text' }) {
             <h3 className={s.section}>{t('about.privacy_title')}</h3>
             <p className={ui.dialogBody}>{t('about.privacy_body')}</p>
 
-            <label className={`${ui.optionCard} ${optedOut ? ui.optionCardActive : ''} ${s.optOut}`}>
+            <label className={`${ui.toggleCard} ${optedOut ? ui.toggleCardActive : ''} ${s.optOut}`}>
               <input
                 type="checkbox"
                 checked={optedOut}

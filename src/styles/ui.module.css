@@ -35,8 +35,12 @@
   margin-bottom: var(--space-2);
 }
 
+/*
+ * No margin: a page pairs this with its own spacing class. Overriding a margin from
+ * another module would depend on which stylesheet the bundler emits last.
+ */
 .pageTitle {
-  margin: 0 0 var(--space-6);
+  margin: 0;
   font-size: var(--fs-display);
   font-weight: var(--fw-bold);
   color: var(--text);
@@ -48,6 +52,17 @@
   font-size: var(--fs-heading);
   font-weight: var(--fw-bold);
   color: var(--text);
+}
+
+/*
+ * A <legend>: ties the heading to the group it names, for screen readers and for the eye.
+ * The fieldset is a flex column, so the legend is its first flex item; the 8px flex gap
+ * plus this margin land on the same 12px the free-floating <h3> used to have.
+ */
+.groupLegend {
+  composes: sectionHeading;
+  padding: 0;
+  margin-bottom: var(--space-1);
 }
 
 .sectionHint {
@@ -62,12 +77,26 @@
   color: var(--text-muted);
 }
 
-/* ---------- option cards (radio / checkbox rows) ---------- */
+/* ---------- option controls ----------
+ *
+ * Three variants, so the shape says what the control does before you read it:
+ *   .optionCard  - one member of a radio group (pick exactly one of these)
+ *   .toggleCard  - a standalone boolean (turn this one thing on)
+ *   .dropzone    - a file input (below)
+ *
+ * Selection is a primary border plus an inset left rule, never a fill. A page with
+ * three filled red blocks on it has no room left for the primary button to be loud.
+ */
 
 .optionGroup {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  /* It is a <fieldset>: drop the native chrome. */
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
 }
 
 .optionCard {
@@ -75,24 +104,52 @@
   align-items: flex-start;
   gap: var(--space-3);
   background-color: var(--surface);
-  border: 2px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
-  padding: var(--space-3) var(--space-4);
+  padding: 13px var(--space-4);
   cursor: pointer;
-  transition: border-color 0.12s ease, background-color 0.12s ease;
+  /* inset, so selection costs no layout and animates on the compositor. */
+  box-shadow: inset 0 0 0 0 var(--primary);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
 
 .optionCard:hover {
-  border-color: var(--border-strong);
+  border-color: var(--text-subtle);
 }
 
 .optionCardActive {
   border-color: var(--primary);
-  background-color: var(--primary-soft-bg);
+  box-shadow: inset 3px 0 0 0 var(--primary);
 }
 
 .optionCardActive:hover {
   border-color: var(--primary-dark);
+  box-shadow: inset 3px 0 0 0 var(--primary-dark);
+}
+
+/*
+ * A standalone switch, not one of a set: flatter, recessed, and the whole row is the
+ * label. No left rule - there is no sibling to compare it against.
+ */
+.toggleCard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 13px var(--space-4);
+  cursor: pointer;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+
+.toggleCard:hover {
+  border-color: var(--border-strong);
+}
+
+.toggleCardActive {
+  border-color: var(--primary);
+  background-color: var(--surface);
 }
 
 .optionLabel {

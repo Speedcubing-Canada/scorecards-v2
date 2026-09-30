@@ -274,7 +274,7 @@ export default function RoundScopePage() {
                 <section>
                   <h3 className={ui.sectionHeading}>{t('scope.presets_title')}</h3>
                   <p className={ui.sectionHint}>{t('scope.presets_hint')}</p>
-                  <div className={ui.optionGroup}>
+                  <fieldset className={ui.optionGroup}>
                     {[null, ...PRESETS].map(preset => (
                       <label
                         key={preset?.id ?? 'default'}
@@ -295,15 +295,15 @@ export default function RoundScopePage() {
                         </div>
                       </label>
                     ))}
-                  </div>
+                  </fieldset>
                 </section>
               )}
 
               <section>
                 {isMidComp && (
                   <>
-                    <h3 className={ui.sectionHeading}>{t('scope.rounds_heading')}</h3>
-                    <div className={ui.optionGroup}>
+                    <fieldset className={ui.optionGroup}>
+                      <legend className={ui.groupLegend}>{t('scope.rounds_heading')}</legend>
                       {(['latest', 'everything', 'selected'] as const).map(mode => (
                         <label key={mode} className={`${ui.optionCard} ${scopeMode === mode ? ui.optionCardActive : ''}`}>
                           <input
@@ -319,7 +319,7 @@ export default function RoundScopePage() {
                           </div>
                         </label>
                       ))}
-                    </div>
+                    </fieldset>
 
                     {scopeMode === 'selected' && (
                       <div className={`${ui.optionGroup} ${s.roundList}`}>
@@ -339,8 +339,8 @@ export default function RoundScopePage() {
                   </>
                 )}
 
-                <h3 className={`${ui.sectionHeading} ${isMidComp ? s.docsHeading : ''}`}>{t('scope.docs_title')}</h3>
-                <div className={ui.optionGroup}>
+                <fieldset className={`${ui.optionGroup} ${isMidComp ? s.docsGroup : ''}`}>
+                  <legend className={ui.groupLegend}>{t('scope.docs_title')}</legend>
                   {docOptions.map(o => (
                     <label key={o.key} className={`${ui.optionCard} ${o.checked ? ui.optionCardActive : ''}`}>
                       <input
@@ -352,7 +352,7 @@ export default function RoundScopePage() {
                       <div className={ui.optionLabel}>{o.label}</div>
                     </label>
                   ))}
-                </div>
+                </fieldset>
               </section>
             </div>
 

@@ -192,7 +192,7 @@ export default function GeneratePage() {
 
       <main className={`${ui.main} ${s.main}`}>
         <div className={ui.compBadge}>{settings.competitionName}</div>
-        <h2 className={ui.pageTitle}>{t('generate.title')}</h2>
+        <h2 className={`${ui.pageTitle} ${s.pageTitle}`}>{t('generate.title')}</h2>
 
         {(status === 'fetching' || status === 'parsing') && (
           <StatsSkeleton label={status === 'fetching' ? t('generate.fetching') : t('generate.parsing')} />

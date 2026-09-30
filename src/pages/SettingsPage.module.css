@@ -4,7 +4,7 @@
 }
 
 .heading {
-  margin-bottom: 28px;
+  margin: 0 0 28px;
 }
 
 .section {
@@ -25,6 +25,18 @@
   font-weight: var(--fw-bold);
   color: var(--text);
   margin: var(--space-4) 0 var(--space-2);
+}
+
+/* The <legend> form of .subheading: names a group inside a section that already has an h3. */
+.subheadingLegend {
+  composes: subheading;
+  padding: 0;
+  margin-top: 0;
+  margin-bottom: var(--space-1);
+}
+
+.roundsGroup {
+  margin-top: var(--space-4);
 }
 
 .subheadingFirst {
@@ -144,9 +156,10 @@
   border-color: var(--border-strong);
 }
 
+/* The badge below goes solid primary, so the tile only needs a ring - not a fill. */
 .langTileActive {
   border-color: var(--primary);
-  background-color: var(--primary-soft-bg);
+  box-shadow: inset 0 0 0 1px var(--primary);
 }
 
 .langBadge {
@@ -187,10 +200,12 @@
   padding: var(--space-3) var(--space-4);
 }
 
+/* A standalone toggle that happens to show the logo it turns on. */
 .logoPreviewChoice {
-  composes: logoPreview;
+  composes: toggleCard from '../styles/ui.module.css';
+  align-items: center;
+  gap: var(--space-4);
   margin-top: var(--space-3);
-  cursor: pointer;
 }
 
 .logoImg {
