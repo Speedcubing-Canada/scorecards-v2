@@ -1,0 +1,47 @@
+.textTrigger {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-medium);
+  text-decoration: underline;
+}
+
+.textTrigger:hover {
+  color: var(--text);
+}
+
+.section {
+  margin: var(--space-5) 0 6px;
+  font-size: var(--fs-body);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+}
+
+.optOut {
+  margin-top: var(--space-3);
+}
+
+.optOutLabel {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-medium);
+  color: var(--text);
+}
+
+.links {
+  margin: var(--space-2) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.link {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-medium);
+  line-height: 1.6;
+  color: var(--primary);
+  word-break: break-word;
+}

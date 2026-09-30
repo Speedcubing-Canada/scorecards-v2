@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import s from './Tooltip.module.css';
 
 /**
  * Lightweight tooltip for jargon and icon-only controls. Shows on hover or keyboard focus.
@@ -17,31 +18,9 @@ export default function Tooltip({
   const [open, setOpen] = useState(false);
   const id = useId();
 
-  const bubble: React.CSSProperties = {
-    position: 'absolute',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    [placement === 'top' ? 'bottom' : 'top']: 'calc(100% + 6px)',
-    zIndex: 200,
-    maxWidth: 240,
-    width: 'max-content',
-    padding: '6px 9px',
-    background: 'var(--surface)',
-    color: 'var(--text)',
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-sm)',
-    boxShadow: 'var(--shadow-lg)',
-    fontSize: 'var(--fs-caption)',
-    fontWeight: 400,
-    lineHeight: 1.4,
-    textAlign: 'left',
-    pointerEvents: 'none',
-    whiteSpace: 'normal',
-  };
-
   return (
     <span
-      style={{ position: 'relative', display: 'inline-flex' }}
+      className={s.wrapper}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
       onFocus={() => setOpen(true)}
@@ -50,7 +29,7 @@ export default function Tooltip({
     >
       {children}
       {open && (
-        <span id={id} role="tooltip" style={bubble}>
+        <span id={id} role="tooltip" className={`${s.bubble} ${s[placement]}`}>
           {label}
         </span>
       )}

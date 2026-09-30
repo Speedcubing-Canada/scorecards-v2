@@ -1,0 +1,121 @@
+.main {
+  max-width: 680px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+@media (max-width: 600px) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.stat {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.statValue {
+  font-size: var(--fs-stat);
+  font-weight: var(--fw-bold);
+  color: var(--primary);
+  margin-bottom: var(--space-1);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+  .statValue {
+    font-size: var(--fs-display);
+  }
+}
+
+.statLabel {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+/* Skeleton blocks that mirror the stat tiles, so nothing shifts on arrival. */
+.statValueSkeleton {
+  width: 56px;
+  height: 28px;
+  margin: 0 auto var(--space-2);
+}
+
+@media (max-width: 600px) {
+  .statValueSkeleton {
+    width: 48px;
+    height: 22px;
+  }
+}
+
+.statLabelSkeleton {
+  width: 70%;
+  height: 10px;
+  margin: 0 auto;
+}
+
+.downloadBtn {
+  overflow-wrap: anywhere;
+}
+
+.progressBox {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) 28px;
+  margin-bottom: var(--space-6);
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.progressLabel {
+  font-size: var(--fs-body);
+  color: var(--text-muted);
+}
+
+.progressPct {
+  font-size: var(--fs-title);
+  font-weight: var(--fw-bold);
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.progressTrack {
+  height: 10px;
+  background-color: var(--primary-soft-bg);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+/* scaleX so the fill animates on the compositor instead of re-laying out each frame. */
+.progressFill {
+  height: 100%;
+  background-color: var(--primary);
+  border-radius: 5px;
+  transform-origin: left center;
+  transition: transform 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressFill {
+    transition: none;
+  }
+}
+
+.statusText {
+  font-size: var(--fs-body);
+  color: var(--text-muted);
+}

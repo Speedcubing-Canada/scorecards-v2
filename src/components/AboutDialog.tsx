@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useIsMobile } from '../lib/useIsMobile';
 import Tooltip from './Tooltip';
 import { REPO_URL, SUPPORT_EMAIL } from './ContactLinks';
 import { isOptedOut, setOptedOut } from '../lib/analytics';
+import ui from '../styles/ui.module.css';
+import s from './AboutDialog.module.css';
 
 /**
  * "About this tool" explainer: a circular "i" button (or a text link when `as="text"`)
@@ -13,7 +14,6 @@ import { isOptedOut, setOptedOut } from '../lib/analytics';
  */
 export default function AboutDialog({ as = 'icon' }: { as?: 'icon' | 'text' }) {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [optedOut, setOptOut] = useState(isOptedOut);
 
@@ -29,113 +29,62 @@ export default function AboutDialog({ as = 'icon' }: { as?: 'icon' | 'text' }) {
   return (
     <>
       {as === 'text' ? (
-        <button style={s.textTrigger} onClick={() => setOpen(true)}>
+        <button className={s.textTrigger} onClick={() => setOpen(true)}>
           {t('about.trigger')}
         </button>
       ) : (
         <Tooltip label={t('about.trigger')} placement="bottom">
-          <button style={s.iconTrigger} aria-label={t('about.trigger')} onClick={() => setOpen(true)}>
+          <button className={ui.iconBtn} aria-label={t('about.trigger')} onClick={() => setOpen(true)}>
             <Info size={18} strokeWidth={2} />
           </button>
         </Tooltip>
       )}
 
       {open && (
-        <div style={s.overlay} onMouseDown={() => setOpen(false)}>
+        <div className={ui.overlay} onMouseDown={() => setOpen(false)}>
           <div
-            style={{ ...s.card, ...(isMobile ? s.cardMobile : {}) }}
+            className={ui.dialogCard}
             onMouseDown={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
           >
-            <h2 style={s.title}>{t('about.title')}</h2>
-            <p style={s.body}>{t('about.intro')}</p>
+            <h2 className={ui.dialogTitle}>{t('about.title')}</h2>
+            <p className={ui.dialogBody}>{t('about.intro')}</p>
 
-            <h3 style={s.section}>{t('about.wcif_title')}</h3>
-            <p style={s.body}>{t('about.wcif_body')}</p>
+            <h3 className={s.section}>{t('about.wcif_title')}</h3>
+            <p className={ui.dialogBody}>{t('about.wcif_body')}</p>
 
-            <h3 style={s.section}>{t('about.workflow_title')}</h3>
-            <p style={s.body}>{t('about.workflow_body')}</p>
+            <h3 className={s.section}>{t('about.workflow_title')}</h3>
+            <p className={ui.dialogBody}>{t('about.workflow_body')}</p>
 
-            <h3 style={s.section}>{t('about.privacy_title')}</h3>
-            <p style={s.body}>{t('about.privacy_body')}</p>
+            <h3 className={s.section}>{t('about.privacy_title')}</h3>
+            <p className={ui.dialogBody}>{t('about.privacy_body')}</p>
 
-            <label style={{ ...s.optOut, ...(optedOut ? s.optOutActive : {}) }}>
+            <label className={`${ui.optionCard} ${optedOut ? ui.optionCardActive : ''} ${s.optOut}`}>
               <input
                 type="checkbox"
                 checked={optedOut}
                 onChange={e => { setOptOut(e.target.checked); setOptedOut(e.target.checked); }}
-                style={s.optOutBox}
+                className={ui.radio}
               />
-              <div style={s.optOutLabel}>{t('about.privacy_optout')}</div>
+              <div className={s.optOutLabel}>{t('about.privacy_optout')}</div>
             </label>
 
             {/* The login page has no Header, so this is the only place a signed-out
                 organizer can find where to send a bug report. */}
-            <h3 style={s.section}>{t('about.feedback_title')}</h3>
-            <p style={s.body}>{t('about.feedback_body')}</p>
-            <p style={s.links}>
-              <a style={s.link} href={REPO_URL} target="_blank" rel="noopener noreferrer">
+            <h3 className={s.section}>{t('about.feedback_title')}</h3>
+            <p className={ui.dialogBody}>{t('about.feedback_body')}</p>
+            <p className={s.links}>
+              <a className={s.link} href={REPO_URL} target="_blank" rel="noopener noreferrer">
                 {REPO_URL.replace('https://', '')}
               </a>
-              <a style={s.link} href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
+              <a className={s.link} href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
             </p>
 
-            <button style={s.close} onClick={() => setOpen(false)}>{t('about.close')}</button>
+            <button className={ui.dialogClose} onClick={() => setOpen(false)}>{t('about.close')}</button>
           </div>
         </div>
       )}
     </>
   );
 }
-
-const s: Record<string, React.CSSProperties> = {
-  iconTrigger: {
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    width: 28, height: 28, padding: 0,
-    background: 'none', border: 'none', borderRadius: '50%',
-    color: 'var(--text-muted)', cursor: 'pointer',
-  },
-  textTrigger: {
-    background: 'none', border: 'none', padding: 0,
-    color: 'var(--text-muted)', cursor: 'pointer',
-    fontFamily: 'inherit', fontSize: 'var(--fs-label)', fontWeight: 500,
-    textDecoration: 'underline',
-  },
-  overlay: {
-    position: 'fixed', inset: 0, zIndex: 100,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: 'var(--space-6)',
-  },
-  card: {
-    backgroundColor: 'var(--surface)', color: 'var(--text)',
-    borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
-    padding: '32px 36px', maxWidth: 520, width: '100%',
-    maxHeight: '85vh', overflowY: 'auto', textAlign: 'left',
-  },
-  cardMobile: { padding: '24px 20px' },
-  title: { margin: '0 0 12px', fontSize: 'var(--fs-title)', fontWeight: 700, color: 'var(--text)' },
-  section: { margin: '20px 0 6px', fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--text)' },
-  body: { margin: 0, fontSize: 'var(--fs-body)', fontWeight: 400, lineHeight: 1.6, color: 'var(--text-muted)' },
-  optOut: {
-    display: 'flex', alignItems: 'flex-start', gap: 12, marginTop: 12,
-    backgroundColor: 'var(--surface)',
-    borderWidth: 2, borderStyle: 'solid', borderColor: 'var(--border)',
-    borderRadius: 'var(--radius-md)', padding: '12px 16px', cursor: 'pointer',
-  },
-  optOutActive: { borderColor: 'var(--primary)', backgroundColor: 'var(--primary-soft-bg)' },
-  optOutBox: { marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 },
-  optOutLabel: { fontSize: 'var(--fs-label)', fontWeight: 500, color: 'var(--text)' },
-  links: { margin: '8px 0 0', display: 'flex', flexDirection: 'column', gap: 4 },
-  link: {
-    fontSize: 'var(--fs-body)', fontWeight: 500, lineHeight: 1.6,
-    color: 'var(--primary)', wordBreak: 'break-word',
-  },
-  close: {
-    marginTop: 'var(--space-6)',
-    backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)',
-    border: 'none', borderRadius: 'var(--radius-md)', padding: '12px 20px',
-    fontSize: 'var(--fs-body)', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', width: '100%',
-  },
-};

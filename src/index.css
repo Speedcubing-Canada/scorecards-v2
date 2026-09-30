@@ -55,6 +55,7 @@
   --fs-body: 14px;     /* body text, inputs, buttons */
   --fs-label: 13px;    /* labels, hints, nav */
   --fs-caption: 12px;  /* captions, tooltips, badges */
+  --fs-micro: 10px;    /* icon-tile labels - the smallest type in the UI */
 
   /* Weight hierarchy - only these three weights are used anywhere */
   --fw-regular: 400;   /* body, descriptions, hints */
@@ -160,6 +161,8 @@ textarea:focus-visible,
 /* Skeleton loading primitive. The `.skeleton` base is themed via surface tokens;
    the pulse keyframes animate the shimmer. Reduced-motion disables the pulse. */
 .skeleton {
+  width: 100%;
+  height: 16px;
   background: var(--surface-2);
   border-radius: var(--radius-sm);
   animation: skeleton-pulse 1.4s ease-in-out infinite;

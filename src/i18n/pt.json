@@ -7,7 +7,10 @@
     "clear": "Limpar",
     "upload": "Enviar",
     "choose_file": "Escolher arquivo",
-    "menu": "Menu"
+    "menu": "Menu",
+    "language": "Idioma",
+    "theme_light": "Mudar para o modo claro",
+    "theme_dark": "Mudar para o modo escuro"
   },
   "login": {
     "subtitle": "Gere súmulas e crachás prontos para impressão para sua competição da WCA.",

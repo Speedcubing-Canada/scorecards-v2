@@ -1,0 +1,36 @@
+.main {
+  max-width: 1040px;
+}
+
+/* auto-fit collapses to one column under 300px, so no extra breakpoint is needed. */
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.pageTitle {
+  margin-bottom: var(--space-2);
+}
+
+/* Capped: full width would be a hard-to-track line length. */
+.intro {
+  margin: 0 0 var(--space-6);
+  max-width: 68ch;
+  font-size: var(--fs-body);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.roundList {
+  margin-top: 10px;
+}
+
+.docsHeading {
+  margin-top: var(--space-6);
+}
+
+.continueBtn {
+  margin-top: var(--space-6);
+}

@@ -15,7 +15,8 @@ import { clearSettings, readCompetition, readStoredScope, writeHasGroups, writeS
 import { PRESETS, readPresetId, writePresetSettings, writePresetId, type Preset } from '../presets';
 import Header from '../components/Header';
 import Skeleton from '../components/Skeleton';
-import { useIsMobile } from '../lib/useIsMobile';
+import ui from '../styles/ui.module.css';
+import s from './RoundScopePage.module.css';
 
 type Status = 'loading' | 'ready' | 'error';
 
@@ -40,7 +41,6 @@ export default function RoundScopePage() {
   const { t, i18n } = useTranslation();
   const { token } = useAuth();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
 
   const { id: competitionId, name: competitionName } = readCompetition();
 
@@ -234,21 +234,21 @@ export default function RoundScopePage() {
   ];
 
   return (
-    <div style={s.page}>
+    <div className={ui.page}>
       <Header showBack onBack={() => navigate('/competitions')} showSignOut />
 
-      <main style={{ ...s.main, ...(isMobile ? s.mainMobile : {}) }}>
-        <div style={s.compBadge}>{competitionName}</div>
-        <h2 style={s.pageTitle}>{t('scope.heading')}</h2>
+      <main className={`${ui.main} ${s.main}`}>
+        <div className={ui.compBadge}>{competitionName}</div>
+        <h2 className={`${ui.pageTitle} ${s.pageTitle}`}>{t('scope.heading')}</h2>
 
         {status === 'loading' && (
           <div role="status" aria-label={t('scope.checking')}>
             <Skeleton width="55%" height={14} style={{ marginBottom: 20 }} />
-            <div style={s.columns}>
+            <div className={s.columns}>
               {Array.from({ length: 2 }).map((_, col) => (
                 <div key={col}>
                   <Skeleton width={140} height={15} style={{ marginBottom: 12 }} />
-                  <div style={s.optionGroup}>
+                  <div className={ui.optionGroup}>
                     {Array.from({ length: 3 }).map((_, i) => (
                       <Skeleton key={i} height={62} radius="var(--radius-md)" />
                     ))}
@@ -259,38 +259,38 @@ export default function RoundScopePage() {
           </div>
         )}
         {status === 'error' && (
-          <div style={{ ...s.statusBox, ...s.statusError }}>
+          <div className={`${ui.statusBox} ${ui.statusError}`}>
             <XCircle size={28} strokeWidth={2} color="var(--danger)" />
-            <span style={{ fontSize: 'var(--fs-body)', color: 'var(--danger)' }}>{statusMsg}</span>
+            <span className={ui.errorText}>{statusMsg}</span>
           </div>
         )}
 
         {status === 'ready' && (
           <>
-            <p style={s.intro}>{isMidComp ? t('scope.intro') : t('scope.intro_pre')}</p>
+            <p className={s.intro}>{isMidComp ? t('scope.intro') : t('scope.intro_pre')}</p>
 
-            <div style={s.columns}>
+            <div className={s.columns}>
               {PRESETS.length > 0 && (
                 <section>
-                  <h3 style={s.sectionHeading}>{t('scope.presets_title')}</h3>
-                  <p style={s.sectionHint}>{t('scope.presets_hint')}</p>
-                  <div style={s.optionGroup}>
+                  <h3 className={ui.sectionHeading}>{t('scope.presets_title')}</h3>
+                  <p className={ui.sectionHint}>{t('scope.presets_hint')}</p>
+                  <div className={ui.optionGroup}>
                     {[null, ...PRESETS].map(preset => (
                       <label
                         key={preset?.id ?? 'default'}
-                        style={{ ...s.optionCard, ...(presetId === (preset?.id ?? null) ? s.optionCardActive : {}) }}
+                        className={`${ui.optionCard} ${presetId === (preset?.id ?? null) ? ui.optionCardActive : ''}`}
                       >
                         <input
                           type="radio"
                           name="preset"
                           checked={presetId === (preset?.id ?? null)}
                           onChange={() => applyPreset(preset)}
-                          style={s.radio}
+                          className={ui.radio}
                         />
                         <div>
-                          <div style={s.optionLabel}>{preset?.name ?? t('scope.preset_default')}</div>
+                          <div className={ui.optionLabel}>{preset?.name ?? t('scope.preset_default')}</div>
                           {(preset ? preset.region : t('scope.preset_default_desc')) && (
-                            <div style={s.optionDesc}>{preset ? preset.region : t('scope.preset_default_desc')}</div>
+                            <div className={ui.optionDesc}>{preset ? preset.region : t('scope.preset_default_desc')}</div>
                           )}
                         </div>
                       </label>
@@ -302,36 +302,36 @@ export default function RoundScopePage() {
               <section>
                 {isMidComp && (
                   <>
-                    <h3 style={s.sectionHeading}>{t('scope.rounds_heading')}</h3>
-                    <div style={s.optionGroup}>
+                    <h3 className={ui.sectionHeading}>{t('scope.rounds_heading')}</h3>
+                    <div className={ui.optionGroup}>
                       {(['latest', 'everything', 'selected'] as const).map(mode => (
-                        <label key={mode} style={{ ...s.optionCard, ...(scopeMode === mode ? s.optionCardActive : {}) }}>
+                        <label key={mode} className={`${ui.optionCard} ${scopeMode === mode ? ui.optionCardActive : ''}`}>
                           <input
                             type="radio"
                             name="scope"
                             checked={scopeMode === mode}
                             onChange={() => setScopeMode(mode)}
-                            style={s.radio}
+                            className={ui.radio}
                           />
                           <div>
-                            <div style={s.optionLabel}>{t(`scope.${mode}.label`)}</div>
-                            <div style={s.optionDesc}>{t(`scope.${mode}.desc`)}</div>
+                            <div className={ui.optionLabel}>{t(`scope.${mode}.label`)}</div>
+                            <div className={ui.optionDesc}>{t(`scope.${mode}.desc`)}</div>
                           </div>
                         </label>
                       ))}
                     </div>
 
                     {scopeMode === 'selected' && (
-                      <div style={{ ...s.optionGroup, marginTop: 10 }}>
+                      <div className={`${ui.optionGroup} ${s.roundList}`}>
                         {roundOptions.map(o => (
-                          <label key={o.key} style={{ ...s.optionCard, ...(effectiveSelected.has(o.key) ? s.optionCardActive : {}) }}>
+                          <label key={o.key} className={`${ui.optionCard} ${effectiveSelected.has(o.key) ? ui.optionCardActive : ''}`}>
                             <input
                               type="checkbox"
                               checked={effectiveSelected.has(o.key)}
                               onChange={() => toggleRound(o.key)}
-                              style={s.radio}
+                              className={ui.radio}
                             />
-                            <div style={s.optionLabel}>{o.label}</div>
+                            <div className={ui.optionLabel}>{o.label}</div>
                           </label>
                         ))}
                       </div>
@@ -339,17 +339,17 @@ export default function RoundScopePage() {
                   </>
                 )}
 
-                <h3 style={{ ...s.sectionHeading, marginTop: isMidComp ? 24 : 0 }}>{t('scope.docs_title')}</h3>
-                <div style={s.optionGroup}>
+                <h3 className={`${ui.sectionHeading} ${isMidComp ? s.docsHeading : ''}`}>{t('scope.docs_title')}</h3>
+                <div className={ui.optionGroup}>
                   {docOptions.map(o => (
-                    <label key={o.key} style={{ ...s.optionCard, ...(o.checked ? s.optionCardActive : {}) }}>
+                    <label key={o.key} className={`${ui.optionCard} ${o.checked ? ui.optionCardActive : ''}`}>
                       <input
                         type="checkbox"
                         checked={o.checked}
                         onChange={e => o.set(e.target.checked)}
-                        style={s.radio}
+                        className={ui.radio}
                       />
-                      <div style={s.optionLabel}>{o.label}</div>
+                      <div className={ui.optionLabel}>{o.label}</div>
                     </label>
                   ))}
                 </div>
@@ -357,7 +357,7 @@ export default function RoundScopePage() {
             </div>
 
             <button
-              style={{ ...s.continueBtn, ...(continueDisabled ? s.continueBtnDisabled : {}) }}
+              className={`${ui.btnPrimary} ${s.continueBtn}`}
               onClick={handleContinue}
               disabled={continueDisabled}
             >
@@ -369,49 +369,3 @@ export default function RoundScopePage() {
     </div>
   );
 }
-
-const s: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', backgroundColor: 'var(--bg)' },
-  main: { maxWidth: 1040, margin: '0 auto', padding: '32px 24px' },
-  mainMobile: { padding: '24px 16px' },
-  // auto-fit collapses to one column under 300px, so no extra breakpoint is needed.
-  columns: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-    gap: 24,
-    alignItems: 'start',
-  },
-  compBadge: {
-    display: 'inline-block', backgroundColor: 'var(--primary-soft-bg)', color: 'var(--primary-soft-text)',
-    borderRadius: 'var(--radius-sm)', padding: '4px 12px', fontSize: 'var(--fs-label)', fontWeight: 700, marginBottom: 8,
-  },
-  pageTitle: { margin: '0 0 8px', fontSize: 'var(--fs-display)', fontWeight: 700, color: 'var(--text)' },
-  sectionHeading: { margin: '0 0 12px', fontSize: 'var(--fs-heading)', fontWeight: 700, color: 'var(--text)' },
-  sectionHint: { margin: '-6px 0 12px', fontSize: 'var(--fs-label)', color: 'var(--text-muted)' },
-  // Capped: full width would be a hard-to-track line length.
-  intro: { margin: '0 0 24px', maxWidth: '68ch', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' },
-  statusBox: {
-    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
-    backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-lg)', padding: '40px 24px', textAlign: 'center', marginBottom: 24,
-  },
-  statusError: { borderColor: 'var(--danger)', backgroundColor: 'var(--primary-soft-bg)' },
-  optionGroup: { display: 'flex', flexDirection: 'column', gap: 8 },
-  optionCard: {
-    display: 'flex', alignItems: 'flex-start', gap: 12,
-    backgroundColor: 'var(--surface)',
-    borderWidth: 2, borderStyle: 'solid', borderColor: 'var(--border)',
-    borderRadius: 'var(--radius-md)', padding: '12px 16px', cursor: 'pointer',
-  },
-  optionCardActive: { borderColor: 'var(--primary)', backgroundColor: 'var(--primary-soft-bg)' },
-  radio: { marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 },
-  optionLabel: { fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--text)', marginBottom: 2 },
-  optionDesc: { fontSize: 'var(--fs-label)', color: 'var(--text-muted)' },
-  continueBtn: {
-    display: 'block', marginTop: 24, backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)',
-    border: 'none', borderRadius: 'var(--radius-md)', padding: '16px', fontSize: 'var(--fs-heading)',
-    fontWeight: 700, textAlign: 'center', cursor: 'pointer', width: '100%',
-    fontFamily: 'inherit', letterSpacing: '-0.01em',
-  },
-  continueBtnDisabled: { backgroundColor: 'var(--primary-disabled)', cursor: 'not-allowed' },
-};

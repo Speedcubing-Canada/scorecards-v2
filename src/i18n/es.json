@@ -7,7 +7,10 @@
     "clear": "Limpiar",
     "upload": "Subir",
     "choose_file": "Elegir archivo",
-    "menu": "Menú"
+    "menu": "Menú",
+    "language": "Idioma",
+    "theme_light": "Cambiar al modo claro",
+    "theme_dark": "Cambiar al modo oscuro"
   },
   "login": {
     "subtitle": "Genere hojas de puntuación y etiquetas de nombre listas para imprimir para su competencia WCA.",

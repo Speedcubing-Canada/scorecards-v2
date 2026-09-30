@@ -1,0 +1,283 @@
+.main {
+  max-width: 640px;
+  padding-bottom: 80px;
+}
+
+.heading {
+  margin-bottom: 28px;
+}
+
+.section {
+  margin-bottom: var(--space-8);
+}
+
+/* Section titles that open a block partway down a section. */
+.sectionTitleSpaced {
+  margin-top: var(--space-5);
+}
+
+.sectionTitleGapped {
+  margin-top: 28px;
+}
+
+.subheading {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+  margin: var(--space-4) 0 var(--space-2);
+}
+
+.subheadingFirst {
+  composes: subheading;
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.optional {
+  font-weight: var(--fw-regular);
+  color: var(--text-subtle);
+  font-size: var(--fs-label);
+}
+
+.wcaLiveLoading {
+  font-weight: var(--fw-regular);
+  color: var(--text-subtle);
+  font-size: var(--fs-caption);
+}
+
+.wcaLiveFound {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: var(--fw-bold);
+  color: var(--success);
+  font-size: var(--fs-caption);
+}
+
+.hintWarning {
+  color: var(--warning-text);
+}
+
+.hintFlush {
+  margin: 0;
+}
+
+.infoIcon {
+  display: inline-flex;
+  color: var(--text-muted);
+  cursor: help;
+}
+
+.infoIcon:hover {
+  color: var(--text);
+}
+
+/* The threshold input is its sibling, so each label owns exactly one control. */
+.rankingRule {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.rankingCard {
+  align-items: center;
+}
+
+.rankingInput {
+  width: 72px;
+  text-align: center;
+  padding: 6px 10px;
+  flex-shrink: 0;
+}
+
+.rankingInput:disabled {
+  background-color: var(--surface-2);
+  color: var(--text-subtle);
+  cursor: not-allowed;
+}
+
+/* ---------- language tiles ---------- */
+
+.langCaption {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-bold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.langCaptionSpaced {
+  composes: langCaption;
+  margin-top: 18px;
+}
+
+.langRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.langTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 6px;
+  width: 78px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  background-color: var(--surface);
+  user-select: none;
+  font-family: inherit;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+
+.langTile:hover {
+  border-color: var(--border-strong);
+}
+
+.langTileActive {
+  border-color: var(--primary);
+  background-color: var(--primary-soft-bg);
+}
+
+.langBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background-color: var(--surface-2);
+  color: var(--text-muted);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.03em;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.langBadgeActive {
+  background-color: var(--primary);
+  color: var(--primary-contrast);
+}
+
+.langTileLabel {
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-medium);
+  color: var(--text);
+}
+
+/* ---------- logo / file rows ---------- */
+
+.logoPreview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+.logoPreviewChoice {
+  composes: logoPreview;
+  margin-top: var(--space-3);
+  cursor: pointer;
+}
+
+.logoImg {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.logoMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.logoName {
+  font-size: var(--fs-label);
+  color: var(--text-muted);
+  word-break: break-word;
+}
+
+.removeBtn {
+  background: none;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 3px 10px;
+  font-size: var(--fs-caption);
+  cursor: pointer;
+  color: var(--text-muted);
+  font-family: inherit;
+  align-self: flex-start;
+  transition: border-color 0.12s ease, color 0.12s ease;
+}
+
+.removeBtn:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* ---------- misc blocks ---------- */
+
+.checkboxCard {
+  margin-top: var(--space-3);
+}
+
+.nametagGroup {
+  margin-bottom: var(--space-5);
+}
+
+.advancedBody {
+  margin-top: var(--space-4);
+}
+
+.warningWrap {
+  margin-top: var(--space-3);
+}
+
+.segmentedSpaced {
+  margin-top: var(--space-2);
+}
+
+.advancedToggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--fs-heading);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+
+.advancedToggle:hover {
+  color: var(--primary);
+}
+
+.advancedToggleArrow {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-muted);
+}
+
+.footer {
+  margin-top: 40px;
+}

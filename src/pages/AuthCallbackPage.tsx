@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { STORAGE_RETURN, useAuth } from '../auth/useAuth';
+import s from './AuthCallbackPage.module.css';
 
 export default function AuthCallbackPage() {
   const { t } = useTranslation();
@@ -38,22 +39,8 @@ export default function AuthCallbackPage() {
   }, [handleCallback, navigate]);
 
   return (
-    <div style={styles.container}>
-      <p style={styles.text}>{t('auth_callback.signing_in')}</p>
+    <div className={s.container}>
+      <p className={s.text}>{t('auth_callback.signing_in')}</p>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontFamily: 'Helvetica, Arial, sans-serif',
-  },
-  text: {
-    fontSize: 18,
-    color: 'var(--text-muted)',
-  },
-};

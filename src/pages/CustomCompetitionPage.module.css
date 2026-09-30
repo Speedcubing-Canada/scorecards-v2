@@ -1,0 +1,26 @@
+.main {
+  max-width: 640px;
+  padding-bottom: 80px;
+}
+
+.heading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-display);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+  text-wrap: balance;
+}
+
+.hint {
+  margin: 0 0 28px;
+  font-size: var(--fs-body);
+  color: var(--text-muted);
+}
+
+.section {
+  margin-bottom: var(--space-8);
+}
+
+.footer {
+  margin-top: 40px;
+}

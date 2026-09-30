@@ -1,0 +1,47 @@
+.trigger {
+  position: relative;
+}
+
+.dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--primary);
+}
+
+.title {
+  margin: 0 0 var(--space-1);
+  font-size: var(--fs-title);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-regular);
+  color: var(--text-subtle);
+}
+
+.date {
+  margin: var(--space-5) 0 6px;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+}
+
+.list {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.item {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-regular);
+  line-height: 1.6;
+  color: var(--text-muted);
+}

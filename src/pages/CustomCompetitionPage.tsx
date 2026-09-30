@@ -4,11 +4,12 @@ import { useTranslation } from 'react-i18next';
 import type { CustomEvent } from '../types/settings';
 import Header from '../components/Header';
 import CustomEventEditor from '../components/CustomEventEditor';
-import { useIsMobile } from '../lib/useIsMobile';
 import {
   readCompetition, readCustomEvents, readIsCustom,
   writeCompetition, writeCustom, writeHasGroups, writeScope,
 } from '../lib/flowState';
+import ui from '../styles/ui.module.css';
+import s from './CustomCompetitionPage.module.css';
 
 // Turn the competition name into a filename-safe id ("custom_" prefix marks the
 // flow downstream). Non-ASCII-only names fall back to a fixed id.
@@ -26,7 +27,6 @@ function customCompetitionId(name: string): string {
 export default function CustomCompetitionPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
 
   // Survive back-navigation from /settings: reload whatever was entered before.
   const [name, setName] = useState(() => (readIsCustom() ? readCompetition().name : ''));
@@ -53,32 +53,32 @@ export default function CustomCompetitionPage() {
   }
 
   return (
-    <div style={s.page}>
+    <div className={ui.page}>
       <Header showBack onBack={() => navigate('/competitions')} showSignOut />
 
-      <main style={{ ...s.main, ...(isMobile ? s.mainMobile : {}) }}>
-        <h2 style={s.heading}>{t('custom.heading')}</h2>
-        <p style={s.hint}>{t('custom.hint')}</p>
+      <main className={`${ui.main} ${s.main}`}>
+        <h2 className={s.heading}>{t('custom.heading')}</h2>
+        <p className={s.hint}>{t('custom.hint')}</p>
 
-        <section style={s.section}>
-          <h3 style={s.sectionTitle}>{t('custom.name_label')}</h3>
+        <section className={s.section}>
+          <h3 className={ui.sectionHeading}>{t('custom.name_label')}</h3>
           <input
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder={t('custom.name_placeholder')}
-            style={s.textInput}
+            className={ui.textInput}
           />
         </section>
 
-        <section style={s.section}>
-          <h3 style={s.sectionTitle}>{t('custom.events_title')}</h3>
+        <section className={s.section}>
+          <h3 className={ui.sectionHeading}>{t('custom.events_title')}</h3>
           <CustomEventEditor events={events} onChange={setEvents} />
         </section>
 
-        <div style={s.footer}>
+        <div className={s.footer}>
           <button
-            style={{ ...s.submitBtn, ...(canContinue ? {} : s.submitBtnDisabled) }}
+            className={ui.btnPrimary}
             disabled={!canContinue}
             onClick={handleContinue}
           >
@@ -89,27 +89,3 @@ export default function CustomCompetitionPage() {
     </div>
   );
 }
-
-const s: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', backgroundColor: 'var(--bg)' },
-  main: { maxWidth: 640, margin: '0 auto', padding: '32px 24px 80px' },
-  mainMobile: { padding: '24px 16px 80px' },
-  heading: { margin: '0 0 8px', fontSize: 'var(--fs-display)', fontWeight: 700, color: 'var(--text)' },
-  hint: { margin: '0 0 28px', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' },
-  section: { marginBottom: 32 },
-  sectionTitle: { margin: '0 0 12px', fontSize: 'var(--fs-heading)', fontWeight: 700, color: 'var(--text)' },
-  textInput: {
-    width: '100%', boxSizing: 'border-box',
-    backgroundColor: 'var(--surface)', color: 'var(--text)',
-    border: '2px solid var(--border)', borderRadius: 'var(--radius-md)',
-    padding: '10px 14px', fontSize: 'var(--fs-body)', fontFamily: 'inherit',
-    outline: 'none',
-  },
-  footer: { marginTop: 40 },
-  submitBtn: {
-    backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)', border: 'none',
-    borderRadius: 'var(--radius-md)', padding: '14px 32px', fontSize: 'var(--fs-heading)', fontWeight: 700,
-    cursor: 'pointer', width: '100%', fontFamily: 'inherit', letterSpacing: '-0.01em',
-  },
-  submitBtnDisabled: { opacity: 0.5, cursor: 'not-allowed' },
-};

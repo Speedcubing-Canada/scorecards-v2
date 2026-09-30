@@ -7,7 +7,10 @@
     "clear": "Clear",
     "upload": "Upload",
     "choose_file": "Choose file",
-    "menu": "Menu"
+    "menu": "Menu",
+    "language": "Language",
+    "theme_light": "Switch to light mode",
+    "theme_dark": "Switch to dark mode"
   },
   "login": {
     "subtitle": "Generate print-ready scorecards and nametags for your WCA competition.",
