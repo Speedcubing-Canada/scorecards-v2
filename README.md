@@ -275,8 +275,10 @@ Non-obvious constraints that look arbitrary in the code but break real output if
 
 - **UI work** follows [`DESIGN_GUIDELINES.md`](DESIGN_GUIDELINES.md) (CSS modules, Montserrat at
   400/500/700, lucide-react icons only, CSS-variable tokens);
-  `src/components/design-system.test.ts` enforces the hard rules. Shared primitives live in
-  `src/styles/ui.module.css`; per-component styling sits in a `Component.module.css` beside it.
+  `src/components/design-system.test.ts` enforces the hard rules (no inline style objects,
+  no raw `px` font sizes, 400/500/700 only) and `src/styles/contrast.test.ts` holds every
+  colour pairing to WCAG AA. Shared primitives live in `src/styles/ui.module.css`;
+  per-component styling sits in a `Component.module.css` beside it.
 - **No em dash in on-screen copy**, in any locale. Use a comma, a colon, or two sentences.
 - **One word per concept per locale.** A scorecard is a *feuille de score* / *hoja de
   puntuación* / *súmula* everywhere, including `src/changelog.ts`.

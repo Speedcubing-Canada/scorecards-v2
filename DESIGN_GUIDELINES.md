@@ -25,11 +25,20 @@ The CSS custom properties in `src/index.css` (`:root` + `[data-theme='dark']`) a
 source of truth. **Reference them via `var(--token)`; don't hardcode values.**
 
 - **Type size** → `--fs-stat`, `--fs-display`, `--fs-title`, `--fs-heading`, `--fs-body`,
-  `--fs-label`, `--fs-caption`, `--fs-micro`.
+  `--fs-label`, `--fs-caption`, `--fs-micro`. Never a raw `px`; the guard test fails on one.
+  The four ranks that matter: page title (`--fs-display`) → section heading (`--fs-heading`)
+  → group label (`--fs-caption`, uppercase via `ui.groupLabel`) → option title (`--fs-body`).
 - **Weight** → `--fw-regular` / `--fw-medium` / `--fw-bold`.
 - **Spacing** → `--space-1`…`--space-8`.
 - **Radii** → `--radius-sm` / `--radius-md` / `--radius-lg`.
-- **Color** → existing surface/text/border/brand/status tokens.
+- **Color** → existing surface/text/border/brand/status tokens. Two rules that are easy to
+  get wrong, and that `src/styles/contrast.test.ts` enforces:
+  - `--primary` is a **fill** and always pairs with `--primary-contrast`. The brand as
+    **text** or an icon is `--primary-soft-text`; the fill colour does not clear 4.5:1 on a
+    surface in either theme.
+  - `--border` is decorative (section rules, card edges). The visible boundary of a
+    **control** is `--border-strong`, which clears 3:1 on every surface (WCAG 1.4.11).
+  Adding a colour pairing means adding it to that test.
 
 ## Typography
 
@@ -40,6 +49,19 @@ source of truth. **Reference them via `var(--token)`; don't hardcode values.**
   - `500` - controls, nav, secondary buttons, small tile labels.
   - `700` - headings, primary buttons, stat values, option/card titles, badges.
 - Montserrat is loaded in `index.html` with exactly `@400;500;700` - keep it in sync.
+
+## Control shapes
+
+Three variants in `ui.module.css`, so the shape says what a control does before it is read:
+
+- `.optionCard` - one member of a radio or checkbox **set** ("pick from these"). Wrap the set
+  in a `<fieldset className={ui.optionGroup}>` with a `<legend>`, so the heading is tied to
+  the controls it names.
+- `.toggleCard` - a **standalone** boolean ("turn this one thing on"). Recessed, no left rule.
+- `.dropzone` - a file input.
+
+Selection is a primary border plus an inset left rule, **never a background fill**. Three
+filled red blocks on a page leave no room for the primary button to be the loudest thing.
 
 ## Icons
 
@@ -72,7 +94,12 @@ source of truth. **Reference them via `var(--token)`; don't hardcode values.**
   for free.
 - Respect `prefers-reduced-motion` (skeleton pulse + spinners already do).
 - Stay responsive with a `@media (max-width: 600px)` block in the component's CSS module.
-- Light **and** dark mode must both look right; never hardcode a color.
+- Light **and** dark mode must both look right; never hardcode a color. Dark mode cannot
+  separate a card from the page by fill alone - the contrast formula caps near-black pairs
+  around 1.26:1 - so the card **edge** carries it there.
+- A form that scrolls a long way keeps its primary action reachable (`ui.stickyFooter`).
+- A wizard's forward button is `ui.btnCta`, not `ui.btnPrimary`: capped and right-aligned on
+  a desktop, full width on a phone. A 1000px-wide button reads as a banner.
 
 ## When you change the UI
 

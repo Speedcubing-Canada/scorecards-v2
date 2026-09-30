@@ -63,6 +63,19 @@ describe('UI design system', () => {
     expect(offenders).toEqual([]);
   });
 
+  /**
+   * Type sizes come from the scale, never from a number typed into one rule. The old
+   * inline styles had 9px, 11px, 12px, 13px and 16px hardcoded past the tokens, which is
+   * how the scale drifted into a section heading only one pixel above an option title.
+   */
+  it('takes every font size from a --fs-* token', () => {
+    const offenders = CSS
+      .flatMap(f => [...f.source.matchAll(/font-size:\s*([^;]+);/g)]
+        .filter(m => !m[1].includes('var(--fs-'))
+        .map(m => `${f.path}: font-size: ${m[1].trim()}`));
+    expect(offenders).toEqual([]);
+  });
+
   it('uses only the 400/500/700 weight hierarchy (no 600 or 800)', () => {
     const offenders = [
       ...TSX.filter(f => /fontWeight: ?(600|800)/.test(f.source)),

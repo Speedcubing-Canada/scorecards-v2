@@ -16,6 +16,23 @@ export interface ChangelogEntry {
 /** Newest first. See "Contributing" in the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-09-30',
+    items: {
+      en: [
+        'The screens have been redesigned: clearer headings, calmer selected options and a readable dark mode.',
+      ],
+      fr: [
+        'Les écrans ont été repensés : titres plus clairs, options sélectionnées plus sobres et mode sombre lisible.',
+      ],
+      es: [
+        'Las pantallas se rediseñaron: títulos más claros, opciones seleccionadas más sobrias y modo oscuro legible.',
+      ],
+      pt: [
+        'As telas foram redesenhadas: títulos mais claros, opções selecionadas mais sóbrias e modo escuro legível.',
+      ],
+    },
+  },
+  {
     id: '2026-09-20',
     items: {
       en: [
