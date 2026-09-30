@@ -7,8 +7,20 @@
   margin: 0 0 28px;
 }
 
+/*
+ * A rule and generous space above each section. On a form this long, grouping has to be
+ * visible from structure - the headings alone were carrying it and losing.
+ */
 .section {
-  margin-bottom: var(--space-8);
+  margin: 0 0 var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border);
+}
+
+/* The first section sits right under the page title; no rule needed there. */
+.section:first-of-type {
+  padding-top: 0;
+  border-top: none;
 }
 
 /* Section titles that open a block partway down a section. */
@@ -25,14 +37,6 @@
   font-weight: var(--fw-bold);
   color: var(--text);
   margin: var(--space-4) 0 var(--space-2);
-}
-
-/* The <legend> form of .subheading: names a group inside a section that already has an h3. */
-.subheadingLegend {
-  composes: subheading;
-  padding: 0;
-  margin-top: 0;
-  margin-bottom: var(--space-1);
 }
 
 .roundsGroup {
@@ -115,17 +119,8 @@
 
 /* ---------- language tiles ---------- */
 
-.langCaption {
-  margin: 0 0 var(--space-2);
-  font-size: var(--fs-caption);
-  font-weight: var(--fw-bold);
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 .langCaptionSpaced {
-  composes: langCaption;
+  composes: groupLabel from '../styles/ui.module.css';
   margin-top: 18px;
 }
 

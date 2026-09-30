@@ -337,7 +337,7 @@ export default function SettingsPage() {
         <section className={s.section}>
           <h3 className={ui.sectionHeading}>{t('settings.language.title')}</h3>
 
-          <p className={s.langCaption}>{t('settings.language.primary_title')}</p>
+          <p className={ui.groupLabel}>{t('settings.language.primary_title')}</p>
           <div className={s.langRow}>
             {LANGUAGES.map((opt) => renderLangTile({
               key: opt.code,
@@ -570,7 +570,7 @@ export default function SettingsPage() {
           {(logoDataUrl || useDefaultLogo) && (
             <div className={s.nametagGroup}>
               <fieldset className={ui.optionGroup}>
-                <legend className={s.subheadingLegend}>{t('settings.nametag.logo_on_nametags')}</legend>
+                <legend className={ui.groupLabel}>{t('settings.nametag.logo_on_nametags')}</legend>
                 {logoModeOptions.map(opt => (
                   <label key={opt.value} className={`${ui.optionCard} ${nametagLogoMode === opt.value ? ui.optionCardActive : ''}`}>
                     <input
@@ -592,7 +592,7 @@ export default function SettingsPage() {
           )}
 
           <fieldset className={ui.optionGroup}>
-            <legend className={s.subheadingLegend}>{t('settings.nametag.qr_codes')}</legend>
+            <legend className={ui.groupLabel}>{t('settings.nametag.qr_codes')}</legend>
             {qrModeOptions.map(opt => (
               <label key={opt.value} className={`${ui.optionCard} ${nametagQrMode === opt.value ? ui.optionCardActive : ''}`}>
                 <input
@@ -728,7 +728,7 @@ export default function SettingsPage() {
               )}
 
               <fieldset className={`${ui.optionGroup} ${s.roundsGroup}`}>
-                <legend className={s.subheadingLegend}>{t('settings.double_check.rounds_title')}</legend>
+                <legend className={ui.groupLabel}>{t('settings.double_check.rounds_title')}</legend>
                 {DOUBLE_CHECK_ROUND_OPTIONS.map(opt => (
                   <label key={opt.value} className={`${ui.optionCard} ${scrambleDoubleCheckRounds.includes(opt.value) ? ui.optionCardActive : ''}`}>
                     <input

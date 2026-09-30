@@ -47,14 +47,22 @@
  * type scale, weight hierarchy, spacing, and radii. Keep weights to 400/500/700.
  */
 :root {
-  /* Type scale */
+  /*
+   * Type scale. Four ranks, each clearly apart, so a long settings form reads as a
+   * hierarchy instead of a flat wall:
+   *   --fs-display  page title
+   *   --fs-heading  section heading (the only 17px thing on a page)
+   *   --fs-caption  group label, uppercase and tracked - a label, not a small heading
+   *   --fs-body     option title (bold) and body copy
+   * A section heading used to be 15px against a 14px option title, one pixel of rank.
+   */
   --fs-stat: 28px;     /* large stat numbers */
-  --fs-display: 22px;  /* page titles */
+  --fs-display: 24px;  /* page titles */
   --fs-title: 20px;    /* dialog titles */
-  --fs-heading: 15px;  /* section headings */
-  --fs-body: 14px;     /* body text, inputs, buttons */
-  --fs-label: 13px;    /* labels, hints, nav */
-  --fs-caption: 12px;  /* captions, tooltips, badges */
+  --fs-heading: 17px;  /* section headings */
+  --fs-body: 14px;     /* body text, option titles, inputs, buttons */
+  --fs-label: 13px;    /* descriptions, hints, nav */
+  --fs-caption: 12px;  /* group labels, captions, tooltips, badges */
   --fs-micro: 10px;    /* icon-tile labels - the smallest type in the UI */
 
   /* Weight hierarchy - only these three weights are used anywhere */
