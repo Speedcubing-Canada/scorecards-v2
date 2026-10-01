@@ -57,7 +57,8 @@ const PAIRS: [string, string, number, string][] = [
   ['--primary-contrast', '--primary', 4.5, 'the label on a primary button'],
   ['--primary-soft-text', '--surface', 4.5, 'small brand text (links, diagram numbers)'],
   ['--primary', '--surface', 3, 'the brand as large display text (stat values, progress %)'],
-  ['--primary-soft-text', '--primary-soft-bg', 4.5, 'the progress bar fill on its track'],
+  ['--danger', '--danger-soft-bg', 4.5, 'the text in an error box'],
+  ['--primary', '--bg', 3, 'the progress fill on its track'],
   ['--warning-text', '--warning-bg', 4.5, 'a warning banner'],
   ['--success', '--surface', 4.5, 'the "auto-detected" confirmation'],
   ['--danger', '--surface', 4.5, 'an error message'],
@@ -66,6 +67,7 @@ const PAIRS: [string, string, number, string][] = [
   ['--border-strong', '--surface', 3, 'a control outline on a card'],
   ['--border-strong', '--bg', 3, 'a control outline on the page'],
   ['--border-strong', '--surface-2', 3, 'a control outline on a toggle'],
+  ['--text-subtle', '--surface-2', 4.5, 'the label on a disabled button'],
   ['--primary', '--surface', 3, 'the primary fill against a card'],
 ];
 

@@ -38,6 +38,11 @@ source of truth. **Reference them via `var(--token)`; don't hardcode values.**
     surface in either theme.
   - `--border` is decorative (section rules, card edges). The visible boundary of a
     **control** is `--border-strong`, which clears 3:1 on every surface (WCAG 1.4.11).
+  - **There is no pale-brand tint.** A disabled button is neutral, an error box is
+    `--danger-soft-bg`, a progress track is `--bg`. A washed-out brand pink reads as a
+    third state that means nothing.
+  - Large text (>=18.66px bold, or >=24px) only needs 3:1, which is why `--primary` works
+    for the stat values and the progress percentage but not for a 14px link.
   Adding a colour pairing means adding it to that test.
 
 ## Typography

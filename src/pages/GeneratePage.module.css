@@ -103,7 +103,9 @@
 
 .progressTrack {
   height: 10px;
-  background-color: var(--primary-soft-bg);
+  /* A recessed well, so the brand fill clears 3:1 against it in both themes.
+     --surface-2 only managed 2.87:1 in dark. */
+  background-color: var(--bg);
   border-radius: 5px;
   overflow: hidden;
 }

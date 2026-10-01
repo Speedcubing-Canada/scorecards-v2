@@ -25,19 +25,22 @@
    * `--primary-contrast`. `--primary-soft-text` is the brand as TEXT or an icon - it has to
    * clear 4.5:1 on a surface, which the fill colour does not in either theme.
    * `--primary-hover` is the more prominent state: darker in light, brighter in dark.
+   *
+   * There is deliberately no pale-brand tint: a disabled button is neutral, an error box
+   * uses `--danger-soft-bg`, and a progress track is `--surface-2`. A washed-out brand
+   * pink reads as a third, meaningless state.
    */
   --primary: #d32f2f;
   --primary-hover: #b71c1c;
   --primary-contrast: #ffffff;
-  --primary-soft-bg: #ffebee;
   --primary-soft-text: #c62828;
-  --primary-disabled: #ef9a9a;
 
   /* Status */
   --warning-bg: #fff8e1;
   --warning-border: #f9a825;
   --warning-text: #b45309;
   --danger: #c00000;
+  --danger-soft-bg: #fff0f0;
   --success: #15803d;
 
   /* Shadows */
@@ -122,15 +125,15 @@
   --primary: #d32f2f;
   --primary-hover: #e5423f;
   --primary-contrast: #ffffff;
-  --primary-soft-bg: #33201f;
-  --primary-soft-text: #ff9b9b;
-  --primary-disabled: #6e4040;
+  /* #ff9b9b before: it cleared the contrast bar but read as rose, not as the brand. */
+  --primary-soft-text: #fc5f5f;
 
   /* Status */
   --warning-bg: #3a3320;
   --warning-border: #b08a2e;
   --warning-text: #e8c477;
   --danger: #ff6b6b;
+  --danger-soft-bg: #2e1b1b;
   --success: #4ade80;
 
   /* Shadows */
