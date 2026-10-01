@@ -657,6 +657,7 @@ export default function SettingsPage() {
 
           {advancedOpen && (
             <div className={s.advancedBody}>
+              <section className={s.section}>
               <h3 className={ui.sectionHeading}>{t('settings.double_check.title')}</h3>
               <p className={ui.hint}>{t('settings.double_check.hint')}</p>
 
@@ -782,9 +783,11 @@ export default function SettingsPage() {
                 onChange={handleDcOverridesChange}
               />
 
+              </section>
+
               {multiStage && (
-                <>
-                  <h3 className={`${ui.sectionHeading} ${s.sectionTitleGapped}`}>
+                <section className={s.section}>
+                  <h3 className={ui.sectionHeading}>
                     {t('settings.advanced.stage_split_title')}
                   </h3>
                   <label className={`${ui.toggleCard} ${splitPdfsByStage ? ui.toggleCardActive : ''}`}>
@@ -804,19 +807,19 @@ export default function SettingsPage() {
                       <WarningBanner>{t('warnings.stage_split_prefilled')}</WarningBanner>
                     </div>
                   )}
-                </>
+                </section>
               )}
 
               {everything && (
-                <>
-                  <h3 className={`${ui.sectionHeading} ${s.sectionTitleGapped}`}>
+                <section className={s.section}>
+                  <h3 className={ui.sectionHeading}>
                     {t('settings.advanced.custom_events_title')}{' '}
                     <span className={s.optional}>({t('settings.advanced.custom_events_optional')})</span>
                   </h3>
                   <p className={ui.hint}>{t('settings.advanced.custom_events_hint')}</p>
 
                   <CustomEventEditor events={customEvents} onChange={events => patch({ customEvents: events })} />
-                </>
+                </section>
               )}
             </div>
           )}

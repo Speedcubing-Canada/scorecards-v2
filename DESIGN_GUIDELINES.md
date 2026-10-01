@@ -116,6 +116,9 @@ shims it for tests.
   separate a card from the page by fill alone - the contrast formula caps near-black pairs
   around 1.26:1 - so the card **edge** carries it there.
 - A form that scrolls a long way keeps its primary action reachable (`ui.stickyFooter`).
+- **A disclosure is a control, not a heading.** `Advanced` is a muted `--fs-body` toggle;
+  the sections it reveals are ordinary `<section>`s with the page's rule and 17px heading,
+  so opening it continues the page's rhythm rather than starting a flat run of headings.
 - **Use the width.** Organizers are on laptops; a 640px column in a 1440px window wastes
   two thirds of the screen. The settings sections flow into two balanced CSS columns above
   1000px (`columns: 2`, with `break-inside: avoid` on each section). CSS columns, not a
