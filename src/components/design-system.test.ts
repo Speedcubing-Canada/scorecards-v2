@@ -76,6 +76,20 @@ describe('UI design system', () => {
     expect(offenders).toEqual([]);
   });
 
+  /**
+   * A control hidden behind a custom tile (the preset picker) must stay in the
+   * accessibility tree and stay focusable, so it is hidden with opacity, never with
+   * display:none or visibility:hidden. Checked statically because vitest runs with CSS
+   * processing off - a rendered assertion would pass either way.
+   */
+  it('keeps visually-hidden inputs focusable', () => {
+    const offenders = CSS
+      .flatMap(f => [...f.source.matchAll(/\.(\w*[Ii]nput)\s*\{([^}]*)\}/g)]
+        .filter(m => /opacity:\s*0/.test(m[2]) && /display:\s*none|visibility:\s*hidden/.test(m[2]))
+        .map(m => `${f.path}: .${m[1]}`));
+    expect(offenders).toEqual([]);
+  });
+
   it('uses only the 400/500/700 weight hierarchy (no 600 or 800)', () => {
     const offenders = [
       ...TSX.filter(f => /fontWeight: ?(600|800)/.test(f.source)),

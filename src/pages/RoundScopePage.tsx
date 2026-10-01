@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { XCircle } from 'lucide-react';
+import { Check, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
@@ -277,26 +277,31 @@ export default function RoundScopePage() {
                 <h3 className={ui.sectionHeading}>{t('scope.presets_title')}</h3>
                 <p className={ui.sectionHint}>{t('scope.presets_hint')}</p>
                 <fieldset className={s.presetGrid}>
-                  {[null, ...PRESETS].map(preset => (
-                    <label
-                      key={preset?.id ?? 'default'}
-                      className={`${ui.optionCard} ${presetId === (preset?.id ?? null) ? ui.optionCardActive : ''}`}
-                    >
-                      <input
-                        type="radio"
-                        name="preset"
-                        checked={presetId === (preset?.id ?? null)}
-                        onChange={() => applyPreset(preset)}
-                        className={ui.radio}
-                      />
-                      <div>
-                        <div className={ui.optionLabel}>{preset?.name ?? t('scope.preset_default')}</div>
-                        {(preset ? preset.region : t('scope.preset_default_desc')) && (
-                          <div className={ui.optionDesc}>{preset ? preset.region : t('scope.preset_default_desc')}</div>
+                  {[null, ...PRESETS].map(preset => {
+                    const selected = presetId === (preset?.id ?? null);
+                    const sub = preset ? preset.region : t('scope.preset_default_desc');
+                    return (
+                      <label
+                        key={preset?.id ?? 'default'}
+                        className={`${s.presetTile} ${selected ? s.presetTileActive : ''}`}
+                      >
+                        <input
+                          type="radio"
+                          name="preset"
+                          checked={selected}
+                          onChange={() => applyPreset(preset)}
+                          className={s.presetInput}
+                        />
+                        <span className={s.presetName}>{preset?.name ?? t('scope.preset_default')}</span>
+                        {sub && <span className={s.presetRegion}>{sub}</span>}
+                        {selected && (
+                          <span className={s.presetCheck} aria-hidden="true">
+                            <Check size={12} strokeWidth={3} />
+                          </span>
                         )}
-                      </div>
-                    </label>
-                  ))}
+                      </label>
+                    );
+                  })}
                 </fieldset>
               </section>
             )}

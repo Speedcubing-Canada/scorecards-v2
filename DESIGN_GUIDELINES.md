@@ -68,6 +68,11 @@ Three variants in `ui.module.css`, so the shape says what a control does before 
 Selection is a primary border plus an inset left rule, **never a background fill**. Three
 filled red blocks on a page leave no room for the primary button to be the loudest thing.
 
+A **picker made of tiles** (the preset picker, the language tiles) keeps a real `<input>`
+underneath, hidden with `opacity: 0` and never `display: none` or `visibility: hidden` -
+that keeps the group's accessible name and its arrow-key behaviour. State the choice on
+screen with a tick or a badge, not with the native control. The guard test checks this.
+
 ## Modals
 
 Use `src/components/Modal.tsx`. It is a native `<dialog>` opened with `showModal()`, so the
@@ -111,6 +116,10 @@ shims it for tests.
   separate a card from the page by fill alone - the contrast formula caps near-black pairs
   around 1.26:1 - so the card **edge** carries it there.
 - A form that scrolls a long way keeps its primary action reachable (`ui.stickyFooter`).
+- **Use the width.** Organizers are on laptops; a 640px column in a 1440px window wastes
+  two thirds of the screen. The settings sections flow into two balanced CSS columns above
+  1000px (`columns: 2`, with `break-inside: avoid` on each section). CSS columns, not a
+  grid: a grid makes every row as tall as its tallest section and leaves holes.
 - **A disabled button says why.** A greyed-out CTA with nothing beside it is a dead end;
   see `blockedReason` on the scope page.
 - One `<h1>` per page (the page title). The Header's app name is a `<span>`, and section

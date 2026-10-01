@@ -334,6 +334,10 @@ export default function SettingsPage() {
 
         {noGroups && <WarningBanner>{t('warnings.no_groups')}</WarningBanner>}
 
+        {/* The settings sections flow into two balanced columns on a laptop. Advanced sits
+            below them at full width: expanded it is longer than everything else combined,
+            and it would leave one column trailing off the bottom of the page. */}
+        <div className={s.columns}>
         <section className={s.section}>
           <h3 className={ui.sectionHeading}>{t('settings.language.title')}</h3>
 
@@ -640,9 +644,10 @@ export default function SettingsPage() {
           </div>
         </section>
         )}
+        </div>
 
         {showScorecards && !isCustom && (
-        <section className={s.section}>
+        <section className={`${s.section} ${s.advancedSection}`}>
           <button className={s.advancedToggle} onClick={() => setAdvancedOpen(o => !o)} aria-expanded={advancedOpen}>
             <span className={s.advancedToggleArrow}>
               {advancedOpen ? <ChevronDown size={16} strokeWidth={2.5} /> : <ChevronRight size={16} strokeWidth={2.5} />}

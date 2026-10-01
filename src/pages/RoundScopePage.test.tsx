@@ -11,6 +11,7 @@ import { fetchWcif } from '../auth/wca';
 import i18n from '../i18n/index';
 import { markAllSeen } from '../changelog';
 import { writeCompetition, readHasGroups, readStoredScope } from '../lib/flowState';
+import { PRESETS, readPresetId } from '../presets';
 import { sampleWcif } from '../test/fixtures';
 import { renderWithProviders, signedInAuth, useEnglish } from '../test/render';
 import RoundScopePage from './RoundScopePage';
@@ -110,6 +111,33 @@ describe('RoundScopePage', () => {
     // Coming back must show what was chosen, not the defaults.
     expect((screen.getByLabelText(i18n.t('scope.doc_schedule')) as HTMLInputElement).checked)
       .toBe(chosen);
+  });
+
+  /*
+   * The preset picker is a custom tile, not a labelled radio: the native input is still
+   * in the DOM but transparent, so the radio group keeps its accessible name and its
+   * keyboard behaviour. Hiding that input with display:none or visibility:hidden would
+   * take both away silently, hence these two.
+   */
+  describe('the preset tiles', () => {
+    it('expose a real radio group a screen reader can name', async () => {
+      renderWithProviders(<RoundScopePage />, { auth: signedInAuth });
+      await screen.findByText(i18n.t('scope.presets_title'));
+
+      const radios = screen.getAllByRole('radio', { name: new RegExp(PRESETS[0].name) });
+      expect(radios.length).toBe(1);
+      expect(radios[0].tagName).toBe('INPUT');
+    });
+
+    it('applies the preset that was picked', async () => {
+      renderWithProviders(<RoundScopePage />, { auth: signedInAuth });
+      await screen.findByText(i18n.t('scope.presets_title'));
+
+      fireEvent.click(screen.getAllByRole('radio', { name: new RegExp(PRESETS[0].name) })[0]);
+      fireEvent.click(screen.getByRole('button', { name: i18n.t('scope.continue') }));
+
+      expect(readPresetId()).toBe(PRESETS[0].id);
+    });
   });
 
   it('surfaces a WCIF fetch failure instead of hanging on the skeleton', async () => {

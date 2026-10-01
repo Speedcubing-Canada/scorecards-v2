@@ -2,6 +2,37 @@
   max-width: 640px;
 }
 
+/*
+ * Most organizers are on a laptop, where a 640px column left two thirds of the screen
+ * empty and the form 3400px long. CSS columns rather than a grid: they balance the
+ * sections automatically, so there are no ragged gaps when a section is conditional.
+ */
+@media (min-width: 1000px) {
+  .main {
+    max-width: 1100px;
+  }
+
+  /*
+   * CSS columns, not a grid: a grid pairs sections row by row, and with six sections of
+   * very different heights every row was as tall as its tallest member, leaving holes.
+   * Columns balance by height instead, and reading order stays top-to-bottom per column.
+   */
+  .columns {
+    columns: 2;
+    column-gap: 48px;
+  }
+
+  /* A section must never be split down the middle of a column. */
+  .section {
+    break-inside: avoid;
+  }
+
+  /* Advanced is full width below the columns, but its controls stay a readable width. */
+  .advancedSection {
+    max-width: 640px;
+  }
+}
+
 .heading {
   margin: 0 0 28px;
 }

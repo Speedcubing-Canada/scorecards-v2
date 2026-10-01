@@ -254,7 +254,10 @@
   display: flex;
   margin-top: var(--space-8);
   padding: var(--space-4) 0 calc(var(--space-4) + env(safe-area-inset-bottom));
-  background: linear-gradient(to top, var(--bg) 60%, transparent);
+  /* An opaque bar with its own edge. A gradient let the content it covers show through,
+     which reads as a bug once the page is more than one column wide. */
+  background-color: var(--bg);
+  border-top: 1px solid var(--border);
 }
 
 .btnSecondary {
