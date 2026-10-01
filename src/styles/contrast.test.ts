@@ -9,8 +9,13 @@ import { fileURLToPath } from 'node:url';
  * choice looks fine next to the colour it was chosen against and only fails against the
  * surface it actually lands on. Every pair below is a real pairing in the UI.
  *
- * Thresholds are WCAG 2.1 AA: 4.5:1 for text, 3:1 for the visual boundary of a control
- * (1.4.11). Decorative colours (--border, the disabled fill) are deliberately absent.
+ * Thresholds are WCAG 2.1 AA: 4.5:1 for normal text, 3:1 for LARGE text (>=18.66px bold,
+ * or >=24px) and for the visual boundary of a control (1.4.11). Decorative colours
+ * (--border, the disabled fill) are deliberately absent.
+ *
+ * The large-text allowance is why the brand red works for the stat values and the progress
+ * percentage but not for a 14px link: --primary is the fill and big display numbers,
+ * --primary-soft-text is small brand-coloured text.
  */
 
 const CSS = readFileSync(fileURLToPath(new URL('../index.css', import.meta.url)), 'utf-8');
@@ -50,7 +55,8 @@ const PAIRS: [string, string, number, string][] = [
   ['--text-subtle', '--bg', 4.5, 'group labels on the page'],
   ['--text-subtle', '--surface-2', 4.5, 'subtle text on a toggle'],
   ['--primary-contrast', '--primary', 4.5, 'the label on a primary button'],
-  ['--primary-soft-text', '--surface', 4.5, 'the brand as text (stat values, links)'],
+  ['--primary-soft-text', '--surface', 4.5, 'small brand text (links, diagram numbers)'],
+  ['--primary', '--surface', 3, 'the brand as large display text (stat values, progress %)'],
   ['--primary-soft-text', '--primary-soft-bg', 4.5, 'the progress bar fill on its track'],
   ['--warning-text', '--warning-bg', 4.5, 'a warning banner'],
   ['--success', '--surface', 4.5, 'the "auto-detected" confirmation'],

@@ -30,7 +30,7 @@
 .statValue {
   font-size: var(--fs-stat);
   font-weight: var(--fw-bold);
-  color: var(--primary-soft-text);
+  color: var(--primary);
   margin-bottom: var(--space-1);
   font-variant-numeric: tabular-nums;
 }
@@ -97,7 +97,7 @@
 .progressPct {
   font-size: var(--fs-title);
   font-weight: var(--fw-bold);
-  color: var(--primary-soft-text);
+  color: var(--primary);
   font-variant-numeric: tabular-nums;
 }
 
