@@ -43,6 +43,7 @@ function ratio(a: string, b: string): number {
 const PAIRS: [string, string, number, string][] = [
   ['--text', '--surface', 4.5, 'body text on a card'],
   ['--text', '--bg', 4.5, 'body text on the page'],
+  ['--text', '--surface-2', 4.5, 'text on a toggle'],
   ['--text-muted', '--surface', 4.5, 'descriptions on a card'],
   ['--text-muted', '--surface-2', 4.5, 'descriptions on a toggle'],
   ['--text-subtle', '--surface', 4.5, '"(optional)" markers on a card'],
@@ -50,7 +51,7 @@ const PAIRS: [string, string, number, string][] = [
   ['--text-subtle', '--surface-2', 4.5, 'subtle text on a toggle'],
   ['--primary-contrast', '--primary', 4.5, 'the label on a primary button'],
   ['--primary-soft-text', '--surface', 4.5, 'the brand as text (stat values, links)'],
-  ['--primary-soft-text', '--primary-soft-bg', 4.5, 'the competition badge'],
+  ['--primary-soft-text', '--primary-soft-bg', 4.5, 'the progress bar fill on its track'],
   ['--warning-text', '--warning-bg', 4.5, 'a warning banner'],
   ['--success', '--surface', 4.5, 'the "auto-detected" confirmation'],
   ['--danger', '--surface', 4.5, 'an error message'],

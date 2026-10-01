@@ -24,10 +24,18 @@
   }
 }
 
+/*
+ * Which competition this page is about: context, not an action and not a selection, so it
+ * is a neutral tag. It used to be a brand-red tint, which spent the one colour that means
+ * "primary action" here on a label that is never clicked.
+ */
 .compBadge {
   display: inline-block;
-  background-color: var(--primary-soft-bg);
-  color: var(--primary-soft-text);
+  /* surface + border, like every other container here: --surface-2 sits only 1.03:1 off
+     the page background, so a bare fill did not read as a tag at all. */
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
   border-radius: var(--radius-sm);
   padding: var(--space-1) var(--space-3);
   font-size: var(--fs-label);
