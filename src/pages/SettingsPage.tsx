@@ -19,9 +19,10 @@ import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
 import CustomEventEditor from '../components/CustomEventEditor';
-import { useIsMobile } from '../lib/useIsMobile';
 import { fetchScoretakingSoftware, fetchWcaLiveId, fetchWcaLivePersonIds } from '../auth/wca';
 import { useAuth } from '../auth/useAuth';
+import ui from '../styles/ui.module.css';
+import s from './SettingsPage.module.css';
 
 // Where each ranking rule lands when it is ticked. 50 is the world top the regulation names;
 // 1 is the national/continental record holder, who a world-50 threshold misses in a small region.
@@ -56,7 +57,6 @@ function restorableSettings(previous: CompetitionSettings | null): Partial<Setti
 export default function SettingsPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const { token } = useAuth();
 
   const { id: competitionId, name: competitionName } = readCompetition();
@@ -189,10 +189,10 @@ export default function SettingsPage() {
       type="button"
       onClick={o.onClick}
       aria-pressed={o.selected}
-      style={{ ...s.langTile, ...(o.selected ? s.langTileActive : {}) }}
+      className={`${s.langTile} ${o.selected ? s.langTileActive : ''}`}
     >
-      <span style={{ ...s.langBadge, ...(o.selected ? s.langBadgeActive : {}) }}>{o.badge}</span>
-      <span style={s.langTileLabel}>{o.label}</span>
+      <span className={`${s.langBadge} ${o.selected ? s.langBadgeActive : ''}`}>{o.badge}</span>
+      <span className={s.langTileLabel}>{o.label}</span>
     </button>
   );
 
@@ -325,20 +325,24 @@ export default function SettingsPage() {
 
 
   return (
-    <div style={s.page}>
+    <div className={ui.page}>
       <Header showBack onBack={() => navigate(isCustom ? '/custom' : '/scope')} showSignOut />
 
-      <main style={{ ...s.main, ...(isMobile ? s.mainMobile : {}) }}>
-        <div style={s.compBadge}>{competitionName}</div>
-        <h2 style={s.heading}>{t('settings.heading')}</h2>
+      <main id="main" className={`${ui.main} ${s.main}`}>
+        <div className={ui.compBadge}>{competitionName}</div>
+        <h1 className={`${ui.pageTitle} ${s.heading}`}>{t('settings.heading')}</h1>
 
         {noGroups && <WarningBanner>{t('warnings.no_groups')}</WarningBanner>}
 
-        <section style={s.section}>
-          <h3 style={s.sectionTitle}>{t('settings.language.title')}</h3>
+        {/* The settings sections flow into two balanced columns on a laptop. Advanced sits
+            below them at full width: expanded it is longer than everything else combined,
+            and it would leave one column trailing off the bottom of the page. */}
+        <div className={s.columns}>
+        <section className={s.section}>
+          <h3 className={ui.sectionHeading}>{t('settings.language.title')}</h3>
 
-          <p style={s.langCaption}>{t('settings.language.primary_title')}</p>
-          <div style={s.langRow}>
+          <div className={ui.groupLabel}>{t('settings.language.primary_title')}</div>
+          <div className={s.langRow}>
             {LANGUAGES.map((opt) => renderLangTile({
               key: opt.code,
               badge: opt.code.toUpperCase(),
@@ -348,8 +352,8 @@ export default function SettingsPage() {
             }))}
           </div>
 
-          <p style={{ ...s.langCaption, marginTop: 18 }}>{t('settings.language.secondary_title')}</p>
-          <div style={s.langRow}>
+          <div className={s.langCaptionSpaced}>{t('settings.language.secondary_title')}</div>
+          <div className={s.langRow}>
             {secondaryLanguageRow(LANGUAGES, language, secondaryLanguage).map((tile, i) => {
               // The column under the selected primary is the "None" tile.
               const lang = LANGUAGES[i];
@@ -372,183 +376,187 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        <section style={s.section}>
-          <h3 style={s.sectionTitle}>{t('settings.paper.title')}</h3>
-          <div style={s.optionGroup}>
+        <section className={s.section}>
+          <fieldset className={ui.optionGroup}>
+            <legend className={ui.groupLegend}>{t('settings.paper.title')}</legend>
             {PAPER_OPTIONS.map((opt) => (
-              <label key={opt.value} style={{ ...s.optionCard, ...(paperFormat === opt.value ? s.optionCardActive : {}) }}>
+              <label key={opt.value} className={`${ui.optionCard} ${paperFormat === opt.value ? ui.optionCardActive : ''}`}>
                 <input
                   type="radio"
                   name="paper"
                   value={opt.value}
                   checked={paperFormat === opt.value}
                   onChange={() => patch({ paperFormat: opt.value })}
-                  style={s.radio}
+                  className={ui.radio}
                 />
                 <div>
-                  <div style={s.optionLabel}>{opt.label}</div>
-                  <div style={s.optionDesc}>{opt.description}</div>
+                  <div className={ui.optionLabel}>{opt.label}</div>
+                  <div className={ui.optionDesc}>{opt.description}</div>
                 </div>
               </label>
             ))}
-          </div>
+          </fieldset>
         </section>
 
         {showScorecards && showSecondRoundMode && (
-        <section style={s.section}>
-          <h3 style={s.sectionTitle}>{t('settings.subsequent_rounds.title')}</h3>
-          <div style={s.optionGroup}>
+        <section className={s.section}>
+          <fieldset className={ui.optionGroup}>
+            <legend className={ui.groupLegend}>{t('settings.subsequent_rounds.title')}</legend>
             {ROUND_MODE_OPTIONS.map((opt) => (
-              <label key={opt.value} style={{ ...s.optionCard, ...(secondRoundMode === opt.value ? s.optionCardActive : {}) }}>
+              <label key={opt.value} className={`${ui.optionCard} ${secondRoundMode === opt.value ? ui.optionCardActive : ''}`}>
                 <input
                   type="radio"
                   name="roundMode"
                   value={opt.value}
                   checked={secondRoundMode === opt.value}
                   onChange={() => patch({ secondRoundMode: opt.value })}
-                  style={s.radio}
+                  className={ui.radio}
                 />
                 <div>
-                  <div style={s.optionLabel}>{opt.label}</div>
-                  <div style={s.optionDesc}>{opt.description}</div>
+                  <div className={ui.optionLabel}>{opt.label}</div>
+                  <div className={ui.optionDesc}>{opt.description}</div>
                 </div>
               </label>
             ))}
-          </div>
+          </fieldset>
         </section>
         )}
 
         {showScorecards && !isCustom && (
-        <section style={s.section}>
-          <h3 style={s.sectionTitle}>{t('settings.check_mode.title')}</h3>
-          <p style={s.hint}>{t('settings.check_mode.hint')}</p>
-          <div style={s.optionGroup}>
+        <section className={s.section}>
+          <fieldset className={ui.optionGroup}>
+            <legend className={ui.groupLegend}>{t('settings.check_mode.title')}</legend>
+            <p className={ui.hint}>{t('settings.check_mode.hint')}</p>
             {checkModeOptions.map(opt => (
-              <label key={opt.value} style={{ ...s.optionCard, ...(scorecardCheckMode === opt.value ? s.optionCardActive : {}) }}>
+              <label key={opt.value} className={`${ui.optionCard} ${scorecardCheckMode === opt.value ? ui.optionCardActive : ''}`}>
                 <input
                   type="radio"
                   name="checkMode"
                   value={opt.value}
                   checked={scorecardCheckMode === opt.value}
                   onChange={() => patch({ scorecardCheckMode: opt.value })}
-                  style={s.radio}
+                  className={ui.radio}
                 />
                 <div>
-                  <div style={s.optionLabel}>{opt.label}</div>
-                  <div style={s.optionDesc}>{opt.description}</div>
+                  <div className={ui.optionLabel}>{opt.label}</div>
+                  <div className={ui.optionDesc}>{opt.description}</div>
                 </div>
               </label>
             ))}
-          </div>
+          </fieldset>
         </section>
         )}
 
         {(showScorecards || showNametags) && !isCustom && (
-        <section style={s.section}>
-          <h3 style={s.sectionTitle}>{t('settings.wca_live.system_title')}</h3>
+        <section className={s.section}>
+          <h3 className={ui.sectionHeading}>{t('settings.wca_live.system_title')}</h3>
           {/* Only the name tag QR codes read the system and the id. The scorecard checkbox
               below is about the printed "WCA Live:" line, which exists in either system. */}
           {showNametags && (<>
-          <p style={s.hint}>{t('settings.wca_live.system_hint')}</p>
-          <div style={s.optionGroup}>
+          <p className={ui.hint}>{t('settings.wca_live.system_hint')}</p>
+          <fieldset className={ui.optionGroup} aria-label={t('settings.wca_live.system_title')}>
             {liveModeOptions.map(opt => (
-              <label key={opt.value} style={{ ...s.optionCard, ...(liveResultsMode === opt.value ? s.optionCardActive : {}) }}>
+              <label key={opt.value} className={`${ui.optionCard} ${liveResultsMode === opt.value ? ui.optionCardActive : ''}`}>
                 <input
                   type="radio"
                   name="liveResultsMode"
                   value={opt.value}
                   checked={liveResultsMode === opt.value}
                   onChange={() => { setModeTouched(true); patch({ liveResultsMode: opt.value }); }}
-                  style={s.radio}
+                  className={ui.radio}
                 />
                 <div>
-                  <div style={s.optionLabel}>{opt.label}</div>
-                  <div style={s.optionDesc}>{opt.description}</div>
+                  <div className={ui.optionLabel}>{opt.label}</div>
+                  <div className={ui.optionDesc}>{opt.description}</div>
                 </div>
               </label>
             ))}
-          </div>
+          </fieldset>
 
           {/* ILR needs no id: its URLs are built from the WCA competition id we already have. */}
           {liveResultsMode === 'wca-live' && (<>
-          <h3 style={{ ...s.sectionTitle, marginTop: 20 }}>
+          <h3 className={`${ui.sectionHeading} ${s.sectionTitleSpaced}`}>
             {t('settings.wca_live.title')}{' '}
-            <span style={s.optional}>({t('settings.wca_live.optional_note')})</span>
+            <span className={s.optional}>({t('settings.wca_live.optional_note')})</span>
             {wcaLiveFetchStatus === 'loading' && (
-              <span style={s.wcaLiveLoading}> {t('settings.wca_live.fetching')}</span>
+              <span className={s.wcaLiveLoading}> {t('settings.wca_live.fetching')}</span>
             )}
             {wcaLiveFetchStatus === 'found' && (
-              <span style={s.wcaLiveFound}>
+              <span className={s.wcaLiveFound}>
                 <Check size={14} strokeWidth={2.5} /> {t('settings.wca_live.auto_detected')}
               </span>
             )}
           </h3>
           {wcaLiveFetchStatus === 'not-found' && (
-            <p style={{ ...s.hint, color: 'var(--warning-text)' }}>{t('settings.wca_live.not_found')}</p>
+            <p className={`${ui.hint} ${s.hintWarning}`}>{t('settings.wca_live.not_found')}</p>
           )}
           {wcaLiveFetchStatus !== 'not-found' && (
-            <p style={s.hint}>{t('settings.wca_live.hint')}</p>
+            <p className={ui.hint}>{t('settings.wca_live.hint')}</p>
           )}
           <input
+            id="wca-live-id"
             type="text"
             inputMode="numeric"
+            autoComplete="off"
+            spellCheck={false}
             value={wcaLiveId ?? ''}
             onChange={e => patch({ wcaLiveId: e.target.value.replace(/\D/g, '') })}
             placeholder={t('settings.wca_live.placeholder')}
-            style={s.textInput}
+            className={ui.textInput}
+            aria-label={t('settings.wca_live.title')}
           />
           </>)}
           </>)}
           {showScorecards && (
-          <label style={{ ...s.optionCard, cursor: 'pointer', marginTop: 12 }}>
+          <label className={`${ui.toggleCard} ${s.checkboxCard} ${hideWcaLiveId ? ui.toggleCardActive : ''}`}>
             <input
               type="checkbox"
               checked={hideWcaLiveId}
               onChange={e => patch({ hideWcaLiveId: e.target.checked })}
-              style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
+              className={ui.radio}
             />
             <div>
-              <div style={s.optionLabel}>{t('settings.wca_live.hide_label')}</div>
-              <div style={s.optionDesc}>{t('settings.wca_live.hide_desc')}</div>
+              <div className={ui.optionLabel}>{t('settings.wca_live.hide_label')}</div>
+              <div className={ui.optionDesc}>{t('settings.wca_live.hide_desc')}</div>
             </div>
           </label>
           )}
         </section>
         )}
 
-        <section style={s.section}>
-          <h3 style={s.sectionTitle}>
+        <section className={s.section}>
+          <h3 className={ui.sectionHeading}>
             {t('settings.logo.title')}{' '}
-            <span style={s.optional}>({t('settings.logo.optional_note')})</span>
+            <span className={s.optional}>({t('settings.logo.optional_note')})</span>
           </h3>
-          <p style={s.hint}>{t('settings.logo.hint')}</p>
+          <p className={ui.hint}>{t('settings.logo.hint')}</p>
 
           {logoDataUrl ? (
-            <div style={s.logoPreview}>
-              <img src={logoDataUrl} alt="Logo preview" style={s.logoImg} />
-              <div style={s.logoMeta}>
-                <span style={s.logoName}>{logoName}</span>
-                <button style={s.removeBtn} onClick={handleRemoveLogo}>{t('common.remove')}</button>
+            <div className={s.logoPreview}>
+              <img src={logoDataUrl} alt="Logo preview" className={s.logoImg} />
+              <div className={s.logoMeta}>
+                <span className={s.logoName}>{logoName}</span>
+                <button className={s.removeBtn} onClick={handleRemoveLogo}>{t('common.remove')}</button>
               </div>
             </div>
           ) : (
             <>
-              <button style={s.uploadBtn} onClick={() => fileInputRef.current?.click()}>
+              <button className={ui.dropzone} onClick={() => fileInputRef.current?.click()}>
                 {t('common.choose_file')}
               </button>
 
-              <label style={{ ...s.logoPreview, marginTop: 12, cursor: 'pointer' }}>
+              <label className={`${s.logoPreviewChoice} ${useDefaultLogo ? ui.toggleCardActive : ''}`}>
                 <input
                   type="checkbox"
                   checked={useDefaultLogo}
                   onChange={e => patch({ useDefaultLogo: e.target.checked })}
-                  style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
+                  className={ui.radio}
                 />
-                <img src={SCC_DEFAULT_LOGO} alt="Speedcubing Canada logo" style={s.logoImg} />
-                <div style={s.logoMeta}>
-                  <span style={s.optionLabel}>{t('settings.logo.default_title')}</span>
-                  <span style={s.optionDesc}>{t('settings.logo.default_desc')}</span>
-                  <span style={{ ...s.hint, margin: 0 }}>{t('settings.logo.use_default_hint')}</span>
+                <img src={SCC_DEFAULT_LOGO} alt="Speedcubing Canada logo" className={s.logoImg} />
+                <div className={s.logoMeta}>
+                  <span className={ui.optionLabel}>{t('settings.logo.default_title')}</span>
+                  <span className={ui.optionDesc}>{t('settings.logo.default_desc')}</span>
+                  <span className={`${ui.hint} ${s.hintFlush}`}>{t('settings.logo.use_default_hint')}</span>
                 </div>
               </label>
             </>
@@ -558,72 +566,68 @@ export default function SettingsPage() {
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            style={{ display: 'none' }}
+            hidden
             onChange={handleLogoChange}
           />
         </section>
 
         {showNametags && (
-        <section style={s.section}>
-          <h3 style={s.sectionTitle}>{t('settings.nametag.title')}</h3>
+        <section className={s.section}>
+          <h3 className={ui.sectionHeading}>{t('settings.nametag.title')}</h3>
 
           {(logoDataUrl || useDefaultLogo) && (
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>
-                {t('settings.nametag.logo_on_nametags')}
-              </div>
-              <div style={s.optionGroup}>
+            <div className={s.nametagGroup}>
+              <fieldset className={ui.optionGroup}>
+                <legend className={ui.groupLabel}>{t('settings.nametag.logo_on_nametags')}</legend>
                 {logoModeOptions.map(opt => (
-                  <label key={opt.value} style={{ ...s.optionCard, ...(nametagLogoMode === opt.value ? s.optionCardActive : {}) }}>
+                  <label key={opt.value} className={`${ui.optionCard} ${nametagLogoMode === opt.value ? ui.optionCardActive : ''}`}>
                     <input
                       type="radio"
                       name="logoMode"
                       value={opt.value}
                       checked={nametagLogoMode === opt.value}
                       onChange={() => patch({ nametagLogoMode: opt.value })}
-                      style={s.radio}
+                      className={ui.radio}
                     />
                     <div>
-                      <div style={s.optionLabel}>{opt.label}</div>
-                      <div style={s.optionDesc}>{opt.description}</div>
+                      <div className={ui.optionLabel}>{opt.label}</div>
+                      <div className={ui.optionDesc}>{opt.description}</div>
                     </div>
                   </label>
                 ))}
-              </div>
+              </fieldset>
             </div>
           )}
 
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>
-            {t('settings.nametag.qr_codes')}
-          </div>
-          <div style={s.optionGroup}>
+          <fieldset className={ui.optionGroup}>
+            <legend className={ui.groupLabel}>{t('settings.nametag.qr_codes')}</legend>
             {qrModeOptions.map(opt => (
-              <label key={opt.value} style={{ ...s.optionCard, ...(nametagQrMode === opt.value ? s.optionCardActive : {}) }}>
+              <label key={opt.value} className={`${ui.optionCard} ${nametagQrMode === opt.value ? ui.optionCardActive : ''}`}>
                 <input
                   type="radio"
                   name="qrMode"
                   value={opt.value}
                   checked={nametagQrMode === opt.value}
                   onChange={() => patch({ nametagQrMode: opt.value })}
-                  style={s.radio}
+                  className={ui.radio}
                 />
                 <div>
-                  <div style={s.optionLabel}>{opt.label}</div>
-                  <div style={s.optionDesc}>{opt.description}</div>
+                  <div className={ui.optionLabel}>{opt.label}</div>
+                  <div className={ui.optionDesc}>{opt.description}</div>
                 </div>
               </label>
             ))}
-          </div>
+          </fieldset>
 
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 8, marginTop: 20 }}>
+          <div className={s.subheading}>
             {t('settings.nametag.layout')}
           </div>
-          <div style={s.segmentedControl}>
+          <div className={ui.segmentedControl} role="group" aria-label={t('settings.nametag.layout')}>
             <button
               type="button"
               onClick={() => patch({ nametagLayout: 'vertical' })}
               aria-pressed={nametagLayout === 'vertical'}
-              style={{ ...s.segment, ...(nametagLayout === 'vertical' ? s.segmentActive : s.segmentInactive) }}
+              className={ui.segment}
             >
               <RectangleVertical size={16} strokeWidth={2} aria-hidden="true" />
               {t('settings.nametag.layout_vertical')}
@@ -632,7 +636,7 @@ export default function SettingsPage() {
               type="button"
               onClick={() => patch({ nametagLayout: 'horizontal' })}
               aria-pressed={nametagLayout === 'horizontal'}
-              style={{ ...s.segment, ...(nametagLayout === 'horizontal' ? s.segmentActive : s.segmentInactive) }}
+              className={ui.segment}
             >
               <RectangleHorizontal size={16} strokeWidth={2} aria-hidden="true" />
               {t('settings.nametag.layout_horizontal')}
@@ -640,45 +644,47 @@ export default function SettingsPage() {
           </div>
         </section>
         )}
+        </div>
 
         {showScorecards && !isCustom && (
-        <section style={s.section}>
-          <button style={s.advancedToggle} onClick={() => setAdvancedOpen(o => !o)} aria-expanded={advancedOpen}>
-            <span style={s.advancedToggleArrow}>
+        <section className={`${s.section} ${s.advancedSection}`}>
+          <button className={s.advancedToggle} onClick={() => setAdvancedOpen(o => !o)} aria-expanded={advancedOpen}>
+            <span className={s.advancedToggleArrow}>
               {advancedOpen ? <ChevronDown size={16} strokeWidth={2.5} /> : <ChevronRight size={16} strokeWidth={2.5} />}
             </span>
             {t('settings.advanced.toggle')}
           </button>
 
           {advancedOpen && (
-            <div style={{ marginTop: 16 }}>
-              <h3 style={s.sectionTitle}>{t('settings.double_check.title')}</h3>
-              <p style={s.hint}>{t('settings.double_check.hint')}</p>
+            <div className={s.advancedBody}>
+              <section className={s.section}>
+              <h3 className={ui.sectionHeading}>{t('settings.double_check.title')}</h3>
+              <p className={ui.hint}>{t('settings.double_check.hint')}</p>
 
-              <div style={{ ...s.subheading, marginTop: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div className={s.subheadingFirst}>
                 {t('settings.double_check.ranking_title')}
                 <Tooltip label={t('settings.double_check.ranking_tooltip')}>
                   <span
                     tabIndex={0}
                     aria-label={t('settings.double_check.ranking_tooltip')}
-                    style={s.infoIcon}
+                    className={s.infoIcon}
                   >
                     <Info size={14} strokeWidth={2} aria-hidden="true" />
                   </span>
                 </Tooltip>
               </div>
-              <p style={s.hint}>{t('settings.double_check.ranking_hint')}</p>
+              <p className={ui.hint}>{t('settings.double_check.ranking_hint')}</p>
 
-              <div style={s.optionGroup}>
-                <div style={{ ...s.optionCard, ...(scrambleDoubleCheckWorldTop !== null ? s.optionCardActive : {}), alignItems: 'center' }}>
-                  <label style={s.rankingRule}>
+              <div className={ui.optionGroup}>
+                <div className={`${ui.toggleCard} ${s.rankingCard} ${scrambleDoubleCheckWorldTop !== null ? ui.toggleCardActive : ''}`}>
+                  <label className={s.rankingRule}>
                     <input
                       type="checkbox"
                       checked={scrambleDoubleCheckWorldTop !== null}
                       onChange={() => toggleDcRankingRule('scrambleDoubleCheckWorldTop')}
-                      style={{ accentColor: 'var(--primary)', flexShrink: 0 }}
+                      className={ui.radio}
                     />
-                    <span style={s.optionLabel}>{t('settings.double_check.ranking_world')}</span>
+                    <span className={ui.optionLabel}>{t('settings.double_check.ranking_world')}</span>
                   </label>
                   <input
                     type="text"
@@ -688,19 +694,21 @@ export default function SettingsPage() {
                     aria-label={t('settings.double_check.ranking_world')}
                     onChange={e => setDcRankingTop('scrambleDoubleCheckWorldTop', e.target.value)}
                     onBlur={() => normalizeDcRankingTop('scrambleDoubleCheckWorldTop')}
-                    style={s.rankingInput}
+                    className={`${ui.textInput} ${s.rankingInput}`}
+                    autoComplete="off"
+                    spellCheck={false}
                   />
                 </div>
 
-                <div style={{ ...s.optionCard, ...(scrambleDoubleCheckRegionTop !== null ? s.optionCardActive : {}), alignItems: 'center' }}>
-                  <label style={s.rankingRule}>
+                <div className={`${ui.toggleCard} ${s.rankingCard} ${scrambleDoubleCheckRegionTop !== null ? ui.toggleCardActive : ''}`}>
+                  <label className={s.rankingRule}>
                     <input
                       type="checkbox"
                       checked={scrambleDoubleCheckRegionTop !== null}
                       onChange={() => toggleDcRankingRule('scrambleDoubleCheckRegionTop')}
-                      style={{ accentColor: 'var(--primary)', flexShrink: 0 }}
+                      className={ui.radio}
                     />
-                    <span style={s.optionLabel}>{t('settings.double_check.ranking_region')}</span>
+                    <span className={ui.optionLabel}>{t('settings.double_check.ranking_region')}</span>
                   </label>
                   <input
                     type="text"
@@ -710,20 +718,22 @@ export default function SettingsPage() {
                     aria-label={t('settings.double_check.ranking_region')}
                     onChange={e => setDcRankingTop('scrambleDoubleCheckRegionTop', e.target.value)}
                     onBlur={() => normalizeDcRankingTop('scrambleDoubleCheckRegionTop')}
-                    style={s.rankingInput}
+                    className={`${ui.textInput} ${s.rankingInput}`}
+                    autoComplete="off"
+                    spellCheck={false}
                   />
                 </div>
               </div>
 
               {scrambleDoubleCheckRegionTop !== null && (
-                <div style={{ ...s.segmentedControl, marginTop: 8 }}>
+                <div className={`${ui.segmentedControl} ${s.segmentedSpaced}`} role="group" aria-label={t('settings.double_check.ranking_region')}>
                   {DOUBLE_CHECK_REGION_OPTIONS.map(opt => (
                     <button
                       key={opt.value}
                       type="button"
                       onClick={() => patch({ scrambleDoubleCheckRegionScope: opt.value })}
                       aria-pressed={scrambleDoubleCheckRegionScope === opt.value}
-                      style={{ ...s.segment, ...(scrambleDoubleCheckRegionScope === opt.value ? s.segmentActive : s.segmentInactive) }}
+                      className={ui.segment}
                     >
                       {opt.label}
                     </button>
@@ -731,39 +741,37 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              <div style={s.subheading}>
-                {t('settings.double_check.rounds_title')}
-              </div>
-              <div style={s.optionGroup}>
+              <fieldset className={`${ui.optionGroup} ${s.roundsGroup}`}>
+                <legend className={ui.groupLabel}>{t('settings.double_check.rounds_title')}</legend>
                 {DOUBLE_CHECK_ROUND_OPTIONS.map(opt => (
-                  <label key={opt.value} style={{ ...s.optionCard, ...(scrambleDoubleCheckRounds.includes(opt.value) ? s.optionCardActive : {}), cursor: 'pointer' }}>
+                  <label key={opt.value} className={`${ui.optionCard} ${scrambleDoubleCheckRounds.includes(opt.value) ? ui.optionCardActive : ''}`}>
                     <input
                       type="checkbox"
                       checked={scrambleDoubleCheckRounds.includes(opt.value)}
                       onChange={() => toggleDoubleCheckRound(opt.value)}
-                      style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
+                      className={ui.radio}
                     />
                     <div>
-                      <div style={s.optionLabel}>{opt.label}</div>
+                      <div className={ui.optionLabel}>{opt.label}</div>
                     </div>
                   </label>
                 ))}
-              </div>
+              </fieldset>
 
-              <div style={s.subheading}>
+              <div className={s.subheading}>
                 {t('settings.double_check.overrides_title')}
               </div>
-              <p style={s.hint}>{t('settings.double_check.overrides_hint')}</p>
+              <p className={ui.hint}>{t('settings.double_check.overrides_hint')}</p>
               {dcOverrideCount > 0 ? (
-                <div style={s.logoPreview}>
-                  <div style={s.logoMeta}>
-                    <span style={s.logoName}>{dcOverridesName}</span>
-                    <span style={s.optionDesc}>{t('settings.double_check.overrides_count', { count: dcOverrideCount })}</span>
-                    <button style={s.removeBtn} onClick={handleRemoveDcOverrides}>{t('common.remove')}</button>
+                <div className={s.logoPreview}>
+                  <div className={s.logoMeta}>
+                    <span className={s.logoName}>{dcOverridesName}</span>
+                    <span className={ui.optionDesc}>{t('settings.double_check.overrides_count', { count: dcOverrideCount })}</span>
+                    <button className={s.removeBtn} onClick={handleRemoveDcOverrides}>{t('common.remove')}</button>
                   </div>
                 </div>
               ) : (
-                <button style={s.uploadBtn} onClick={() => dcFileInputRef.current?.click()}>
+                <button className={ui.dropzone} onClick={() => dcFileInputRef.current?.click()}>
                   {t('common.choose_file')}
                 </button>
               )}
@@ -771,53 +779,55 @@ export default function SettingsPage() {
                 ref={dcFileInputRef}
                 type="file"
                 accept=".csv,text/csv,text/plain"
-                style={{ display: 'none' }}
+                hidden
                 onChange={handleDcOverridesChange}
               />
 
+              </section>
+
               {multiStage && (
-                <>
-                  <h3 style={{ ...s.sectionTitle, marginTop: 28 }}>
+                <section className={s.section}>
+                  <h3 className={ui.sectionHeading}>
                     {t('settings.advanced.stage_split_title')}
                   </h3>
-                  <label style={{ ...s.optionCard, cursor: 'pointer' }}>
+                  <label className={`${ui.toggleCard} ${splitPdfsByStage ? ui.toggleCardActive : ''}`}>
                     <input
                       type="checkbox"
                       checked={splitPdfsByStage}
                       onChange={e => patch({ splitPdfsByStage: e.target.checked })}
-                      style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
+                      className={ui.radio}
                     />
                     <div>
-                      <div style={s.optionLabel}>{t('settings.advanced.stage_split_label')}</div>
-                      <div style={s.optionDesc}>{t('settings.advanced.stage_split_desc')}</div>
+                      <div className={ui.optionLabel}>{t('settings.advanced.stage_split_label')}</div>
+                      <div className={ui.optionDesc}>{t('settings.advanced.stage_split_desc')}</div>
                     </div>
                   </label>
                   {stageSplitSkipsRound2(draft, showSecondRoundMode) && (
-                    <div style={{ marginTop: 12 }}>
+                    <div className={s.warningWrap}>
                       <WarningBanner>{t('warnings.stage_split_prefilled')}</WarningBanner>
                     </div>
                   )}
-                </>
+                </section>
               )}
 
               {everything && (
-                <>
-                  <h3 style={{ ...s.sectionTitle, marginTop: 28 }}>
+                <section className={s.section}>
+                  <h3 className={ui.sectionHeading}>
                     {t('settings.advanced.custom_events_title')}{' '}
-                    <span style={s.optional}>({t('settings.advanced.custom_events_optional')})</span>
+                    <span className={s.optional}>({t('settings.advanced.custom_events_optional')})</span>
                   </h3>
-                  <p style={s.hint}>{t('settings.advanced.custom_events_hint')}</p>
+                  <p className={ui.hint}>{t('settings.advanced.custom_events_hint')}</p>
 
                   <CustomEventEditor events={customEvents} onChange={events => patch({ customEvents: events })} />
-                </>
+                </section>
               )}
             </div>
           )}
         </section>
         )}
 
-        <div style={s.footer}>
-          <button style={s.submitBtn} onClick={handleSubmit}>
+        <div className={ui.stickyFooter}>
+          <button className={ui.btnCta} onClick={handleSubmit}>
             {t('settings.generate_button')}
           </button>
         </div>
@@ -825,132 +835,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-const s: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', backgroundColor: 'var(--bg)' },
-  main: { maxWidth: 640, margin: '0 auto', padding: '32px 24px 80px' },
-  mainMobile: { padding: '24px 16px 80px' },
-  compBadge: {
-    display: 'inline-block', backgroundColor: 'var(--primary-soft-bg)', color: 'var(--primary-soft-text)',
-    borderRadius: 'var(--radius-sm)', padding: '4px 12px', fontSize: 'var(--fs-label)', fontWeight: 700, marginBottom: 12,
-  },
-  heading: { margin: '0 0 28px', fontSize: 'var(--fs-display)', fontWeight: 700, color: 'var(--text)' },
-  section: { marginBottom: 32 },
-  sectionTitle: { margin: '0 0 12px', fontSize: 'var(--fs-heading)', fontWeight: 700, color: 'var(--text)' },
-  optional: { fontWeight: 400, color: 'var(--text-subtle)', fontSize: 'var(--fs-label)' },
-  wcaLiveLoading: { fontWeight: 400, color: 'var(--text-subtle)', fontSize: 'var(--fs-caption)' },
-  wcaLiveFound: {
-    display: 'inline-flex', alignItems: 'center', gap: 4,
-    fontWeight: 700, color: 'var(--success)', fontSize: 'var(--fs-caption)',
-  },
-  hint: { margin: '0 0 12px', fontSize: 'var(--fs-label)', color: 'var(--text-muted)' },
-  subheading: { fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: '16px 0 8px' },
-  infoIcon: { display: 'inline-flex', color: 'var(--text-muted)', cursor: 'help' },
-  // The threshold input is its sibling, so each label owns exactly one control.
-  rankingRule: { display: 'flex', alignItems: 'center', gap: 12, flex: 1, cursor: 'pointer' },
-  rankingInput: {
-    width: 72, boxSizing: 'border-box',
-    backgroundColor: 'var(--surface)', color: 'var(--text)',
-    border: '2px solid var(--border)', borderRadius: 'var(--radius-md)',
-    padding: '6px 10px', fontSize: 'var(--fs-body)', fontFamily: 'inherit',
-    outline: 'none', textAlign: 'center',
-  },
-  optionGroup: { display: 'flex', flexDirection: 'column', gap: 8 },
-  optionCard: {
-    display: 'flex', alignItems: 'flex-start', gap: 12,
-    backgroundColor: 'var(--surface)',
-    borderWidth: 2, borderStyle: 'solid', borderColor: 'var(--border)',
-    borderRadius: 'var(--radius-md)', padding: '12px 16px', cursor: 'pointer',
-  },
-  optionCardActive: { borderColor: 'var(--primary)', backgroundColor: 'var(--primary-soft-bg)' },
-  radio: { marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 },
-  langCaption: {
-    margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: 'var(--text-subtle)',
-    textTransform: 'uppercase', letterSpacing: '0.05em',
-  },
-  langRow: { display: 'flex', flexWrap: 'wrap', gap: 8 },
-  langTile: {
-    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-    gap: 7, padding: '10px 6px', width: 78,
-    borderWidth: 2, borderStyle: 'solid', borderColor: 'var(--border)', borderRadius: 'var(--radius-lg)',
-    cursor: 'pointer', backgroundColor: 'var(--surface)', userSelect: 'none',
-    fontFamily: 'inherit', outline: 'none',
-    transition: 'border-color 120ms ease, background-color 120ms ease',
-  },
-  langTileActive: { borderColor: 'var(--primary)', backgroundColor: 'var(--primary-soft-bg)' },
-  langBadge: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    width: 36, height: 36, borderRadius: 'var(--radius-md)',
-    backgroundColor: 'var(--border)', color: 'var(--text-muted)',
-    fontSize: 'var(--fs-label)', fontWeight: 700, letterSpacing: '0.03em',
-    transition: 'background-color 120ms ease, color 120ms ease',
-  },
-  langBadgeActive: { backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)' },
-  langTileLabel: { fontSize: 'var(--fs-caption)', fontWeight: 500, color: 'var(--text)' },
-  optionLabel: { fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--text)', marginBottom: 2 },
-  optionDesc: { fontSize: 'var(--fs-label)', color: 'var(--text-muted)' },
-  logoPreview: {
-    display: 'flex', alignItems: 'center', gap: 16,
-    backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-md)', padding: '12px 16px',
-  },
-  logoImg: { width: 64, height: 64, objectFit: 'contain', borderRadius: 'var(--radius-sm)' },
-  logoMeta: { display: 'flex', flexDirection: 'column', gap: 6 },
-  logoName: { fontSize: 'var(--fs-label)', color: 'var(--text-muted)' },
-  removeBtn: {
-    background: 'none', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
-    padding: '3px 10px', fontSize: 'var(--fs-caption)', cursor: 'pointer', color: 'var(--text-muted)',
-    fontFamily: 'inherit',
-  },
-  uploadBtn: {
-    backgroundColor: 'var(--surface)', border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-md)',
-    padding: '14px 24px', fontSize: 'var(--fs-body)', cursor: 'pointer', color: 'var(--text-muted)',
-    width: '100%', fontFamily: 'inherit',
-  },
-  textInput: {
-    width: '100%', boxSizing: 'border-box',
-    backgroundColor: 'var(--surface)', color: 'var(--text)',
-    border: '2px solid var(--border)', borderRadius: 'var(--radius-md)',
-    padding: '10px 14px', fontSize: 'var(--fs-body)', fontFamily: 'inherit',
-    outline: 'none',
-  },
-  footer: { marginTop: 40 },
-  submitBtn: {
-    backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)', border: 'none',
-    borderRadius: 'var(--radius-md)', padding: '14px 32px', fontSize: 'var(--fs-heading)', fontWeight: 700,
-    cursor: 'pointer', width: '100%', fontFamily: 'inherit', letterSpacing: '-0.01em',
-  },
-  advancedToggle: {
-    background: 'none', border: 'none', padding: 0,
-    fontSize: 'var(--fs-heading)', fontWeight: 700, color: 'var(--text)', cursor: 'pointer',
-    display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit',
-  },
-  advancedToggleArrow: { display: 'inline-flex', alignItems: 'center', color: 'var(--text-muted)' },
-  segmentedControl: {
-    display: 'flex',
-    border: '2px solid var(--border)',
-    borderRadius: 'var(--radius-md)',
-    overflow: 'hidden',
-  },
-  segment: {
-    flex: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: '10px 0',
-    border: 'none',
-    fontSize: 'var(--fs-label)',
-    fontWeight: 700,
-    fontFamily: 'inherit',
-    cursor: 'pointer',
-  },
-  segmentActive: {
-    backgroundColor: 'var(--primary)',
-    color: 'var(--primary-contrast)',
-  },
-  segmentInactive: {
-    backgroundColor: 'var(--surface)',
-    color: 'var(--text-muted)',
-  },
-};

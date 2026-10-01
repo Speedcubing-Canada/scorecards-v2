@@ -1,6 +1,7 @@
 import { Mail } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Tooltip from './Tooltip';
+import ui from '../styles/ui.module.css';
 
 /** Where bug reports and feedback go. Imported, never re-typed - see contact-links.test.ts. */
 export const REPO_URL = 'https://github.com/Speedcubing-Canada/scorecards-v2';
@@ -21,7 +22,7 @@ export default function ContactLinks() {
     <>
       <Tooltip label={t('contact.github')} placement="bottom">
         <a
-          style={s.link}
+          className={ui.iconBtn}
           href={REPO_URL}
           target="_blank"
           rel="noopener noreferrer"
@@ -32,19 +33,10 @@ export default function ContactLinks() {
       </Tooltip>
 
       <Tooltip label={t('contact.email')} placement="bottom">
-        <a style={s.link} href={`mailto:${SUPPORT_EMAIL}`} aria-label={t('contact.email')}>
+        <a className={ui.iconBtn} href={`mailto:${SUPPORT_EMAIL}`} aria-label={t('contact.email')}>
           <Mail size={18} strokeWidth={2} />
         </a>
       </Tooltip>
     </>
   );
 }
-
-const s: Record<string, React.CSSProperties> = {
-  link: {
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    width: 28, height: 28, padding: 0,
-    borderRadius: '50%',
-    color: 'var(--text-muted)', cursor: 'pointer',
-  },
-};

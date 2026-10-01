@@ -1,0 +1,158 @@
+.card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-top: var(--space-6);
+  text-align: left;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-heading);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+}
+
+.callout {
+  background-color: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) 14px;
+  margin: 0 0 var(--space-5);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-medium);
+  line-height: 1.6;
+  color: var(--warning-text);
+}
+
+.diagram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-4) 0 var(--space-5);
+}
+
+@media (max-width: 600px) {
+  .diagram {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+}
+
+.arrow {
+  color: var(--text-subtle);
+  flex-shrink: 0;
+}
+
+.stage {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.caption {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.sheet {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  width: 72px;
+  height: 92px;
+  padding: 3px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-strong);
+  background-color: var(--surface-2);
+}
+
+.quad,
+.pile,
+.deckLayer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  background-color: var(--surface);
+  border: 1px solid var(--border-strong);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-bold);
+  color: var(--primary-soft-text);
+}
+
+.piles {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  height: 92px;
+}
+
+.pile {
+  width: 20px;
+  height: 42px;
+  /* Offset outlines, so a pile reads as a stack of cut cards. */
+  box-shadow:
+    3px -3px 0 -1px var(--surface), 3px -3px 0 var(--border-strong),
+    6px -6px 0 -1px var(--surface), 6px -6px 0 var(--border-strong);
+}
+
+.deck {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+  height: 92px;
+  width: 40px;
+}
+
+.deckLayer {
+  height: 16px;
+}
+
+.steps {
+  margin: 0;
+  padding-left: 1.3em;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.step,
+.note {
+  font-size: var(--fs-label);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.notesDivided {
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+
+.note {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.noteIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--text-subtle);
+}

@@ -7,7 +7,11 @@
     "clear": "Effacer",
     "upload": "Télécharger",
     "choose_file": "Choisir un fichier",
-    "menu": "Menu"
+    "menu": "Menu",
+    "skip_to_content": "Aller au contenu",
+    "language": "Langue",
+    "theme_light": "Passer en mode clair",
+    "theme_dark": "Passer en mode sombre"
   },
   "login": {
     "subtitle": "Générez des feuilles de score et des badges imprimables pour votre compétition WCA.",
@@ -174,7 +178,7 @@
       "paper": "Papier",
       "total_pages": "Pages"
     },
-    "download_button": "Télécharger {{filename}}",
+    "download_button": "Télécharger",
     "building_button": "Création du ZIP…",
     "guide": {
       "title": "Comment imprimer et découper",
@@ -216,6 +220,8 @@
     "doc_group_overview": "Aperçu des groupes",
     "doc_first_timers": "Fiches pour les nouveaux participants",
     "checking": "Vérification de la compétition…",
+    "needs_document": "Choisissez au moins un document à imprimer.",
+    "needs_round": "Choisissez au moins un tour.",
     "continue": "Continuer →",
     "latest": {
       "label": "Dernier tour uniquement",

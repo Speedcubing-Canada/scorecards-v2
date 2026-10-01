@@ -18,10 +18,10 @@ const MOBILE_QUERY = `(max-width: ${MOBILE_BREAKPOINT}px)`;
  * Returns `true` when the viewport is at or below {@link MOBILE_BREAKPOINT}.
  * Backed by `window.matchMedia` so it updates live as the window resizes.
  *
- * Because every component in this app styles itself with inline
- * `React.CSSProperties` objects (no CSS classes), CSS media queries can't
- * override those styles - so the breakpoint has to be read in JS and used to
- * pick between style objects.
+ * Styling is not what this is for: a `(max-width: 600px)` media query in the
+ * component's CSS module handles that, and costs no render. Reach for this hook
+ * only when the breakpoint picks a different subtree or component - the Header's
+ * hamburger menu, or PrintGuide's down-vs-right arrow.
  */
 export function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(() =>

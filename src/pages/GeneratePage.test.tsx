@@ -16,7 +16,7 @@ import * as analytics from '../lib/analytics';
 import i18n from '../i18n/index';
 import { markAllSeen } from '../changelog';
 import { writeCompetition, writeSettings } from '../lib/flowState';
-import { buildPdfJobs, downloadTarget } from '../lib/pdfJobs';
+import { buildPdfJobs } from '../lib/pdfJobs';
 import { parseWCIF } from '../lib/wcif-parser';
 import { sampleWcif, testSettings } from '../test/fixtures';
 import { renderWithProviders, signedInAuth, useEnglish } from '../test/render';
@@ -44,10 +44,9 @@ class StubWorker {
 
 const settings = testSettings({ competitionId: 'GrosJouetsaMontreal2026' });
 const jobs = buildPdfJobs(parseWCIF(sampleWcif(), settings), settings);
-const downloadName = i18n.t('generate.download_button', {
-  filename: downloadTarget(jobs, settings.competitionId).filename,
-});
-const downloadButton = () => screen.findByRole('button', { name: downloadName });
+// The filename is a caption under the button, not part of its label - a long competition
+// id used to shrink the label to fit inside it.
+const downloadButton = () => screen.findByRole('button', { name: i18n.t('generate.download_button') });
 
 beforeEach(async () => {
   sessionStorage.clear();
@@ -105,7 +104,8 @@ describe('GeneratePage', () => {
     }));
     renderWithProviders(<GeneratePage />, { auth: signedInAuth });
 
-    await screen.findByRole('button', { name: /\.pdf|\.zip/ });
+    await downloadButton();
+    expect(screen.getByText(/\.pdf$|\.zip$/)).toBeTruthy();
     expect(mockWcif).not.toHaveBeenCalled();
   });
 

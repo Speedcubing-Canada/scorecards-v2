@@ -1,0 +1,12 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg);
+}
+
+.text {
+  font-size: var(--fs-title);
+  color: var(--text-muted);
+}

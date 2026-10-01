@@ -9,28 +9,38 @@
   /* Text */
   --text: #1a1a1a;
   --text-muted: #555555;
-  --text-subtle: #888888;
-  --text-faint: #aaaaaa;
+  /* 4.96:1 on --bg. #888888 was 3.25:1 and carried every "(optional)" marker. */
+  --text-subtle: #6a6a6a;
 
-  /* Borders */
+  /*
+   * --border is decorative only (section rules, card edges, the header line).
+   * --border-strong is the visible boundary of a CONTROL, so it has to clear 3:1
+   * against both --surface and --bg for WCAG 1.4.11. #cccccc was 1.61:1.
+   */
   --border: #e0e0e0;
-  --border-strong: #cccccc;
+  --border-strong: #8a8a8a;
 
-  /* Brand */
-  --color-primary: #d32f2f;
-  --color-primary-dark: #b71c1c;
+  /*
+   * Brand. `--primary` is a FILL (buttons, badges, the progress bar) and always pairs with
+   * `--primary-contrast`. `--primary-soft-text` is the brand as TEXT or an icon - it has to
+   * clear 4.5:1 on a surface, which the fill colour does not in either theme.
+   * `--primary-hover` is the more prominent state: darker in light, brighter in dark.
+   *
+   * There is deliberately no pale-brand tint: a disabled button is neutral, an error box
+   * uses `--danger-soft-bg`, and a progress track is `--surface-2`. A washed-out brand
+   * pink reads as a third, meaningless state.
+   */
   --primary: #d32f2f;
-  --primary-dark: #b71c1c;
+  --primary-hover: #b71c1c;
   --primary-contrast: #ffffff;
-  --primary-soft-bg: #ffebee;
-  --primary-soft-text: #d32f2f;
-  --primary-disabled: #ef9a9a;
+  --primary-soft-text: #c62828;
 
   /* Status */
   --warning-bg: #fff8e1;
   --warning-border: #f9a825;
   --warning-text: #b45309;
   --danger: #c00000;
+  --danger-soft-bg: #fff0f0;
   --success: #15803d;
 
   /* Shadows */
@@ -47,14 +57,23 @@
  * type scale, weight hierarchy, spacing, and radii. Keep weights to 400/500/700.
  */
 :root {
-  /* Type scale */
+  /*
+   * Type scale. Four ranks, each clearly apart, so a long settings form reads as a
+   * hierarchy instead of a flat wall:
+   *   --fs-display  page title
+   *   --fs-heading  section heading (the only 17px thing on a page)
+   *   --fs-caption  group label, uppercase and tracked - a label, not a small heading
+   *   --fs-body     option title (bold) and body copy
+   * A section heading used to be 15px against a 14px option title, one pixel of rank.
+   */
   --fs-stat: 28px;     /* large stat numbers */
-  --fs-display: 22px;  /* page titles */
+  --fs-display: 24px;  /* page titles */
   --fs-title: 20px;    /* dialog titles */
-  --fs-heading: 15px;  /* section headings */
-  --fs-body: 14px;     /* body text, inputs, buttons */
-  --fs-label: 13px;    /* labels, hints, nav */
-  --fs-caption: 12px;  /* captions, tooltips, badges */
+  --fs-heading: 17px;  /* section headings */
+  --fs-body: 14px;     /* body text, option titles, inputs, buttons */
+  --fs-label: 13px;    /* descriptions, hints, nav */
+  --fs-caption: 12px;  /* group labels, captions, tooltips, badges */
+  --fs-micro: 10px;    /* icon-tile labels - the smallest type in the UI */
 
   /* Weight hierarchy - only these three weights are used anywhere */
   --fw-regular: 400;   /* body, descriptions, hints */
@@ -83,36 +102,38 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  /* Surfaces */
-  --bg: #121212;
-  --surface: #1e1e1e;
-  --surface-2: #2a2a2a;
+  /*
+   * Surfaces. A card cannot be pulled far off the page in the near-black range - the
+   * contrast formula's +0.05 floor caps #0a-vs-#1e at about 1.26:1 - so the card EDGE
+   * carries the separation. That is why --border here is much lighter than it looks it
+   * should be; it is doing the job the fill cannot.
+   */
+  --bg: #0a0a0b;
+  --surface: #1e1e21;
+  --surface-2: #2a2a2e;
 
   /* Text */
   --text: #f2f2f2;
   --text-muted: #b8b8b8;
-  --text-subtle: #8a8a8a;
-  --text-faint: #6a6a6a;
+  --text-subtle: #9a9a9a;
 
   /* Borders */
-  --border: #3a3a3a;
-  --border-strong: #4a4a4a;
+  --border: #454549;
+  --border-strong: #767680;
 
-  /* Brand */
-  --color-primary: #f06a6a;
-  --color-primary-dark: #e05252;
-  --primary: #f06a6a;
-  --primary-dark: #e05252;
-  --primary-contrast: #1a1a1a;
-  --primary-soft-bg: #3a2424;
-  --primary-soft-text: #f8a0a0;
-  --primary-disabled: #6e4040;
+  /* Brand: the real brand red, with white on it, instead of a pastel salmon. */
+  --primary: #d32f2f;
+  --primary-hover: #e5423f;
+  --primary-contrast: #ffffff;
+  /* #ff9b9b before: it cleared the contrast bar but read as rose, not as the brand. */
+  --primary-soft-text: #fc5f5f;
 
   /* Status */
   --warning-bg: #3a3320;
   --warning-border: #b08a2e;
   --warning-text: #e8c477;
   --danger: #ff6b6b;
+  --danger-soft-bg: #2e1b1b;
   --success: #4ade80;
 
   /* Shadows */
@@ -124,6 +145,14 @@
   box-sizing: border-box;
 }
 
+/* Used purely to group form controls; the native chrome and spacing are never wanted. */
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
 body {
   margin: 0;
   font-family: 'Montserrat', Helvetica, Arial, sans-serif;
@@ -131,6 +160,32 @@ body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.2s ease, color 0.2s ease;
+  /* Drops the 300ms double-tap-to-zoom delay on every tap on a phone. */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(211, 47, 47, 0.15);
+}
+
+/*
+ * Skip link: the header carries seven controls before the page content, which is a lot of
+ * tabbing on every page. Off-screen until focused.
+ */
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: var(--space-2);
+  z-index: 200;
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-medium);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
 }
 
 #root {
@@ -139,7 +194,7 @@ body {
 
 code {
   font-family: ui-monospace, Consolas, monospace;
-  font-size: 13px;
+  font-size: var(--fs-label);
   background: var(--surface-2);
   padding: 2px 6px;
   border-radius: var(--radius-sm);
@@ -160,6 +215,8 @@ textarea:focus-visible,
 /* Skeleton loading primitive. The `.skeleton` base is themed via surface tokens;
    the pulse keyframes animate the shimmer. Reduced-motion disables the pulse. */
 .skeleton {
+  width: 100%;
+  height: 16px;
   background: var(--surface-2);
   border-radius: var(--radius-sm);
   animation: skeleton-pulse 1.4s ease-in-out infinite;

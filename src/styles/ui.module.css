@@ -1,0 +1,467 @@
+/*
+ * Shared UI primitives. Anything used by two or more components lives here;
+ * page-specific styling stays in that page's own `.module.css`.
+ *
+ * Values come from the tokens in `index.css` - never hardcode one here.
+ * The phone breakpoint is 600px, matching MOBILE_BREAKPOINT in lib/useIsMobile.ts.
+ */
+
+/* ---------- page shell ---------- */
+
+.page {
+  min-height: 100vh;
+  background-color: var(--bg);
+}
+
+.main {
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6);
+}
+
+@media (max-width: 600px) {
+  .main {
+    padding: var(--space-6) var(--space-4);
+  }
+}
+
+/*
+ * Which competition this page is about: context, not an action and not a selection, so it
+ * is a neutral tag. It used to be a brand-red tint, which spent the one colour that means
+ * "primary action" here on a label that is never clicked.
+ */
+.compBadge {
+  display: inline-block;
+  /* surface + border, like every other container here: --surface-2 sits only 1.03:1 off
+     the page background, so a bare fill did not read as a tag at all. */
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  margin-bottom: var(--space-2);
+}
+
+/*
+ * No margin: a page pairs this with its own spacing class. Overriding a margin from
+ * another module would depend on which stylesheet the bundler emits last.
+ */
+.pageTitle {
+  margin: 0;
+  font-size: var(--fs-display);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+  text-wrap: balance;
+}
+
+.sectionHeading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-heading);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+}
+
+/*
+ * A <legend>: ties the heading to the group it names, for screen readers and for the eye.
+ * The fieldset is a flex column, so the legend is its first flex item; the 8px flex gap
+ * plus this margin land on the same 12px the free-floating <h3> used to have.
+ */
+.groupLegend {
+  composes: sectionHeading;
+  padding: 0;
+  margin-bottom: var(--space-1);
+}
+
+/*
+ * Names a group of controls inside a section. Uppercase and tracked so it reads as a
+ * different *kind* of thing from both the section heading above and the option titles
+ * below, rather than competing with either on size.
+ */
+.groupLabel {
+  /* margin-bottom only: a page adds its own top spacing without a specificity contest. */
+  margin-bottom: var(--space-2);
+  padding: 0;
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-bold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sectionHint {
+  margin: -6px 0 var(--space-3);
+  font-size: var(--fs-label);
+  color: var(--text-muted);
+}
+
+.hint {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-label);
+  color: var(--text-muted);
+}
+
+/* ---------- option controls ----------
+ *
+ * Three variants, so the shape says what the control does before you read it:
+ *   .optionCard  - one member of a radio group (pick exactly one of these)
+ *   .toggleCard  - a standalone boolean (turn this one thing on)
+ *   .dropzone    - a file input (below)
+ *
+ * Selection is a primary border plus an inset left rule, never a fill. A page with
+ * three filled red blocks on it has no room left for the primary button to be loud.
+ */
+
+.optionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.optionCard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  background-color: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 13px var(--space-4);
+  cursor: pointer;
+  /* inset, so selection costs no layout and animates on the compositor. */
+  box-shadow: inset 0 0 0 0 var(--primary);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.optionCard:hover {
+  border-color: var(--text-subtle);
+}
+
+.optionCardActive {
+  border-color: var(--primary);
+  box-shadow: inset 3px 0 0 0 var(--primary);
+}
+
+.optionCardActive:hover {
+  border-color: var(--primary-hover);
+  box-shadow: inset 3px 0 0 0 var(--primary-hover);
+}
+
+/*
+ * A standalone switch, not one of a set: flatter, recessed, and the whole row is the
+ * label. No left rule - there is no sibling to compare it against.
+ */
+.toggleCard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  background-color: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 13px var(--space-4);
+  cursor: pointer;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+
+.toggleCard:hover {
+  border-color: var(--border-strong);
+}
+
+.toggleCardActive {
+  border-color: var(--primary);
+  background-color: var(--surface);
+}
+
+.optionLabel {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.optionDesc {
+  font-size: var(--fs-label);
+  color: var(--text-muted);
+}
+
+.radio {
+  margin-top: 2px;
+  accent-color: var(--primary);
+  flex-shrink: 0;
+}
+
+/* ---------- buttons ---------- */
+
+.btnPrimary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  background-color: var(--primary);
+  color: var(--primary-contrast);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-size: var(--fs-heading);
+  font-weight: var(--fw-bold);
+  font-family: inherit;
+  letter-spacing: -0.01em;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+}
+
+.btnPrimary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btnPrimary:disabled {
+  /* Neutral, not a washed-out brand pink: unavailable is not a shade of the brand. */
+  background-color: var(--surface-2);
+  color: var(--text-subtle);
+  border: 1px solid var(--border-strong);
+  cursor: not-allowed;
+}
+
+/*
+ * A wizard's forward button. Full width on a phone, but capped and right-aligned on a
+ * desktop: a 1000px-wide button reads as a banner, not a control.
+ */
+.btnCta {
+  composes: btnPrimary;
+  max-width: 380px;
+  margin-left: auto;
+}
+
+@media (max-width: 600px) {
+  .btnCta {
+    max-width: none;
+  }
+}
+
+/*
+ * Keeps the primary action in reach on a form that scrolls for thousands of pixels,
+ * instead of making the organizer hunt for the bottom of the page.
+ */
+.stickyFooter {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  margin-top: var(--space-8);
+  padding: var(--space-4) 0 calc(var(--space-4) + env(safe-area-inset-bottom));
+  /* An opaque bar with its own edge. A gradient let the content it covers show through,
+     which reads as a bug once the page is more than one column wide. */
+  background-color: var(--bg);
+  border-top: 1px solid var(--border);
+}
+
+.btnSecondary {
+  background: none;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-medium);
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease;
+}
+
+.btnSecondary:hover {
+  border-color: var(--text-muted);
+  color: var(--text);
+}
+
+/* Icon-only round trigger (about, what's new, contact links). */
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.iconBtn:hover {
+  background-color: var(--surface-2);
+  color: var(--text);
+}
+
+/* ---------- inputs ---------- */
+
+.textInput {
+  width: 100%;
+  box-sizing: border-box;
+  background-color: var(--surface);
+  color: var(--text);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px var(--space-4);
+  font-size: var(--fs-body);
+  font-family: inherit;
+  transition: border-color 0.12s ease;
+}
+
+.textInput:hover {
+  border-color: var(--border-strong);
+}
+
+.textInput:focus-visible {
+  border-color: var(--primary);
+}
+
+/* Dashed "choose a file" target. */
+.dropzone {
+  width: 100%;
+  background-color: var(--surface);
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 14px var(--space-6);
+  font-size: var(--fs-body);
+  font-family: inherit;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease;
+}
+
+.dropzone:hover {
+  border-color: var(--primary);
+  color: var(--text);
+}
+
+/* ---------- segmented control ---------- */
+
+.segmentedControl {
+  display: flex;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.segment {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 10px 0;
+  border: none;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  font-family: inherit;
+  background-color: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.segment:hover[aria-pressed='false'] {
+  background-color: var(--surface-2);
+  color: var(--text);
+}
+
+.segment[aria-pressed='true'] {
+  background-color: var(--primary);
+  color: var(--primary-contrast);
+}
+
+/* ---------- status / feedback ---------- */
+
+.statusBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px var(--space-6);
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.statusError {
+  border-color: var(--danger);
+  background-color: var(--danger-soft-bg);
+}
+
+.errorText {
+  font-size: var(--fs-body);
+  color: var(--danger);
+}
+
+.status {
+  font-size: var(--fs-heading);
+  color: var(--text-muted);
+  text-align: center;
+  padding: var(--space-8) 0;
+}
+
+/* ---------- modal dialog ---------- */
+
+/*
+ * A native <dialog>. showModal() supplies the focus trap, Escape, the inert background
+ * and focus restore, so there is no overlay div and no keydown listener here.
+ */
+.dialog {
+  padding: 0;
+  border: none;
+  max-width: 520px;
+  width: calc(100% - 2 * var(--space-6));
+  max-height: 85vh;
+  background-color: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  text-align: left;
+}
+
+.dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.dialogBodyWrap {
+  padding: var(--space-8) 36px;
+}
+
+@media (max-width: 600px) {
+  .dialogBodyWrap {
+    padding: var(--space-6) var(--space-5);
+  }
+}
+
+.dialogTitle {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-title);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+}
+
+.dialogBody {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: var(--fw-regular);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.dialogClose {
+  composes: btnPrimary;
+  margin-top: var(--space-6);
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--fs-body);
+}

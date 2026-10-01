@@ -8,16 +8,16 @@ import type { WCACompetition } from '../types/wcif';
 import Header from '../components/Header';
 import AboutDialog from '../components/AboutDialog';
 import Skeleton from '../components/Skeleton';
-import { useIsMobile } from '../lib/useIsMobile';
 import { formatCompetitionDate, visibleCompetitions } from '../lib/competitionList';
 import { clearCustom, clearDownstream, readCompetition, writeCompetition } from '../lib/flowState';
 import { clearPresetSettings } from '../presets';
+import ui from '../styles/ui.module.css';
+import s from './CompetitionPickerPage.module.css';
 
 export default function CompetitionPickerPage() {
   const { t } = useTranslation();
   const { token } = useAuth();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const [competitions, setCompetitions] = useState<WCACompetition[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
@@ -65,20 +65,20 @@ export default function CompetitionPickerPage() {
   }
 
   return (
-    <div style={styles.container}>
+    <div className={ui.page}>
       <Header showUser showSignOut />
 
-      <main style={{ ...styles.main, ...(isMobile ? styles.mainMobile : {}) }}>
-        <div style={styles.headingRow}>
-          <h2 style={styles.heading}>{t('picker.heading')}</h2>
+      <main id="main" className={`${ui.main} ${s.main}`}>
+        <div className={s.headingRow}>
+          <h1 className={ui.pageTitle}>{t('picker.heading')}</h1>
           <AboutDialog />
         </div>
-        <p style={styles.hint}>{t('picker.hint')}</p>
+        <p className={s.hint}>{t('picker.hint')}</p>
 
         {isLoading && (
-          <div role="status" aria-label={t('picker.loading')} style={{ ...styles.grid, ...(isMobile ? styles.gridMobile : {}) }}>
+          <div role="status" aria-label={t('picker.loading')} className={s.grid}>
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} style={styles.compCard}>
+              <div key={i} className={s.compCard}>
                 <Skeleton width="75%" height={16} />
                 <Skeleton width="50%" height={13} />
               </div>
@@ -86,31 +86,31 @@ export default function CompetitionPickerPage() {
           </div>
         )}
         {error != null && (
-          <div style={styles.errorBox}>
-            <p style={{ ...styles.status, color: 'var(--danger)', padding: 0 }}>
+          <div className={s.errorBox}>
+            <p className={`${ui.status} ${s.errorText}`}>
               {t(fetchErrorKey(error) === 'errors.session_expired'
                 ? 'errors.session_expired'
                 : 'errors.competitions_failed')}
             </p>
-            <button style={styles.retryButton} onClick={retry}>
+            <button className={s.retryButton} onClick={retry}>
               {t('errors.retry')}
             </button>
           </div>
         )}
 
         {!isLoading && error == null && competitions.length === 0 && (
-          <p style={styles.status}>{t('picker.empty')}</p>
+          <p className={ui.status}>{t('picker.empty')}</p>
         )}
 
-        <div style={{ ...styles.grid, ...(isMobile ? styles.gridMobile : {}) }}>
+        <div className={s.grid}>
           {competitions.map((comp) => (
             <button
               key={comp.id}
-              style={styles.compCard}
+              className={s.compCard}
               onClick={() => selectCompetition(comp)}
             >
-              <span style={styles.compName}>{comp.name}</span>
-              <span style={styles.compMeta}>
+              <span className={s.compName}>{comp.name}</span>
+              <span className={s.compMeta}>
                 {comp.city} · {formatCompetitionDate(comp.start_date)}
               </span>
             </button>
@@ -120,84 +120,15 @@ export default function CompetitionPickerPage() {
         {/* Niche flow: keep it discoverable but secondary, below the WCA list. It skips
             /scope, where a preset is otherwise re-written, so clear the seed on the way in. */}
         {!isLoading && (
-          <button style={styles.customCard} onClick={() => { clearPresetSettings(); navigate('/custom'); }}>
-            <span style={styles.customCardTitle}>
+          <button className={s.customCard} onClick={() => { clearPresetSettings(); navigate('/custom'); }}>
+            <span className={s.customCardTitle}>
               <Plus size={16} strokeWidth={2.5} aria-hidden="true" />
               {t('picker.create_custom_title')}
             </span>
-            <span style={styles.compMeta}>{t('picker.create_custom_desc')}</span>
+            <span className={s.compMeta}>{t('picker.create_custom_desc')}</span>
           </button>
         )}
       </main>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    minHeight: '100vh',
-    backgroundColor: 'var(--bg)',
-  },
-  main: {
-    maxWidth: 800,
-    margin: '0 auto',
-    padding: '40px 24px',
-  },
-  mainMobile: { padding: '24px 16px' },
-  headingRow: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 },
-  heading: { margin: 0, fontSize: 'var(--fs-display)', fontWeight: 700, color: 'var(--text)' },
-  hint: { margin: '0 0 28px', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' },
-  errorBox: {
-    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '32px 0',
-  },
-  retryButton: {
-    backgroundColor: 'var(--surface)',
-    color: 'var(--text)',
-    border: '1px solid var(--border-strong)',
-    borderRadius: 'var(--radius-md)',
-    padding: '8px 20px',
-    fontSize: 'var(--fs-label)',
-    fontWeight: 500,
-    fontFamily: 'inherit',
-    cursor: 'pointer',
-  },
-  status: { fontSize: 'var(--fs-heading)', color: 'var(--text-muted)', textAlign: 'center', padding: '32px 0' },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-    gap: 16,
-  },
-  gridMobile: { gridTemplateColumns: '1fr' },
-  compCard: {
-    backgroundColor: 'var(--surface)',
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-lg)',
-    padding: '20px 24px',
-    textAlign: 'left',
-    cursor: 'pointer',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 6,
-    transition: 'border-color 0.15s, box-shadow 0.15s',
-  },
-  compName: { fontSize: 16, fontWeight: 700, color: 'var(--text)' },
-  compMeta: { fontSize: 'var(--fs-label)', color: 'var(--text-muted)' },
-  customCard: {
-    backgroundColor: 'var(--surface)',
-    border: '2px dashed var(--border-strong)',
-    borderRadius: 'var(--radius-lg)',
-    padding: '14px 20px',
-    marginTop: 16,
-    width: '100%',
-    textAlign: 'left',
-    cursor: 'pointer',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 6,
-    transition: 'border-color 0.15s, box-shadow 0.15s',
-  },
-  customCardTitle: {
-    display: 'inline-flex', alignItems: 'center', gap: 6,
-    fontSize: 16, fontWeight: 700, color: 'var(--text)',
-  },
-};

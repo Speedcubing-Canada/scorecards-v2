@@ -1,34 +1,20 @@
 import { Moon, Sun } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../theme/ThemeContext';
 import Tooltip from './Tooltip';
+import s from './ThemeToggle.module.css';
 
 export default function ThemeToggle() {
+  const { t } = useTranslation();
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
-  const label = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+  const label = t(isDark ? 'common.theme_light' : 'common.theme_dark');
 
   return (
     <Tooltip label={label} placement="bottom">
-      <button style={s.btn} onClick={toggleTheme} aria-label={label}>
+      <button className={s.btn} onClick={toggleTheme} aria-label={label}>
         {isDark ? <Sun size={16} strokeWidth={2} /> : <Moon size={16} strokeWidth={2} />}
       </button>
     </Tooltip>
   );
 }
-
-const s: Record<string, React.CSSProperties> = {
-  btn: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 30,
-    height: 28,
-    padding: 0,
-    background: 'var(--surface)',
-    border: '1px solid var(--border-strong)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--radius-sm)',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-  },
-};

@@ -7,7 +7,11 @@
     "clear": "Clear",
     "upload": "Upload",
     "choose_file": "Choose file",
-    "menu": "Menu"
+    "menu": "Menu",
+    "skip_to_content": "Skip to content",
+    "language": "Language",
+    "theme_light": "Switch to light mode",
+    "theme_dark": "Switch to dark mode"
   },
   "login": {
     "subtitle": "Generate print-ready scorecards and nametags for your WCA competition.",
@@ -174,7 +178,7 @@
       "paper": "Paper",
       "total_pages": "Pages"
     },
-    "download_button": "Download {{filename}}",
+    "download_button": "Download",
     "building_button": "Building ZIP…",
     "guide": {
       "title": "How to print and cut",
@@ -216,6 +220,8 @@
     "doc_group_overview": "Group Overview",
     "doc_first_timers": "First-Timer Slips",
     "checking": "Checking the competition…",
+    "needs_document": "Pick at least one document to print.",
+    "needs_round": "Pick at least one round.",
     "continue": "Continue →",
     "latest": {
       "label": "Latest round only",

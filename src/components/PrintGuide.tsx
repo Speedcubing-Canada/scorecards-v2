@@ -2,8 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowDown, ArrowRight, CalendarDays, ClipboardCheck, IdCard, Scissors, UserPlus, Users } from 'lucide-react';
 import { guideSections, type GuideSection, type PdfJob } from '../lib/pdfJobs';
 import { useIsMobile } from '../lib/useIsMobile';
-
-const noteIcon: React.CSSProperties = { flexShrink: 0, marginTop: 2, color: 'var(--text-subtle)' };
+import s from './PrintGuide.module.css';
 
 type NoteSection = Exclude<GuideSection, 'scorecards'>;
 const isNote = (x: GuideSection): x is NoteSection => x !== 'scorecards';
@@ -12,11 +11,11 @@ const isNote = (x: GuideSection): x is NoteSection => x !== 'scorecards';
 // `satisfies` keeps the literal key types (so `t()` type-checks them) while still failing
 // the build if a new GuideSection is added without a note here.
 const NOTES = {
-  schedule:       { icon: <CalendarDays size={16} strokeWidth={2} aria-hidden style={noteIcon} />,   key: 'generate.guide.schedule' },
-  checking:       { icon: <ClipboardCheck size={16} strokeWidth={2} aria-hidden style={noteIcon} />, key: 'generate.guide.checking' },
-  nametags:       { icon: <IdCard size={16} strokeWidth={2} aria-hidden style={noteIcon} />,         key: 'generate.guide.nametags' },
-  'group-overview': { icon: <Users size={16} strokeWidth={2} aria-hidden style={noteIcon} />,       key: 'generate.guide.group_overview' },
-  'first-timers': { icon: <UserPlus size={16} strokeWidth={2} aria-hidden style={noteIcon} />,       key: 'generate.guide.first_timers' },
+  schedule:       { icon: <CalendarDays size={16} strokeWidth={2} aria-hidden className={s.noteIcon} />,   key: 'generate.guide.schedule' },
+  checking:       { icon: <ClipboardCheck size={16} strokeWidth={2} aria-hidden className={s.noteIcon} />, key: 'generate.guide.checking' },
+  nametags:       { icon: <IdCard size={16} strokeWidth={2} aria-hidden className={s.noteIcon} />,         key: 'generate.guide.nametags' },
+  'group-overview': { icon: <Users size={16} strokeWidth={2} aria-hidden className={s.noteIcon} />,       key: 'generate.guide.group_overview' },
+  'first-timers': { icon: <UserPlus size={16} strokeWidth={2} aria-hidden className={s.noteIcon} />,       key: 'generate.guide.first_timers' },
 } as const satisfies Record<NoteSection, { icon: React.ReactNode; key: string }>;
 
 /**
@@ -26,33 +25,34 @@ const NOTES = {
  */
 export default function PrintGuide({ jobs }: { jobs: PdfJob[] }) {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
   const sections = guideSections(jobs);
   if (sections.length === 0) return null;
 
+  const hasScorecards = sections.includes('scorecards');
+
   return (
-    <section style={s.card}>
-      <h3 style={s.title}>
+    <section className={s.card}>
+      <h3 className={s.title}>
         <Scissors size={18} strokeWidth={2} aria-hidden />
         {t('generate.guide.title')}
       </h3>
 
-      {sections.includes('scorecards') && (
+      {hasScorecards && (
         <>
-          <p style={s.callout}>{t('generate.guide.scorecards.callout')}</p>
-          <CutDiagram isMobile={isMobile} />
-          <ol style={s.steps}>
-            <li style={s.step}>{t('generate.guide.scorecards.steps.print')}</li>
-            <li style={s.step}>{t('generate.guide.scorecards.steps.cut')}</li>
-            <li style={s.step}>{t('generate.guide.scorecards.steps.stack')}</li>
-            <li style={s.step}>{t('generate.guide.scorecards.steps.covers')}</li>
+          <p className={s.callout}>{t('generate.guide.scorecards.callout')}</p>
+          <CutDiagram />
+          <ol className={s.steps}>
+            <li className={s.step}>{t('generate.guide.scorecards.steps.print')}</li>
+            <li className={s.step}>{t('generate.guide.scorecards.steps.cut')}</li>
+            <li className={s.step}>{t('generate.guide.scorecards.steps.stack')}</li>
+            <li className={s.step}>{t('generate.guide.scorecards.steps.covers')}</li>
           </ol>
         </>
       )}
 
-      <div style={sections.includes('scorecards') ? { ...s.notes, ...s.notesDivided } : s.notes}>
+      <div className={hasScorecards ? `${s.notes} ${s.notesDivided}` : s.notes}>
         {sections.filter(isNote).map(section => (
-          <p key={section} style={s.note}>
+          <p key={section} className={s.note}>
             {NOTES[section].icon}
             <span>{t(NOTES[section].key)}</span>
           </p>
@@ -63,108 +63,38 @@ export default function PrintGuide({ jobs }: { jobs: PdfJob[] }) {
 }
 
 /** Sheet -> four piles -> one deck, in plain divs: the design-system guard forbids inline SVG. */
-function CutDiagram({ isMobile }: { isMobile: boolean }) {
+function CutDiagram() {
   const { t } = useTranslation();
-  const Arrow = isMobile ? ArrowDown : ArrowRight;
-  const arrow = <Arrow size={20} strokeWidth={2} aria-hidden style={{ color: 'var(--text-faint)', flexShrink: 0 }} />;
+  // A component swap, not a style: the flow turns vertical on a phone.
+  const Arrow = useIsMobile() ? ArrowDown : ArrowRight;
+  const arrow = <Arrow size={20} strokeWidth={2} aria-hidden className={s.arrow} />;
 
   return (
-    <div style={{ ...s.diagram, ...(isMobile ? s.diagramMobile : {}) }}>
-      <figure style={s.stage}>
-        <div style={s.sheet}>
-          {[1, 2, 3, 4].map(n => <div key={n} style={s.quad}>{n}</div>)}
+    <div className={s.diagram}>
+      <figure className={s.stage}>
+        <div className={s.sheet}>
+          {[1, 2, 3, 4].map(n => <div key={n} className={s.quad}>{n}</div>)}
         </div>
-        <figcaption style={s.caption}>{t('generate.guide.scorecards.diagram.sheet')}</figcaption>
+        <figcaption className={s.caption}>{t('generate.guide.scorecards.diagram.sheet')}</figcaption>
       </figure>
 
       {arrow}
 
-      <figure style={s.stage}>
-        <div style={s.piles}>
-          {[1, 2, 3, 4].map(n => <div key={n} style={s.pile}>{n}</div>)}
+      <figure className={s.stage}>
+        <div className={s.piles}>
+          {[1, 2, 3, 4].map(n => <div key={n} className={s.pile}>{n}</div>)}
         </div>
-        <figcaption style={s.caption}>{t('generate.guide.scorecards.diagram.piles')}</figcaption>
+        <figcaption className={s.caption}>{t('generate.guide.scorecards.diagram.piles')}</figcaption>
       </figure>
 
       {arrow}
 
-      <figure style={s.stage}>
-        <div style={s.deck}>
-          {[1, 2, 3, 4].map(n => <div key={n} style={s.deckLayer}>{n}</div>)}
+      <figure className={s.stage}>
+        <div className={s.deck}>
+          {[1, 2, 3, 4].map(n => <div key={n} className={s.deckLayer}>{n}</div>)}
         </div>
-        <figcaption style={s.caption}>{t('generate.guide.scorecards.diagram.deck')}</figcaption>
+        <figcaption className={s.caption}>{t('generate.guide.scorecards.diagram.deck')}</figcaption>
       </figure>
     </div>
   );
 }
-
-const s: Record<string, React.CSSProperties> = {
-  card: {
-    backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-lg)', padding: 'var(--space-6)', marginTop: 'var(--space-6)',
-    textAlign: 'left',
-  },
-  title: {
-    display: 'flex', alignItems: 'center', gap: 'var(--space-2)', margin: '0 0 var(--space-4)',
-    fontSize: 'var(--fs-heading)', fontWeight: 700, color: 'var(--text)',
-  },
-  callout: {
-    backgroundColor: 'var(--warning-bg)', border: '1px solid var(--warning-border)',
-    borderRadius: 'var(--radius-md)', padding: '12px 14px', margin: '0 0 var(--space-5)',
-    fontSize: 'var(--fs-label)', fontWeight: 500, lineHeight: 1.6, color: 'var(--warning-text)',
-  },
-
-  diagram: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-4)',
-    padding: 'var(--space-4) 0 var(--space-5)',
-  },
-  diagramMobile: { flexDirection: 'column', gap: 'var(--space-3)' },
-  stage: { margin: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-2)' },
-  caption: { fontSize: 'var(--fs-caption)', color: 'var(--text-muted)', textAlign: 'center' },
-
-  sheet: {
-    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, width: 72, height: 92,
-    padding: 3, borderRadius: 'var(--radius-sm)',
-    border: '1px dashed var(--border-strong)', backgroundColor: 'var(--surface-2)',
-  },
-  quad: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    borderRadius: 3, backgroundColor: 'var(--surface)', border: '1px solid var(--border-strong)',
-    fontSize: 'var(--fs-caption)', fontWeight: 700, color: 'var(--primary)',
-  },
-
-  piles: { display: 'flex', alignItems: 'flex-end', gap: 12, height: 92 },
-  pile: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    width: 20, height: 42, borderRadius: 3,
-    backgroundColor: 'var(--surface)', border: '1px solid var(--border-strong)',
-    // Offset outlines, so a pile reads as a stack of cut cards.
-    boxShadow: '3px -3px 0 -1px var(--surface), 3px -3px 0 var(--border-strong),'
-             + '6px -6px 0 -1px var(--surface), 6px -6px 0 var(--border-strong)',
-    fontSize: 'var(--fs-caption)', fontWeight: 700, color: 'var(--primary)',
-  },
-
-  deck: {
-    display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 2,
-    height: 92, width: 40,
-  },
-  deckLayer: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    height: 16, borderRadius: 3,
-    backgroundColor: 'var(--surface)', border: '1px solid var(--border-strong)',
-    fontSize: 'var(--fs-caption)', fontWeight: 700, color: 'var(--primary)',
-  },
-
-  steps: {
-    margin: 0, paddingLeft: '1.3em', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)',
-  },
-  step: { fontSize: 'var(--fs-label)', lineHeight: 1.6, color: 'var(--text-muted)' },
-  notes: { display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' },
-  notesDivided: {
-    marginTop: 'var(--space-5)', paddingTop: 'var(--space-5)', borderTop: '1px solid var(--border)',
-  },
-  note: {
-    display: 'flex', gap: 'var(--space-2)', margin: 0,
-    fontSize: 'var(--fs-label)', lineHeight: 1.6, color: 'var(--text-muted)',
-  },
-};

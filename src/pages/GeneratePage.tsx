@@ -18,10 +18,10 @@ import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
 import Skeleton from '../components/Skeleton';
 import PrintGuide from '../components/PrintGuide';
-import { useIsMobile } from '../lib/useIsMobile';
 import { readSettings } from '../lib/flowState';
-import { downloadButtonFontSize } from '../lib/downloadButtonFontSize';
 import i18n from '../i18n/index';
+import ui from '../styles/ui.module.css';
+import s from './GeneratePage.module.css';
 
 type Status = 'idle' | 'fetching' | 'parsing' | 'ready' | 'building' | 'error';
 
@@ -29,7 +29,6 @@ export default function GeneratePage() {
   const { t } = useTranslation();
   const { token } = useAuth();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
 
   const settings: CompetitionSettings | null = readSettings();
 
@@ -187,27 +186,34 @@ export default function GeneratePage() {
   }
 
   return (
-    <div style={s.page}>
+    <div className={ui.page}>
       <Header showBack onBack={() => navigate('/settings')} showSignOut />
 
-      <main style={{ ...s.main, ...(isMobile ? s.mainMobile : {}) }}>
-        <div style={s.compBadge}>{settings.competitionName}</div>
-        <h2 style={s.pageTitle}>{t('generate.title')}</h2>
+      <main id="main" className={`${ui.main} ${s.main}`}>
+        <div className={ui.compBadge}>{settings.competitionName}</div>
+        <h1 className={`${ui.pageTitle} ${s.pageTitle}`}>{t('generate.title')}</h1>
 
         {(status === 'fetching' || status === 'parsing') && (
-          <StatsSkeleton isMobile={isMobile} label={status === 'fetching' ? t('generate.fetching') : t('generate.parsing')} />
+          <StatsSkeleton label={status === 'fetching' ? t('generate.fetching') : t('generate.parsing')} />
         )}
         {status === 'error'    && (
           <StatusBox icon={<XCircle size={28} strokeWidth={2} color="var(--danger)" />} text={statusMsg} isError />
         )}
         {status === 'building' && (
-          <div style={s.progressBox}>
-            <div style={s.progressHeader}>
-              <span style={s.progressLabel}>{statusMsg || t('generate.rendering')}</span>
-              <span style={s.progressPct}>{buildPercent}%</span>
+          <div className={s.progressBox}>
+            <div className={s.progressHeader}>
+              <span className={s.progressLabel}>{statusMsg || t('generate.rendering')}</span>
+              <span className={s.progressPct}>{buildPercent}%</span>
             </div>
-            <div style={s.progressTrack}>
-              <div style={{ ...s.progressFill, width: `${buildPercent}%` }} />
+            <div
+              className={s.progressTrack}
+              role="progressbar"
+              aria-valuenow={buildPercent}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={t('generate.rendering')}
+            >
+              <div className={s.progressFill} style={{ transform: `scaleX(${buildPercent / 100})` }} />
             </div>
           </div>
         )}
@@ -224,7 +230,7 @@ export default function GeneratePage() {
             )}
 
             {status === 'ready' && (
-              <div style={{ ...s.stats, ...(isMobile ? s.statsMobile : {}) }}>
+              <div className={s.stats}>
                 <Stat label={t('generate.stats.scorecards')} value={scorecardCount} />
                 <Stat label={t('generate.stats.cover_cards')} value={coverCount} />
                 <Stat label={t('generate.stats.pdfs')} value={pdfCount} />
@@ -233,26 +239,19 @@ export default function GeneratePage() {
               </div>
             )}
 
-            {(() => {
-              const buttonLabel = status === 'building'
-                ? t('generate.building_button')
-                : t('generate.download_button', { filename });
-              const disabled = status === 'building' || pdfCount === 0;
-              return (
-                <button
-                  style={{
-                    ...s.downloadBtn,
-                    fontSize: downloadButtonFontSize(buttonLabel),
-                    ...(disabled ? s.downloadBtnDisabled : {}),
-                  }}
-                  onClick={handleDownload}
-                  disabled={disabled}
-                >
-                  {status !== 'building' && <Download size={18} aria-hidden />}
-                  {buttonLabel}
-                </button>
-              );
-            })()}
+            {/* The filename sits under the button, not inside it: a long competition id used
+                to force the label down to 12px to fit. */}
+            <button
+              className={ui.btnPrimary}
+              onClick={handleDownload}
+              disabled={status === 'building' || pdfCount === 0}
+            >
+              {status !== 'building' && <Download size={18} aria-hidden />}
+              {status === 'building' ? t('generate.building_button') : t('generate.download_button')}
+            </button>
+            {status === 'ready' && pdfCount > 0 && (
+              <p className={s.downloadFilename}>{filename}</p>
+            )}
 
             <PrintGuide jobs={jobs} />
           </>
@@ -264,22 +263,22 @@ export default function GeneratePage() {
 
 function StatusBox({ icon, text, isError = false }: { icon: React.ReactNode; text: string; isError?: boolean }) {
   return (
-    <div style={{ ...s.statusBox, ...(isError ? s.statusError : {}) }}>
+    <div className={`${ui.statusBox} ${isError ? ui.statusError : ''}`}>
       {icon}
-      <span style={{ fontSize: 'var(--fs-body)', color: isError ? 'var(--danger)' : 'var(--text-muted)' }}>{text}</span>
+      <span className={isError ? ui.errorText : s.statusText}>{text}</span>
     </div>
   );
 }
 
 /** Mirrors the stats grid and download button, so the layout doesn't shift on arrival. */
-function StatsSkeleton({ isMobile, label }: { isMobile: boolean; label: string }) {
+function StatsSkeleton({ label }: { label: string }) {
   return (
     <div role="status" aria-label={label}>
-      <div style={{ ...s.stats, ...(isMobile ? s.statsMobile : {}) }}>
+      <div className={s.stats}>
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} style={s.stat}>
-            <Skeleton width={isMobile ? 48 : 56} height={isMobile ? 22 : 28} style={{ margin: '0 auto 8px' }} />
-            <Skeleton width="70%" height={10} style={{ margin: '0 auto' }} />
+          <div key={i} className={s.stat}>
+            <Skeleton className={s.statValueSkeleton} />
+            <Skeleton className={s.statLabelSkeleton} />
           </div>
         ))}
       </div>
@@ -289,65 +288,10 @@ function StatsSkeleton({ isMobile, label }: { isMobile: boolean; label: string }
 }
 
 function Stat({ label, value }: { label: string; value: number | string }) {
-  const isMobile = useIsMobile();
   return (
-    <div style={s.stat}>
-      <div style={{ ...s.statValue, ...(isMobile ? s.statValueMobile : {}) }}>{value}</div>
-      <div style={s.statLabel}>{label}</div>
+    <div className={s.stat}>
+      <div className={s.statValue}>{value}</div>
+      <div className={s.statLabel}>{label}</div>
     </div>
   );
 }
-
-const s: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', backgroundColor: 'var(--bg)' },
-  main: { maxWidth: 680, margin: '0 auto', padding: '32px 24px' },
-  mainMobile: { padding: '24px 16px' },
-  compBadge: {
-    display: 'inline-block', backgroundColor: 'var(--primary-soft-bg)', color: 'var(--primary-soft-text)',
-    borderRadius: 'var(--radius-sm)', padding: '4px 12px', fontSize: 'var(--fs-label)', fontWeight: 700, marginBottom: 8,
-  },
-  pageTitle: { margin: '0 0 24px', fontSize: 'var(--fs-display)', fontWeight: 700, color: 'var(--text)' },
-  statusBox: {
-    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
-    backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-lg)', padding: '40px 24px', textAlign: 'center', marginBottom: 24,
-  },
-  statusError: { borderColor: 'var(--danger)', backgroundColor: 'var(--primary-soft-bg)' },
-  stats: {
-    display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 24,
-  },
-  statsMobile: { gridTemplateColumns: 'repeat(2, 1fr)' },
-  stat: {
-    backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-md)', padding: '16px', textAlign: 'center',
-  },
-  statValue: { fontSize: 'var(--fs-stat)', fontWeight: 700, color: 'var(--primary)', marginBottom: 4 },
-  statValueMobile: { fontSize: 'var(--fs-display)' },
-  statLabel: { fontSize: 'var(--fs-caption)', color: 'var(--text-muted)' },
-  downloadBtn: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-    backgroundColor: 'var(--primary)', color: 'var(--primary-contrast)',
-    border: 'none', borderRadius: 'var(--radius-md)', padding: '16px', fontSize: 'var(--fs-heading)',
-    fontWeight: 700, textAlign: 'center', cursor: 'pointer', width: '100%',
-    fontFamily: 'inherit', letterSpacing: '-0.01em', overflowWrap: 'anywhere',
-  },
-  downloadBtnDisabled: {
-    backgroundColor: 'var(--primary-disabled)', cursor: 'not-allowed',
-  },
-  progressBox: {
-    backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-lg)', padding: '24px 28px', marginBottom: 24,
-  },
-  progressHeader: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12,
-  },
-  progressLabel: { fontSize: 'var(--fs-body)', color: 'var(--text-muted)' },
-  progressPct: { fontSize: 'var(--fs-title)', fontWeight: 700, color: 'var(--primary)' },
-  progressTrack: {
-    height: 10, backgroundColor: 'var(--primary-soft-bg)', borderRadius: 5, overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%', backgroundColor: 'var(--primary)', borderRadius: 5,
-    transition: 'width 0.2s ease',
-  },
-};

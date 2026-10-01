@@ -114,9 +114,18 @@ describe('the event icon', () => {
     expect(state()[0].iconDataUrl).toBeNull();
   });
 
-  it('is keyboard reachable', () => {
+  // A real <button>, not a div with role="button": the browser gives it Enter, Space and
+  // focus for free, where the hand-rolled version only ever handled Enter.
+  it('is a native button, so the keyboard reaches it', () => {
     mount([event()]);
-    fireEvent.keyDown(wcaIcon(), { key: 'Enter' });
+    expect(wcaIcon().tagName).toBe('BUTTON');
+    expect(wcaIcon().hasAttribute('tabindex')).toBe(false);
+  });
+
+  it('marks the chosen icon as pressed', () => {
+    mount([event()]);
+    expect(wcaIcon().getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(wcaIcon());
     expect(state()[0].iconDataUrl).toBeTruthy();
   });
 

@@ -7,7 +7,11 @@
     "clear": "Limpar",
     "upload": "Enviar",
     "choose_file": "Escolher arquivo",
-    "menu": "Menu"
+    "menu": "Menu",
+    "skip_to_content": "Ir para o conteúdo",
+    "language": "Idioma",
+    "theme_light": "Mudar para o modo claro",
+    "theme_dark": "Mudar para o modo escuro"
   },
   "login": {
     "subtitle": "Gere súmulas e crachás prontos para impressão para sua competição da WCA.",
@@ -174,7 +178,7 @@
       "paper": "Papel",
       "total_pages": "Páginas"
     },
-    "download_button": "Baixar {{filename}}",
+    "download_button": "Baixar",
     "building_button": "Criando ZIP…",
     "guide": {
       "title": "Como imprimir e recortar",
@@ -216,6 +220,8 @@
     "doc_group_overview": "Visão geral dos grupos",
     "doc_first_timers": "Fichas de novato",
     "checking": "Verificando a competição…",
+    "needs_document": "Escolha pelo menos um documento para imprimir.",
+    "needs_round": "Escolha pelo menos uma rodada.",
     "continue": "Continuar →",
     "latest": {
       "label": "Apenas a última rodada",

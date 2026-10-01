@@ -1,0 +1,129 @@
+.header {
+  position: relative;
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  padding: 0 var(--space-6);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 600px) {
+  .header {
+    padding: 0 var(--space-4);
+  }
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.logo {
+  height: 26px;
+  width: auto;
+  display: block;
+}
+
+.divider {
+  width: 1px;
+  height: 22px;
+  background-color: var(--border);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.userName {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-medium);
+  color: var(--text);
+}
+
+.hamburger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0;
+}
+
+.menuPanel {
+  position: absolute;
+  top: 56px;
+  right: var(--space-3);
+  min-width: 200px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  z-index: 50;
+}
+
+.menuRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.menuUser {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.menuSignOut {
+  background: none;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-medium);
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+}
+
+.menuSignOut:hover {
+  border-color: var(--text-muted);
+  color: var(--text);
+}
