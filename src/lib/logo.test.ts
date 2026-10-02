@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { logoState, resolveLogo } from './logo';
+import { logoState, resolveLogo, showCompNameAboveCompetitor } from './logo';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 
 const CUSTOM = 'data:image/png;base64,custom-logo-bytes';
@@ -30,5 +30,17 @@ describe('resolveLogo', () => {
 
   it('returns null when both sources are disabled', () => {
     expect(resolveLogo({ logoDataUrl: null, useDefaultLogo: false })).toBeNull();
+  });
+});
+
+// A custom logo replaces the comp name in the scorecard header; this puts it back.
+describe('showCompNameAboveCompetitor', () => {
+  it('needs both a custom logo and the opt-in', () => {
+    expect(showCompNameAboveCompetitor({ logoDataUrl: CUSTOM, scorecardCompNameWithLogo: true })).toBe(true);
+    expect(showCompNameAboveCompetitor({ logoDataUrl: CUSTOM, scorecardCompNameWithLogo: false })).toBe(false);
+  });
+
+  it('stays off without a custom logo, whose layouts already print the name', () => {
+    expect(showCompNameAboveCompetitor({ logoDataUrl: null, scorecardCompNameWithLogo: true })).toBe(false);
   });
 });

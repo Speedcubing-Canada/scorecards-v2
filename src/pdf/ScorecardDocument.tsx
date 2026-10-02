@@ -4,7 +4,7 @@ import type { ScorecardData } from '../lib/wcif-parser';
 import { getStrings, splitLabelTotal, type ScorecardStrings } from '../lib/i18n';
 import type { Style } from '@react-pdf/types';
 import { EVENT_ICONS } from '../assets/events';
-import { logoState, resolveLogo, type LogoState } from '../lib/logo';
+import { logoState, resolveLogo, showCompNameAboveCompetitor, type LogoState } from '../lib/logo';
 import {
   SCORECARDS_PER_PAGE, ROW_HEIGHTS, showLiveIdLine,
   PDF_FONT as FONT, PDF_FONT_BOLD as FONT_BOLD,
@@ -73,6 +73,12 @@ function nameFontSize(name: string, state: 'custom' | 'default' | 'none'): numbe
   return Math.min(18, Math.max(7, Math.floor(available / Math.max(name.length * 0.65, 1))));
 }
 
+// Comp name line above the competitor name: shrinks to stay on one line in the 158pt name cell
+// (Helvetica ~0.5pt/pt/char).
+function headerCompNameFontSize(name: string): number {
+  return Math.min(7.5, Math.max(5, 158 / Math.max(name.length * 0.5, 1)));
+}
+
 const styles = StyleSheet.create({
   page: { backgroundColor: '#ffffff' },
 
@@ -95,6 +101,7 @@ const styles = StyleSheet.create({
   defaultLogoImg: { width: 30, height: 30, objectFit: 'contain' },
   nameCell: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 3 },
   nameText: { fontFamily: FONT_BOLD, textAlign: 'center' },
+  headerCompNameText: { textAlign: 'center', color: '#111', marginBottom: 3 },
   idText: { fontSize: 7.5, textAlign: 'center', marginTop: 2, color: '#222' },
 
   // Event row - underlined text only, no box, icon is left clear
@@ -174,7 +181,7 @@ function LabelWithGreyTotal({ label, connector, style }: {
 }
 
 function ScorecardCard({
-  card, settings, strings, logoMode, headerLogo, cardW, cardH, pos,
+  card, settings, strings, logoMode, headerLogo, headerCompNameFs, cardW, cardH, pos,
 }: {
   card: Extract<ScorecardData, { kind: 'scorecard' }>;
   settings: CompetitionSettings;
@@ -183,6 +190,8 @@ function ScorecardCard({
   strings: ScorecardStrings;
   logoMode: LogoState;
   headerLogo: string | null;
+  // null hides the comp name line above the competitor name.
+  headerCompNameFs: number | null;
   cardW: number; cardH: number;
   pos: { left: number; top: number };
 }) {
@@ -237,6 +246,9 @@ function ScorecardCard({
           </View>
         )}
         <View style={styles.nameCell}>
+          {headerCompNameFs !== null && (
+            <Text style={[styles.headerCompNameText, { fontSize: headerCompNameFs }]}>{settings.competitionName}</Text>
+          )}
           <Text style={[styles.nameText, { fontSize: nameFontSize(card.name || ' ', logoMode) }]}>
             {card.name || ' '}
           </Text>
@@ -366,6 +378,8 @@ export function ScorecardDocument({ entries, settings }: Props) {
   const coverStrings = getStrings(settings.language);
   const logoMode     = logoState(settings);
   const headerLogo   = resolveLogo(settings);
+  const headerCompNameFs = showCompNameAboveCompetitor(settings)
+    ? headerCompNameFontSize(settings.competitionName) : null;
   const pages: ScorecardData[][] = [];
   for (let i = 0; i < entries.length; i += SCORECARDS_PER_PAGE) pages.push(entries.slice(i, i + SCORECARDS_PER_PAGE));
 
@@ -378,6 +392,7 @@ export function ScorecardDocument({ entries, settings }: Props) {
             return entry.kind === 'scorecard'
               ? <ScorecardCard key={ei} card={entry} settings={settings}
                   strings={cardStrings} logoMode={logoMode} headerLogo={headerLogo}
+                  headerCompNameFs={headerCompNameFs}
                   cardW={config.cardW} cardH={config.cardH} pos={pos} />
               : <CoverCard key={ei} card={entry} settings={settings} strings={coverStrings}
                   cardW={config.cardW} cardH={config.cardH} pos={pos} />;

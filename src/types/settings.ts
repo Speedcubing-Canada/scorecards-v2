@@ -62,6 +62,8 @@ export interface CompetitionSettings {
   logoDataUrl: string | null;
   // The bundled Speedcubing Canada logo when no custom logo is uploaded.
   useDefaultLogo: boolean;
+  // Prints the comp name above the competitor's on scorecards, for custom logos without it.
+  scorecardCompNameWithLogo: boolean;
   // Detected from `scoretaking_software` ('internal' => ilr), overridable on the settings page.
   liveResultsMode: LiveResultsMode;
   // 'wca-live' only; ILR needs neither.

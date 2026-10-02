@@ -96,6 +96,7 @@ export default function SettingsPage() {
     secondRoundMode: preset.secondRoundMode ?? 'prefilled',
     logoDataUrl: null,
     useDefaultLogo: preset.useDefaultLogo ?? isCanadianLanguage(i18n.resolvedLanguage ?? i18n.language),
+    scorecardCompNameWithLogo: false,
     // Overwritten on mount by the competition's own setting, unless modeTouched.
     liveResultsMode: 'wca-live',
     wcaLiveId: '',
@@ -126,6 +127,7 @@ export default function SettingsPage() {
 
   const {
     language, secondaryLanguage, paperFormat, secondRoundMode, logoDataUrl, useDefaultLogo,
+    scorecardCompNameWithLogo,
     liveResultsMode, wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,
     scorecardCheckMode, customEvents, splitPdfsByStage, scrambleDoubleCheckRounds,
     scrambleDoubleCheckOverrides, scrambleDoubleCheckWorldTop, scrambleDoubleCheckRegionTop,
@@ -532,6 +534,7 @@ export default function SettingsPage() {
           <p className={ui.hint}>{t('settings.logo.hint')}</p>
 
           {logoDataUrl ? (
+            <>
             <div className={s.logoPreview}>
               <img src={logoDataUrl} alt="Logo preview" className={s.logoImg} />
               <div className={s.logoMeta}>
@@ -539,6 +542,21 @@ export default function SettingsPage() {
                 <button className={s.removeBtn} onClick={handleRemoveLogo}>{t('common.remove')}</button>
               </div>
             </div>
+            {showScorecards && (
+            <label className={`${ui.toggleCard} ${s.checkboxCard} ${scorecardCompNameWithLogo ? ui.toggleCardActive : ''}`}>
+              <input
+                type="checkbox"
+                checked={scorecardCompNameWithLogo}
+                onChange={e => patch({ scorecardCompNameWithLogo: e.target.checked })}
+                className={ui.radio}
+              />
+              <div>
+                <div className={ui.optionLabel}>{t('settings.logo.show_comp_name_label')}</div>
+                <div className={ui.optionDesc}>{t('settings.logo.show_comp_name_desc')}</div>
+              </div>
+            </label>
+            )}
+            </>
           ) : (
             <>
               <button className={ui.dropzone} onClick={() => fileInputRef.current?.click()}>

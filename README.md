@@ -37,6 +37,13 @@ we can see which competitions the tool is used on and which settings people pick
 Empty documents are omitted. Two or more files download as `{id}_pdfs.zip`; a single file
 downloads on its own so it can be printed straight away.
 
+### Scorecard header logo
+
+The top-left of each scorecard shows an uploaded logo alone, the Speedcubing Canada logo next to
+the competition name, or the competition name only. A custom logo drops the name, so for logos
+that don't contain it, "Show the competition name on scorecards" (settings, logo section) prints
+it in small type above the competitor's name. The line shrinks to fit long names (5pt minimum).
+
 ### Stages
 
 Competitions model stages two ways, and both are recognised. Most give each stage its own WCIF

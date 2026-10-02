@@ -43,6 +43,7 @@ function settings(over: Partial<CompetitionSettings> = {}): CompetitionSettings 
     paperFormat: 'LETTER',
     secondRoundMode: 'prefilled',
     useDefaultLogo: true,
+    scorecardCompNameWithLogo: false,
     logoDataUrl: null,
     liveResultsMode: 'wca-live',
     hideWcaLiveId: false,

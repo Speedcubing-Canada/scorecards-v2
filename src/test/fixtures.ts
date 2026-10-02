@@ -17,6 +17,7 @@ export function testSettings(over: Partial<CompetitionSettings> = {}): Competiti
     secondRoundMode: 'prefilled',
     logoDataUrl: null,
     useDefaultLogo: true,
+    scorecardCompNameWithLogo: false,
     liveResultsMode: 'wca-live',
     wcaLiveId: null,
     wcaLivePersonIds: null,
