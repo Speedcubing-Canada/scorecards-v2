@@ -7,7 +7,13 @@ vi.mock('../auth/wca', async (importOriginal) => ({
   fetchWcif: vi.fn(),
 }));
 
+vi.mock('../lib/analytics', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../lib/analytics')>()),
+  send: vi.fn(),
+}));
+
 import { fetchWcif } from '../auth/wca';
+import { send } from '../lib/analytics';
 import i18n from '../i18n/index';
 import { markAllSeen } from '../changelog';
 import { writeCompetition, readHasGroups, readStoredScope } from '../lib/flowState';
@@ -148,5 +154,9 @@ describe('RoundScopePage', () => {
     renderWithProviders(<RoundScopePage />, { auth: signedInAuth });
 
     expect(await screen.findByText(/boom/)).toBeTruthy();
+    // The first fetch happens here, so this is the only place it can be reported.
+    expect(vi.mocked(send)).toHaveBeenCalledWith(expect.objectContaining({
+      event: 'error', comp: { id: 'Uncached2026' }, stage: 'fetch',
+    }));
   });
 });

@@ -103,11 +103,13 @@ export function buildGenerateEvent(args: {
   output: { pdfs: number; pages: number; scorecards: number; coverCards: number };
 }): AnalyticsEvent {
   const { parsed, wcif, settings, uiLanguage, presetId, output } = args;
+  const dc = settings.scrambleDoubleCheck;
   return {
     v: 1,
     event: 'generate',
     comp: competition(settings, wcif),
-    size: competitionSize(parsed, wcif),
+    // Null, not zeros: a custom competition has no WCIF to size, and zeros skew averages.
+    size: settings.isCustomCompetition ? null : competitionSize(parsed, wcif),
     output,
     settings: {
       paperFormat: settings.paperFormat,
@@ -124,9 +126,10 @@ export function buildGenerateEvent(args: {
       secondRoundMode: settings.secondRoundMode,
       scorecardCheckMode: settings.scorecardCheckMode,
       scrambleDoubleCheck: settings.scrambleDoubleCheck,
-      scrambleDoubleCheckWorldTop: settings.scrambleDoubleCheckWorldTop,
-      scrambleDoubleCheckRegionTop: settings.scrambleDoubleCheckRegionTop,
-      scrambleDoubleCheckRegionScope: settings.scrambleDoubleCheckRegionTop === null
+      // The draft keeps these while the toggle is off; only report them when they apply.
+      scrambleDoubleCheckWorldTop: dc ? settings.scrambleDoubleCheckWorldTop : null,
+      scrambleDoubleCheckRegionTop: dc ? settings.scrambleDoubleCheckRegionTop : null,
+      scrambleDoubleCheckRegionScope: !dc || settings.scrambleDoubleCheckRegionTop === null
         ? null : settings.scrambleDoubleCheckRegionScope,
       customEvents: (settings.customEvents ?? []).filter(c => c.name.trim()).length,
       preset: presetId,

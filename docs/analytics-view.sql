@@ -33,7 +33,9 @@ SELECT
   CAST(jsonPayload.output.scorecards AS INT64) AS scorecards,
   CAST(jsonPayload.output.covercards AS INT64) AS cover_cards,
   jsonPayload.settings.language           AS language,
-  jsonPayload.settings.secondarylanguage  AS secondary_language,
+  -- NULL means single-language output; spelled out so charts don't show it as missing.
+  IF(jsonPayload.event = 'generate',
+     IFNULL(jsonPayload.settings.secondarylanguage, 'none'), NULL) AS secondary_language,
   jsonPayload.settings.uilanguage         AS ui_language,
   jsonPayload.settings.paperformat        AS paper_format,
   jsonPayload.settings.preset             AS preset,
@@ -45,6 +47,11 @@ SELECT
   jsonPayload.settings.scorecardcheckmode AS scorecard_check_mode,
   jsonPayload.settings.hidewcaliveid      AS hide_wca_live_id,
   jsonPayload.settings.scrambledoublecheck AS scramble_double_check,
+  CAST(jsonPayload.settings.scrambledoublecheckworldtop AS INT64) AS double_check_world_top,
+  CAST(jsonPayload.settings.scrambledoublecheckregiontop AS INT64) AS double_check_region_top,
+  jsonPayload.settings.scrambledoublecheckregionscope AS double_check_region_scope,
+  jsonPayload.settings.liveresultsmode    AS live_results_mode,
+  jsonPayload.settings.splitpdfsbystage   AS split_pdfs_by_stage,
   CAST(jsonPayload.settings.customevents AS INT64) AS custom_events,
   jsonPayload.scope.mode                  AS scope_mode,
   ARRAY_TO_STRING(jsonPayload.scope.documents, ', ') AS documents,
@@ -58,4 +65,9 @@ SELECT
   -- uncommented to expose them:
   --   jsonPayload.stage   AS error_stage,
   --   jsonPayload.message AS error_message
-FROM `scorecards-v2-prod.analytics.stdout`
+FROM `scorecards-v2-prod.analytics.stdout`;
+
+-- Settings and size charts read this one: session rows carry no settings, so on `events`
+-- they show up as a NULL language, paper format, and so on.
+CREATE OR REPLACE VIEW `scorecards-v2-prod.analytics.generations` AS
+SELECT * FROM `scorecards-v2-prod.analytics.events` WHERE event = 'generate';

@@ -193,7 +193,9 @@ bq --project_id=scorecards-v2-prod query --use_legacy_sql=false < docs/analytics
 ```
 
 Build the dashboard in [Looker Studio](https://lookerstudio.google.com): new report,
-BigQuery connector, the `analytics.events` view (not the raw `stdout` table). Set
+BigQuery connector, the `analytics.events` view (not the raw `stdout` table), plus
+`analytics.generations` (generate events only) for every settings or size chart: on
+`events`, sign-in rows show up as a NULL language, paper format, and so on. Set
 `latlng`'s type to Geo > Latitude, Longitude by hand, Looker cannot infer it. Set the
 data source's freshness to 1 hour, down from the 12 hour default, for auto-refresh.
 
