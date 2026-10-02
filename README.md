@@ -16,6 +16,10 @@ never uploaded, and there is no database. One anonymous usage event is sent per 
 we can see which competitions the tool is used on and which settings people pick, see
 [Usage analytics](#usage-analytics).
 
+<p align="center">
+  <img alt="Picking a competition, choosing documents and settings, then generating" src="docs/readme/walkthrough.gif" width="800">
+</p>
+
 ---
 
 ## What it generates
@@ -36,6 +40,17 @@ we can see which competitions the tool is used on and which settings people pick
 
 Empty documents are omitted. Two or more files download as `{id}_pdfs.zip`; a single file
 downloads on its own so it can be printed straight away.
+
+<table>
+  <tr>
+    <td align="center"><img alt="Bilingual French/English scorecard with a custom competition logo, a cutoff and a stage group" src="docs/readme/scorecard-bilingual.png" width="360"></td>
+    <td align="center"><img alt="English-only scorecard with the competition name and no logo" src="docs/readme/scorecard-simple.png" width="360"></td>
+  </tr>
+  <tr>
+    <td align="center">Bilingual, custom logo, cutoff, stage</td>
+    <td align="center">Simple: English, no logo, newcomer</td>
+  </tr>
+</table>
 
 ### Scorecard header logo
 
