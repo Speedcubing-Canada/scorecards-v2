@@ -15,7 +15,7 @@ beforeEach(() => { _id = 0; });
 const BASE: CompetitionSettings = {
   competitionId: 'TC2024', competitionName: 'Test Comp 2024',
   language: 'en', secondaryLanguage: null, paperFormat: 'A4', secondRoundMode: 'blanks',
-  logoDataUrl: null, useDefaultLogo: false, liveResultsMode: 'wca-live',
+  logoDataUrl: null, useDefaultLogo: false, scorecardCompNameWithLogo: false, liveResultsMode: 'wca-live',
   wcaLiveId: null, wcaLivePersonIds: null,
   hideWcaLiveId: false, nametagLogoMode: 'hidden', nametagQrMode: 'back-only', nametagLayout: 'vertical',
   splitPdfsByStage: false,

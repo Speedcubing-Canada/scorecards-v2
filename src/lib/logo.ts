@@ -18,3 +18,9 @@ export function resolveLogo(settings: Pick<CompetitionSettings, 'logoDataUrl' | 
   if (settings.useDefaultLogo) return SCC_DEFAULT_LOGO;
   return null;
 }
+
+export function showCompNameAboveCompetitor(
+  settings: Pick<CompetitionSettings, 'logoDataUrl' | 'scorecardCompNameWithLogo'>,
+): boolean {
+  return !!settings.logoDataUrl && settings.scorecardCompNameWithLogo;
+}

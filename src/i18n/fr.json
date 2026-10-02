@@ -114,7 +114,9 @@
       "hint": "Apparaît dans le coin supérieur gauche de chaque feuille. PNG ou SVG recommandé.",
       "default_title": "Logo Speedcubing Canada par défaut",
       "default_desc": "Affiché dans le coin supérieur gauche de chaque feuille, à côté du nom de la compétition, lorsqu'aucun logo personnalisé n'est téléchargé.",
-      "use_default_hint": "Recommandé pour les compétitions canadiennes. À désactiver pour les compétitions hors du Canada."
+      "use_default_hint": "Recommandé pour les compétitions canadiennes. À désactiver pour les compétitions hors du Canada.",
+      "show_comp_name_label": "Afficher le nom de la compétition sur les feuilles",
+      "show_comp_name_desc": "Imprimé au-dessus du nom du compétiteur, pour les logos qui ne le contiennent pas."
     },
     "nametag": {
       "title": "Mise en page des badges",

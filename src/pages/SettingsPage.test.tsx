@@ -233,12 +233,26 @@ describe('restoring the previous submission', () => {
     expect(screen.getByText('double-checks.csv')).toBeTruthy();
   });
 
+  it('offers the scorecard comp name option only once a custom logo is uploaded', async () => {
+    const label = 'Show the competition name on scorecards';
+    await renderSettings();
+    expect(screen.queryByText(label)).toBeNull();
+
+    cleanup();
+    writeSettings(stored({ logoDataUrl: 'data:image/png;base64,iVBORw0KGgo=' }));
+    await renderSettings();
+    fireEvent.click(screen.getByText(label));
+    generate();
+    expect(readSettings()?.scorecardCompNameWithLogo).toBe(true);
+  });
+
   // Restore and submit untouched: a field dropped from the draft shows up here as a loss.
   it('re-submits everything it restored', async () => {
     const settings = stored({
       language: 'fr', secondaryLanguage: 'en', paperFormat: 'A4', secondRoundMode: 'blanks',
       nametagLayout: 'horizontal', nametagQrMode: 'both-sides', scorecardCheckMode: 'none',
       hideWcaLiveId: true, wcaLiveId: '9667', useDefaultLogo: true, liveResultsMode: 'ilr',
+      scorecardCompNameWithLogo: true,
       scrambleDoubleCheck: true, scrambleDoubleCheckRounds: ['firstRound'],
       scrambleDoubleCheckOverrides: { '333|1': ['2019SMIT01'] },
       customEvents: [event('Mini Guildford')],

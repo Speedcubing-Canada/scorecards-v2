@@ -16,6 +16,23 @@ export interface ChangelogEntry {
 /** Newest first. See "Contributing" in the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-10-01',
+    items: {
+      en: [
+        'Scorecards can now show the competition name alongside a custom logo.',
+      ],
+      fr: [
+        'Les feuilles peuvent maintenant afficher le nom de la compétition avec un logo personnalisé.',
+      ],
+      es: [
+        'Las hojas ahora pueden mostrar el nombre de la competencia junto a un logo personalizado.',
+      ],
+      pt: [
+        'As súmulas agora podem mostrar o nome da competição junto com um logo personalizado.',
+      ],
+    },
+  },
+  {
     id: '2026-09-30',
     items: {
       en: [

@@ -91,7 +91,7 @@ export default function RoundScopePage() {
           competitionId, competitionName,
           language: uiLang, secondaryLanguage: null,
           paperFormat: 'LETTER', secondRoundMode: 'blanks',
-          logoDataUrl: null, useDefaultLogo: true,
+          logoDataUrl: null, useDefaultLogo: true, scorecardCompNameWithLogo: false,
           liveResultsMode: 'wca-live', wcaLiveId: null, wcaLivePersonIds: null, hideWcaLiveId: false,
           nametagLogoMode: 'with-name', nametagQrMode: 'back-only', nametagLayout: 'vertical',
           customEvents: [],
