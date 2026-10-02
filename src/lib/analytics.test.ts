@@ -136,8 +136,21 @@ describe('buildGenerateEvent', () => {
   it('reports the regional ranking scope only when that rule is on', () => {
     type Dc = { scrambleDoubleCheckRegionScope: string | null };
     expect((generate().settings as Dc).scrambleDoubleCheckRegionScope).toBeNull();
-    const on = generate({ scrambleDoubleCheckRegionTop: 1, scrambleDoubleCheckRegionScope: 'continental' });
+    const on = generate({
+      scrambleDoubleCheck: true, scrambleDoubleCheckRegionTop: 1, scrambleDoubleCheckRegionScope: 'continental',
+    });
     expect((on.settings as Dc).scrambleDoubleCheckRegionScope).toBe('continental');
+  });
+
+  // The draft keeps the ranking rules while the feature is off; they must not count as used.
+  it('reports no ranking rules while the double-check is off', () => {
+    const rules = { scrambleDoubleCheckWorldTop: 50, scrambleDoubleCheckRegionTop: 3 };
+    expect(generate({ scrambleDoubleCheck: false, ...rules }).settings).toMatchObject({
+      scrambleDoubleCheckWorldTop: null, scrambleDoubleCheckRegionTop: null, scrambleDoubleCheckRegionScope: null,
+    });
+    expect(generate({ scrambleDoubleCheck: true, ...rules }).settings).toMatchObject({
+      scrambleDoubleCheckWorldTop: 50, scrambleDoubleCheckRegionTop: 3, scrambleDoubleCheckRegionScope: 'national',
+    });
   });
 
   it('lists only the selected documents, sorted', () => {
@@ -153,7 +166,8 @@ describe('buildGenerateEvent', () => {
     expect((s.settings as { customEvents: number }).customEvents).toBe(1);
   });
 
-  it('has no location for a custom competition, which has no WCIF', () => {
+  // Zeros would drag the dashboard's size averages down.
+  it('has no location or size for a custom competition, which has no WCIF', () => {
     const e = buildGenerateEvent({
       parsed: emptyParsedWcif(),
       wcif: null,
@@ -163,7 +177,7 @@ describe('buildGenerateEvent', () => {
       output: buildOutput([], 4, 8, 0),
     });
     expect(e.comp).toEqual({ id: 'my-comp', country: null, lat: null, lng: null, custom: true });
-    expect(e.size).toEqual({ competitors: 0, events: 0, rounds: 0, groups: 0, stages: 0, days: 0 });
+    expect(e.size).toBeNull();
   });
 
   it('carries nothing that identifies a person', () => {

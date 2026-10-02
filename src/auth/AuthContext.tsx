@@ -136,6 +136,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (returnedState !== savedState) throw new Error('OAuth state mismatch - possible CSRF');
     if (!verifier) throw new Error('Missing PKCE verifier');
 
+    // Only renew() redirects with a token still stored; a fresh sign-in starts without one.
+    const isRenewal = readStored<WCAToken>(STORAGE_TOKEN) !== null;
+
     setIsLoading(true);
     try {
       const newToken = await exchangeCodeForToken(code, verifier);
@@ -146,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem(STORAGE_RENEW_ATTEMPT);
       // Once per sign-in, carrying nothing but the fact that one happened. Lets us compare
       // organizers who start the flow against those who reach a download.
-      send(buildSessionEvent());
+      if (!isRenewal) send(buildSessionEvent());
     } finally {
       setIsLoading(false);
     }

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
 import { fetchErrorKey, fetchWcif } from '../auth/wca';
 import { getCachedWcif, setCachedWcif } from '../lib/wcifCache';
+import * as analytics from '../lib/analytics';
 import { parseWCIF, type ParsedWCIF } from '../lib/wcif-parser';
 import {
   availableRounds, latestAssignedRound, filterParsedByScope, hasUnassignedIntermediate,
@@ -81,10 +82,13 @@ export default function RoundScopePage() {
     let cancelled = false;
 
     async function run() {
+      // The first fetch and parse of a competition happen here, so this is where they fail.
+      let stage: analytics.ErrorStage = 'fetch';
       try {
         const wcif = getCachedWcif(competitionId) ?? await fetchWcif(competitionId, token!.access_token);
         if (cancelled) return;
         setCachedWcif(competitionId, wcif);
+        stage = 'parse';
 
         const uiLang = (i18n.language?.slice(0, 2) ?? 'en') as LocaleCode;
         const detectionSettings: CompetitionSettings = {
@@ -123,6 +127,7 @@ export default function RoundScopePage() {
         setStatus('ready');
       } catch (e) {
         if (!cancelled) {
+          analytics.send(analytics.buildErrorEvent(competitionId, stage, e));
           const key = fetchErrorKey(e);
           setStatusMsg(key ? t(key) : String(e));
           setStatus('error');

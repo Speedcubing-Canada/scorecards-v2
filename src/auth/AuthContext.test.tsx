@@ -169,6 +169,17 @@ describe('handleCallback', () => {
     expect(mockSend).toHaveBeenCalledTimes(1);
   });
 
+  // A tab left open past the token life comes back through the same callback.
+  it('reports no session event for a renewal redirect', async () => {
+    arrive();
+    sessionStorage.setItem('wca_token', JSON.stringify(token));
+    stubExchange();
+    mount();
+    await act(() => auth.handleCallback('the-code', 'the-state'));
+    expect(auth.token).toEqual(token);
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+
   it('clears isLoading when the exchange fails', async () => {
     arrive();
     stubExchange({ ok: false, status: 401, statusText: 'Unauthorized', text: async () => '' });
