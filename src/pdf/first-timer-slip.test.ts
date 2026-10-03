@@ -85,6 +85,18 @@ describe('buildSlipLines content rules', () => {
 
   // Blindfolded is named differently in all four locales, so it proves the slip picks
   // the event name up from its own language rather than defaulting to English.
+  it('gives a blank on-the-spot slip a line to write on for every value, and every event', () => {
+    const lines = buildSlipLines(entry({ blank: true, name: '', eventIds: ['333', 'pyram'] }), EN, 'en');
+    const valued = lines.filter((l) => l.bold !== undefined);
+    expect(valued.map((l) => l.text)).toEqual([
+      EN.preferredNamePrefix, EN.genderPrefix, EN.birthdatePrefix, EN.citizenshipPrefix,
+    ]);
+    expect(valued.every((l) => /^_+$/.test(l.bold!))).toBe(true);
+    // Age is unknown until written in, so consent is always offered.
+    expect(texts(lines)).toContain(EN.parentalConsent);
+    expect(texts(lines).slice(-2)).toEqual([`• ${getEventName('333', 'en')}`, `• ${getEventName('pyram', 'en')}`]);
+  });
+
   it('localizes event names to the slip language', () => {
     for (const loc of LOCALES) {
       const s = getFirstTimerSlipStrings(loc);

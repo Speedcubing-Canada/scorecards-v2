@@ -166,7 +166,12 @@
       "csv_count": "{{count}} competitor(s) loaded",
       "add_custom_event": "+ Add custom event"
     },
-    "generate_button": "Generate →"
+    "generate_button": "Generate →",
+    "ots": {
+      "title": "On-the-spot registration",
+      "label": "Add blanks for on-the-spot registrations",
+      "desc": "One page each of blank name tags, first-timer slips and scorecards, to fill in by hand."
+    }
   },
   "generate": {
     "title": "Generate Scorecards",
@@ -240,7 +245,12 @@
   },
   "warnings": {
     "no_groups": "No groups have been assigned for this competition yet, so scorecard counts show 0. Assign groups first (in Groupifier or on the WCA website), then come back here. You can still generate the schedule tracker and name tags in the meantime.",
-    "stage_split_prefilled": "Round 2 is prefilled with the competitors from Round 1, who are not on a stage yet, so it stays one PDF. The other rounds are still split per stage."
+    "stage_split_prefilled": "Round 2 is prefilled with the competitors from Round 1, who are not on a stage yet, so it stays one PDF. The other rounds are still split per stage.",
+    "ots_intro": "This competition accepts on-the-spot registrations. People registered on the day are not in the WCIF, so a few things need fixing by hand:",
+    "ots_blanks": "Use the blank name tags, first-timer slips and scorecards (one page each) for them.",
+    "ots_ids": "Add each of them on the WCA website (and in WCA Live) before entering results: their scorecards have no ID until then.",
+    "ots_groups": "Write their group on their scorecards and name tag. Group sizes, cover cards, the Group Overview and the Round Checklist do not count them.",
+    "ots_round2": "Prefilled Round 2 scorecards only list registered competitors: use the extra scorecards for anyone added on the day."
   },
   "about": {
     "trigger": "What is this?",

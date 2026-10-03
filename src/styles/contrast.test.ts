@@ -60,6 +60,7 @@ const PAIRS: [string, string, number, string][] = [
   ['--danger', '--danger-soft-bg', 4.5, 'the text in an error box'],
   ['--primary', '--bg', 3, 'the progress fill on its track'],
   ['--warning-text', '--warning-bg', 4.5, 'a warning banner'],
+  ['--info-text', '--info-bg', 4.5, 'an info banner'],
   ['--success', '--surface', 4.5, 'the "auto-detected" confirmation'],
   ['--danger', '--surface', 4.5, 'an error message'],
   // 1.4.11: --border-strong is the only boundary on the Back, Sign out and theme buttons,

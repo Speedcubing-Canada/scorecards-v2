@@ -16,6 +16,23 @@ export interface ChangelogEntry {
 /** Newest first. See "Contributing" in the README before adding an entry. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-10-03',
+    items: {
+      en: [
+        'Competitions with on-the-spot registration get blank name tags, first-timer slips and scorecards.',
+      ],
+      fr: [
+        "Les compétitions avec inscription sur place reçoivent des badges, fiches pour les nouveaux participants et feuilles vierges.",
+      ],
+      es: [
+        'Las competencias con inscripción en el lugar reciben acreditaciones, fichas de primera vez y hojas en blanco.',
+      ],
+      pt: [
+        'Competições com inscrição no local recebem crachás, fichas de novato e súmulas em branco.',
+      ],
+    },
+  },
+  {
     id: '2026-10-01',
     items: {
       en: [

@@ -18,7 +18,7 @@ const BASE: CompetitionSettings = {
   logoDataUrl: null, useDefaultLogo: false, scorecardCompNameWithLogo: false, liveResultsMode: 'wca-live',
   wcaLiveId: null, wcaLivePersonIds: null,
   hideWcaLiveId: false, nametagLogoMode: 'hidden', nametagQrMode: 'back-only', nametagLayout: 'vertical',
-  splitPdfsByStage: false,
+  splitPdfsByStage: false, otsBlanks: false,
   customEvents: [], scorecardCheckMode: 'per-group-card',
   scrambleDoubleCheck: false, scrambleDoubleCheckRounds: ['finals'], scrambleDoubleCheckOverrides: {},
   scrambleDoubleCheckWorldTop: 50, scrambleDoubleCheckRegionTop: null, scrambleDoubleCheckRegionScope: 'national',
@@ -2866,5 +2866,48 @@ describe('subStageLabel', () => {
 
   it('returns nothing for the unnamed activities the room-per-stage shape uses', () => {
     expect(subStageLabel('', '')).toBe('');
+  });
+});
+
+// On-the-spot registrants are not in the WCIF, so they get fill-in blanks after everyone else.
+describe('on-the-spot blanks', () => {
+  const c = ch(100, '333', 1, 1);
+  const e = evt('333', [rSpec('a')]);
+  const e2 = evt('222', [rSpec('a')]);
+  const r = room('Stage', [act('333', 1, [c])]);
+  const persons = () => [
+    per(1, [{ aid: 100 }], { name: 'Zed' }),
+    { ...per(2, [{ aid: 100 }], { name: 'Amy', wcaId: null }) },
+  ];
+
+  it('adds nothing when off', () => {
+    const result = parseWCIF(mkWCIF([e, e2], [r], persons()), cfg());
+    expect(result.nametags.some(t => t.blank)).toBe(false);
+    expect(result.firstTimers.some(f => f.blank)).toBe(false);
+    expect(result.extras.some(x => x.kind === 'scorecard' && x.eventId === '')).toBe(false);
+  });
+
+  it('appends 4 blank name tags after the sorted real ones', () => {
+    const result = parseWCIF(mkWCIF([e, e2], [r], persons()), cfg({ otsBlanks: true }));
+    const tags = result.nametags;
+    expect(tags.slice(0, 2).map(t => t.name)).toEqual(['Zed', 'Amy']);
+    expect(tags.slice(2)).toHaveLength(4);
+    expect(tags.slice(2).every(t => t.blank && t.name === '' && t.role === 'competitor')).toBe(true);
+  });
+
+  it('appends blank first-timer slips listing every competition event, after the real ones', () => {
+    const result = parseWCIF(mkWCIF([e, e2], [r], persons()), cfg({ otsBlanks: true }));
+    expect(result.firstTimers[0]?.name).toBe('Amy');
+    const blanks = result.firstTimers.slice(1);
+    expect(blanks.length).toBeGreaterThan(0);
+    expect(blanks.every(f => f.blank && f.name === '')).toBe(true);
+    expect(blanks[0]?.eventIds).toEqual(['333', '222']);
+  });
+
+  it('appends one page of pure-blank scorecards after the padded extras', () => {
+    const result = parseWCIF(mkWCIF([e, e2], [r], persons()), cfg({ otsBlanks: true }));
+    expect(result.extras.length % 4).toBe(0);
+    const tail = result.extras.slice(-4) as ScorecardEntry[];
+    expect(tail.every(x => x.kind === 'scorecard' && x.eventId === '' && x.eventName === '' && x.group === '')).toBe(true);
   });
 });

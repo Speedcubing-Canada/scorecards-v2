@@ -166,7 +166,12 @@
       "csv_count": "{{count}} compétiteur(s) chargé(s)",
       "add_custom_event": "+ Ajouter une épreuve personnalisée"
     },
-    "generate_button": "Générer →"
+    "generate_button": "Générer →",
+    "ots": {
+      "title": "Inscriptions sur place",
+      "label": "Ajouter des fiches vierges pour les inscriptions sur place",
+      "desc": "Une page de badges, de fiches pour les nouveaux participants et de feuilles vierges, à remplir à la main."
+    }
   },
   "generate": {
     "title": "Générer les feuilles de score",
@@ -240,7 +245,12 @@
   },
   "warnings": {
     "no_groups": "Aucun groupe n'a encore été assigné pour cette compétition, donc le nombre de feuilles affiche 0. Assignez d'abord les groupes (dans Groupifier ou sur le site de la WCA), puis revenez ici. Vous pouvez tout de même générer le suivi d'horaire et les badges entre-temps.",
-    "stage_split_prefilled": "Le tour 2 est prérempli avec les personnes du tour 1, qui ne sont pas encore affectées à une scène : il reste donc un seul PDF. Les autres tours sont tout de même divisés par scène."
+    "stage_split_prefilled": "Le tour 2 est prérempli avec les personnes du tour 1, qui ne sont pas encore affectées à une scène : il reste donc un seul PDF. Les autres tours sont tout de même divisés par scène.",
+    "ots_intro": "Cette compétition accepte les inscriptions sur place. Les personnes inscrites le jour même ne sont pas dans le WCIF, donc quelques éléments sont à corriger à la main :",
+    "ots_blanks": "Utilisez pour elles les badges, fiches pour les nouveaux participants et feuilles vierges (une page de chaque).",
+    "ots_ids": "Ajoutez chacune d'elles sur le site de la WCA (et dans WCA Live) avant de saisir les résultats : leurs feuilles n'ont pas d'identifiant d'ici là.",
+    "ots_groups": "Écrivez leur groupe sur leurs feuilles et leur badge. La taille des groupes, les feuilles de couverture, l'aperçu des groupes et la liste de vérification ne les comptent pas.",
+    "ots_round2": "Les feuilles préremplies du 2e tour ne listent que les compétiteurs inscrits : utilisez les feuilles supplémentaires pour les personnes ajoutées le jour même."
   },
   "about": {
     "trigger": "Qu'est-ce que c'est ?",

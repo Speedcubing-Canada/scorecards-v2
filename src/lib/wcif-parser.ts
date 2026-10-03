@@ -1,6 +1,7 @@
 import type { WCIF, Round, EventId, Assignment, ChildActivity, PersonalBest } from '../types/wcif';
 import type { CompetitionSettings, DoubleCheckRound } from '../types/settings';
-import { getStrings, getEventName, getNametTagTitleStrings, getNametTagStrings, getShortNametTagNames, getScheduleStrings, type NametTagTitleStrings } from './i18n';
+import { getStrings, getEventName, getFirstTimerSlipStrings, getNametTagTitleStrings, getNametTagStrings, getShortNametTagNames, getScheduleStrings, type NametTagTitleStrings } from './i18n';
+import { packSlipPages } from '../pdf/firstTimerSlipLines';
 
 export type ScorecardFormat = 'avg5' | 'bo2-avg5' | 'mo3' | 'bo1-mo3' | 'bo2' | 'bo1';
 
@@ -32,6 +33,8 @@ export interface NametTagEntry {
   scramble: string[];
   judge: string[];
   run: string[];
+  // On-the-spot fill-in tag: QR codes point at the competition, not a person.
+  blank?: boolean;
 }
 
 // One per accepted newcomer, for the confirmation slip the delegate attaches after the
@@ -43,6 +46,8 @@ export interface FirstTimerEntry {
   birthdate?: string | null;
   countryIso2: string;
   eventIds: EventId[];
+  // On-the-spot fill-in slip: every field is a line to write on.
+  blank?: boolean;
 }
 
 function buildDuties(
@@ -1126,6 +1131,26 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   // First-timer slips: alphabetical by name.
   firstTimers.sort((a, b) => byName(a.name, b.name));
 
+  if (settings.otsBlanks) {
+    const compEvents = WCA_EVENT_ORDER.filter(e => wcif.events.some(ev => ev.id === e));
+    const blankTag: NametTagEntry = {
+      name: '', wcaId: '', registrantId: 0, wcaUserId: 0, registrationId: 0, gender: 'o',
+      role: 'competitor',
+      titleFront: resolveTitle(nametTagTitles.front, 'competitor', false),
+      titleBack:  resolveTitle(nametTagTitles.back,  'competitor', false),
+      events: [], compete: [], scramble: [], judge: [], run: [], blank: true,
+    };
+    nametags.push(blankTag, blankTag, blankTag, blankTag);
+
+    const blankSlip: FirstTimerEntry = {
+      name: '', gender: 'o', birthdate: null, countryIso2: '', eventIds: compEvents, blank: true,
+    };
+    // As many as one page holds; a long event list makes each slip taller.
+    const slipStrings = getFirstTimerSlipStrings(language);
+    firstTimers.push(...packSlipPages(
+      Array(8).fill(blankSlip), slipStrings, language, settings.paperFormat)[0]);
+  }
+
   // Extra scorecards
   // Build minimum timeslot for each round (eventId-rN) from its child activities.
   const roundMinTs: Record<string, string> = {};
@@ -1171,6 +1196,15 @@ export function parseWCIF(wcif: WCIF, settings: CompetitionSettings): ParsedWCIF
   }
   const extrasRem = extrasEntries.length % 4;
   if (extrasRem !== 0) for (let i = 0; i < 4 - extrasRem; i++) extrasEntries.push(EMPTY_COVER);
+  if (settings.otsBlanks) {
+    // Only the competition header is printed; the rest is written by hand.
+    const pureBlank: ScorecardEntry = {
+      kind: 'scorecard', timeslot: 'ZZZ', eventId: '', eventName: '', roundLabel: '', roundNum: 0,
+      group: '', name: '', wcaId: '', liveId: '', gender: '',
+      cutoff: '', limit: '', format: 'avg5', isCumulative: false,
+    };
+    extrasEntries.push(pureBlank, pureBlank, pureBlank, pureBlank);
+  }
 
   // Schedule tracker
   const timezone = wcif.schedule.venues[0]?.timezone ?? 'UTC';

@@ -50,6 +50,17 @@ describe('liveQrTarget', () => {
     expect(ilr.endsWith('/5')).toBe(false);
     expect(live).not.toContain('1385268');
   });
+
+  // On-the-spot fill-in tags have no person yet, so they open the competition itself.
+  it('sends a blank tag to the competition page in both systems', () => {
+    const blank = { registrantId: 0, registrationId: 0, blank: true };
+    expect(liveQrTarget({ mode: 'ilr', competitionId: 'Soorsi2026', wcaLiveId: null, wcaLivePersonIds: null }, blank).url)
+      .toBe('https://www.worldcubeassociation.org/competitions/Soorsi2026/live');
+    expect(liveQrTarget({ mode: 'wca-live', competitionId: 'X', wcaLiveId: '9667', wcaLivePersonIds: { 5: '42' } }, blank).url)
+      .toBe('https://live.worldcubeassociation.org/competitions/9667');
+    expect(liveQrTarget({ mode: 'wca-live', competitionId: 'X', wcaLiveId: null, wcaLivePersonIds: null }, blank).url)
+      .toBe('https://live.worldcubeassociation.org');
+  });
 });
 
 // A path is not eyeball-checkable the way a grid of rects is, so this walks the emitted `d`

@@ -18,8 +18,9 @@ import { readPresetSettings } from '../presets';
 import { SCC_DEFAULT_LOGO } from '../assets/scc-logo';
 import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
+import OtsNotice from '../components/OtsNotice';
 import CustomEventEditor from '../components/CustomEventEditor';
-import { fetchScoretakingSoftware, fetchWcaLiveId, fetchWcaLivePersonIds } from '../auth/wca';
+import { fetchCompetitionInfo, fetchWcaLiveId, fetchWcaLivePersonIds } from '../auth/wca';
 import { useAuth } from '../auth/useAuth';
 import ui from '../styles/ui.module.css';
 import s from './SettingsPage.module.css';
@@ -107,6 +108,7 @@ export default function SettingsPage() {
     nametagLayout: preset.nametagLayout ?? 'vertical',
     scorecardCheckMode: preset.scorecardCheckMode ?? 'per-group-card',
     splitPdfsByStage: false,
+    otsBlanks: false,
     // Regulation 11i binds every competition, so there is no switch: "off" is both ranking
     // rules unticked with no round or CSV rule. A whole round is only worth double-checking
     // at a championship, whose finals 11i1f singles out.
@@ -131,7 +133,7 @@ export default function SettingsPage() {
     liveResultsMode, wcaLiveId, hideWcaLiveId, nametagLogoMode, nametagQrMode, nametagLayout,
     scorecardCheckMode, customEvents, splitPdfsByStage, scrambleDoubleCheckRounds,
     scrambleDoubleCheckOverrides, scrambleDoubleCheckWorldTop, scrambleDoubleCheckRegionTop,
-    scrambleDoubleCheckRegionScope,
+    scrambleDoubleCheckRegionScope, otsBlanks,
   } = draft;
 
   // Not part of the draft, but stored so a restored upload isn't nameless.
@@ -139,6 +141,9 @@ export default function SettingsPage() {
   const [wcaLiveFetchStatus, setWcaLiveFetchStatus] = useState<'loading' | 'found' | 'not-found'>('loading');
   // A restored or hand-picked choice beats the WCA record, which may not be updated yet.
   const [modeTouched, setModeTouched] = useState(previous?.liveResultsMode !== undefined);
+  // Same rule for the OTS blanks: a restored choice beats the detected flag.
+  const otsTouched = previous?.otsBlanks !== undefined;
+  const [onTheSpot, setOnTheSpot] = useState(false);
   // A restored custom event behind a collapsed section reads as lost.
   const [advancedOpen, setAdvancedOpen] = useState(
     customEvents.length > 0 || Object.keys(scrambleDoubleCheckOverrides).length > 0,
@@ -151,7 +156,10 @@ export default function SettingsPage() {
     // Custom competitions are unofficial - they run on neither live-results system.
     if (!competitionId || isCustom) return;
     (async () => {
-      const scoretaking = await fetchScoretakingSoftware(competitionId, token?.access_token);
+      const { scoretakingSoftware: scoretaking, onTheSpot: ots } =
+        await fetchCompetitionInfo(competitionId, token?.access_token);
+      setOnTheSpot(ots);
+      if (ots && !otsTouched) patch({ otsBlanks: true });
       // ILR builds its URLs from ids already in hand; nothing to look up on WCA Live.
       if (scoretaking === 'internal' && !modeTouched) {
         patch({ liveResultsMode: 'ilr' });
@@ -298,6 +306,7 @@ export default function SettingsPage() {
       wcaLiveId: isCustom ? null : (draft.wcaLiveId?.trim() || null),
       wcaLivePersonIds: isCustom ? null : draft.wcaLivePersonIds,
       hideWcaLiveId: isCustom ? true : draft.hideWcaLiveId,
+      otsBlanks: !isCustom && draft.otsBlanks,
       scrambleDoubleCheck: !isCustom,
     });
     navigate('/generate');
@@ -335,6 +344,7 @@ export default function SettingsPage() {
         <h1 className={`${ui.pageTitle} ${s.heading}`}>{t('settings.heading')}</h1>
 
         {noGroups && <WarningBanner>{t('warnings.no_groups')}</WarningBanner>}
+        {onTheSpot && <OtsNotice />}
 
         {/* The settings sections flow into two balanced columns on a laptop. Advanced sits
             below them at full width: expanded it is longer than everything else combined,
@@ -660,6 +670,24 @@ export default function SettingsPage() {
               {t('settings.nametag.layout_horizontal')}
             </button>
           </div>
+        </section>
+        )}
+
+        {!isCustom && (
+        <section className={s.section}>
+          <h3 className={ui.sectionHeading}>{t('settings.ots.title')}</h3>
+          <label className={`${ui.toggleCard} ${s.checkboxCard} ${otsBlanks ? ui.toggleCardActive : ''}`}>
+            <input
+              type="checkbox"
+              checked={otsBlanks}
+              onChange={e => patch({ otsBlanks: e.target.checked })}
+              className={ui.radio}
+            />
+            <div>
+              <div className={ui.optionLabel}>{t('settings.ots.label')}</div>
+              <div className={ui.optionDesc}>{t('settings.ots.desc')}</div>
+            </div>
+          </label>
         </section>
         )}
         </div>

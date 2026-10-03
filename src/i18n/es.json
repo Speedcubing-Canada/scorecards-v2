@@ -166,7 +166,12 @@
       "csv_count": "{{count}} competidor(es) cargado(s)",
       "add_custom_event": "+ Agregar evento personalizado"
     },
-    "generate_button": "Generar →"
+    "generate_button": "Generar →",
+    "ots": {
+      "title": "Inscripción en el lugar",
+      "label": "Añadir hojas en blanco para inscripciones en el lugar",
+      "desc": "Una página de acreditaciones, fichas de primera vez y hojas en blanco, para rellenar a mano."
+    }
   },
   "generate": {
     "title": "Generar hojas de puntuación",
@@ -240,7 +245,12 @@
   },
   "warnings": {
     "no_groups": "Todavía no se han asignado grupos para esta competición, por lo que los recuentos de hojas muestran 0. Asigna primero los grupos (en Groupifier o en el sitio web de la WCA) y luego vuelve aquí. Mientras tanto, puedes generar el seguimiento del horario y las acreditaciones.",
-    "stage_split_prefilled": "La ronda 2 se rellena con las personas de la ronda 1, que todavía no tienen escenario asignado, así que se queda en un solo PDF. Las demás rondas sí se dividen por escenario."
+    "stage_split_prefilled": "La ronda 2 se rellena con las personas de la ronda 1, que todavía no tienen escenario asignado, así que se queda en un solo PDF. Las demás rondas sí se dividen por escenario.",
+    "ots_intro": "Esta competición acepta inscripciones en el lugar. Las personas inscritas el mismo día no están en el WCIF, así que hay algunas cosas que corregir a mano:",
+    "ots_blanks": "Usa para ellas las acreditaciones, fichas de primera vez y hojas en blanco (una página de cada una).",
+    "ots_ids": "Añade a cada una en el sitio web de la WCA (y en WCA Live) antes de ingresar resultados: sus hojas no tienen ID hasta entonces.",
+    "ots_groups": "Escribe su grupo en sus hojas y su acreditación. El tamaño de los grupos, las portadas, el resumen de grupos y la lista de verificación no las cuentan.",
+    "ots_round2": "Las hojas prellenadas de la ronda 2 solo incluyen a los competidores inscritos: usa las hojas adicionales para quien se haya añadido el mismo día."
   },
   "about": {
     "trigger": "¿Qué es esto?",

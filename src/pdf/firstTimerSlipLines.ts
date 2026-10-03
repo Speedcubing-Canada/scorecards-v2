@@ -68,6 +68,7 @@ function genderWord(gender: 'm' | 'f' | 'o', s: FirstTimerSlipStrings): string {
 export function buildSlipLines(
   entry: FirstTimerEntry, s: FirstTimerSlipStrings, language: LocaleCode,
 ): SlipLine[] {
+  if (entry.blank) return blankSlipLines(entry, s, language);
   const lines: SlipLine[] = [
     { text: s.confirmIntro1, checkbox: false },
     { text: s.confirmIntro2, checkbox: false },
@@ -93,6 +94,24 @@ export function buildSlipLines(
     for (const name of eventNames) lines.push({ text: `• ${name}`, checkbox: true });
   }
   return lines;
+}
+
+const WRITE_IN = '_'.repeat(22);
+
+/** Every value is a line to write on; consent and events are ticked as they apply. */
+function blankSlipLines(entry: FirstTimerEntry, s: FirstTimerSlipStrings, language: LocaleCode): SlipLine[] {
+  return [
+    { text: s.confirmIntro1, checkbox: false },
+    { text: s.confirmIntro2, checkbox: false },
+    { text: s.firstCompetition, checkbox: true },
+    { text: s.preferredNamePrefix, bold: WRITE_IN, checkbox: true },
+    { text: s.genderPrefix, bold: WRITE_IN, checkbox: true },
+    { text: s.birthdatePrefix, bold: WRITE_IN, checkbox: true },
+    { text: s.citizenshipPrefix, bold: WRITE_IN, checkbox: true },
+    { text: s.parentalConsent, checkbox: true },
+    { text: s.solveMultipleIntro, checkbox: false },
+    ...entry.eventIds.map((id) => ({ text: `• ${getEventName(id, language)}`, checkbox: true })),
+  ];
 }
 
 // @react-pdf page heights in points (portrait).

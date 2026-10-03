@@ -9,3 +9,14 @@
   color: var(--warning-text);
   margin-bottom: var(--space-5);
 }
+
+.info {
+  background-color: var(--info-bg);
+  border-color: var(--info-border);
+  color: var(--info-text);
+}
+
+.banner ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
