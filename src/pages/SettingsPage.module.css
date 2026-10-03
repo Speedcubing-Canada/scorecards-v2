@@ -276,6 +276,11 @@
   margin-bottom: var(--space-5);
 }
 
+/* Columns truncate the last section's bottom margin, so Advanced brings its own gap. */
+.advancedSection {
+  margin-top: var(--space-6);
+}
+
 .advancedBody {
   margin-top: var(--space-4);
 }
