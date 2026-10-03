@@ -19,13 +19,17 @@ import SettingsPage from './SettingsPage';
 vi.mock('../auth/wca', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../auth/wca')>()),
   // No network from a test, and no auto-filled id to compete with a restored one.
-  fetchScoretakingSoftware: vi.fn().mockResolvedValue('wca_live'),
+  fetchCompetitionInfo: vi.fn().mockResolvedValue({ scoretakingSoftware: 'wca_live', onTheSpot: false }),
   fetchWcaLiveId: vi.fn().mockResolvedValue(null),
   fetchWcaLivePersonIds: vi.fn().mockResolvedValue(null),
 }));
 
-import { fetchScoretakingSoftware, fetchWcaLiveId } from '../auth/wca';
-const mockScoretaking = vi.mocked(fetchScoretakingSoftware);
+import { fetchCompetitionInfo, fetchWcaLiveId } from '../auth/wca';
+const mockInfo = vi.mocked(fetchCompetitionInfo);
+const mockScoretaking = {
+  mockResolvedValue: (sw: 'wca_live' | 'internal', onTheSpot = false) =>
+    mockInfo.mockResolvedValue({ scoretakingSoftware: sw, onTheSpot }),
+};
 const mockWcaLiveId = vi.mocked(fetchWcaLiveId);
 
 const event = (name: string): CustomEvent =>
@@ -387,5 +391,37 @@ describe('per-stage PDF split', () => {
     await renderSettings();
     fireEvent.click(advancedToggle());
     expect(screen.queryByText(/stays one PDF/i)).toBeNull();
+  });
+});
+
+// `on_the_spot_registration` seeds the blanks and shows what to fix by hand.
+describe('on-the-spot registration', () => {
+  const box = () => screen.getByRole('checkbox', { name: /Add blanks for on-the-spot/ }) as HTMLInputElement;
+
+  it('ticks the blanks and shows the notice when the competition takes OTS', async () => {
+    mockScoretaking.mockResolvedValue('wca_live', true);
+    await renderSettings();
+
+    expect(await screen.findByText(/accepts on-the-spot registrations/)).toBeTruthy();
+    expect(box().checked).toBe(true);
+    generate();
+    expect(readSettings()?.otsBlanks).toBe(true);
+  });
+
+  it('shows neither when it does not', async () => {
+    await renderSettings();
+
+    expect(screen.queryByText(/accepts on-the-spot registrations/)).toBeNull();
+    expect(box().checked).toBe(false);
+  });
+
+  it('keeps a restored choice over the detected flag', async () => {
+    mockScoretaking.mockResolvedValue('wca_live', true);
+    writeSettings(stored({ otsBlanks: false }));
+    await renderSettings();
+    await screen.findByText(/accepts on-the-spot registrations/);
+    generate();
+
+    expect(readSettings()?.otsBlanks).toBe(false);
   });
 });

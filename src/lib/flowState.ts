@@ -149,6 +149,7 @@ export function readSettings(): CompetitionSettings | null {
   if (gsDocs.groupOverview === undefined) gsDocs.groupOverview = false;
   if (s.hideWcaLiveId === undefined) s.hideWcaLiveId = false;
   if (s.splitPdfsByStage === undefined) s.splitPdfsByStage = false;
+  if (s.otsBlanks === undefined) s.otsBlanks = false;
   if (s.liveResultsMode === undefined) s.liveResultsMode = 'wca-live';
   if (s.isCustomCompetition === undefined) s.isCustomCompetition = false;
   if (s.scorecardCheckMode === undefined) s.scorecardCheckMode = 'per-group-card';

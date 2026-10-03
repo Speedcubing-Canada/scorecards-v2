@@ -89,6 +89,9 @@ export interface CompetitionSettings {
   // One scorecard PDF per stage instead of one per round, for printing each stage on its own
   // paper colour. Only splits rounds where every card knows its stage and 2+ stages ran.
   splitPdfsByStage: boolean;
+  // One page each of blank name tags, first-timer slips and scorecards for people registered
+  // on the day. Seeded from the competition's `on_the_spot_registration` flag.
+  otsBlanks: boolean;
   generationScope: GenerationScope;
   // No WCIF is fetched, only customEvents render, and every WCA Live field is forced off.
   isCustomCompetition: boolean;

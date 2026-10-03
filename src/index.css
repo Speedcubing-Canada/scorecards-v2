@@ -39,6 +39,9 @@
   --warning-bg: #fff8e1;
   --warning-border: #f9a825;
   --warning-text: #b45309;
+  --info-bg: #eaf2fb;
+  --info-border: #5b8fd0;
+  --info-text: #1e4f86;
   --danger: #c00000;
   --danger-soft-bg: #fff0f0;
   --success: #15803d;
@@ -132,6 +135,9 @@
   --warning-bg: #3a3320;
   --warning-border: #b08a2e;
   --warning-text: #e8c477;
+  --info-bg: #1c2836;
+  --info-border: #3f6c9e;
+  --info-text: #9fc6f0;
   --danger: #ff6b6b;
   --danger-soft-bg: #2e1b1b;
   --success: #4ade80;

@@ -10,7 +10,7 @@ import {
   setOnAuthExpired,
   fetchManagedCompetitions,
   fetchMe,
-  fetchScoretakingSoftware,
+  fetchCompetitionInfo,
   fetchWcaLiveId,
   fetchWcaLivePersonIds,
   fetchWcif,
@@ -137,33 +137,36 @@ describe('fetchWcif', () => {
 // Null on any failure, so a WCA Live outage degrades the QR codes instead of blocking
 // the download.
 
-describe('fetchScoretakingSoftware', () => {
-  it('reads the field off the single-competition endpoint', async () => {
-    const fn = stubFetch(ok({ scoretaking_software: 'internal' }));
-    expect(await fetchScoretakingSoftware('Comp2026', 'tok')).toBe('internal');
+describe('fetchCompetitionInfo', () => {
+  const none = { scoretakingSoftware: null, onTheSpot: false };
+
+  it('reads both fields off the single-competition endpoint', async () => {
+    const fn = stubFetch(ok({ scoretaking_software: 'internal', on_the_spot_registration: true }));
+    expect(await fetchCompetitionInfo('Comp2026', 'tok'))
+      .toEqual({ scoretakingSoftware: 'internal', onTheSpot: true });
     expect(callArgs(fn)[0]).toBe(`${WCA_API_URL}/competitions/Comp2026`);
   });
 
   it('sends no Authorization header when called without a token', async () => {
     // Announced competitions are public; only unannounced ones need the token.
     const fn = stubFetch(ok({ scoretaking_software: 'wca_live' }));
-    expect(await fetchScoretakingSoftware('Comp2026')).toBe('wca_live');
+    expect((await fetchCompetitionInfo('Comp2026')).scoretakingSoftware).toBe('wca_live');
     expect(callArgs(fn)[1]?.headers).toEqual({});
   });
 
-  it('returns null when the field is absent', async () => {
-    stubFetch(ok({}));
-    expect(await fetchScoretakingSoftware('Comp2026')).toBeNull();
+  it('reads absent or null fields as unknown / no OTS', async () => {
+    stubFetch(ok({ on_the_spot_registration: null }));
+    expect(await fetchCompetitionInfo('Comp2026')).toEqual(none);
   });
 
-  it('returns null rather than throwing on a bad status', async () => {
+  it('returns the empty result rather than throwing on a bad status', async () => {
     stubFetch(fail(404));
-    expect(await fetchScoretakingSoftware('Comp2026')).toBeNull();
+    expect(await fetchCompetitionInfo('Comp2026')).toEqual(none);
   });
 
-  it('returns null rather than throwing on a network error', async () => {
+  it('returns the empty result rather than throwing on a network error', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
-    expect(await fetchScoretakingSoftware('Comp2026')).toBeNull();
+    expect(await fetchCompetitionInfo('Comp2026')).toEqual(none);
   });
 });
 

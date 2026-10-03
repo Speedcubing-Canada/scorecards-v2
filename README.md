@@ -98,6 +98,25 @@ One exception: a round 2 set to "prefilled" is filled with the round 1 qualifier
 on a stage until round 1 is over, so it stays a single PDF. The settings and generate pages both
 say so when the combination is selected.
 
+### On-the-spot registration
+
+People registered on the day are not in the WCIF. When the WCA API reports
+`on_the_spot_registration`, the settings page ticks **Add blanks for on-the-spot
+registrations** (a restored choice wins) and shows a notice on the settings and generate
+pages. The setting adds:
+
+- 4 blank name tags after the real ones (badge "Competitor"). Their QR codes open the
+  competition on Competition Groups and on WCA Live / ILR rather than a person.
+- One page of blank first-timer slips: every value is a line to write on, every competition
+  event is listed to tick, and parental consent is always offered.
+- 4 pure-blank scorecards at the end of the extras (competition header only, 5 attempt rows).
+  Extras only ship with the "everything" scope.
+
+Left to the organizer by hand: adding each person on the WCA site / WCA Live before entering
+results (no ID on their cards until then), their group (group sizes, cover cards, Group Overview
+and Round Checklist do not count them), and prefilled Round 2, which only lists registered
+competitors.
+
 ## Quick start
 
 ```bash

@@ -122,24 +122,32 @@ export async function fetchWcif(competitionId: string, token: string): Promise<W
   return authFetch(`${WCA_API_URL}/competitions/${competitionId}/wcif`, token);
 }
 
+export interface CompetitionInfo {
+  // 'internal' is ILR, 'wca_live' the separate site; null when unreadable.
+  scoretakingSoftware: 'external' | 'wca_live' | 'internal' | null;
+  onTheSpot: boolean;
+}
+
 /**
- * The scoretaking system, or null if it can't be read. 'internal' is ILR, 'wca_live' the
- * separate site. Only on the single-competition endpoint, and public once announced: the
- * token is needed for unannounced competitions only.
+ * Fields only on the single-competition endpoint, public once announced: the token is
+ * needed for unannounced competitions only. Never throws.
  */
-export async function fetchScoretakingSoftware(
+export async function fetchCompetitionInfo(
   competitionId: string,
   token?: string,
-): Promise<'external' | 'wca_live' | 'internal' | null> {
+): Promise<CompetitionInfo> {
   try {
     const res = await fetch(`${WCA_API_URL}/competitions/${competitionId}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
-    if (!res.ok) return null;
+    if (!res.ok) return { scoretakingSoftware: null, onTheSpot: false };
     const json = await res.json();
-    return json?.scoretaking_software ?? null;
+    return {
+      scoretakingSoftware: json?.scoretaking_software ?? null,
+      onTheSpot: json?.on_the_spot_registration === true,
+    };
   } catch {
-    return null;
+    return { scoretakingSoftware: null, onTheSpot: false };
   }
 }
 

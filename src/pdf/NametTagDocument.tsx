@@ -159,7 +159,8 @@ interface QrConfig {
 function QrSection({ entry, qr, qrSize, compact = false }: {
   entry: NametTagEntry; qr: QrConfig; qrSize: number; compact?: boolean;
 }) {
-  const cgUrl = `https://www.competitiongroups.com/competitions/${qr.competitionId}/persons/${entry.registrantId}`;
+  const cgComp = `https://www.competitiongroups.com/competitions/${qr.competitionId}`;
+  const cgUrl = entry.blank ? cgComp : `${cgComp}/persons/${entry.registrantId}`;
   const live = liveQrTarget(qr, entry);
 
   return (

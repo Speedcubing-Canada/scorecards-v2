@@ -28,6 +28,7 @@ export function testSettings(over: Partial<CompetitionSettings> = {}): Competiti
     customEvents: [],
     scorecardCheckMode: 'per-group-card',
     splitPdfsByStage: false,
+    otsBlanks: false,
     scrambleDoubleCheck: false,
     scrambleDoubleCheckRounds: ['finals'],
     scrambleDoubleCheckOverrides: {},

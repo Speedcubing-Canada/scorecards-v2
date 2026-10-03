@@ -16,6 +16,7 @@ import { readPresetId } from '../presets';
 import type { WorkerRequest, WorkerResponse } from '../pdf/scorecardWorker';
 import Header from '../components/Header';
 import WarningBanner from '../components/WarningBanner';
+import OtsNotice from '../components/OtsNotice';
 import Skeleton from '../components/Skeleton';
 import PrintGuide from '../components/PrintGuide';
 import { readSettings } from '../lib/flowState';
@@ -223,6 +224,7 @@ export default function GeneratePage() {
             {status === 'ready' && parsed?.hasGroups === false && (
               <WarningBanner>{t('warnings.no_groups')}</WarningBanner>
             )}
+            {status === 'ready' && settings?.otsBlanks && <OtsNotice />}
 
             {status === 'ready' && settings && effectiveParsed
               && stageSplitSkipsRound2(settings, hasUnassignedIntermediate(effectiveParsed)) && (

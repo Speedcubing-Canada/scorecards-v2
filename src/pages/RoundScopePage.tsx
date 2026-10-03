@@ -100,7 +100,7 @@ export default function RoundScopePage() {
           nametagLogoMode: 'with-name', nametagQrMode: 'back-only', nametagLayout: 'vertical',
           customEvents: [],
           // Detection-only parse; the real mode is chosen later on /settings.
-          scorecardCheckMode: 'per-group-card', splitPdfsByStage: false,
+          scorecardCheckMode: 'per-group-card', splitPdfsByStage: false, otsBlanks: false,
           scrambleDoubleCheck: false, scrambleDoubleCheckRounds: [], scrambleDoubleCheckOverrides: {},
           scrambleDoubleCheckWorldTop: null, scrambleDoubleCheckRegionTop: null,
           scrambleDoubleCheckRegionScope: 'national',
