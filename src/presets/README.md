@@ -35,6 +35,7 @@ All booleans. App defaults in brackets.
 | `nametags` | `true` | Name tags |
 | `roundChecklist` | `false` | Round Checklist |
 | `firstTimerSlips` | `false` | First-timer slips |
+| `groupOverview` | `false` | Group Overview |
 
 Note: mid-competition, `scheduleTracker` and `nametags` default to `false` instead.
 

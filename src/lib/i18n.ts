@@ -346,7 +346,7 @@ const SCHEDULE_EN: ScheduleStrings = {
 };
 
 const SCHEDULE_FR: ScheduleStrings = {
-  title: '- Suivi du calendrier',
+  title: '- Suivi de l\'horaire',
   estimatedStart: 'Heure de\ndébut estimée',
   estimatedEnd: 'Heure de\nfin estimée',
   event: 'Épreuve',

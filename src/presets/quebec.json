@@ -2,7 +2,9 @@
   "id": "quebec",
   "name": "Québec",
   "region": "Canada",
-  "documents": {},
+  "documents": {
+    "groupOverview": true
+  },
   "settings": {
     "language": "fr",
     "secondaryLanguage": "en"
